@@ -1,0 +1,8 @@
+Placeholder for golang-migrate SQL migrations (e.g. 000001_create_users_table.up.sql).
+
+`config.AutoMigrateDev` (see config/config.go) is a dev-only convenience that
+uses GORM's AutoMigrate. For production, generate versioned SQL migrations
+here and apply them with golang-migrate instead:
+
+migrate create -ext sql -dir migrations -seq create_users_table
+migrate -database "$DATABASE_URL" -path migrations up
