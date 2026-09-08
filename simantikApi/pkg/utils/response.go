@@ -18,6 +18,11 @@ func Success(c *fiber.Ctx, message string, data interface{}) error {
 	return SuccessWithStatus(c, fiber.StatusOK, message, data)
 }
 
+// OK is an alias for Success.
+func OK(c *fiber.Ctx, message string, data interface{}) error {
+	return Success(c, message, data)
+}
+
 // Created writes a 201 Created response with the standardized envelope.
 func Created(c *fiber.Ctx, message string, data interface{}) error {
 	return SuccessWithStatus(c, fiber.StatusCreated, message, data)
