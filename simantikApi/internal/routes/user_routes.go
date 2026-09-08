@@ -8,17 +8,20 @@ import (
 	"simantikApi/internal/middleware"
 )
 
-// registerUserRoutes mounts /auth/* (public, behind API secret only) and
-// /users/* (behind API secret + JWT, with role-gated admin endpoints).
+// registerUserRoutes mounts /users/* (behind API secret + JWT, with role-gated admin endpoints).
 func registerUserRoutes(router fiber.Router, cfg *config.Config, h *handler.UserHandler) {
-	auth := router.Group("/auth")
-	auth.Post("/register", h.Register)
-	auth.Post("/login", h.Login)
-
 	users := router.Group("/users", middleware.JWTAuth(cfg.JWTSecret))
+
+	// Authenticated user profile routes
 	users.Get("/me", h.Me)
-	users.Get("/", middleware.RequireRoles("admin"), h.List)
-	users.Get("/:id", h.GetByID)
-	users.Put("/:id", h.Update)
-	users.Delete("/:id", middleware.RequireRoles("admin"), h.Delete)
+	users.Patch("/me", h.UpdateMe)
+	users.Patch("/me/password", h.ChangePassword)
+	users.Patch("/me/avatar", h.UpdateAvatar)
+	users.Get("/me/roles", h.GetMyRoles)
+
+	// Admin-only management routes
+	adminOnly := middleware.RequireRoles("admin")
+	users.Get("/", adminOnly, h.List)
+	users.Get("/:id", adminOnly, h.GetByID)
+	users.Patch("/:id/status", adminOnly, h.UpdateStatus)
 }

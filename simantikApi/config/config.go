@@ -24,9 +24,22 @@ type Config struct {
 	AppEnv  string
 	AppPort string
 
-	APISecret      string
-	JWTSecret      string
-	JWTExpiryHours int
+	APISecret              string
+	JWTSecret              string
+	JWTAccessExpiryMinutes int
+	RefreshExpiryDays      int
+
+	CookieSecure   bool
+	CookieSameSite string
+
+	// Google OAuth / OIDC
+	GoogleClientID     string
+	GoogleClientSecret string
+	GoogleRedirectURL  string
+
+	// Resend Email API
+	ResendAPIKey    string
+	ResendFromEmail string
 
 	DatabaseURL string
 	DBHost      string
@@ -41,7 +54,9 @@ type Config struct {
 	DBConnMaxLifetimeMinutes int
 	DBConnMaxIdleTimeMinutes int
 
-	DBAutoMigrate bool
+	DBAutoMigrate      bool
+	DBAutoMigrateForce bool
+	DBLogLevel         string
 }
 
 // Load reads a local .env file (if present) and populates Config from the
@@ -51,13 +66,26 @@ func Load() *Config {
 		log.Println("config: no .env file found, relying on process environment")
 	}
 
+	appEnv := getEnv("APP_ENV", "development")
+
 	return &Config{
-		AppEnv:  getEnv("APP_ENV", "development"),
+		AppEnv:  appEnv,
 		AppPort: getEnv("APP_PORT", "8080"),
 
-		APISecret:      getEnv("API_SECRET", ""),
-		JWTSecret:      getEnv("JWT_SECRET", ""),
-		JWTExpiryHours: getEnvInt("JWT_EXPIRY_HOURS", 24),
+		APISecret:              getEnv("API_SECRET", ""),
+		JWTSecret:              getEnv("JWT_SECRET", ""),
+		JWTAccessExpiryMinutes: getEnvInt("JWT_ACCESS_EXPIRY_MINUTES", 15),
+		RefreshExpiryDays:      getEnvInt("REFRESH_EXPIRY_DAYS", 7),
+
+		CookieSecure:   getEnvBool("COOKIE_SECURE", appEnv == "production"),
+		CookieSameSite: getEnv("COOKIE_SAMESITE", "Lax"),
+
+		GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+		GoogleRedirectURL:  getEnv("GOOGLE_REDIRECT_URL", ""),
+
+		ResendAPIKey:    getEnv("RESEND_API_KEY", ""),
+		ResendFromEmail: getEnv("RESEND_FROM_EMAIL", "SIMANTIK <onboarding@resend.dev>"),
 
 		DatabaseURL: getEnv("DATABASE_URL", ""),
 		DBHost:      getEnv("DB_HOST", "localhost"),
@@ -72,7 +100,9 @@ func Load() *Config {
 		DBConnMaxLifetimeMinutes: getEnvInt("DB_CONN_MAX_LIFETIME_MINUTES", 30),
 		DBConnMaxIdleTimeMinutes: getEnvInt("DB_CONN_MAX_IDLE_TIME_MINUTES", 5),
 
-		DBAutoMigrate: getEnvBool("DB_AUTO_MIGRATE", true),
+		DBAutoMigrate:      getEnvBool("DB_AUTO_MIGRATE", true),
+		DBAutoMigrateForce: getEnvBool("DB_AUTO_MIGRATE_FORCE", false),
+		DBLogLevel:         getEnv("DB_LOG_LEVEL", "warn"),
 	}
 }
 
@@ -112,17 +142,32 @@ func ensureSSLRequire(rawURL string) string {
 }
 
 // NewDatabase opens a GORM connection to PostgreSQL and tunes the underlying
-// sql.DB connection pool for Neon's serverless connection pooler, which
-// works best with a modest number of long-lived connections that recycle
-// periodically.
+// sql.DB connection pool for Neon's serverless connection pooler.
 func NewDatabase(cfg *Config) (*gorm.DB, error) {
-	gormLogLevel := logger.Warn
-	if cfg.AppEnv == "development" {
+	var gormLogLevel logger.LogLevel
+	switch strings.ToLower(cfg.DBLogLevel) {
+	case "info":
 		gormLogLevel = logger.Info
+	case "silent":
+		gormLogLevel = logger.Silent
+	case "error":
+		gormLogLevel = logger.Error
+	default:
+		gormLogLevel = logger.Warn
 	}
 
+	customLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold:             1 * time.Second, // 1s threshold for remote cloud databases (Neon)
+			LogLevel:                  gormLogLevel,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  true,
+		},
+	)
+
 	db, err := gorm.Open(postgres.Open(cfg.DSN()), &gorm.Config{
-		Logger: logger.Default.LogMode(gormLogLevel),
+		Logger: customLogger,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("config: failed to connect to database: %w", err)
@@ -141,12 +186,71 @@ func NewDatabase(cfg *Config) (*gorm.DB, error) {
 	return db, nil
 }
 
-// AutoMigrateDev runs GORM's schema auto-migration for development
-// convenience only. Production deployments should disable DB_AUTO_MIGRATE
-// and manage schema changes with versioned SQL migrations under
-// /migrations, applied via golang-migrate.
-func AutoMigrateDev(db *gorm.DB) error {
-	return db.AutoMigrate(&models.User{})
+// AutoMigrateDev runs GORM's schema auto-migration for all models.
+// If core tables already exist, it skips running auto-migration to prevent hundreds of
+// remote information_schema roundtrips. Set force=true (or DB_AUTO_MIGRATE_FORCE=true)
+// to force schema re-synchronization.
+func AutoMigrateDev(db *gorm.DB, force bool) error {
+	if !force && db.Migrator().HasTable(&models.User{}) && db.Migrator().HasTable(&models.Tryout{}) {
+		log.Println("config: database tables already exist, skipping dev auto-migration (set DB_AUTO_MIGRATE_FORCE=true to force)")
+		return nil
+	}
+
+	log.Println("config: executing GORM auto-migration for all models...")
+	return db.AutoMigrate(
+		// Identity & Access
+		&models.Role{},
+		&models.Permission{},
+		&models.RolePermission{},
+		&models.User{},
+		&models.RefreshToken{},
+		&models.OTPCode{},
+		&models.PasswordResetToken{},
+		&models.ExternalAccount{},
+		&models.StudentProfile{},
+
+		// Competency
+		&models.Competency{},
+
+		// Learning System
+		&models.LearningModule{},
+		&models.Material{},
+		&models.MaterialAttachment{},
+		&models.LearningProgress{},
+
+		// Question Bank
+		&models.QuestionType{},
+		&models.Question{},
+		&models.QuestionOption{},
+		&models.QuestionCompetency{},
+		&models.QuestionExplanation{},
+
+		// Tryout & Adaptive Engine
+		&models.Tryout{},
+		&models.TryoutQuestion{},
+		&models.TryoutAttempt{},
+		&models.AttemptQuestion{},
+		&models.StudentAnswer{},
+
+		// Practice System
+		&models.Practice{},
+		&models.PracticeAnswer{},
+
+		// Evaluation & Recommendation
+		&models.Evaluation{},
+		&models.CompetencyEvaluation{},
+		&models.Recommendation{},
+
+		// CMS Content
+		&models.News{},
+		&models.Documentation{},
+		&models.Testimonial{},
+
+		// System & Audit
+		&models.FileRecord{},
+		&models.AuditLog{},
+		&models.Notification{},
+	)
 }
 
 func getEnv(key, fallback string) string {
