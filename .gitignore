@@ -1,0 +1,9 @@
+/simantikApi/tmp/
+/simantikApi/build-errors.log
+/simantikApi/.env
+/simantikApi/*.log
+
+/web/node_modules
+/web/.env
+/web/.next/
+/docs
