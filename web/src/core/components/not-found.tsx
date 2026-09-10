@@ -1,9 +1,9 @@
 'use client';
 
-import { Button } from '@/components/atoms/button';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/atoms/button';
 
 const NotFound = () => {
   const router: AppRouterInstance = useRouter();
