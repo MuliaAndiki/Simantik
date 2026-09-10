@@ -15,6 +15,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/plugin/opentelemetry/tracing"
 
 	"simantikApi/internal/models"
 )
@@ -57,6 +58,12 @@ type Config struct {
 	DBAutoMigrate      bool
 	DBAutoMigrateForce bool
 	DBLogLevel         string
+
+	// OpenTelemetry Tracing
+	OtelEnabled     bool
+	OtelServiceName string
+	OtelEndpoint    string
+	OtelInsecure    bool
 }
 
 // Load reads a local .env file (if present) and populates Config from the
@@ -103,6 +110,11 @@ func Load() *Config {
 		DBAutoMigrate:      getEnvBool("DB_AUTO_MIGRATE", true),
 		DBAutoMigrateForce: getEnvBool("DB_AUTO_MIGRATE_FORCE", false),
 		DBLogLevel:         getEnv("DB_LOG_LEVEL", "warn"),
+
+		OtelEnabled:     getEnvBool("OTEL_ENABLED", true),
+		OtelServiceName: getEnv("OTEL_SERVICE_NAME", "simantik-api"),
+		OtelEndpoint:    getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "jaeger:4317"),
+		OtelInsecure:    getEnvBool("OTEL_INSECURE", true),
 	}
 }
 
@@ -182,6 +194,12 @@ func NewDatabase(cfg *Config) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(cfg.DBMaxIdleConns)
 	sqlDB.SetConnMaxLifetime(time.Duration(cfg.DBConnMaxLifetimeMinutes) * time.Minute)
 	sqlDB.SetConnMaxIdleTime(time.Duration(cfg.DBConnMaxIdleTimeMinutes) * time.Minute)
+
+	if cfg.OtelEnabled {
+		if err := db.Use(tracing.NewPlugin()); err != nil {
+			log.Printf("warning: failed to register gorm opentelemetry plugin: %v", err)
+		}
+	}
 
 	return db, nil
 }

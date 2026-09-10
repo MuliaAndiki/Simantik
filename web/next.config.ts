@@ -2,6 +2,7 @@ import { env } from '@/configs/env.config';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   redirects: async () => {
     return [
       {

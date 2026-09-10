@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/contrib/otelfiber/v2"
 
 	"simantikApi/config"
 	"simantikApi/internal/handler"
@@ -19,11 +20,33 @@ import (
 	"simantikApi/internal/repository"
 	"simantikApi/internal/routes"
 	"simantikApi/internal/service"
+	"simantikApi/pkg/telemetry"
 	"simantikApi/pkg/utils"
 )
 
 func main() {
 	cfg := config.Load()
+
+	// ─── 0. OpenTelemetry Tracing ──────────────────────────────────────────────
+	shutdownTracer, err := telemetry.InitTracer(context.Background(), telemetry.Config{
+		Enabled:        cfg.OtelEnabled,
+		ServiceName:    cfg.OtelServiceName,
+		ServiceVersion: "1.0.0",
+		Environment:    cfg.AppEnv,
+		Endpoint:       cfg.OtelEndpoint,
+		Insecure:       cfg.OtelInsecure,
+	})
+	if err != nil {
+		log.Printf("warning: failed to initialize telemetry tracer: %v", err)
+	} else {
+		defer func() {
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := shutdownTracer(shutdownCtx); err != nil {
+				log.Printf("telemetry shutdown error: %v", err)
+			}
+		}()
+	}
 
 	db, err := config.NewDatabase(cfg)
 	if err != nil {
@@ -118,7 +141,14 @@ func main() {
 		ErrorHandler: fiberErrorHandler,
 	})
 
-	// Security, CORS, Logger, Limiter, and Panic Recovery middlewares
+	// Observability, Security, CORS, Logger, Limiter, and Panic Recovery middlewares
+	if cfg.OtelEnabled {
+		app.Use(otelfiber.Middleware(
+			otelfiber.WithNext(func(c *fiber.Ctx) bool {
+				return c.Path() == "/health"
+			}),
+		))
+	}
 	app.Use(middleware.RecoverMiddleware())
 	app.Use(middleware.SecurityHeaders())
 	app.Use(middleware.CORS())
