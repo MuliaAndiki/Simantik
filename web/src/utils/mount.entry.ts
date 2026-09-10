@@ -1,4 +1,22 @@
 export const mountEntry = {
   auth: '/auth',
   user: '/users',
-};
+  admin: '/admin',
+  competencies: '/competencies',
+  questionTypes: '/question-types',
+  questions: '/questions',
+  tryouts: '/tryouts',
+  attempts: '/attempts',
+  evaluations: '/evaluations',
+  recommendations: '/recommendations',
+  learningModules: '/learning-modules',
+  materials: '/materials',
+  learningProgress: '/learning-progress',
+  cms: '/cms',
+  news: '/news',
+  documentation: '/documentation',
+  testimonials: '/testimonials',
+  notifications: '/notifications',
+  reports: '/reports',
+  system: '/system',
+} as const;

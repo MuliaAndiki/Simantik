@@ -38,6 +38,16 @@ jobs:
     defaults:
       run:
         working-directory: web
+    env:
+      CI: "true"
+      SKIP_ENV_VALIDATION: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_ENV: "production"
+      AUTH_SECRET_KEY: "simantik-ci-dummy-auth-secret-key-min-32-chars"
+      NEXT_INTERNAL_API_SECRET: "simantik-ci-dummy-internal-api-secret"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NEXT_PUBLIC_BACKEND_URL: "http://localhost:8080"
+      NEXT_PUBLIC_BASEPATH: "/home"
 
     steps:
       - name: Checkout Code
@@ -59,6 +69,3 @@ jobs:
 
       - name: Next.js Production Build Check
         run: bun run build
-        env:
-          NEXT_TELEMETRY_DISABLED: 1
-          NODE_ENV: production
