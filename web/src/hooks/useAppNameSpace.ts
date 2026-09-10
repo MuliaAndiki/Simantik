@@ -1,6 +1,6 @@
-import { type QueryClient, useQueryClient } from "@tanstack/react-query";
-import { useAlert } from "@/hooks/useService/useAlert/costum-alert";
-import type { AlertContexType } from "@/types/ui";
+import { type QueryClient, useQueryClient } from '@tanstack/react-query';
+import { useAlert } from '@/hooks/useService/useAlert/costum-alert';
+import type { AlertContexType } from '@/types/ui';
 
 export type AppNameSpace = {
   queryClient: QueryClient;
