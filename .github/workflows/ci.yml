@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+jobs:
+  backend-test:
+    name: Backend Tests (Go)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: simantikApi
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: simantikApi/go.mod
+          cache: true
+          cache-dependency-path: simantikApi/go.sum
+
+      - name: Download Go Dependencies
+        run: go mod download
+
+      - name: Run Go Tests
+        run: go test -v -race ./...
+
+  frontend-test:
+    name: Frontend Tests & Quality (Bun + Biome)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Biome Check (Formatting & Linting)
+        run: bun run check
+
+      - name: Run Bun Unit Tests
+        run: bun test
+
+      - name: Next.js Production Build Check
+        run: bun run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          NODE_ENV: production

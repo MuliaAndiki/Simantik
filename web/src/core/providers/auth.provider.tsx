@@ -1,48 +1,51 @@
 'use client';
 
-import React from 'react';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/stores/store';
 import { usePathname, useRouter } from 'next/navigation';
-import { getCookie } from 'cookies-next';
-import { useAppDispatch } from '@/hooks/dispatch/dispatch';
-import { setCurrentUser } from '@/stores/authSlice/authSlice';
-import { APP_SESSION_COOKIE_KEY } from '@/configs/cookies.config';
+import type React from 'react';
+import { useEffect } from 'react';
+import { setAuthErrorHandler } from '@/api/client/client-http';
+import { clearSessionCookies, getAccessToken, getRefreshToken } from '@/utils/session-cookie';
+
+const PUBLIC_PATHS = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/auth/verify-email',
+  '/magic-link',
+  '/auth/magic-link',
+  '/home',
+];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
-  const currentUser = useSelector((state: RootState) => state.auth.currentUser);
-  const dispatch = useAppDispatch();
+  const router = useRouter();
 
-  React.useEffect(() => {
-    if (!currentUser?.user?.token) {
-      const token = getCookie(APP_SESSION_COOKIE_KEY);
-      if (token) {
-        dispatch(setCurrentUser({ user: { token } } as any));
+  // 401 (access token invalid/expired & refresh gagal) → bersihkan + ke /login.
+  useEffect(() => {
+    const handleAuthError = () => {
+      clearSessionCookies();
+      if (!pathname?.startsWith('/login')) {
+        window.location.assign('/login');
       }
-    }
-  }, [currentUser, dispatch]);
+    };
 
-  React.useEffect(() => {
-    const isAuthPage =
-      pathname?.startsWith('/login') ||
-      pathname?.startsWith('/register') ||
-      pathname?.startsWith('/home');
+    setAuthErrorHandler(handleAuthError);
+    return () => setAuthErrorHandler(null);
+  }, [pathname]);
 
-    const isAuthenticated = Boolean(currentUser?.user?.token);
+  // Guard klien: redirect bila tidak ada access/refresh token di area privat.
+  // Jika hanya refresh token yang tersisa, biarkan berjalan — client-http akan
+  // memanggil POST /auth/refresh-token untuk memperbarui access token.
+  useEffect(() => {
+    const isPublicPath = PUBLIC_PATHS.some((path) => pathname?.startsWith(path));
+    const hasSession = Boolean(getAccessToken() || getRefreshToken());
 
-    if (!isAuthenticated && !isAuthPage) {
+    if (!isPublicPath && !hasSession) {
       router.replace('/login');
-      return;
     }
-
-    if (isAuthenticated && isAuthPage) {
-      // setUp
-      // router.replace('/home');
-      return;
-    }
-  }, [pathname, currentUser, router]);
+  }, [pathname, router]);
 
   return <>{children}</>;
 }
