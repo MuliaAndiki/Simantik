@@ -1,5 +1,5 @@
+import { BookOpen, History, Home, User } from 'lucide-react';
 import React from 'react';
-import { Home, BookOpen, History, User } from 'lucide-react';
 
 interface AppConfig {
   name: string;
@@ -107,3 +107,5 @@ export const SIDEBAR_MENU = [
   { name: 'Riwayat', url: '/history', icon: History, subMenu: [] },
   { name: 'Profil', url: '/profile', icon: User, subMenu: [] },
 ];
+
+export const baseUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080'} ${process.env.NEXT_PUBLIC_GATE_API || '/api'} ${process.env.NEXT_PUBLIC_VERSION_API || '/v1'} `;

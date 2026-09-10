@@ -1,13 +1,13 @@
 'use client';
 
-import { Button } from '@/components/atoms';
+import { ChevronDown } from 'lucide-react';
 import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/atoms';
-import { ChevronDown } from 'lucide-react';
 import { getLanguageName, Language } from '@/configs/i18n.config';
 import { useLanguage } from '@/hooks/useLanguage';
 

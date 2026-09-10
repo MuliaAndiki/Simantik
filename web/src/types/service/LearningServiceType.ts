@@ -1,0 +1,209 @@
+import type { ApiResponse, ContentStatus, MaterialType } from '../model';
+
+// ============================================================================
+// Learning Module DTOs
+// ============================================================================
+
+/**
+ * Payload for creating a learning module
+ * Maps to backend: `dto.CreateLearningModuleRequest`
+ */
+export interface CreateLearningModuleRequest {
+  title: string;
+  description?: string;
+  display_order?: number;
+}
+
+/**
+ * Payload for updating an existing learning module
+ * Maps to backend: `dto.UpdateLearningModuleRequest`
+ */
+export interface UpdateLearningModuleRequest {
+  title?: string;
+  description?: string;
+  display_order?: number;
+  status?: ContentStatus | string;
+}
+
+/**
+ * Summary representation of a learning module
+ * Maps to backend: `dto.LearningModuleResponse`
+ */
+export interface LearningModuleResponse {
+  id: string;
+  title: string;
+  description: string;
+  display_order: number;
+  status: string;
+  materials_count: number;
+  completed_count: number;
+  progress_percentage: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Condensed material item inside a module detail response
+ * Maps to backend: `dto.MaterialSummaryResponse`
+ */
+export interface MaterialSummaryResponse {
+  id: string;
+  title: string;
+  type: MaterialType | string;
+  display_order: number;
+  competency_id?: string | null;
+  status: string;
+  is_completed: boolean;
+}
+
+/**
+ * Detailed module response including nested materials
+ * Maps to backend: `dto.LearningModuleDetailResponse`
+ */
+export interface LearningModuleDetailResponse extends LearningModuleResponse {
+  materials: MaterialSummaryResponse[];
+}
+
+/**
+ * Filter parameters for querying learning modules
+ * Maps to backend: `dto.ListModuleFilter`
+ */
+export interface ListModuleFilter {
+  search?: string;
+  status?: ContentStatus | string;
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Paginated list of modules
+ * Maps to backend: `dto.PaginatedModulesResponse`
+ */
+export interface PaginatedModulesResponse {
+  modules: LearningModuleResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// ============================================================================
+// Material DTOs
+// ============================================================================
+
+/**
+ * Payload for creating a new learning material
+ * Maps to backend: `dto.CreateMaterialRequest`
+ */
+export interface CreateMaterialRequest {
+  module_id: string;
+  competency_id?: string | null;
+  title: string;
+  description?: string;
+  content: string;
+  type: MaterialType | string;
+  display_order?: number;
+}
+
+/**
+ * Payload for updating learning material content
+ * Maps to backend: `dto.UpdateMaterialRequest`
+ */
+export interface UpdateMaterialRequest {
+  competency_id?: string | null;
+  title?: string;
+  description?: string;
+  content?: string;
+  type?: MaterialType | string;
+  display_order?: number;
+  status?: ContentStatus | string;
+}
+
+/**
+ * Full details of a learning material
+ * Maps to backend: `dto.MaterialResponse`
+ */
+export interface MaterialResponse {
+  id: string;
+  module_id: string;
+  competency_id?: string | null;
+  competency_name?: string | null;
+  title: string;
+  description: string;
+  content: string;
+  type: string;
+  display_order: number;
+  status: string;
+  is_completed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Query filter for searching and listing materials
+ * Maps to backend: `dto.ListMaterialFilter`
+ */
+export interface ListMaterialFilter {
+  module_id?: string;
+  competency_id?: string;
+  status?: ContentStatus | string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Paginated materials response
+ * Maps to backend: `dto.PaginatedMaterialsResponse`
+ */
+export interface PaginatedMaterialsResponse {
+  materials: MaterialResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// ============================================================================
+// Learning Progress DTOs
+// ============================================================================
+
+/**
+ * Payload for updating completion status of a material
+ * Maps to backend: `dto.UpdateProgressRequest`
+ */
+export interface UpdateProgressRequest {
+  is_completed: boolean;
+}
+
+/**
+ * Progress status of a single material
+ * Maps to backend: `dto.LearningProgressResponse`
+ */
+export interface LearningProgressResponse {
+  material_id: string;
+  is_completed: boolean;
+  completed_at?: string | null;
+}
+
+/**
+ * Summary of a student's completion progress across an entire module
+ * Maps to backend: `dto.ModuleProgressSummaryResponse`
+ */
+export interface ModuleProgressSummaryResponse {
+  module_id: string;
+  module_title: string;
+  total_materials: number;
+  completed_materials: number;
+  progress_percentage: number;
+}
+
+// ============================================================================
+// Standard Wrapped Responses
+// ============================================================================
+
+export type LearningModuleApiResponse = ApiResponse<LearningModuleResponse>;
+export type LearningModuleDetailApiResponse = ApiResponse<LearningModuleDetailResponse>;
+export type PaginatedModulesApiResponse = ApiResponse<PaginatedModulesResponse>;
+export type MaterialApiResponse = ApiResponse<MaterialResponse>;
+export type PaginatedMaterialsApiResponse = ApiResponse<PaginatedMaterialsResponse>;
+export type LearningProgressApiResponse = ApiResponse<LearningProgressResponse>;
+export type ModuleProgressSummaryApiResponse = ApiResponse<ModuleProgressSummaryResponse>;
