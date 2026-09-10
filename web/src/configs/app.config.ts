@@ -108,4 +108,4 @@ export const SIDEBAR_MENU = [
   { name: 'Profil', url: '/profile', icon: User, subMenu: [] },
 ];
 
-export const baseUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080'} ${process.env.NEXT_PUBLIC_GATE_API || '/api'} ${process.env.NEXT_PUBLIC_VERSION_API || '/v1'} `;
+export const baseUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080'}${process.env.NEXT_PUBLIC_GATE_API || '/api'}${process.env.NEXT_PUBLIC_VERSION_API || '/v1'}`;

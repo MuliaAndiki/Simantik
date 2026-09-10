@@ -10,4 +10,5 @@ export const AuthEndpoint = {
   resetPassword: `${mountEntry.auth}/resetPassword`,
   google: `${mountEntry.auth}/loginGoogle`,
   resendOtp: `${mountEntry.auth}/resendRegisterOtp`,
+  verifyRegisterOtp: `${mountEntry.auth}/verifyRegisterOtp`,
 } as const;

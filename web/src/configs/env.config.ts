@@ -1,5 +1,5 @@
 import { createEnv } from '@t3-oss/env-nextjs';
-import { NEVER, z } from 'zod';
+import { z } from 'zod';
 
 const requiredString = z.string().trim().min(1, 'This field is required');
 
@@ -29,8 +29,8 @@ export const env = createEnv({
     NEXT_INTERNAL_API_SECRET: process.env.NEXT_INTERNAL_API_SECRET,
   },
 
-  // Skip Validation for the following Environment Variables
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  // Skip Validation for the following Environment Variables (CI / build environments)
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION || !!process.env.CI,
   // Make empty strings from Environment Variables as undefined
   emptyStringAsUndefined: true,
 });

@@ -1,0 +1,12 @@
+export { default as AdminService } from './api/AdminService';
+export { default as AuthService } from './api/AuthService';
+export { default as ContentService } from './api/ContentService';
+export { default as EvaluationService } from './api/EvaluationService';
+export { default as LearningService } from './api/LearningService';
+export { default as NotificationService } from './api/NotificationService';
+export { default as QuestionService } from './api/QuestionService';
+export { default as RecommendationService } from './api/RecommendationService';
+export { default as ReportingService } from './api/ReportingService';
+export { default as TryoutService } from './api/TryoutService';
+export { default as UserService } from './api/UserService';
+export { default as Api } from './props.service';
