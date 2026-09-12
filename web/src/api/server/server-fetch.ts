@@ -70,6 +70,7 @@ async function clearTokens(): Promise<void> {
 function buildBaseHeaders(accessToken?: string): Record<string, string> {
   const internalApiKey =
     process.env.NEXT_INTERNAL_API_SECRET ||
+    process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ||
     process.env.INTERNAL_API_SECRET ||
     process.env.INTERNAL_API_KEY ||
     '';
@@ -77,6 +78,7 @@ function buildBaseHeaders(accessToken?: string): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'x-internal-api-key': internalApiKey,
+    'x-api-secret': internalApiKey,
   };
 
   if (accessToken) {

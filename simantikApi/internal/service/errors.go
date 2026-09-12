@@ -79,3 +79,9 @@ var (
 var (
 	ErrNotificationNotFound = errors.New("notification not found")
 )
+
+// School errors.
+var (
+	ErrSchoolNotFound   = errors.New("school not found")
+	ErrSchoolNPSNExists = errors.New("school NPSN already registered")
+)

@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { Toaster } from 'react-hot-toast';
 import { SidebarProvider } from '@/components/atoms';
 import { PWAUpdatePrompt } from '@/components/pwa/PWAUpdatePrompt';
 import { AuthProvider } from '@/core/providers/auth.provider';
@@ -27,12 +26,6 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <PWAUpdatePrompt />
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 900,
-        }}
-      />
     </Providers>
   );
 }

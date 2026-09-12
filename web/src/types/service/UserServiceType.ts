@@ -65,9 +65,18 @@ export interface UserResponse {
   avatarURL: string | null;
   role: string;
   status: string;
+  hasSchool: boolean;
   lastLoginAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Sets the student's school on their profile (student role only)
+ * Maps to backend: `dto.UpdateMySchoolRequest`
+ */
+export interface UpdateMySchoolRequest {
+  schoolId: string;
 }
 
 /**

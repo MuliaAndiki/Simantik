@@ -27,9 +27,10 @@ async function refreshAccessTokenOnce(): Promise<boolean> {
       headers: {
         'Content-Type': 'application/json',
         'x-internal-api-key': buildInternalApiKey(),
+        'x-api-secret': buildInternalApiKey(),
       },
       body: JSON.stringify({ refreshToken }),
-      credentials: 'same-origin',
+      credentials: 'include',
       cache: 'no-store',
     });
 

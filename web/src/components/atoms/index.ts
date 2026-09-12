@@ -1,5 +1,7 @@
 export * from './accordion';
 export * from './alert-dialog';
+export * from './auth/AuthIllustration';
+export * from './auth/SimantikLogo';
 export * from './avatar';
 export * from './badge';
 export * from './button';

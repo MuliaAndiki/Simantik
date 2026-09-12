@@ -19,6 +19,10 @@ func APISecret(secret string) fiber.Handler {
 	secret = strings.TrimSpace(secret)
 
 	return func(c *fiber.Ctx) error {
+		// Allow CORS preflight requests without requiring API secret header
+		if c.Method() == fiber.MethodOptions {
+			return c.Next()
+		}
 
 		if secret == "" {
 			return c.Next()

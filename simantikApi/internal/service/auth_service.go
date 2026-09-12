@@ -37,6 +37,7 @@ type authService struct {
 	otpRepo          repository.OTPRepository
 	resetTokenRepo   repository.PasswordResetTokenRepository
 	extAccountRepo   repository.ExternalAccountRepository
+	profileRepo      repository.StudentProfileRepository
 	emailSender      utils.EmailSender
 	googleVerifier   utils.GoogleVerifier
 	jwtSecret        string
@@ -52,6 +53,7 @@ func NewAuthService(
 	otpRepo repository.OTPRepository,
 	resetTokenRepo repository.PasswordResetTokenRepository,
 	extAccountRepo repository.ExternalAccountRepository,
+	profileRepo repository.StudentProfileRepository,
 	emailSender utils.EmailSender,
 	googleVerifier utils.GoogleVerifier,
 	jwtSecret string,
@@ -65,6 +67,7 @@ func NewAuthService(
 		otpRepo:          otpRepo,
 		resetTokenRepo:   resetTokenRepo,
 		extAccountRepo:   extAccountRepo,
+		profileRepo:      profileRepo,
 		emailSender:      emailSender,
 		googleVerifier:   googleVerifier,
 		jwtSecret:        jwtSecret,
@@ -193,10 +196,12 @@ func (s *authService) VerifyRegisterOTP(ctx context.Context, req dto.VerifyRegis
 
 	_ = s.userRepo.UpdateLastLogin(ctx, user.ID)
 
-	return &dto.AuthResponse{
+	res := &dto.AuthResponse{
 		User:        ToUserResponse(user),
 		AccessToken: accessToken,
-	}, rawRefreshToken, nil
+	}
+	s.applyHasSchool(ctx, user, res)
+	return res, rawRefreshToken, nil
 }
 
 func (s *authService) ResendRegisterOTP(ctx context.Context, req dto.ResendOTPRequest) error {
@@ -273,10 +278,12 @@ func (s *authService) Login(ctx context.Context, req dto.LoginRequest, meta dto.
 
 	_ = s.userRepo.UpdateLastLogin(ctx, user.ID)
 
-	return &dto.AuthResponse{
+	res := &dto.AuthResponse{
 		User:        ToUserResponse(user),
 		AccessToken: accessToken,
-	}, rawRefreshToken, nil
+	}
+	s.applyHasSchool(ctx, user, res)
+	return res, rawRefreshToken, nil
 }
 
 func (s *authService) Refresh(ctx context.Context, rawRefreshToken string, meta dto.RequestMeta) (*dto.AuthResponse, string, error) {
@@ -581,7 +588,7 @@ func (s *authService) LoginGoogle(ctx context.Context, req dto.GoogleLoginReques
 			}
 
 			if s.db != nil {
-				err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+				if err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 					if err := tx.Create(newUser).Error; err != nil {
 						return err
 					}
@@ -598,7 +605,9 @@ func (s *authService) LoginGoogle(ctx context.Context, req dto.GoogleLoginReques
 
 					user = newUser
 					return nil
-				})
+				}); err != nil {
+					return nil, "", err
+				}
 			} else {
 				if err := s.userRepo.Create(ctx, newUser); err != nil {
 					return nil, "", err
@@ -613,10 +622,6 @@ func (s *authService) LoginGoogle(ctx context.Context, req dto.GoogleLoginReques
 					return nil, "", err
 				}
 				user = newUser
-			}
-
-			if err != nil {
-				return nil, "", err
 			}
 		}
 	}
@@ -636,10 +641,12 @@ func (s *authService) LoginGoogle(ctx context.Context, req dto.GoogleLoginReques
 
 	_ = s.userRepo.UpdateLastLogin(ctx, user.ID)
 
-	return &dto.AuthResponse{
+	res := &dto.AuthResponse{
 		User:        ToUserResponse(user),
 		AccessToken: accessToken,
-	}, rawRefreshToken, nil
+	}
+	s.applyHasSchool(ctx, user, res)
+	return res, rawRefreshToken, nil
 }
 
 // issueTokens creates a short-lived access JWT and a long-lived hashed refresh token session.
@@ -677,4 +684,13 @@ func (s *authService) issueTokens(ctx context.Context, user *models.User, meta d
 
 func normalizeEmail(e string) string {
 	return strings.ToLower(strings.TrimSpace(e))
+}
+
+// applyHasSchool flags whether the user (students) has picked a school,
+// so the frontend can route them to school onboarding after login.
+func (s *authService) applyHasSchool(ctx context.Context, user *models.User, res *dto.AuthResponse) {
+	profile, err := s.profileRepo.FindByUserID(ctx, user.ID)
+	if err == nil && profile != nil && profile.SchoolID != nil {
+		res.User.HasSchool = true
+	}
 }
