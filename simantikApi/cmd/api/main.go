@@ -69,6 +69,8 @@ func main() {
 	otpRepo := repository.NewOTPRepository(db)
 	resetTokenRepo := repository.NewPasswordResetTokenRepository(db)
 	extAccountRepo := repository.NewExternalAccountRepository(db)
+	schoolRepo := repository.NewSchoolRepository(db)
+	profileRepo := repository.NewStudentProfileRepository(db)
 
 	competencyRepo := repository.NewCompetencyRepository(db)
 	questionRepo := repository.NewQuestionRepository(db)
@@ -102,13 +104,14 @@ func main() {
 		otpRepo,
 		resetTokenRepo,
 		extAccountRepo,
+		profileRepo,
 		emailSender,
 		googleVerifier,
 		cfg.JWTSecret,
 		cfg.JWTAccessExpiryMinutes,
 		cfg.RefreshExpiryDays,
 	)
-	userService := service.NewUserService(userRepo, refreshTokenRepo)
+	userService := service.NewUserService(userRepo, refreshTokenRepo, schoolRepo, profileRepo)
 	questionService := service.NewQuestionService(competencyRepo, questionRepo, db)
 	tryoutService := service.NewTryoutService(tryoutRepo)
 	attemptService := service.NewTryoutAttemptService(db, attemptRepo, tryoutRepo)
@@ -119,6 +122,7 @@ func main() {
 	contentService := service.NewContentService(newsRepo, docRepo, testRepo)
 	notificationService := service.NewNotificationService(notifRepo, emailSender)
 	reportingService := service.NewReportingService(reportingRepo, recommendationService)
+	schoolService := service.NewSchoolService(schoolRepo)
 
 	// ─── 4. HTTP Handlers ──────────────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authService, cfg)
@@ -133,6 +137,7 @@ func main() {
 	contentHandler := handler.NewContentHandler(contentService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	reportingHandler := handler.NewReportingHandler(reportingService)
+	schoolHandler := handler.NewSchoolHandler(schoolService)
 	systemHandler := handler.NewSystemHandler(db, cfg)
 
 	// ─── 5. HTTP Router & Production Hardening ────────────────────────────────
@@ -168,6 +173,7 @@ func main() {
 		Content:        contentHandler,
 		Notification:   notificationHandler,
 		Reporting:      reportingHandler,
+		School:         schoolHandler,
 		System:         systemHandler,
 	})
 

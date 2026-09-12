@@ -7,6 +7,7 @@ import { NotificationEndpoint } from './state/NotificationEndpoint';
 import { QuestionEndpoint } from './state/QuestionEndpoint';
 import { RecommendationEndpoint } from './state/RecommendationEndpoint';
 import { ReportingEndpoint } from './state/ReportingEndpoint';
+import { SchoolEndpoint } from './state/SchoolEndpoint';
 import { TryoutEndpoint } from './state/TryoutEndpoint';
 import { UserEndpoint } from './state/UserEndpoint';
 
@@ -20,6 +21,7 @@ export const EndpointEntry = {
   question: QuestionEndpoint,
   recommendation: RecommendationEndpoint,
   reporting: ReportingEndpoint,
+  school: SchoolEndpoint,
   tryout: TryoutEndpoint,
   user: UserEndpoint,
 } as const;

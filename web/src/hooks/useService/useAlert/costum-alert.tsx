@@ -1,6 +1,7 @@
 'use client';
+
 import { createContext, useContext, useState } from 'react';
-import { toast } from 'react-hot-toast';
+import { Toaster as Sonner, toast } from 'sonner';
 import { AlertModal } from '@/core/components/alert-modal';
 import { ToastEffect } from '@/core/components/alert-toast';
 import { AlertContexType, ModalProps, ToastProps } from '@/types/ui';
@@ -12,14 +13,15 @@ export const useAlert = (): AlertContexType => {
   if (!contex) throw new Error('useAlert must be used within an AlertProvider');
   return contex;
 };
+
 export const AlertProvinder = ({ children }: { children: React.ReactNode }) => {
   const [modal, setModal] = useState<ModalProps | null>(null);
   const [resolver, setResolver] = useState<(res: boolean) => void>();
 
-  const toastAlert = ({ message, title, icon, onVoid }: ToastProps) => {
-    toast.custom((t) => (
-      <ToastEffect t={t} title={title} message={message} icon={icon} onVoid={onVoid} />
-    ));
+  const toastAlert = ({ message, title, icon = 'info' }: ToastProps) => {
+    toast.custom(() => <ToastEffect title={title} message={message} icon={icon} />, {
+      duration: 4000,
+    });
   };
 
   const showModal = (p: ModalProps) => {
@@ -47,6 +49,14 @@ export const AlertProvinder = ({ children }: { children: React.ReactNode }) => {
   return (
     <AlertContex.Provider value={{ toast: toastAlert, modal: showModal, confirm }}>
       {children}
+      <Sonner
+        position="top-center"
+        theme="light"
+        expand={false}
+        visibleToasts={3}
+        offset={16}
+        toastOptions={{ unstyled: true }}
+      />
       {modal && (
         <AlertModal
           open={!!modal}

@@ -5,6 +5,7 @@ export const UserEndpoint = {
   updateProfile: `${mountEntry.user}/me`,
   changePassword: `${mountEntry.user}/me/password`,
   updateAvatars: `${mountEntry.user}/me/avatar`,
+  updateMySchool: `${mountEntry.user}/me/school`,
   getRole: `${mountEntry.user}/me/roles`,
 
   adminGet: `${mountEntry.user}/`,

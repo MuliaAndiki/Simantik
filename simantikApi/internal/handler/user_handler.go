@@ -118,6 +118,35 @@ func (h *UserHandler) UpdateAvatar(c *fiber.Ctx) error {
 	return utils.Success(c, "avatar updated successfully", res)
 }
 
+// UpdateMySchool handles PATCH /api/v1/users/me/school.
+func (h *UserHandler) UpdateMySchool(c *fiber.Ctx) error {
+	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
+	if !ok {
+		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
+	}
+
+	var req dto.UpdateMySchoolRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid request body", err)
+	}
+	if details := utils.ValidateStruct(req); details != nil {
+		return utils.ValidationError(c, details)
+	}
+
+	res, err := h.service.UpdateMySchool(c.UserContext(), userID, req)
+	if err != nil {
+		if errors.Is(err, service.ErrSchoolNotFound) {
+			return utils.Error(c, fiber.StatusBadRequest, err.Error(), err)
+		}
+		if errors.Is(err, service.ErrInvalidRole) {
+			return utils.Error(c, fiber.StatusForbidden, "only students can set a school", err)
+		}
+		return mapUserServiceError(c, err)
+	}
+
+	return utils.Success(c, "school updated successfully", res)
+}
+
 // GetMyRoles handles GET /api/v1/users/me/roles.
 func (h *UserHandler) GetMyRoles(c *fiber.Ctx) error {
 	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)

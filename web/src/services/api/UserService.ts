@@ -6,6 +6,7 @@ import type {
   PaginatedUsersResponse,
   UpdateAvatarRequest,
   UpdateMeRequest,
+  UpdateMySchoolRequest,
   UpdateUserStatusRequest,
   UserFilter,
   UserResponse,
@@ -44,6 +45,18 @@ class UserService {
   public async UpdateAvatarService(payload: UpdateAvatarRequest): Promise<TResponse<UserResponse>> {
     const res = await getHttp().PatchResponse<UserResponse>(
       EndpointEntry.user.updateAvatars,
+      payload
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async UpdateMySchoolService(
+    payload: UpdateMySchoolRequest
+  ): Promise<TResponse<UserResponse>> {
+    const res = await getHttp().PatchResponse<UserResponse>(
+      EndpointEntry.user.updateMySchool,
       payload
     );
     return toServiceResponse(res, {

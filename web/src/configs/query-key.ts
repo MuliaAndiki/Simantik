@@ -104,4 +104,10 @@ export const queryKey = {
     competencyAnalytics: () => ['reporting', 'competencyAnalytics'] as const,
     difficultyAnalytics: () => ['reporting', 'difficultyAnalytics'] as const,
   },
+
+  schoolRoot: () => ['school'] as const,
+  school: {
+    list: (query?: Record<string, any>) => ['school', 'list', query] as const,
+    detail: (id: string) => ['school', 'detail', id] as const,
+  },
 } as const;

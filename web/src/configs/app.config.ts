@@ -1,4 +1,4 @@
-import { BookOpen, History, Home, User } from 'lucide-react';
+import { BookOpen, History, Home, LayoutDashboard, School, User, Users } from 'lucide-react';
 import React from 'react';
 
 interface AppConfig {
@@ -101,11 +101,50 @@ export const navigationMenuConfig: NavigationMenuConfig = {
   ],
 };
 
-export const SIDEBAR_MENU = [
+export type UserRole = 'student' | 'admin' | 'content_manager';
+
+export interface NavItem {
+  name: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  subMenu?: NavItem[];
+}
+
+export const SIDEBAR_MENU: NavItem[] = [
   { name: 'Beranda', url: '/home', icon: Home, subMenu: [] },
   { name: 'Module', url: '/module', icon: BookOpen, subMenu: [] },
   { name: 'Riwayat', url: '/history', icon: History, subMenu: [] },
   { name: 'Profil', url: '/profile', icon: User, subMenu: [] },
 ];
+
+// Menu per role non-student. Student memakai SIDEBAR_MENU.
+export const ROLE_SIDEBAR_MENU: Record<string, NavItem[]> = {
+  ADMIN: [
+    { name: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard, subMenu: [] },
+    { name: 'Siswa', url: '/admin/students', icon: Users, subMenu: [] },
+    { name: 'Sekolah', url: '/admin/schools', icon: School, subMenu: [] },
+  ],
+  CONTENT_MANAGER: [
+    { name: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard, subMenu: [] },
+    { name: 'Materi', url: '/admin/materials', icon: BookOpen, subMenu: [] },
+    { name: 'Sekolah', url: '/admin/schools', icon: School, subMenu: [] },
+  ],
+};
+
+export function getRoleDashboardPath(role?: string | null): string {
+  if (role === 'admin' || role === 'content_manager') return '/admin/dashboard';
+  return '/home';
+}
+
+export function isMenuActive(url: string, pathname: string): boolean {
+  return pathname === url || pathname.startsWith(`${url}/`);
+}
+
+export function isItemActive(item: NavItem, pathname: string): boolean {
+  if (item.subMenu && item.subMenu.length > 0) {
+    return item.subMenu.some((sub) => isMenuActive(sub.url, pathname));
+  }
+  return isMenuActive(item.url, pathname);
+}
 
 export const baseUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080'}${process.env.NEXT_PUBLIC_GATE_API || '/api'}${process.env.NEXT_PUBLIC_VERSION_API || '/v1'}`;

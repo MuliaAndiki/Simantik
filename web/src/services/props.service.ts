@@ -8,6 +8,7 @@ import NotificationService from './api/NotificationService';
 import QuestionService from './api/QuestionService';
 import RecommendationService from './api/RecommendationService';
 import ReportingService from './api/ReportingService';
+import SchoolService from './api/SchoolService';
 import TryoutService from './api/TryoutService';
 import UserService from './api/UserService';
 
@@ -22,6 +23,7 @@ const wrappedLearning = WrapApi(LearningService);
 const wrappedContent = WrapApi(ContentService);
 const wrappedNotification = WrapApi(NotificationService);
 const wrappedReporting = WrapApi(ReportingService);
+const wrappedSchool = WrapApi(SchoolService);
 
 export const Api = {
   auth: wrappedAuth,
@@ -35,6 +37,7 @@ export const Api = {
   content: wrappedContent,
   notification: wrappedNotification,
   reporting: wrappedReporting,
+  school: wrappedSchool,
 
   Auth: wrappedAuth,
   User: wrappedUser,
@@ -47,6 +50,7 @@ export const Api = {
   Content: wrappedContent,
   Notification: wrappedNotification,
   Reporting: wrappedReporting,
+  School: wrappedSchool,
 };
 
 export default Api;

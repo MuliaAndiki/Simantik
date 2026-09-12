@@ -7,6 +7,7 @@ import type {
   ChangePasswordRequest,
   UpdateAvatarRequest,
   UpdateMeRequest,
+  UpdateMySchoolRequest,
   UpdateUserStatusRequest,
   UserResponse,
 } from '@/types/service';
@@ -20,6 +21,42 @@ export function useUpdateProfile() {
     onSettled: async () => {
       await ns.queryClient.invalidateQueries({
         queryKey: queryKey.userRoot(),
+      });
+    },
+    onMutate: async () => {
+      await ns.queryClient.cancelQueries({
+        queryKey: queryKey.userRoot(),
+      });
+      const previousUser = readUserSnapshot(ns);
+      return { previousUser };
+    },
+    onSuccess: (res) => {
+      ns.alert.toast({
+        title: res.title,
+        message: res.message,
+        icon: 'success',
+      });
+    },
+    onError: (err) => {
+      ns.alert.toast({
+        title: ResponseTitles.error,
+        message: err.message,
+        icon: 'error',
+      });
+    },
+  });
+}
+
+export function useUpdateMySchool() {
+  const ns = useAppNameSpace();
+  return useMutation<TResponse<UserResponse>, Error, UpdateMySchoolRequest, UserCacheContext>({
+    mutationFn: (body: UpdateMySchoolRequest) => Api.user.UpdateMySchoolService(body),
+    onSettled: async () => {
+      await ns.queryClient.invalidateQueries({
+        queryKey: queryKey.userRoot(),
+      });
+      await ns.queryClient.invalidateQueries({
+        queryKey: queryKey.authRoot(),
       });
     },
     onMutate: async () => {

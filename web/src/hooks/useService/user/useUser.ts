@@ -1,6 +1,7 @@
 import {
   useChangePassword,
   useUpdateAvatar,
+  useUpdateMySchool,
   useUpdateProfile,
   useUpdateUserStatus,
 } from './state/mutate';
@@ -16,6 +17,7 @@ export const useUser = () => {
     },
     mutate: {
       updateProfile: useUpdateProfile,
+      updateMySchool: useUpdateMySchool,
       changePassword: useChangePassword,
       updateAvatar: useUpdateAvatar,
       updateStatus: useUpdateUserStatus,

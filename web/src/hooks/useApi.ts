@@ -7,6 +7,7 @@ import { useNotification } from './useService/notification/useNotification';
 import { useQuestion } from './useService/question/useQuestion';
 import { useRecommendation } from './useService/recommendation/useRecommendation';
 import { useReporting } from './useService/reporting/useReporting';
+import { useSchool } from './useService/school/useSchool';
 import { useTryout } from './useService/tryout/useTryout';
 import { useUser } from './useService/user/useUser';
 
@@ -21,6 +22,7 @@ export function useApi() {
     question: useQuestion(),
     recommendation: useRecommendation(),
     reporting: useReporting(),
+    school: useSchool(),
     tryout: useTryout(),
     user: useUser(),
   };

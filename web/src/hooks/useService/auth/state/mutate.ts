@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import type { TResponse } from '@/api/types/response.types';
+import { getRoleDashboardPath } from '@/configs/app.config';
 import { queryKey } from '@/configs/query-key';
 import { useAppNameSpace } from '@/hooks/useAppNameSpace';
 import Api from '@/services/props.service';
@@ -20,6 +21,23 @@ import type {
 } from '@/types/service';
 import { type AuthCacheContext, readAuthSnapshot } from '@/utils/cache/auth.cache';
 import { ResponseTitles } from '@/utils/response-titles';
+
+const STUDENT_ROLE = 'student';
+const SCHOOL_ONBOARDING_PATH = '/pilih-sekolah';
+
+/**
+ * Routing pasca-login: pelajar yang belum punya sekolah diarahkan ke halaman
+ * pemilihan sekolah; selain itu semua role diarahkan ke dashboard role-nya
+ * (student → /home, admin/content_manager → /admin/dashboard).
+ */
+function routeAfterAuth(user: { role: string; hasSchool: boolean } | null | undefined) {
+  if (!user) return;
+  if (user.role === STUDENT_ROLE && !user.hasSchool) {
+    window.location.assign(SCHOOL_ONBOARDING_PATH);
+    return;
+  }
+  window.location.assign(getRoleDashboardPath(user.role));
+}
 
 export function useLogin() {
   const ns = useAppNameSpace();
@@ -46,6 +64,7 @@ export function useLogin() {
         message: res.message,
         icon: 'success',
       });
+      routeAfterAuth(res.data?.user);
     },
     onError: (err) => {
       ns.alert.toast({
@@ -101,6 +120,7 @@ export function useVerifyRegisterOTP() {
         message: res.message,
         icon: 'success',
       });
+      routeAfterAuth(res.data?.user);
     },
     onError: (err) => {
       ns.alert.toast({
@@ -262,6 +282,7 @@ export function useGoogleLogin() {
         message: res.message,
         icon: 'success',
       });
+      routeAfterAuth(res.data?.user);
     },
     onError: (err) => {
       ns.alert.toast({

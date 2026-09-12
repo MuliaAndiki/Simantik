@@ -56,6 +56,11 @@ type GoogleLoginRequest struct {
 	IDToken string `json:"idToken" validate:"required"`
 }
 
+// UpdateMySchoolRequest sets the student's school on their profile.
+type UpdateMySchoolRequest struct {
+	SchoolID string `json:"schoolId" validate:"required,uuid"`
+}
+
 // ─── Response DTOs ───────────────────────────────────────────────────────────
 
 // RegisterResponse is returned when registration is initiated and OTP is dispatched.
@@ -102,6 +107,8 @@ type RequestMeta struct {
 
 // UserResponse is the safe, outward-facing representation of a User.
 // Sensitive fields (PasswordHash, DeletedAt) are never included.
+// HasSchool tells the frontend whether a student has picked a school yet
+// (students without one are routed to school onboarding after login).
 type UserResponse struct {
 	ID          uuid.UUID  `json:"id"`
 	FullName    string     `json:"fullName"`
@@ -110,6 +117,7 @@ type UserResponse struct {
 	AvatarURL   *string    `json:"avatarURL"`
 	Role        string     `json:"role"`
 	Status      string     `json:"status"`
+	HasSchool   bool       `json:"hasSchool"`
 	LastLoginAt *time.Time `json:"lastLoginAt"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`

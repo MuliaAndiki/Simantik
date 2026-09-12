@@ -16,6 +16,7 @@ func TestAPISecretMiddleware(t *testing.T) {
 
 	tests := []struct {
 		name           string
+		method         string
 		headerKey      string
 		headerVal      string
 		expectedStatus int
@@ -62,6 +63,13 @@ func TestAPISecretMiddleware(t *testing.T) {
 			headerVal:      "",
 			expectedStatus: http.StatusUnauthorized,
 		},
+		{
+			name:           "OPTIONS preflight bypass without header",
+			headerKey:      "",
+			headerVal:      "",
+			expectedStatus: http.StatusOK,
+			method:         http.MethodOptions,
+		},
 	}
 
 	for _, tt := range tests {
@@ -71,8 +79,15 @@ func TestAPISecretMiddleware(t *testing.T) {
 			app.Get("/test", func(c *fiber.Ctx) error {
 				return c.SendString("ok")
 			})
+			app.Options("/test", func(c *fiber.Ctx) error {
+				return c.SendString("ok")
+			})
 
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			method := http.MethodGet
+			if tt.method != "" {
+				method = tt.method
+			}
+			req := httptest.NewRequest(method, "/test", nil)
 			if tt.headerKey != "" {
 				req.Header.Set(tt.headerKey, tt.headerVal)
 			}

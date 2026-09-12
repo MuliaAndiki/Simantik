@@ -17,6 +17,7 @@ func registerUserRoutes(router fiber.Router, cfg *config.Config, h *handler.User
 	users.Patch("/me", h.UpdateMe)
 	users.Patch("/me/password", h.ChangePassword)
 	users.Patch("/me/avatar", h.UpdateAvatar)
+	users.Patch("/me/school", h.UpdateMySchool)
 	users.Get("/me/roles", h.GetMyRoles)
 
 	// Admin-only management routes

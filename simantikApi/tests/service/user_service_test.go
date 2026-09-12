@@ -99,7 +99,7 @@ func (m *mockRefreshTokenRepo) DeleteExpired(ctx context.Context) error {
 func TestUserService_GetMe(t *testing.T) {
 	userRepo := newMockUserRepo()
 	sessionRepo := newMockRefreshTokenRepo()
-	svc := service.NewUserService(userRepo, sessionRepo)
+	svc := service.NewUserService(userRepo, sessionRepo, newMockSchoolRepo(), newMockStudentProfileRepo())
 
 	user := &models.User{
 		ID:       uuid.New(),
@@ -125,7 +125,7 @@ func TestUserService_GetMe(t *testing.T) {
 func TestUserService_ChangePassword(t *testing.T) {
 	userRepo := newMockUserRepo()
 	sessionRepo := newMockRefreshTokenRepo()
-	svc := service.NewUserService(userRepo, sessionRepo)
+	svc := service.NewUserService(userRepo, sessionRepo, newMockSchoolRepo(), newMockStudentProfileRepo())
 
 	oldPassword := "OldPass123!"
 	oldHash, _ := utils.HashPassword(oldPassword)
@@ -177,7 +177,7 @@ func TestUserService_ChangePassword(t *testing.T) {
 func TestUserService_UpdateUserStatus(t *testing.T) {
 	userRepo := newMockUserRepo()
 	sessionRepo := newMockRefreshTokenRepo()
-	svc := service.NewUserService(userRepo, sessionRepo)
+	svc := service.NewUserService(userRepo, sessionRepo, newMockSchoolRepo(), newMockStudentProfileRepo())
 
 	adminID := uuid.New()
 	studentID := uuid.New()
@@ -203,5 +203,115 @@ func TestUserService_UpdateUserStatus(t *testing.T) {
 	}
 	if res.Status != "suspended" {
 		t.Errorf("expected status suspended, got %s", res.Status)
+	}
+}
+
+type userServiceTestDeps struct {
+	svc         service.UserService
+	userRepo    *mockUserRepo
+	schoolRepo  *mockSchoolRepo
+	profileRepo *mockStudentProfileRepo
+}
+
+func newUserServiceTestDeps() userServiceTestDeps {
+	userRepo := newMockUserRepo()
+	schoolRepo := newMockSchoolRepo()
+	profileRepo := newMockStudentProfileRepo()
+	svc := service.NewUserService(
+		userRepo,
+		newMockRefreshTokenRepo(),
+		schoolRepo,
+		profileRepo,
+	)
+	return userServiceTestDeps{svc: svc, userRepo: userRepo, schoolRepo: schoolRepo, profileRepo: profileRepo}
+}
+
+func TestUserService_UpdateMySchool(t *testing.T) {
+	deps := newUserServiceTestDeps()
+	ctx := context.Background()
+
+	// Seed a school
+	if err := deps.schoolRepo.Create(ctx, &models.School{
+		ID:      testSchoolID,
+		NPSN:    "20100199",
+		Name:    "SMAN 1 Test",
+		Level:   models.SchoolLevelSMA,
+		Status:  models.SchoolStatusNegeri,
+		Address: "Jl. Test No. 1",
+	}); err != nil {
+		t.Fatalf("school seed failed: %v", err)
+	}
+
+	// Seed an active student
+	student := &models.User{
+		ID:       uuid.New(),
+		FullName: "Anak Sekolah",
+		Email:    "anak@example.com",
+		Role:     models.UserRoleStudent,
+		Status:   models.UserStatusActive,
+	}
+	_ = deps.userRepo.Create(ctx, student)
+
+	// Admin cannot set a school
+	admin := &models.User{
+		ID:       uuid.New(),
+		FullName: "Admin Sekolah",
+		Email:    "admin@example.com",
+		Role:     models.UserRoleAdmin,
+		Status:   models.UserStatusActive,
+	}
+	_ = deps.userRepo.Create(ctx, admin)
+	_, err := deps.svc.UpdateMySchool(ctx, admin.ID, dto.UpdateMySchoolRequest{SchoolID: testSchoolID.String()})
+	if err != service.ErrInvalidRole {
+		t.Fatalf("expected ErrInvalidRole for admin, got %v", err)
+	}
+
+	// Unknown school is rejected
+	_, err = deps.svc.UpdateMySchool(ctx, student.ID, dto.UpdateMySchoolRequest{SchoolID: uuid.New().String()})
+	if err != service.ErrSchoolNotFound {
+		t.Fatalf("expected ErrSchoolNotFound, got %v", err)
+	}
+
+	// Student sets a school: profile created, response has hasSchool=true
+	res, err := deps.svc.UpdateMySchool(ctx, student.ID, dto.UpdateMySchoolRequest{SchoolID: testSchoolID.String()})
+	if err != nil {
+		t.Fatalf("unexpected UpdateMySchool error: %v", err)
+	}
+	if !res.HasSchool {
+		t.Fatal("expected hasSchool=true after setting school")
+	}
+
+	profile, err := deps.profileRepo.FindByUserID(ctx, student.ID)
+	if err != nil {
+		t.Fatalf("expected profile created: %v", err)
+	}
+	if profile.SchoolID == nil || *profile.SchoolID != testSchoolID {
+		t.Fatalf("expected profile school %s, got %v", testSchoolID, profile.SchoolID)
+	}
+	if profile.School != "SMAN 1 Test" {
+		t.Fatalf("expected profile school name 'SMAN 1 Test', got %q", profile.School)
+	}
+
+	// Setting a different school updates the existing profile (no duplicate)
+	otherSchool := &models.School{
+		ID:      uuid.New(),
+		NPSN:    "20100200",
+		Name:    "SMKN 2 Test",
+		Level:   models.SchoolLevelSMK,
+		Status:  models.SchoolStatusSwasta,
+		Address: "Jl. Test No. 2",
+	}
+	_ = deps.schoolRepo.Create(ctx, otherSchool)
+
+	res2, err := deps.svc.UpdateMySchool(ctx, student.ID, dto.UpdateMySchoolRequest{SchoolID: otherSchool.ID.String()})
+	if err != nil {
+		t.Fatalf("unexpected second UpdateMySchool error: %v", err)
+	}
+	if !res2.HasSchool {
+		t.Fatal("expected hasSchool=true on school change")
+	}
+	updated, _ := deps.profileRepo.FindByUserID(ctx, student.ID)
+	if updated.School != "SMKN 2 Test" {
+		t.Fatalf("expected school updated to 'SMKN 2 Test', got %q", updated.School)
 	}
 }
