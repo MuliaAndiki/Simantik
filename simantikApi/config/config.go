@@ -264,6 +264,9 @@ func AutoMigrateDev(db *gorm.DB, force bool) error {
 		&models.Documentation{},
 		&models.Testimonial{},
 
+		// Master Data
+		&models.School{},
+
 		// System & Audit
 		&models.FileRecord{},
 		&models.AuditLog{},

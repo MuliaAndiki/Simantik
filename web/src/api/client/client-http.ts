@@ -56,17 +56,23 @@ async function buildApiUrl(path: string): Promise<string> {
   return `${normalizedBase}${normalizedPath}`;
 }
 
-function buildBaseHeaders(accessToken?: string): Record<string, string> {
-  const internalApiKey =
+function getInternalApiKey(): string {
+  return (
     process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ||
     process.env.NEXT_INTERNAL_API_SECRET ||
     process.env.INTERNAL_API_SECRET ||
     process.env.INTERNAL_API_KEY ||
-    '';
+    ''
+  );
+}
+
+function buildBaseHeaders(accessToken?: string): Record<string, string> {
+  const internalApiKey = getInternalApiKey();
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'x-internal-api-key': internalApiKey,
+    'x-api-secret': internalApiKey,
   };
 
   if (accessToken) {
@@ -131,7 +137,7 @@ async function clientCoreFetchResponse<T>(
       ...extraHeaders,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    credentials: 'same-origin',
+    credentials: 'include',
     cache,
   });
 
@@ -148,7 +154,7 @@ async function clientCoreFetchResponse<T>(
           ...extraHeaders,
         },
         body: body !== undefined ? JSON.stringify(body) : undefined,
-        credentials: 'same-origin',
+        credentials: 'include',
         cache,
       });
     }
@@ -263,15 +269,11 @@ export async function ClientPostFormDataResponse<T>(
 
   const endpoint = await buildApiUrl(path);
 
-  const internalApiKey =
-    process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ||
-    process.env.NEXT_INTERNAL_API_SECRET ||
-    process.env.INTERNAL_API_SECRET ||
-    process.env.INTERNAL_API_KEY ||
-    '';
+  const internalApiKey = getInternalApiKey();
 
   const headers: Record<string, string> = {
     'x-internal-api-key': internalApiKey,
+    'x-api-secret': internalApiKey,
   };
 
   if (accessToken) {
@@ -282,7 +284,7 @@ export async function ClientPostFormDataResponse<T>(
     method: 'POST',
     headers,
     body: formData,
-    credentials: 'same-origin',
+    credentials: 'include',
     cache: 'no-store',
   });
 
@@ -330,15 +332,11 @@ export async function ClientDownloadResponse(path: string): Promise<Response> {
 
   const endpoint = await buildApiUrl(path);
 
-  const internalApiKey =
-    process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ||
-    process.env.NEXT_INTERNAL_API_SECRET ||
-    process.env.INTERNAL_API_SECRET ||
-    process.env.INTERNAL_API_KEY ||
-    '';
+  const internalApiKey = getInternalApiKey();
 
   const headers: Record<string, string> = {
     'x-internal-api-key': internalApiKey,
+    'x-api-secret': internalApiKey,
   };
 
   if (accessToken) {
@@ -348,7 +346,7 @@ export async function ClientDownloadResponse(path: string): Promise<Response> {
   const res = await fetch(endpoint, {
     method: 'GET',
     headers,
-    credentials: 'same-origin',
+    credentials: 'include',
     cache: 'no-store',
   });
 

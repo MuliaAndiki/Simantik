@@ -126,6 +126,35 @@ func (m *mockExtAccountRepo) FindByUserID(ctx context.Context, userID uuid.UUID)
 	return nil, nil
 }
 
+type mockStudentProfileRepo struct {
+	profiles map[uuid.UUID]*models.StudentProfile
+}
+
+func newMockStudentProfileRepo() *mockStudentProfileRepo {
+	return &mockStudentProfileRepo{profiles: make(map[uuid.UUID]*models.StudentProfile)}
+}
+
+func (m *mockStudentProfileRepo) Create(ctx context.Context, p *models.StudentProfile) error {
+	if p.ID == uuid.Nil {
+		p.ID = uuid.New()
+	}
+	m.profiles[p.UserID] = p
+	return nil
+}
+
+func (m *mockStudentProfileRepo) FindByUserID(ctx context.Context, userID uuid.UUID) (*models.StudentProfile, error) {
+	p, ok := m.profiles[userID]
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	return p, nil
+}
+
+func (m *mockStudentProfileRepo) Update(ctx context.Context, p *models.StudentProfile) error {
+	m.profiles[p.UserID] = p
+	return nil
+}
+
 type mockGoogleVerifier struct{}
 
 type mockEmailSender struct {
@@ -166,28 +195,40 @@ func (m *mockGoogleVerifier) Verify(ctx context.Context, idToken string) (*utils
 	return nil, service.ErrInvalidGoogleToken
 }
 
-func TestAuthService_RegisterAndLogin(t *testing.T) {
-	userRepo := newMockUserRepo()
-	sessionRepo := newMockRefreshTokenRepo()
-	otpRepo := newMockOTPRepo()
-	resetRepo := newMockResetTokenRepo()
-	extRepo := newMockExtAccountRepo()
-	emailSender := &mockEmailSender{}
-	googleVerifier := &mockGoogleVerifier{}
+var testSchoolID = uuid.MustParse("11111111-1111-1111-1111-111111111111")
 
+type authTestDeps struct {
+	svc         service.AuthService
+	userRepo    *mockUserRepo
+	profileRepo *mockStudentProfileRepo
+	emailSender *mockEmailSender
+}
+
+func newAuthTestDeps() authTestDeps {
+	userRepo := newMockUserRepo()
+	profileRepo := newMockStudentProfileRepo()
+	emailSender := &mockEmailSender{}
 	svc := service.NewAuthService(
 		nil,
 		userRepo,
-		sessionRepo,
-		otpRepo,
-		resetRepo,
-		extRepo,
+		newMockRefreshTokenRepo(),
+		newMockOTPRepo(),
+		newMockResetTokenRepo(),
+		newMockExtAccountRepo(),
+		profileRepo,
 		emailSender,
-		googleVerifier,
+		&mockGoogleVerifier{},
 		"jwt-secret-for-test-32bytes-long",
 		15,
 		7,
 	)
+	return authTestDeps{svc: svc, userRepo: userRepo, profileRepo: profileRepo, emailSender: emailSender}
+}
+
+func TestAuthService_RegisterAndLogin(t *testing.T) {
+	deps := newAuthTestDeps()
+	svc := deps.svc
+	emailSender := deps.emailSender
 
 	ctx := context.Background()
 	meta := dto.RequestMeta{UserAgent: "test", IPAddress: "127.0.0.1"}
@@ -233,7 +274,8 @@ func TestAuthService_RegisterAndLogin(t *testing.T) {
 		t.Errorf("expected ErrInvalidOTP, got %v", err)
 	}
 
-	// 5. Verify with correct OTP: activates account and returns tokens
+	// 5. Verify with correct OTP: activates account and returns tokens.
+	//    New student has no school yet: hasSchool must be false.
 	authRes, rawRefreshToken, err := svc.VerifyRegisterOTP(ctx, dto.VerifyRegisterOTPRequest{
 		Email: "rudi@example.com",
 		OTP:   activeOTP,
@@ -243,6 +285,9 @@ func TestAuthService_RegisterAndLogin(t *testing.T) {
 	}
 	if authRes.User.Email != "rudi@example.com" {
 		t.Errorf("expected email rudi@example.com, got %s", authRes.User.Email)
+	}
+	if authRes.User.HasSchool {
+		t.Errorf("expected hasSchool=false for fresh student, got true")
 	}
 	if authRes.AccessToken == "" {
 		t.Errorf("expected non-empty access token")
@@ -261,7 +306,7 @@ func TestAuthService_RegisterAndLogin(t *testing.T) {
 		t.Errorf("expected ErrEmailAlreadyExists, got %v", err)
 	}
 
-	// 7. Login with correct credentials
+	// 7. Login with correct credentials: still no school
 	loginRes, loginRefresh, err := svc.Login(ctx, dto.LoginRequest{
 		Email:    "rudi@example.com",
 		Password: "Password123!",
@@ -272,8 +317,34 @@ func TestAuthService_RegisterAndLogin(t *testing.T) {
 	if loginRes.AccessToken == "" || loginRefresh == "" {
 		t.Errorf("expected access token and refresh token")
 	}
+	if loginRes.User.HasSchool {
+		t.Errorf("expected hasSchool=false before school selection, got true")
+	}
 
-	// 8. Login with wrong password
+	// 8. Set school on the profile, then login again: hasSchool must be true
+	user, err := deps.userRepo.FindByEmail(ctx, "rudi@example.com")
+	if err != nil {
+		t.Fatalf("user not found: %v", err)
+	}
+	if err := deps.profileRepo.Create(ctx, &models.StudentProfile{
+		UserID:   user.ID,
+		SchoolID: &testSchoolID,
+		School:   "SMAN 1 Test",
+	}); err != nil {
+		t.Fatalf("profile create failed: %v", err)
+	}
+	loginRes2, _, err := svc.Login(ctx, dto.LoginRequest{
+		Email:    "rudi@example.com",
+		Password: "Password123!",
+	}, meta)
+	if err != nil {
+		t.Fatalf("unexpected login error: %v", err)
+	}
+	if !loginRes2.User.HasSchool {
+		t.Errorf("expected hasSchool=true after school selection, got false")
+	}
+
+	// 9. Login with wrong password
 	_, _, err = svc.Login(ctx, dto.LoginRequest{
 		Email:    "rudi@example.com",
 		Password: "WrongPassword!",
@@ -284,27 +355,9 @@ func TestAuthService_RegisterAndLogin(t *testing.T) {
 }
 
 func TestAuthService_RefreshSession(t *testing.T) {
-	userRepo := newMockUserRepo()
-	sessionRepo := newMockRefreshTokenRepo()
-	otpRepo := newMockOTPRepo()
-	resetRepo := newMockResetTokenRepo()
-	extRepo := newMockExtAccountRepo()
-	emailSender := &mockEmailSender{}
-	googleVerifier := &mockGoogleVerifier{}
-
-	svc := service.NewAuthService(
-		nil,
-		userRepo,
-		sessionRepo,
-		otpRepo,
-		resetRepo,
-		extRepo,
-		emailSender,
-		googleVerifier,
-		"jwt-secret-for-test-32bytes-long",
-		15,
-		7,
-	)
+	deps := newAuthTestDeps()
+	svc := deps.svc
+	emailSender := deps.emailSender
 
 	ctx := context.Background()
 	meta := dto.RequestMeta{UserAgent: "test", IPAddress: "127.0.0.1"}
@@ -345,27 +398,10 @@ func TestAuthService_RefreshSession(t *testing.T) {
 }
 
 func TestAuthService_OTPVerificationFlow(t *testing.T) {
-	userRepo := newMockUserRepo()
-	sessionRepo := newMockRefreshTokenRepo()
-	otpRepo := newMockOTPRepo()
-	resetRepo := newMockResetTokenRepo()
-	extRepo := newMockExtAccountRepo()
-	emailSender := &mockEmailSender{}
-	googleVerifier := &mockGoogleVerifier{}
-
-	svc := service.NewAuthService(
-		nil,
-		userRepo,
-		sessionRepo,
-		otpRepo,
-		resetRepo,
-		extRepo,
-		emailSender,
-		googleVerifier,
-		"jwt-secret-for-test-32bytes-long",
-		15,
-		7,
-	)
+	deps := newAuthTestDeps()
+	svc := deps.svc
+	userRepo := deps.userRepo
+	emailSender := deps.emailSender
 
 	ctx := context.Background()
 	user := &models.User{
@@ -427,5 +463,47 @@ func TestAuthService_OTPVerificationFlow(t *testing.T) {
 	}
 	if loginRes.AccessToken == "" {
 		t.Errorf("expected access token")
+	}
+}
+
+func TestAuthService_GoogleLoginHasSchoolFlag(t *testing.T) {
+	deps := newAuthTestDeps()
+	ctx := context.Background()
+	meta := dto.RequestMeta{UserAgent: "test", IPAddress: "127.0.0.1"}
+
+	// New Google identity: no school yet, hasSchool must be false
+	res, rawRefresh, err := deps.svc.LoginGoogle(ctx, dto.GoogleLoginRequest{IDToken: "valid-token"}, meta)
+	if err != nil {
+		t.Fatalf("unexpected google login error: %v", err)
+	}
+	if res.User.Email != "googleuser@example.com" {
+		t.Fatalf("expected googleuser@example.com, got %s", res.User.Email)
+	}
+	if res.AccessToken == "" || rawRefresh == "" {
+		t.Fatal("expected tokens from google login")
+	}
+	if res.User.HasSchool {
+		t.Fatal("expected hasSchool=false for fresh google student, got true")
+	}
+
+	// Set the school via profile, then google-login again: hasSchool true
+	user, err := deps.userRepo.FindByEmail(ctx, "googleuser@example.com")
+	if err != nil {
+		t.Fatalf("google user not found: %v", err)
+	}
+	if err := deps.profileRepo.Create(ctx, &models.StudentProfile{
+		UserID:   user.ID,
+		SchoolID: &testSchoolID,
+		School:   "SMAN 1 Test",
+	}); err != nil {
+		t.Fatalf("profile create failed: %v", err)
+	}
+
+	res2, _, err := deps.svc.LoginGoogle(ctx, dto.GoogleLoginRequest{IDToken: "valid-token"}, meta)
+	if err != nil {
+		t.Fatalf("unexpected second google login error: %v", err)
+	}
+	if !res2.User.HasSchool {
+		t.Fatal("expected hasSchool=true after school selection, got false")
 	}
 }

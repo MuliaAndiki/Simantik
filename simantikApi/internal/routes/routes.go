@@ -24,6 +24,7 @@ type Handlers struct {
 	Notification   *handler.NotificationHandler
 	Reporting      *handler.ReportingHandler
 	System         *handler.SystemHandler
+	School         *handler.SchoolHandler
 }
 
 // Register mounts every route group under /api/v1, applying the API-secret
@@ -65,5 +66,8 @@ func Register(app *fiber.App, cfg *config.Config, h *Handlers) {
 	RegisterNotificationRoutes(api, cfg, h.Notification)
 	if h.Reporting != nil {
 		RegisterReportingRoutes(api, cfg, h.Reporting)
+	}
+	if h.School != nil {
+		RegisterSchoolRoutes(api, cfg, h.School)
 	}
 }

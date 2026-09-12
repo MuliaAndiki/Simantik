@@ -20,6 +20,7 @@ type UserService interface {
 	UpdateMe(ctx context.Context, userID uuid.UUID, req dto.UpdateMeRequest) (*dto.UserResponse, error)
 	ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error
 	UpdateAvatar(ctx context.Context, userID uuid.UUID, req dto.UpdateAvatarRequest) (*dto.UserResponse, error)
+	UpdateMySchool(ctx context.Context, userID uuid.UUID, req dto.UpdateMySchoolRequest) (*dto.UserResponse, error)
 	GetMyRoles(ctx context.Context, userID uuid.UUID) (*dto.UserRolesResponse, error)
 
 	// Admin operations
@@ -31,16 +32,22 @@ type UserService interface {
 type userService struct {
 	userRepo         repository.UserRepository
 	refreshTokenRepo repository.RefreshTokenRepository
+	schoolRepo       repository.SchoolRepository
+	profileRepo      repository.StudentProfileRepository
 }
 
 // NewUserService builds a UserService backed by user and session repositories.
 func NewUserService(
 	userRepo repository.UserRepository,
 	refreshTokenRepo repository.RefreshTokenRepository,
+	schoolRepo repository.SchoolRepository,
+	profileRepo repository.StudentProfileRepository,
 ) UserService {
 	return &userService{
 		userRepo:         userRepo,
 		refreshTokenRepo: refreshTokenRepo,
+		schoolRepo:       schoolRepo,
+		profileRepo:      profileRepo,
 	}
 }
 
@@ -131,6 +138,51 @@ func (s *userService) UpdateAvatar(ctx context.Context, userID uuid.UUID, req dt
 	}
 
 	res := ToUserResponse(user)
+	return &res, nil
+}
+
+// UpdateMySchool sets the student's school on their profile (student role only).
+func (s *userService) UpdateMySchool(ctx context.Context, userID uuid.UUID, req dto.UpdateMySchoolRequest) (*dto.UserResponse, error) {
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	if user.Role != models.UserRoleStudent {
+		return nil, ErrInvalidRole
+	}
+
+	schoolID, err := uuid.Parse(req.SchoolID)
+	if err != nil {
+		return nil, ErrSchoolNotFound
+	}
+	school, err := s.schoolRepo.FindByID(ctx, schoolID)
+	if err != nil {
+		return nil, ErrSchoolNotFound
+	}
+
+	profile, err := s.profileRepo.FindByUserID(ctx, user.ID)
+	if err == nil && profile != nil {
+		profile.SchoolID = &school.ID
+		profile.School = school.Name
+		if err := s.profileRepo.Update(ctx, profile); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := s.profileRepo.Create(ctx, &models.StudentProfile{
+			UserID:   user.ID,
+			SchoolID: &school.ID,
+			School:   school.Name,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	res := ToUserResponse(user)
+	res.HasSchool = true
 	return &res, nil
 }
 
