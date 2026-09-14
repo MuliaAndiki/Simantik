@@ -112,6 +112,7 @@ export interface RegisterResponse {
 export interface AuthResponse {
   user: UserResponse;
   accessToken: string;
+  refreshToken?: string | null;
 }
 
 /**

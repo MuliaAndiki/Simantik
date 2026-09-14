@@ -34,6 +34,19 @@ class SchoolService {
     });
   }
 
+  public async ListSchoolsPublicService(
+    filter?: ListSchoolFilter
+  ): Promise<TResponse<PaginatedSchoolsResponse>> {
+    const url = buildQueryString(
+      EndpointEntry.school.listPublic,
+      filter as Record<string, unknown>
+    );
+    const res = await getHttp().GetResponse<PaginatedSchoolsResponse>(url);
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
   public async GetSchoolService(id: string): Promise<TResponse<SchoolResponse>> {
     const res = await getHttp().GetResponse<SchoolResponse>(EndpointEntry.school.detail(id));
     return toServiceResponse(res, {

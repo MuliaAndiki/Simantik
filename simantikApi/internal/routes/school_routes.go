@@ -13,9 +13,13 @@ func RegisterSchoolRoutes(api fiber.Router, cfg *config.Config, h *handler.Schoo
 	adminOnly := middleware.RequireRoles("admin")
 
 	schools := api.Group("/admin/schools", auth, adminOnly)
-	schools.Post("/", h.CreateSchool)
 	schools.Get("/", h.ListSchools)
 	schools.Get("/:id", h.GetSchool)
+	schools.Post("/", h.CreateSchool)
 	schools.Patch("/:id", h.UpdateSchool)
 	schools.Delete("/:id", h.DeleteSchool)
+
+
+	api.Get("/schools", h.ListSchools)
+	api.Get("/schools/:id", h.GetSchool)
 }

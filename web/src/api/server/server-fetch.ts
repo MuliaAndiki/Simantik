@@ -8,6 +8,7 @@ import {
   type ApiSuccessResponse,
 } from '@/api/types/response.types';
 import {
+  APP_REFRESH_TOKEN_COOKIE_EXPIRES_IN,
   APP_SESSION_COOKIE_KEY,
   APP_SESSION_COOKIE_REFRESH,
   APP_SESSION_COOKIE_ROLE,
@@ -110,8 +111,8 @@ let _refreshInFlight: Promise<string | null> | null = null;
 
 /**
  * Menukar refresh token dengan access token baru via POST /auth/refresh-token.
- * Backend hanya mengembalikan `{ accessToken, expiresIn }` (refresh token
- * tidak dirotasi), jadi hanya cookie access token yang diperbarui.
+ * Backend me-rotate refresh token (revoke lama, terbitkan baru) dan mengembalikan
+ * `{ accessToken, refreshToken }`, jadi kedua cookie diperbarui.
  */
 async function _doRefreshOnce(): Promise<string | null> {
   const refreshToken = await getRefreshToken();
@@ -137,9 +138,15 @@ async function _doRefreshOnce(): Promise<string | null> {
   }
 
   let accessToken: string | undefined;
+  let newRefreshToken: string | undefined;
   try {
-    const json: ApiResponse<{ accessToken: string; expiresIn: number }> = await res.json();
+    const json: ApiResponse<{
+      accessToken: string;
+      refreshToken?: string | null;
+      expiresIn: number;
+    }> = await res.json();
     accessToken = json.data?.accessToken;
+    newRefreshToken = json.data?.refreshToken ?? undefined;
   } catch {
     return null;
   }
@@ -153,12 +160,20 @@ async function _doRefreshOnce(): Promise<string | null> {
     const isProduction = process.env.NODE_ENV === 'production';
 
     store.set(COOKIE_KEYS.accessToken, accessToken, {
-      httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 15,
     });
+
+    if (newRefreshToken) {
+      store.set(COOKIE_KEYS.refreshToken, newRefreshToken, {
+        secure: isProduction,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: APP_REFRESH_TOKEN_COOKIE_EXPIRES_IN / 1000,
+      });
+    }
   } catch (err) {
     if (IS_API_DEBUG) {
       console.error('[Auth] refresh: gagal menyimpan cookie', err);

@@ -1,8 +1,13 @@
 'use client';
 
 import type * as React from 'react';
-
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/atoms';
+import {
+  Avatar,
+  AvatarImage,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/atoms';
 import { AppSidebar } from '@/core/components/app-sidebar';
 import { BottomNav } from '@/core/components/button-nav';
 import LanguageDropdown from '../components/language.dropdown';
@@ -25,18 +30,18 @@ export function AppShell({ children }: AppShellProps) {
         <SidebarInset>
           <div className="flex h-full flex-col w-full">
             <div className="flex p-4 items-center gap-2 border-b w-full h-20">
-              <div className="flex items-center justify-between max-w-7xl mx-auto w-full">
+              <div className="flex items-center justify-between max-w-full mx-auto w-full">
                 <SidebarTrigger />
                 <div className="flex items-center gap-4">
-                  <ThemeToggle />
-                  <LanguageDropdown />
                   <NotificationDropdown />
+                  <Avatar>
+                    <AvatarImage src={'/avatars/1.png'} />
+                  </Avatar>
                 </div>
               </div>
             </div>
-
             <div className="flex-1 overflow-auto w-full pb-16 md:pb-0">
-              <div className="container h-full max-w-7xl w-full mx-auto p-[1rem]">{children}</div>
+              <div className="container h-full max-w-full w-full mx-auto p-[1rem]">{children}</div>
             </div>
           </div>
         </SidebarInset>

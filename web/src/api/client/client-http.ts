@@ -185,6 +185,15 @@ async function clientCoreFetchResponse<T>(
     throw new ApiErrorClass(errorMessage, res.status, json?.errors);
   }
 
+  if (json && typeof json === 'object') {
+    if (json.status === undefined) {
+      json.status = res.status;
+    }
+    if (json.success === undefined) {
+      json.success = res.ok;
+    }
+  }
+
   return json;
 }
 
@@ -311,6 +320,15 @@ export async function ClientPostFormDataResponse<T>(
 
     const errorMessage = extractErrorMessage(res.status, json);
     throw new ApiErrorClass(errorMessage, res.status, json?.errors);
+  }
+
+  if (json && typeof json === 'object') {
+    if (json.status === undefined) {
+      json.status = res.status;
+    }
+    if (json.success === undefined) {
+      json.success = res.ok;
+    }
   }
 
   return json;
