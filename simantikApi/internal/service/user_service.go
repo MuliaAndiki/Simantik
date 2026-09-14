@@ -281,17 +281,35 @@ func (s *userService) UpdateUserStatus(ctx context.Context, currentAdminID, targ
 
 // ToUserResponse translates an internal User model into an external safe DTO.
 func ToUserResponse(u *models.User) dto.UserResponse {
-	return dto.UserResponse{
-		ID:          u.ID,
-		FullName:    u.FullName,
-		Email:       u.Email,
-		AvatarURL:   u.AvatarURL,
-		Role:        string(u.Role),
-		Status:      string(u.Status),
-		LastLoginAt: u.LastLoginAt,
-		CreatedAt:   u.CreatedAt,
-		UpdatedAt:   u.UpdatedAt,
-	}
+    // 1. Buat object response utama tanpa StudentProfile dulu
+    resp := dto.UserResponse{
+        ID:          u.ID,
+        FullName:    u.FullName,
+        Email:       u.Email,
+        // Otp:      u.Otp, // (Uncomment jika ada field Otp di model)
+        AvatarURL:   u.AvatarURL,
+        Role:        string(u.Role),
+        Status:      string(u.Status),
+        HasSchool:   false, // Default false
+        LastLoginAt: u.LastLoginAt,
+        CreatedAt:   u.CreatedAt,
+        UpdatedAt:   u.UpdatedAt,
+    }
+
+    
+    if u.StudentProfile != nil {
+        resp.HasSchool = u.StudentProfile.SchoolID != nil || u.StudentProfile.School != ""
+        resp.StudentProfile = &dto.StudentProfileResponse{
+            School:           u.StudentProfile.School,
+            Grade:            u.StudentProfile.Grade,
+            Major:            u.StudentProfile.Major,
+            TargetUniversity: u.StudentProfile.TargetUniversity,
+            TargetMajor:      u.StudentProfile.TargetMajor,
+            Bio:              u.StudentProfile.Bio,
+        }
+    }
+
+    return resp
 }
 
 // getPermissionsForRole returns granular permission strings mapped from the RBAC role.

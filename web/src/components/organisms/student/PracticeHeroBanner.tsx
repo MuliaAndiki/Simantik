@@ -33,7 +33,7 @@ export function PracticeHeroBanner({
         </div>
 
         {/* Right Study Desk Illustration */}
-        <div className="w-full md:w-80 sm:w-64 max-w-xs shrink-0 flex items-center justify-center p-2 rounded-2xl bg-gradient-to-b from-[#FAFCFD] to-[#F1F5F9] border border-[#E2E8F0]">
+        <div className="w-full md:w-80 sm:w-64 max-w-xs shrink-0 flex items-center justify-center p-2 rounded-2xl ">
           <div className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64">
             <Image
               src="/illustrations/student-learning.jpg"

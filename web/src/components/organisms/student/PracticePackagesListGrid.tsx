@@ -152,9 +152,6 @@ export function PracticePackagesListGrid({
             <h2 className="text-xl font-bold tracking-tight text-[#111827]">
               Daftar Paket Latihan
             </h2>
-            <span className="inline-flex items-center rounded-full bg-[#E0F7FA] px-3 py-1 text-xs font-semibold text-[#0284C7] border border-[#BDEAF0]">
-              Menampilkan: {packages.length} Paket Latihan Terpilih (Total {totalAllPackages})
-            </span>
           </div>
           <p className="text-xs md:text-sm text-[#546A72]">
             Pilih paket soal untuk menguji pemahaman teks dan membaca kritis.

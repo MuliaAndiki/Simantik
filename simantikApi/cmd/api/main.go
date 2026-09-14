@@ -11,9 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/contrib/otelfiber/v2"
-
 	"simantikApi/config"
 	"simantikApi/internal/handler"
 	"simantikApi/internal/middleware"
@@ -22,6 +19,9 @@ import (
 	"simantikApi/internal/service"
 	"simantikApi/pkg/telemetry"
 	"simantikApi/pkg/utils"
+
+	"github.com/gofiber/contrib/otelfiber/v2"
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {

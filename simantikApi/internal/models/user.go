@@ -41,6 +41,8 @@ type User struct {
 	CreatedAt    time.Time      `json:"createdAt"`
 	UpdatedAt    time.Time      `json:"updatedAt"`
 	DeletedAt    gorm.DeletedAt `gorm:"index"                                   json:"-"`
+
+	StudentProfile *StudentProfile `gorm:"foreignKey:UserID" json:"studentProfile,omitempty"`
 }
 
 // BeforeCreate generates a UUID primary key application-side, avoiding a

@@ -19,6 +19,7 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
         activate: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
         noActivate: 'bg-background text-foreground shadow-xs hover:bg-foreground/5',
+        quit: 'bg-transparent text-destructive shadow-xs border border-destructive hover:bg-destructive/90 hover:text-white',
         google:
           'bg-background, text-foreground rounded-full font-light border shadow-2xl drop-shadow-2xl hover:bg-foreground/10 ',
       },

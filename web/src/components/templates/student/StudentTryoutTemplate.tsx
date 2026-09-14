@@ -27,7 +27,7 @@ export function StudentTryoutTemplate({
     <div className={cn('w-full max-w-full mx-auto space-y-6 md:space-y-8 pb-6', className)}>
       {/* 1. Page Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Tryout</h1>
+        <h1 className="text-2xl font-bold tracking-tight  text-slate-900">Tryout</h1>
         <p className="text-sm text-slate-500 mt-1">
           Uji kesiapan Anda dengan simulasi ujian berstandar nasional dan analisis mendalam.
         </p>
