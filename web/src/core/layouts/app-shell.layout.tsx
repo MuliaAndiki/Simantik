@@ -1,18 +1,11 @@
 'use client';
 
 import type * as React from 'react';
-import {
-  Avatar,
-  AvatarImage,
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/atoms';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/atoms';
 import { AppSidebar } from '@/core/components/app-sidebar';
 import { BottomNav } from '@/core/components/button-nav';
-import LanguageDropdown from '../components/language.dropdown';
 import NotificationDropdown from '../components/notification.dropdown';
-import ThemeToggle from '../components/theme-toggle';
+import ProfileDropdown from '../components/profile.dropdown';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -34,9 +27,7 @@ export function AppShell({ children }: AppShellProps) {
                 <SidebarTrigger />
                 <div className="flex items-center gap-4">
                   <NotificationDropdown />
-                  <Avatar>
-                    <AvatarImage src={'/avatars/1.png'} />
-                  </Avatar>
+                  <ProfileDropdown />
                 </div>
               </div>
             </div>

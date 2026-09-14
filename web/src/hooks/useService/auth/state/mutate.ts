@@ -61,7 +61,11 @@ export function useLogin() {
     },
     onSuccess: (res) => {
       if (res.data) {
-        setSessionCookies({ accessToken: res.data.accessToken, role: res.data.user.role });
+        setSessionCookies({
+          accessToken: res.data.accessToken,
+          refreshToken: res.data.refreshToken ?? undefined,
+          role: res.data.user.role,
+        });
       }
       ns.alert.toast({
         title: res.title || ResponseTitles.success,
@@ -120,7 +124,11 @@ export function useVerifyRegisterOTP() {
     },
     onSuccess: (res) => {
       if (res.data) {
-        setSessionCookies({ accessToken: res.data.accessToken, role: res.data.user.role });
+        setSessionCookies({
+          accessToken: res.data.accessToken,
+          refreshToken: res.data.refreshToken ?? undefined,
+          role: res.data.user.role,
+        });
       }
       ns.alert.toast({
         title: res.title || ResponseTitles.success,
@@ -171,7 +179,11 @@ export function useRefreshToken() {
     },
     onSuccess: (res) => {
       if (res.data) {
-        setSessionCookies({ accessToken: res.data.accessToken, role: res.data.user.role });
+        setSessionCookies({
+          accessToken: res.data.accessToken,
+          refreshToken: res.data.refreshToken ?? undefined,
+          role: res.data.user.role,
+        });
       }
     },
     onError: (err) => {
@@ -290,7 +302,11 @@ export function useGoogleLogin() {
     },
     onSuccess: (res) => {
       if (res.data) {
-        setSessionCookies({ accessToken: res.data.accessToken, role: res.data.user.role });
+        setSessionCookies({
+          accessToken: res.data.accessToken,
+          refreshToken: res.data.refreshToken ?? undefined,
+          role: res.data.user.role,
+        });
       }
       ns.alert.toast({
         title: res.title || ResponseTitles.success,
