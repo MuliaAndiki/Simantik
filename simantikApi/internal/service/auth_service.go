@@ -197,8 +197,9 @@ func (s *authService) VerifyRegisterOTP(ctx context.Context, req dto.VerifyRegis
 	_ = s.userRepo.UpdateLastLogin(ctx, user.ID)
 
 	res := &dto.AuthResponse{
-		User:        ToUserResponse(user),
-		AccessToken: accessToken,
+		User:         ToUserResponse(user),
+		AccessToken:  accessToken,
+		RefreshToken: rawRefreshToken,
 	}
 	s.applyHasSchool(ctx, user, res)
 	return res, rawRefreshToken, nil
@@ -279,8 +280,9 @@ func (s *authService) Login(ctx context.Context, req dto.LoginRequest, meta dto.
 	_ = s.userRepo.UpdateLastLogin(ctx, user.ID)
 
 	res := &dto.AuthResponse{
-		User:        ToUserResponse(user),
-		AccessToken: accessToken,
+		User:         ToUserResponse(user),
+		AccessToken:  accessToken,
+		RefreshToken: rawRefreshToken,
 	}
 	s.applyHasSchool(ctx, user, res)
 	return res, rawRefreshToken, nil
@@ -325,8 +327,9 @@ func (s *authService) Refresh(ctx context.Context, rawRefreshToken string, meta 
 	}
 
 	return &dto.AuthResponse{
-		User:        ToUserResponse(user),
-		AccessToken: newAccessToken,
+		User:         ToUserResponse(user),
+		AccessToken:  newAccessToken,
+		RefreshToken: newRawRefreshToken,
 	}, newRawRefreshToken, nil
 }
 
@@ -638,12 +641,12 @@ func (s *authService) LoginGoogle(ctx context.Context, req dto.GoogleLoginReques
 	if err != nil {
 		return nil, "", err
 	}
-
 	_ = s.userRepo.UpdateLastLogin(ctx, user.ID)
 
 	res := &dto.AuthResponse{
-		User:        ToUserResponse(user),
-		AccessToken: accessToken,
+		User:         ToUserResponse(user),
+		AccessToken:  accessToken,
+		RefreshToken: rawRefreshToken,
 	}
 	s.applyHasSchool(ctx, user, res)
 	return res, rawRefreshToken, nil

@@ -10,7 +10,7 @@ export interface ModalProps {
 }
 
 export interface ToastProps {
-  title: string;
+  title?: string;
   icon?: ToastType;
   message: string;
   onVoid?: () => void;

@@ -19,7 +19,7 @@ export default function ContainerPilihSekolah() {
   const [error, setError] = useState<string>();
   const debouncedSearch = useDebounce(schoolSearch, SCHOOL_SEARCH_DEBOUNCE_MS);
 
-  const schoolQuery = api.school.query.list({
+  const schoolQuery = api.school.query.listPublic({
     search: debouncedSearch.trim() || undefined,
     limit: 20,
   });

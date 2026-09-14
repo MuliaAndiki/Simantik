@@ -38,7 +38,9 @@ async function refreshAccessTokenOnce(): Promise<boolean> {
       return false;
     }
 
-    const json: { data?: { accessToken?: string; expiresIn?: number } } = await res.json();
+    const json: {
+      data?: { accessToken?: string; refreshToken?: string | null; expiresIn?: number };
+    } = await res.json();
 
     if (!json.data?.accessToken) {
       return false;
@@ -46,6 +48,7 @@ async function refreshAccessTokenOnce(): Promise<boolean> {
 
     setSessionCookies({
       accessToken: json.data.accessToken,
+      refreshToken: json.data.refreshToken ?? undefined,
       expiresIn: json.data.expiresIn,
     });
 
