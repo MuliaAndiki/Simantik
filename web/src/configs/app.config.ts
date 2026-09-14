@@ -1,4 +1,18 @@
-import { BookOpen, History, Home, LayoutDashboard, School, User, Users } from 'lucide-react';
+import {
+  BarChart3,
+  BookOpen,
+  FileQuestion,
+  FileText,
+  LayoutDashboard,
+  MessageSquareQuote,
+  Newspaper,
+  School,
+  Settings,
+  Trophy,
+  User,
+  Users,
+  Video,
+} from 'lucide-react';
 import React from 'react';
 
 interface AppConfig {
@@ -111,29 +125,43 @@ export interface NavItem {
 }
 
 export const SIDEBAR_MENU: NavItem[] = [
-  { name: 'Beranda', url: '/home', icon: Home, subMenu: [] },
-  { name: 'Module', url: '/module', icon: BookOpen, subMenu: [] },
-  { name: 'Riwayat', url: '/history', icon: History, subMenu: [] },
-  { name: 'Profil', url: '/profile', icon: User, subMenu: [] },
+  { name: 'Dashboard', url: '/student/dashboard', icon: LayoutDashboard, subMenu: [] },
+  { name: 'Belajar', url: '/student/learning', icon: BookOpen, subMenu: [] },
+  { name: 'Latihan', url: '/student/practice', icon: FileQuestion, subMenu: [] },
+  { name: 'Tryout', url: '/student/tryout', icon: Trophy, subMenu: [] },
+  { name: 'Evaluasi', url: '/student/evaluation', icon: BarChart3, subMenu: [] },
+  { name: 'Pengaturan', url: '/student/setting', icon: Settings, subMenu: [] },
+  { name: 'Bantuan & Panduan', url: '/student/help', icon: User, subMenu: [] },
 ];
 
-// Menu per role non-student. Student memakai SIDEBAR_MENU.
 export const ROLE_SIDEBAR_MENU: Record<string, NavItem[]> = {
+  STUDENT: SIDEBAR_MENU,
   ADMIN: [
     { name: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard, subMenu: [] },
     { name: 'Siswa', url: '/admin/students', icon: Users, subMenu: [] },
     { name: 'Sekolah', url: '/admin/schools', icon: School, subMenu: [] },
   ],
   CONTENT_MANAGER: [
-    { name: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard, subMenu: [] },
-    { name: 'Materi', url: '/admin/materials', icon: BookOpen, subMenu: [] },
-    { name: 'Sekolah', url: '/admin/schools', icon: School, subMenu: [] },
+    { name: 'Dashboard', url: '/content_manager/dashboard', icon: LayoutDashboard, subMenu: [] },
+    { name: 'Materi', url: '/content_manager/materials', icon: BookOpen, subMenu: [] },
+    { name: 'Bank Soal', url: '/content_manager/questions', icon: FileQuestion, subMenu: [] },
+    { name: 'Tryout', url: '/content_manager/tryouts', icon: Trophy, subMenu: [] },
+    { name: 'Berita', url: '/content_manager/news', icon: Newspaper, subMenu: [] },
+    { name: 'Dokumentasi', url: '/content_manager/documentation', icon: FileText, subMenu: [] },
+    {
+      name: 'Testimoni',
+      url: '/content_manager/testimonials',
+      icon: MessageSquareQuote,
+      subMenu: [],
+    },
+    { name: 'Tutorial', url: '/content_manager/tutorials', icon: Video, subMenu: [] },
   ],
 };
 
 export function getRoleDashboardPath(role?: string | null): string {
-  if (role === 'admin' || role === 'content_manager') return '/admin/dashboard';
-  return '/home';
+  if (role === 'admin') return '/admin/dashboard';
+  if (role === 'content_manager') return '/content_manager/dashboard';
+  return '/student/dashboard';
 }
 
 export function isMenuActive(url: string, pathname: string): boolean {

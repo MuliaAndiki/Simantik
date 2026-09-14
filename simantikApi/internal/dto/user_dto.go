@@ -83,8 +83,9 @@ type VerifyRegisterOTPRequest struct {
 // AuthResponse is returned on successful login, register verification, refresh, or Google login.
 // The refresh token is NOT included here — it is delivered via httpOnly cookie only.
 type AuthResponse struct {
-	User        UserResponse `json:"user"`
-	AccessToken string       `json:"accessToken"`
+	User         UserResponse `json:"user"`
+	AccessToken  string       `json:"accessToken"`
+	RefreshToken string       `json:"refreshToken,omitempty"`
 }
 
 // VerifyOTPResponse is returned after a successful password reset OTP verification.

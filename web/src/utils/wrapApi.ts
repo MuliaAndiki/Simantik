@@ -29,11 +29,13 @@ export function WrapApi<T extends Record<string, any>>(apiModule: T): WrappedApi
       (wrapped as any)[key] = (async (...args: any[]) => {
         const res = await value.apply(apiModule, args);
 
-        if (res?.status === 'error') {
+        if (res?.status === 'error' || res?.success === false) {
           const errorMessage =
             typeof res.message === 'string' && res.message.trim() !== ''
               ? res.message
-              : 'Terjadi kesalahan saat memproses data.';
+              : typeof res.error === 'string' && res.error.trim() !== ''
+                ? res.error
+                : 'Terjadi kesalahan saat memproses data.';
           throw new Error(errorMessage);
         }
 

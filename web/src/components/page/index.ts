@@ -7,3 +7,7 @@ export * from './ComingSoonPage';
 export * from './legal/HelpPage';
 export * from './legal/PrivacyPage';
 export * from './legal/TermsPage';
+export * from './private/student/DashboardStudentPage';
+export * from './private/student/StudentLearningPage';
+export * from './private/student/StudentPracticePage';
+export * from './private/student/StudentTryoutPage';

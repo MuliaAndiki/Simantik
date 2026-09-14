@@ -11,7 +11,12 @@
  */
 
 export interface ApiResponse<T = unknown> {
-  status: number;
+  /**
+   * Status HTTP numerik. Tidak selalu ada: envelope dari client-http hanya
+   * membawa flag `success` — pengecekan sukses harus fallback ke flag itu.
+   */
+  status?: number;
+  success?: boolean;
   title?: string;
   message: string;
   data?: T;

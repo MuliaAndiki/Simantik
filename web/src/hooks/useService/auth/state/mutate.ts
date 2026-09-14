@@ -21,6 +21,7 @@ import type {
 } from '@/types/service';
 import { type AuthCacheContext, readAuthSnapshot } from '@/utils/cache/auth.cache';
 import { ResponseTitles } from '@/utils/response-titles';
+import { setSessionCookies } from '@/utils/session-cookie';
 
 const STUDENT_ROLE = 'student';
 const SCHOOL_ONBOARDING_PATH = '/pilih-sekolah';
@@ -59,8 +60,11 @@ export function useLogin() {
       return { previousData };
     },
     onSuccess: (res) => {
+      if (res.data) {
+        setSessionCookies({ accessToken: res.data.accessToken, role: res.data.user.role });
+      }
       ns.alert.toast({
-        title: res.title,
+        title: res.title || ResponseTitles.success,
         message: res.message,
         icon: 'success',
       });
@@ -87,7 +91,7 @@ export function useRegister() {
     },
     onSuccess: (res) => {
       ns.alert.toast({
-        title: res.title,
+        title: res.title || ResponseTitles.success,
         message: res.message,
         icon: 'success',
       });
@@ -115,8 +119,11 @@ export function useVerifyRegisterOTP() {
       });
     },
     onSuccess: (res) => {
+      if (res.data) {
+        setSessionCookies({ accessToken: res.data.accessToken, role: res.data.user.role });
+      }
       ns.alert.toast({
-        title: res.title,
+        title: res.title || ResponseTitles.success,
         message: res.message,
         icon: 'success',
       });
@@ -138,7 +145,7 @@ export function useResendOTP() {
     mutationFn: (body: ResendOTPRequest) => Api.auth.ResendOTPService(body),
     onSuccess: (res) => {
       ns.alert.toast({
-        title: res.title,
+        title: res.title || ResponseTitles.success,
         message: res.message,
         icon: 'success',
       });
@@ -162,6 +169,11 @@ export function useRefreshToken() {
         queryKey: queryKey.authRoot(),
       });
     },
+    onSuccess: (res) => {
+      if (res.data) {
+        setSessionCookies({ accessToken: res.data.accessToken, role: res.data.user.role });
+      }
+    },
     onError: (err) => {
       ns.alert.toast({
         title: ResponseTitles.error,
@@ -181,7 +193,7 @@ export function useLogout() {
     },
     onSuccess: (res) => {
       ns.alert.toast({
-        title: res.title,
+        title: res.title || ResponseTitles.success,
         message: res.message,
         icon: 'success',
       });
@@ -202,7 +214,7 @@ export function useForgotPassword() {
     mutationFn: (body: ForgotPasswordRequest) => Api.auth.ForgotPasswordService(body),
     onSuccess: (res) => {
       ns.alert.toast({
-        title: res.title,
+        title: res.title || ResponseTitles.success,
         message: res.message,
         icon: 'success',
       });
@@ -223,7 +235,7 @@ export function useVerifyOTP() {
     mutationFn: (body: VerifyOTPRequest) => Api.auth.VerifyOTPService(body),
     onSuccess: (res) => {
       ns.alert.toast({
-        title: res.title,
+        title: res.title || ResponseTitles.success,
         message: res.message,
         icon: 'success',
       });
@@ -249,7 +261,7 @@ export function useResetPassword() {
     },
     onSuccess: (res) => {
       ns.alert.toast({
-        title: res.title,
+        title: res.title || ResponseTitles.success,
         message: res.message,
         icon: 'success',
       });
@@ -277,8 +289,11 @@ export function useGoogleLogin() {
       });
     },
     onSuccess: (res) => {
+      if (res.data) {
+        setSessionCookies({ accessToken: res.data.accessToken, role: res.data.user.role });
+      }
       ns.alert.toast({
-        title: res.title,
+        title: res.title || ResponseTitles.success,
         message: res.message,
         icon: 'success',
       });

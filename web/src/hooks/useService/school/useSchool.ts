@@ -1,10 +1,11 @@
 import { useCreateSchool, useDeleteSchool, useUpdateSchool } from './state/mutate';
-import { useSchoolDetail, useSchoolList } from './state/query';
+import { useSchoolDetail, useSchoolList, useSchoolPublicList } from './state/query';
 
 export const useSchool = () => {
   return {
     query: {
       list: useSchoolList,
+      listPublic: useSchoolPublicList,
       detail: useSchoolDetail,
     },
     mutate: {

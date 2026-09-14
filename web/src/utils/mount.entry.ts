@@ -20,4 +20,5 @@ export const mountEntry = {
   reports: '/reports',
   system: '/system',
   schools: '/admin/schools',
+  schoolPublik: '/schools',
 } as const;

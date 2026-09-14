@@ -14,6 +14,17 @@ export function useSchoolList(query?: ListSchoolFilter, options?: { enabled?: bo
   });
 }
 
+export function useSchoolPublicList(query?: ListSchoolFilter, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.school.list(query),
+    queryFn: async () => {
+      const res = await Api.school.ListSchoolsPublicService(query);
+      return res.data;
+    },
+    enabled: options?.enabled,
+  });
+}
+
 export function useSchoolDetail(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKey.school.detail(id),

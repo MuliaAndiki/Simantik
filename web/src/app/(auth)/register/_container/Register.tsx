@@ -20,8 +20,8 @@ export default function ContainerRegister() {
 
     register.mutate(data, {
       onSuccess: (res) => {
-        if (!res.data) return;
-        router.replace(`/verify-otp?purpose=register&email=${encodeURIComponent(res.data.email)}`);
+        if (!res.data?.email) return;
+        router.push(`/verify-otp?purpose=register&email=${encodeURIComponent(res.data.email)}`);
       },
     });
   };
