@@ -17,7 +17,7 @@ func main() {
 	flag.IntVar(&step, "step", 0, "Number of migration steps to apply (can be positive or negative)")
 	flag.Parse()
 
-	// Mengambil parameter aksi: "up", "down", "version", atau "force"
+	
 	action := flag.Arg(0)
 	if action == "" && step == 0 {
 		log.Fatal("Usage: go run cmd/migrate/main.go [up|down|version|force <version>] OR -step <n>")

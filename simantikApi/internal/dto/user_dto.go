@@ -122,6 +122,8 @@ type UserResponse struct {
 	LastLoginAt *time.Time `json:"lastLoginAt"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`
+
+	StudentProfile *StudentProfileResponse `json:"studentProfile,omitempty"`
 }
 
 // UpdateMeRequest allows authenticated users to update their own profile.

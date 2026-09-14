@@ -8,6 +8,7 @@ export * from './button';
 export * from './calendar';
 export * from './card';
 export * from './carousel';
+export * from './chart';
 export * from './command';
 export * from './countdown-digit';
 export * from './dialog';

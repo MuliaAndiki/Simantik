@@ -69,6 +69,12 @@ export interface UserResponse {
   lastLoginAt: string | null;
   createdAt: string;
   updatedAt: string;
+
+  studentProfile?: {
+    school: string;
+    grade: string;
+    //
+  };
 }
 
 /**

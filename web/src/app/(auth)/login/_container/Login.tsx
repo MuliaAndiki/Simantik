@@ -24,7 +24,11 @@ export default function ContainerLogin() {
       {
         onSuccess: (res) => {
           if (!res.data) return;
-          setSessionCookies({ accessToken: res.data.accessToken, role: res.data.user.role });
+          setSessionCookies({
+            accessToken: res.data.accessToken,
+            refreshToken: res.data.refreshToken ?? undefined,
+            role: res.data.user.role,
+          });
         },
       }
     );
@@ -39,7 +43,11 @@ export default function ContainerLogin() {
     login.mutate(data, {
       onSuccess: (res) => {
         if (!res.data) return;
-        setSessionCookies({ accessToken: res.data.accessToken, role: res.data.user.role });
+        setSessionCookies({
+          accessToken: res.data.accessToken,
+          refreshToken: res.data.refreshToken ?? undefined,
+          role: res.data.user.role,
+        });
       },
     });
   };
