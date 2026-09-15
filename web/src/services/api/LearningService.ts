@@ -33,6 +33,13 @@ class LearningService {
     });
   }
 
+  public async ListModuleLabelsService(): Promise<TResponse<string[]>> {
+    const res = await getHttp().GetResponse<string[]>(EndpointEntry.learning.moduleLabels);
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
   public async CreateModuleService(
     payload: CreateLearningModuleRequest
   ): Promise<TResponse<LearningModuleResponse>> {

@@ -13,6 +13,7 @@ import {
   useMaterialDetail,
   useMaterialList,
   useModuleDetail,
+  useModuleLabelList,
   useModuleList,
   useModuleProgress,
   useMyLearningProgress,
@@ -22,6 +23,7 @@ export const useLearning = () => {
   return {
     query: {
       modules: useModuleList,
+      moduleLabels: useModuleLabelList,
       moduleDetail: useModuleDetail,
       moduleProgress: useModuleProgress,
       materials: useMaterialList,

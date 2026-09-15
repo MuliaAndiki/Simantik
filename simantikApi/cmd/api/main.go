@@ -54,12 +54,16 @@ func main() {
 	}
 
 	if cfg.DBAutoMigrate {
-		log.Println("running dev auto-migration (disable DB_AUTO_MIGRATE in production)")
-		if err := config.AutoMigrateDev(db, cfg.DBAutoMigrateForce); err != nil {
-			log.Fatalf("auto-migration failed: %v", err)
-		}
-		if err := config.SeedInitialData(db); err != nil {
-			log.Printf("warning: initial master data seeding failed: %v", err)
+		if cfg.AppEnv == "production" {
+			log.Println("config: DB_AUTO_MIGRATE is ignored in production. Schema migrations must be run explicitly via cmd/migrate.")
+		} else {
+			log.Println("running dev auto-migration (disable DB_AUTO_MIGRATE in production)")
+			if err := config.AutoMigrateDev(db, cfg.DBAutoMigrateForce); err != nil {
+				log.Fatalf("auto-migration failed: %v", err)
+			}
+			if err := config.SeedInitialData(db); err != nil {
+				log.Printf("warning: initial master data seeding failed: %v", err)
+			}
 		}
 	}
 

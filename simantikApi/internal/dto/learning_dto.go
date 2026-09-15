@@ -11,12 +11,14 @@ import (
 type CreateLearningModuleRequest struct {
 	Title        string `json:"title" validate:"required,min=3,max=200"`
 	Description  string `json:"description"`
+	Label        string `json:"label"`
 	DisplayOrder int    `json:"display_order"`
 }
 
 type UpdateLearningModuleRequest struct {
 	Title        string `json:"title" validate:"omitempty,min=3,max=200"`
 	Description  string `json:"description"`
+	Label        string `json:"label"`
 	DisplayOrder int    `json:"display_order"`
 	Status       string `json:"status" validate:"omitempty,oneof=draft published archived"`
 }
@@ -25,6 +27,7 @@ type LearningModuleResponse struct {
 	ID                 uuid.UUID `json:"id"`
 	Title              string    `json:"title"`
 	Description        string    `json:"description"`
+	Label              string    `json:"label"`
 	DisplayOrder       int       `json:"display_order"`
 	Status             string    `json:"status"`
 	MaterialsCount     int       `json:"materials_count"`
@@ -51,6 +54,7 @@ type LearningModuleDetailResponse struct {
 
 type ListModuleFilter struct {
 	Search string `query:"search"`
+	Label  string `query:"label"`
 	Status string `query:"status"`
 	Limit  int    `query:"limit"`
 	Offset int    `query:"offset"`

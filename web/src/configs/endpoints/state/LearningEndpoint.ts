@@ -2,6 +2,7 @@ import { mountEntry } from '@/utils/mount.entry';
 
 export const LearningEndpoint = {
   modules: `${mountEntry.learningModules}`,
+  moduleLabels: `${mountEntry.learningModules}/labels`,
   moduleDetail: (id: string) => `${mountEntry.learningModules}/${id}`,
   moduleStatus: (id: string) => `${mountEntry.learningModules}/${id}/status`,
   moduleProgress: (id: string) => `${mountEntry.learningModules}/${id}/progress`,

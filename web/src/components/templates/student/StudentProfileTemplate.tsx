@@ -52,7 +52,6 @@ export function StudentProfileTemplate({
         </div>
 
         {/* Portal Siswa Terverifikasi Badge */}
-        
       </div>
 
       {/* 2. Top Profile Hero Banner */}

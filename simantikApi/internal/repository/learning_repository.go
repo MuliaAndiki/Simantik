@@ -21,6 +21,7 @@ type LearningModuleRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, filter dto.ListModuleFilter) ([]models.LearningModule, int64, error)
 	ListPublished(ctx context.Context, filter dto.ListModuleFilter) ([]models.LearningModule, int64, error)
+	GetDistinctLabels(ctx context.Context) ([]string, error)
 }
 
 type learningModuleRepository struct {
@@ -48,7 +49,7 @@ func (r *learningModuleRepository) FindByIDWithMaterials(ctx context.Context, id
 	var module models.LearningModule
 	err := r.db.WithContext(ctx).
 		Preload("Materials", func(db *gorm.DB) *gorm.DB {
-			return db.Order("display_order ASC")
+			return db.Order("display_order ASC, created_at ASC")
 		}).
 		First(&module, "id = ?", id).Error
 	if err != nil {
@@ -72,7 +73,10 @@ func (r *learningModuleRepository) List(ctx context.Context, filter dto.ListModu
 	query := r.db.WithContext(ctx).Model(&models.LearningModule{})
 
 	if filter.Search != "" {
-		query = query.Where("title ILIKE ?", "%"+filter.Search+"%")
+		query = query.Where("title ILIKE ? OR description ILIKE ?", "%"+filter.Search+"%", "%"+filter.Search+"%")
+	}
+	if filter.Label != "" {
+		query = query.Where("label = ?", filter.Label)
 	}
 	if filter.Status != "" {
 		query = query.Where("status = ?", filter.Status)
@@ -99,6 +103,20 @@ func (r *learningModuleRepository) List(ctx context.Context, filter dto.ListModu
 func (r *learningModuleRepository) ListPublished(ctx context.Context, filter dto.ListModuleFilter) ([]models.LearningModule, int64, error) {
 	filter.Status = string(models.ContentStatusPublished)
 	return r.List(ctx, filter)
+}
+
+func (r *learningModuleRepository) GetDistinctLabels(ctx context.Context) ([]string, error) {
+	var labels []string
+	err := r.db.WithContext(ctx).
+		Model(&models.LearningModule{}).
+		Where("label IS NOT NULL AND label != '' AND deleted_at IS NULL").
+		Distinct("label").
+		Order("label ASC").
+		Pluck("label", &labels).Error
+	if err != nil {
+		return nil, err
+	}
+	return labels, nil
 }
 
 // ─── Material Repository ─────────────────────────────────────────────────────

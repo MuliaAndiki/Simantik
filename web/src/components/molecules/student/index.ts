@@ -5,6 +5,8 @@ export * from './EvaluationNextStepCard';
 export * from './EvaluationOverallScoreCard';
 export * from './EvaluationPillarCard';
 export * from './EvaluationTrendChartCard';
+export * from './LearningDetailBreadcrumb';
+export * from './LearningDetailCtaBanner';
 export * from './LearningFilterBar';
 export * from './LearningMaterialItemCard';
 export * from './MaterialCard';

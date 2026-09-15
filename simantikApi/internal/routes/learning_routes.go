@@ -17,6 +17,7 @@ func RegisterLearningRoutes(api fiber.Router, cfg *config.Config, lh *handler.Le
 	// ─── Learning Modules ──────────────────────────────────────────────────────
 	mod := api.Group("/learning-modules", auth)
 	mod.Get("/", lh.ListModules)
+	mod.Get("/labels", lh.ListModuleLabels)
 	mod.Post("/", adminOrCM, lh.CreateModule)
 	mod.Get("/:id", lh.GetModule)
 	mod.Patch("/:id", adminOrCM, lh.UpdateModule)

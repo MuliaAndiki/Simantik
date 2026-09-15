@@ -66,6 +66,7 @@ export const queryKey = {
   learningRoot: () => ['learning'] as const,
   learning: {
     modules: (query?: Record<string, any>) => ['learning', 'modules', query] as const,
+    moduleLabels: () => ['learning', 'moduleLabels'] as const,
     moduleDetail: (id: string) => ['learning', 'moduleDetail', id] as const,
     moduleProgress: (id: string) => ['learning', 'moduleProgress', id] as const,
     materials: (query?: Record<string, any>) => ['learning', 'materials', query] as const,
