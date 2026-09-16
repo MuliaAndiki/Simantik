@@ -7,18 +7,25 @@ import (
 	"gorm.io/gorm"
 )
 
-// Practice represents a student self-study or practice session (not timed).
+// Practice represents a student self-study practice attempt (non-adaptive, untimed).
 type Practice struct {
-	ID           uuid.UUID     `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID       uuid.UUID     `gorm:"type:uuid;not null;index" json:"userId"`
-	CompetencyID *uuid.UUID    `gorm:"type:uuid;index" json:"competencyId"` // optional competency focus
-	Status       AttemptStatus `gorm:"type:varchar(20);not null;default:'in_progress';index" json:"status"`
-	StartedAt    time.Time     `gorm:"not null" json:"startedAt"`
-	CompletedAt  *time.Time    `json:"completedAt"`
-	CreatedAt    time.Time     `json:"createdAt"`
-	UpdatedAt    time.Time     `json:"updatedAt"`
+	ID             uuid.UUID     `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID         uuid.UUID     `gorm:"type:uuid;not null;index" json:"userId"`
+	PackageID      *uuid.UUID    `gorm:"type:uuid;index" json:"packageId"`      // practice package reference
+	CompetencyID   *uuid.UUID    `gorm:"type:uuid;index" json:"competencyId"`   // optional competency focus
+	Status           AttemptStatus `gorm:"type:varchar(20);not null;default:'in_progress';index" json:"status"`
+	Score            *float64      `gorm:"type:numeric(5,2)" json:"score"`
+	TotalQuestions   int           `gorm:"not null;default:0" json:"totalQuestions"`
+	CorrectAnswers   int           `gorm:"not null;default:0" json:"correctAnswers"`
+	IsAutoSubmitted  bool          `gorm:"not null;default:false" json:"isAutoSubmitted"`
+	AutoSubmitReason string        `gorm:"type:varchar(100)" json:"autoSubmitReason,omitempty"`
+	StartedAt        time.Time     `gorm:"not null" json:"startedAt"`
+	CompletedAt    *time.Time    `json:"completedAt"`
+	CreatedAt      time.Time     `json:"createdAt"`
+	UpdatedAt      time.Time     `json:"updatedAt"`
 
 	User       *User            `gorm:"foreignKey:UserID;" json:"-"`
+	Package    *PracticePackage `gorm:"foreignKey:PackageID;" json:"package,omitempty"`
 	Competency *Competency      `gorm:"foreignKey:CompetencyID;" json:"competency,omitempty"`
 	Answers    []PracticeAnswer `gorm:"foreignKey:PracticeID;constraint:OnDelete:CASCADE;" json:"answers,omitempty"`
 }

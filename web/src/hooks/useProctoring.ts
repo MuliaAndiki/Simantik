@@ -14,4 +14,5 @@ export function useProctoring(): ProctoringContextValue {
   return context;
 }
 
+export { ProctoringProvider } from '@/core/providers/proctoring';
 export default useProctoring;

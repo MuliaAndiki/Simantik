@@ -6,7 +6,6 @@ package models
 // can be created without schema dependency errors.
 func AllModels() []interface{} {
 	return []interface{}{
-		// 1. Identity & Access Control (RBAC)
 		&Role{},
 		&Permission{},
 		&RolePermission{},
@@ -15,48 +14,34 @@ func AllModels() []interface{} {
 		&OTPCode{},
 		&PasswordResetToken{},
 		&ExternalAccount{},
-
-		// 2. Master Data & Profiles
 		&School{},
 		&StudentProfile{},
 		&Competency{},
 		&FileRecord{},
-
-		// 3. Learning Management System
 		&LearningModule{},
 		&Material{},
 		&MaterialAttachment{},
 		&LearningProgress{},
-
-		// 4. Question Bank
 		&QuestionType{},
 		&Question{},
 		&QuestionOption{},
 		&QuestionCompetency{},
 		&QuestionExplanation{},
-
-		// 5. Tryout & Adaptive Testing Engine
 		&Tryout{},
 		&TryoutQuestion{},
 		&TryoutAttempt{},
 		&AttemptQuestion{},
 		&StudentAnswer{},
-
-		// 6. Practice & Self-Study
+		&PracticePackage{},
+		&PracticePackageQuestion{},
 		&Practice{},
 		&PracticeAnswer{},
-
-		// 7. Evaluation & Adaptive Recommendations
 		&Evaluation{},
 		&CompetencyEvaluation{},
 		&Recommendation{},
-
-		// 8. CMS & Static Content
 		&News{},
 		&Documentation{},
 		&Testimonial{},
-
-		// 9. System, Telemetry & Notifications
 		&AuditLog{},
 		&Notification{},
 	}

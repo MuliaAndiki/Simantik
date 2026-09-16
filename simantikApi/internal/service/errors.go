@@ -44,6 +44,19 @@ var (
 	ErrTryoutNotAvailable          = errors.New("tryout is not available")
 )
 
+// Practice and Practice Attempt errors.
+var (
+	ErrPracticePackageNotFound       = errors.New("practice package not found")
+	ErrCannotDeletePublishedPractice = errors.New("cannot delete a published practice package")
+	ErrPracticeNotFound              = errors.New("practice attempt not found")
+	ErrPracticeAlreadyActive         = errors.New("an active practice attempt already exists for this package")
+	ErrPracticeNotActive             = errors.New("practice attempt is not active")
+	ErrPracticeNotOwner              = errors.New("you do not own this practice attempt")
+	ErrPracticeNotAvailable          = errors.New("practice package is not available")
+	ErrPracticeEmptyPackage          = errors.New("practice package has no questions")
+	ErrPracticeQuestionNotFound      = errors.New("question not found in this practice package")
+)
+
 // Competency and Question errors.
 var (
 	ErrCompetencyNotFound   = errors.New("competency not found")

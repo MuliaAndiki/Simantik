@@ -34,6 +34,12 @@ type SubmitAnswerResponse struct {
 	RemainingSeconds int       `json:"remaining_seconds"`
 }
 
+type AutoSubmitAttemptRequest struct {
+	Reason         string                `json:"reason" validate:"omitempty"`
+	ViolationCount int                   `json:"violation_count" validate:"omitempty"`
+	Answers        []SubmitAnswerRequest `json:"answers" validate:"omitempty,dive"`
+}
+
 type CompleteAttemptResponse struct {
 	AttemptID        uuid.UUID `json:"attempt_id"`
 	Status           string    `json:"status"`
@@ -43,6 +49,8 @@ type CompleteAttemptResponse struct {
 	Accuracy         float64   `json:"accuracy"`
 	TimeTakenSeconds int       `json:"time_taken_seconds"`
 	EvaluationID     uuid.UUID `json:"evaluation_id"`
+	IsAutoSubmitted  bool      `json:"is_auto_submitted"`
+	AutoSubmitReason string    `json:"auto_submit_reason,omitempty"`
 }
 
 type AttemptStatusResponse struct {

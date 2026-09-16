@@ -19,6 +19,9 @@ export const mountEntry = {
   notifications: '/notifications',
   reports: '/reports',
   system: '/system',
+  practices: '/practices',
+  practicePackages: '/practice-packages',
+  practiceAttempts: '/practice-attempts',
   schools: '/admin/schools',
   schoolPublik: '/schools',
 } as const;

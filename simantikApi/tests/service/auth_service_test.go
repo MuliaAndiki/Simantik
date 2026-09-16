@@ -184,6 +184,10 @@ func (m *mockEmailSender) SendTryoutResult(ctx context.Context, toEmail, student
 	return nil
 }
 
+func (m *mockEmailSender) SendTryoutDetailedResult(ctx context.Context, data utils.TryoutResultEmailData) error {
+	return nil
+}
+
 func (m *mockGoogleVerifier) Verify(ctx context.Context, idToken string) (*utils.GoogleClaims, error) {
 	if idToken == "valid-token" {
 		return &utils.GoogleClaims{

@@ -24,10 +24,19 @@ func NewTryoutAttemptHandler(attemptService service.TryoutAttemptService) *Tryou
 }
 
 // StartAttempt handles POST /api/v1/tryouts/:id/attempts.
+// If id is "auto" or "match", it automatically selects the optimal tryout package for the student.
 func (h *TryoutAttemptHandler) StartAttempt(c *fiber.Ctx) error {
-	tryoutID, err := uuid.Parse(c.Params("id"))
-	if err != nil {
-		return utils.Error(c, fiber.StatusBadRequest, "invalid tryout id", err)
+	idParam := c.Params("id")
+	var tryoutID uuid.UUID
+	var err error
+
+	if idParam == "auto" || idParam == "match" || idParam == "" {
+		tryoutID = uuid.Nil
+	} else {
+		tryoutID, err = uuid.Parse(idParam)
+		if err != nil {
+			return utils.Error(c, fiber.StatusBadRequest, "invalid tryout id", err)
+		}
 	}
 
 	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
@@ -173,6 +182,42 @@ func (h *TryoutAttemptHandler) CompleteAttempt(c *fiber.Ctx) error {
 	}
 
 	return utils.Success(c, "attempt completed successfully", res)
+}
+
+// AutoSubmitAttempt handles POST /api/v1/attempts/:attemptId/auto-submit.
+// Triggered by proctoring anti-cheating engine when student exceeds maximum violation threshold.
+func (h *TryoutAttemptHandler) AutoSubmitAttempt(c *fiber.Ctx) error {
+	attemptID, err := uuid.Parse(c.Params("attemptId"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid attempt id", err)
+	}
+
+	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
+	if !ok {
+		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
+	}
+
+	var req dto.AutoSubmitAttemptRequest
+	_ = c.BodyParser(&req)
+	if req.Reason == "" {
+		req.Reason = "VIOLATION_THRESHOLD_EXCEEDED"
+	}
+
+	res, err := h.attemptService.CompleteAttempt(c.UserContext(), attemptID, userID, req)
+	if err != nil {
+		if errors.Is(err, service.ErrAttemptNotFound) {
+			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
+		}
+		if errors.Is(err, service.ErrAttemptNotOwner) {
+			return utils.Error(c, fiber.StatusForbidden, err.Error(), err)
+		}
+		if errors.Is(err, service.ErrAttemptNotActive) {
+			return utils.Error(c, fiber.StatusBadRequest, err.Error(), err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to auto-submit attempt", err)
+	}
+
+	return utils.Success(c, "attempt auto-submitted successfully due to violations", res)
 }
 
 // ListMyAttempts handles GET /api/v1/attempts.

@@ -27,6 +27,7 @@ func RegisterAttemptRoutes(api fiber.Router, cfg *config.Config, ah *handler.Try
 	auth := middleware.JWTAuth(cfg.JWTSecret)
 
 	// Nested under tryout for starting
+	api.Post("/tryouts/auto/attempts", auth, ah.StartAttempt)
 	api.Post("/tryouts/:id/attempts", auth, ah.StartAttempt)
 
 	// Flat attempt endpoints
@@ -36,4 +37,5 @@ func RegisterAttemptRoutes(api fiber.Router, cfg *config.Config, ah *handler.Try
 	a.Get("/:attemptId/questions/:number", ah.GetAttemptQuestion)
 	a.Post("/:attemptId/answers", ah.SubmitAnswer)
 	a.Post("/:attemptId/complete", ah.CompleteAttempt)
+	a.Post("/:attemptId/auto-submit", ah.AutoSubmitAttempt)
 }

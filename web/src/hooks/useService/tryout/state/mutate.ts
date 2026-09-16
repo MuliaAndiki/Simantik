@@ -5,6 +5,7 @@ import { useAppNameSpace } from '@/hooks/useAppNameSpace';
 import Api from '@/services/props.service';
 import type {
   AddTryoutQuestionsRequest,
+  AutoSubmitAttemptRequest,
   CompleteAttemptResponse,
   CreateTryoutRequest,
   PublishTryoutRequest,
@@ -273,6 +274,33 @@ export function useCompleteAttempt() {
         title: res.title,
         message: res.message,
         icon: 'success',
+      });
+    },
+    onError: (err) => {
+      ns.alert.toast({
+        title: ResponseTitles.error,
+        message: err.message,
+        icon: 'error',
+      });
+    },
+  });
+}
+
+export function useAutoSubmitAttempt() {
+  const ns = useAppNameSpace();
+  return useMutation<
+    TResponse<CompleteAttemptResponse>,
+    Error,
+    { attemptId: string; body?: AutoSubmitAttemptRequest },
+    TryoutCacheContext
+  >({
+    mutationFn: ({ attemptId, body }) => Api.tryout.AutoSubmitAttemptService(attemptId, body),
+    onSettled: async () => {
+      await ns.queryClient.invalidateQueries({
+        queryKey: queryKey.tryoutRoot(),
+      });
+      await ns.queryClient.invalidateQueries({
+        queryKey: queryKey.evaluationRoot(),
       });
     },
     onError: (err) => {

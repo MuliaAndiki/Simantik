@@ -13,4 +13,6 @@ export * from './private/student/StudentLearningDetailPage';
 export * from './private/student/StudentLearningPage';
 export * from './private/student/StudentModuleDetailPage';
 export * from './private/student/StudentPracticePage';
+export * from './private/student/StudentTryoutDetailPage';
 export * from './private/student/StudentTryoutPage';
+export * from './private/student/StudentTryoutResultPage';

@@ -92,6 +92,7 @@ func main() {
 	testRepo := repository.NewTestimonialRepository(db)
 	notifRepo := repository.NewNotificationRepository(db)
 	reportingRepo := repository.NewReportingRepository(db)
+	practiceRepo := repository.NewPracticeRepository(db)
 
 	// ─── 2. External Service Abstractions ─────────────────────────────────────
 	emailSender := utils.NewEmailSender(utils.ResendConfig{
@@ -118,7 +119,7 @@ func main() {
 	userService := service.NewUserService(userRepo, refreshTokenRepo, schoolRepo, profileRepo)
 	questionService := service.NewQuestionService(competencyRepo, questionRepo, db)
 	tryoutService := service.NewTryoutService(tryoutRepo)
-	attemptService := service.NewTryoutAttemptService(db, attemptRepo, tryoutRepo)
+	attemptService := service.NewTryoutAttemptService(db, attemptRepo, tryoutRepo, emailSender)
 	evaluationService := service.NewEvaluationService(evaluationRepo, attemptRepo, tryoutRepo, db)
 	recommendationService := service.NewRecommendationService(recommendationRepo, evaluationRepo, materialRepo)
 	learningService := service.NewLearningService(moduleRepo, materialRepo, progressRepo)
@@ -127,6 +128,7 @@ func main() {
 	notificationService := service.NewNotificationService(notifRepo, emailSender)
 	reportingService := service.NewReportingService(reportingRepo, recommendationService)
 	schoolService := service.NewSchoolService(schoolRepo)
+	practiceService := service.NewPracticeService(db, practiceRepo, questionRepo, evaluationRepo)
 
 	// ─── 4. HTTP Handlers ──────────────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authService, cfg)
@@ -142,6 +144,7 @@ func main() {
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	reportingHandler := handler.NewReportingHandler(reportingService)
 	schoolHandler := handler.NewSchoolHandler(schoolService)
+	practiceHandler := handler.NewPracticeHandler(practiceService)
 	systemHandler := handler.NewSystemHandler(db, cfg)
 
 	// ─── 5. HTTP Router & Production Hardening ────────────────────────────────
@@ -178,6 +181,7 @@ func main() {
 		Notification:   notificationHandler,
 		Reporting:      reportingHandler,
 		School:         schoolHandler,
+		Practice:       practiceHandler,
 		System:         systemHandler,
 	})
 

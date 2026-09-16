@@ -12,6 +12,7 @@ export * from './ContentServiceType';
 export * from './EvaluationServiceType';
 export * from './LearningServiceType';
 export * from './NotificationServiceType';
+export * from './PracticeServiceType';
 export * from './QuestionServiceType';
 export * from './RecommendationServiceType';
 export * from './ReportingServiceType';
