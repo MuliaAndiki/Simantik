@@ -14,4 +14,5 @@ export const TryoutEndpoint = {
     `${mountEntry.attempts}/${attemptId}/questions/${number}`,
   submitAnswer: (attemptId: string) => `${mountEntry.attempts}/${attemptId}/answers`,
   completeAttempt: (attemptId: string) => `${mountEntry.attempts}/${attemptId}/complete`,
+  autoSubmit: (attemptId: string) => `${mountEntry.attempts}/${attemptId}/auto-submit`,
 } as const;

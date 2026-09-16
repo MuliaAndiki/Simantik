@@ -215,63 +215,7 @@ func AutoMigrateDev(db *gorm.DB, force bool) error {
 	}
 
 	log.Println("config: executing GORM auto-migration for all models...")
-	return db.AutoMigrate(
-		// Identity & Access
-		&models.Role{},
-		&models.Permission{},
-		&models.RolePermission{},
-		&models.User{},
-		&models.RefreshToken{},
-		&models.OTPCode{},
-		&models.PasswordResetToken{},
-		&models.ExternalAccount{},
-		&models.StudentProfile{},
-
-		// Competency
-		&models.Competency{},
-
-		// Learning System
-		&models.LearningModule{},
-		&models.Material{},
-		&models.MaterialAttachment{},
-		&models.LearningProgress{},
-
-		// Question Bank
-		&models.QuestionType{},
-		&models.Question{},
-		&models.QuestionOption{},
-		&models.QuestionCompetency{},
-		&models.QuestionExplanation{},
-
-		// Tryout & Adaptive Engine
-		&models.Tryout{},
-		&models.TryoutQuestion{},
-		&models.TryoutAttempt{},
-		&models.AttemptQuestion{},
-		&models.StudentAnswer{},
-
-		// Practice System
-		&models.Practice{},
-		&models.PracticeAnswer{},
-
-		// Evaluation & Recommendation
-		&models.Evaluation{},
-		&models.CompetencyEvaluation{},
-		&models.Recommendation{},
-
-		// CMS Content
-		&models.News{},
-		&models.Documentation{},
-		&models.Testimonial{},
-
-		// Master Data
-		&models.School{},
-
-		// System & Audit
-		&models.FileRecord{},
-		&models.AuditLog{},
-		&models.Notification{},
-	)
+	return db.AutoMigrate(models.AllModels()...)
 }
 
 func getEnv(key, fallback string) string {

@@ -4,6 +4,7 @@ import { ContentEndpoint } from './state/ContentEndpoint';
 import { EvaluationEndpoint } from './state/EvaluationEndpoint';
 import { LearningEndpoint } from './state/LearningEndpoint';
 import { NotificationEndpoint } from './state/NotificationEndpoint';
+import { PracticeEndpoint } from './state/PracticeEndpoint';
 import { QuestionEndpoint } from './state/QuestionEndpoint';
 import { RecommendationEndpoint } from './state/RecommendationEndpoint';
 import { ReportingEndpoint } from './state/ReportingEndpoint';
@@ -18,6 +19,7 @@ export const EndpointEntry = {
   evaluation: EvaluationEndpoint,
   learning: LearningEndpoint,
   notification: NotificationEndpoint,
+  practice: PracticeEndpoint,
   question: QuestionEndpoint,
   recommendation: RecommendationEndpoint,
   reporting: ReportingEndpoint,

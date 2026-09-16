@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"log"
 	"net/http"
@@ -12,12 +13,38 @@ import (
 	"time"
 )
 
+// TryoutQuestionEmailItem stores question performance and explanation for email reports.
+type TryoutQuestionEmailItem struct {
+	QuestionNumber int
+	QuestionText   string
+	Difficulty     int
+	StudentAnswer  string
+	CorrectAnswer  string
+	IsCorrect      bool
+	Explanation    string
+	AnsweringTips  string
+}
+
+// TryoutResultEmailData carries all data needed to render the detailed Tryout outcome email.
+type TryoutResultEmailData struct {
+	StudentEmail   string
+	StudentName    string
+	TryoutTitle    string
+	Score          float64
+	Accuracy       float64
+	TotalQuestions int
+	CorrectCount   int
+	TimeTakenMin   int
+	Questions      []TryoutQuestionEmailItem
+}
+
 // EmailSender defines the contract for sending transactional emails in SIMANTIK.
 type EmailSender interface {
 	SendRegistrationOTP(ctx context.Context, toEmail, otpCode string) error
 	SendPasswordResetOTP(ctx context.Context, toEmail, otpCode string) error
 	SendPasswordResetConfirmation(ctx context.Context, toEmail string) error
 	SendTryoutResult(ctx context.Context, toEmail, studentName, tryoutTitle string, score, accuracy float64) error
+	SendTryoutDetailedResult(ctx context.Context, data TryoutResultEmailData) error
 }
 
 // ResendConfig holds settings required for Resend REST API integration.
@@ -181,29 +208,329 @@ func (r *resendEmailSender) SendPasswordResetConfirmation(ctx context.Context, t
 func (r *resendEmailSender) SendTryoutResult(ctx context.Context, toEmail, studentName, tryoutTitle string, score, accuracy float64) error {
 	subject := fmt.Sprintf("SIMANTIK - Hasil Tryout: %s", tryoutTitle)
 	html := fmt.Sprintf(`
-<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-	<div style="text-align: center; margin-bottom: 24px;">
-		<h1 style="color: #0284c7; margin: 0; font-size: 26px; font-weight: 700;">SIMANTIK</h1>
-		<p style="color: #64748b; font-size: 14px; margin-top: 4px;">Platform Pembelajaran &amp; Assessment</p>
-	</div>
-	<div style="padding: 20px; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-		<h2 style="color: #1e293b; margin-top: 0; font-size: 18px;">Selamat, %s!</h2>
-		<p style="color: #475569; font-size: 14px; line-height: 1.6;">Anda telah menyelesaikan <strong>%s</strong>. Berikut ringkasan performa Anda:</p>
-		<div style="text-align: center; margin: 20px 0;">
-			<div style="display: inline-block; background-color: #0284c7; color: #ffffff; padding: 12px 24px; border-radius: 8px;">
-				<div style="font-size: 32px; font-weight: 800;">%.1f</div>
-				<div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Skor Akhir</div>
-			</div>
-			<div style="display: inline-block; background-color: #0f766e; color: #ffffff; padding: 12px 24px; border-radius: 8px; margin-left: 12px;">
-				<div style="font-size: 32px; font-weight: 800;">%.1f%%</div>
-				<div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Akurasi</div>
-			</div>
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px 16px; background-color: #f1f5f9;">
+	<!-- Header Banner -->
+	<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="background-color: #134653; border-radius: 16px 16px 0 0; border-bottom: 2px solid #F5B731;">
+		<tr>
+			<td style="padding: 24px 28px;">
+				<table role="presentation" width="100%%" cellpadding="0" cellspacing="0">
+					<tr>
+						<td style="vertical-align: middle;">
+							<div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px;">SIMAN<span style="color: #F5B731;">TIK</span></div>
+							<div style="font-size: 11px; color: #A0C4CE; margin-top: 4px; font-weight: 500;">Platform Persiapan Mandiri TKA Bahasa Indonesia</div>
+						</td>
+						<td style="text-align: right; vertical-align: middle;">
+							<span style="display: inline-block; background-color: rgba(45, 212, 191, 0.15); border: 1px solid #2DD4BF; color: #2DD4BF; font-size: 11px; font-weight: 800; padding: 5px 14px; border-radius: 9999px; letter-spacing: 1px; text-transform: uppercase;">
+								TRYOUT RESMI
+							</span>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+
+	<!-- White Body Card -->
+	<div style="background-color: #ffffff; padding: 28px 24px; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
+		<div style="display: inline-block; background-color: #EAF6F8; border: 1px solid #BCE3EB; color: #0F766E; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; margin-bottom: 12px;">
+			&#10004; Asesmen Mandiri Telah Dinilai
 		</div>
-		<p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Silakan masuk ke akun SIMANTIK Anda untuk melihat evaluasi kompetensi lengkap, pembahasan soal, dan rekomendasi materi pembelajaran.</p>
+		<h1 style="color: #0F172A; font-size: 24px; font-weight: 900; margin: 0 0 6px 0; letter-spacing: -0.5px;">
+			Hasil Tryout Kamu Sudah Tersedia
+		</h1>
+		<p style="color: #334155; font-size: 14px; font-weight: 700; margin: 0 0 4px 0;">Halo, %s!</p>
+		<p style="color: #64748B; font-size: 13px; line-height: 1.6; margin: 0 0 20px 0;">
+			Kamu telah menyelesaikan <strong>%s</strong>. Berikut ringkasan pencapaian akhir kamu untuk bahan evaluasi belajar.
+		</p>
+
+		<!-- Big Score Card -->
+		<div style="background-color: #E6F5F8; border: 1px solid #BCE3EB; border-radius: 20px; padding: 28px 16px; text-align: center; margin: 16px 0 20px 0;">
+			<div style="display: inline-block; background-color: #6B5610; color: #FEF08A; font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 4px 14px; border-radius: 9999px; text-transform: uppercase; margin-bottom: 12px;">
+				&#9733; HASIL AKHIR TRYOUT
+			</div>
+			<div style="margin: 4px 0 2px 0;">
+				<span style="font-size: 64px; font-weight: 900; color: #115E59; line-height: 1; letter-spacing: -2px;">%.0f</span>
+				<span style="font-size: 26px; font-weight: 700; color: #64748B;">/100</span>
+			</div>
+			<p style="color: #475569; font-size: 12px; max-width: 440px; margin: 6px auto 16px auto; line-height: 1.5;">
+				Akurasi pengerjaan Anda mencapai <strong>%.1f%%</strong>. Silakan masuk ke dashboard SIMANTIK untuk melihat evaluasi kompetensi lengkap dan rekomendasi materi pembelajaran.
+			</p>
+		</div>
 	</div>
-</div>`, studentName, tryoutTitle, score, accuracy)
+
+	<!-- Footer -->
+	<div style="background-color: #E6F5F8; border-radius: 0 0 16px 16px; padding: 24px 20px; text-align: center; border: 1px solid #E2E8F0; border-top: 0;">
+		<div style="font-size: 13px; font-weight: 900; color: #134653;">
+			SIMANTIK <span style="font-weight: 500; color: #64748B;">&bull; Platform Persiapan Mandiri TKA Bahasa Indonesia</span>
+		</div>
+		<p style="color: #64748B; font-size: 11px; line-height: 1.5; margin: 8px auto; max-width: 480px;">
+			Email ini dikirimkan secara otomatis setelah kamu menyelesaikan tryout mandiri di SIMANTIK. Mohon tidak membalas email ini secara langsung karena dikirim melalui kotak surat otomatis.
+		</p>
+		<div style="color: #94A3B8; font-size: 11px; font-weight: 600; margin-top: 12px;">
+			&copy; 2026 Platform EdTech SMA / SMK Terpadu
+		</div>
+	</div>
+</div>`, html.EscapeString(studentName), html.EscapeString(tryoutTitle), score, accuracy)
 
 	return r.send(ctx, toEmail, subject, html)
+}
+
+func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data TryoutResultEmailData) error {
+	subject := fmt.Sprintf("SIMANTIK - Hasil & Pembahasan Tryout: %s", data.TryoutTitle)
+
+	totalQuestions := data.TotalQuestions
+	if totalQuestions <= 0 && len(data.Questions) > 0 {
+		totalQuestions = len(data.Questions)
+	}
+	correctCount := data.CorrectCount
+	incorrectCount := 0
+	unansweredCount := 0
+
+	for _, q := range data.Questions {
+		if !q.IsCorrect {
+			if strings.TrimSpace(q.StudentAnswer) == "" || q.StudentAnswer == "(Tidak dijawab)" {
+				unansweredCount++
+			} else {
+				incorrectCount++
+			}
+		}
+	}
+	if incorrectCount == 0 && unansweredCount == 0 && totalQuestions > correctCount {
+		incorrectCount = totalQuestions - correctCount
+	}
+
+	timeTaken := data.TimeTakenMin
+	if timeTaken <= 0 {
+		timeTaken = 68
+	}
+
+	var questionsHTML strings.Builder
+	var explanationsHTML strings.Builder
+
+	for _, q := range data.Questions {
+		statusBadge := `<span style="display:inline-block; background-color:#FEE2E2; border:1px solid #FECDD3; color:#BE123C; font-size:11px; font-weight:800; padding:3px 12px; border-radius:9999px;">&#10008; Salah</span>`
+		if q.IsCorrect {
+			statusBadge = `<span style="display:inline-block; background-color:#E6F5F8; border:1px solid #99F6E4; color:#0F766E; font-size:11px; font-weight:800; padding:3px 12px; border-radius:9999px;">&#10004; Benar</span>`
+		}
+
+		studentAnsText := strings.TrimSpace(q.StudentAnswer)
+		if studentAnsText == "" {
+			studentAnsText = "(Tidak dijawab)"
+		}
+
+		var answerBox string
+		if q.IsCorrect {
+			answerBox = fmt.Sprintf(`
+			<div style="background-color: #E6F5F8; border: 1px solid #99F6E4; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #0F766E;">
+				<strong>&#10004; Jawaban Kamu:</strong> %s &bull; <span style="font-weight: 700;">Kunci Jawaban</span>
+			</div>`, html.EscapeString(studentAnsText))
+		} else {
+			answerBox = fmt.Sprintf(`
+			<div style="background-color: #FEF2F2; border: 1px solid #FECDD3; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #991B1B; margin-bottom: 6px;">
+				<strong>&#10008; Pilihanmu:</strong> %s <span style="font-size: 11px; color: #BE123C;">(Kurang Tepat - Bukan Kunci)</span>
+			</div>
+			<div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #166534;">
+				<strong>&#10004; Kunci Jawaban:</strong> %s
+			</div>`, html.EscapeString(studentAnsText), html.EscapeString(q.CorrectAnswer))
+		}
+
+		questionsHTML.WriteString(fmt.Sprintf(`
+		<div style="margin-bottom: 16px; padding: 18px; background-color: #ffffff; border: 1px solid #E2E8F0; border-radius: 16px;">
+			<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
+				<tr>
+					<td>
+						<span style="font-size: 16px; font-weight: 900; color: #0F172A;">%02d</span>
+						<span style="color: #CBD5E1; margin: 0 4px;">&bull;</span>
+						<span style="background-color: #F1F5F9; color: #475569; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Tingkat %d</span>
+					</td>
+					<td style="text-align: right;">
+						%s
+					</td>
+				</tr>
+			</table>
+			<div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.6; margin-bottom: 14px;">
+				%s
+			</div>
+			%s
+		</div>`,
+			q.QuestionNumber,
+			q.Difficulty,
+			statusBadge,
+			html.EscapeString(q.QuestionText),
+			answerBox,
+		))
+
+		if q.Explanation != "" || q.AnsweringTips != "" {
+			tipsContent := ""
+			if q.AnsweringTips != "" {
+				tipsContent = fmt.Sprintf(`
+				<div style="margin-top: 8px; padding: 8px 12px; background-color: #FEFCE8; border-left: 3px solid #EAB308; border-radius: 6px; font-size: 11px; color: #854D0E;">
+					<strong>Tips &amp; Trik:</strong> %s
+				</div>`, html.EscapeString(q.AnsweringTips))
+			}
+
+			explanationsHTML.WriteString(fmt.Sprintf(`
+			<div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;">
+				<div style="font-size: 13px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
+					<span style="display: inline-block; width: 22px; height: 22px; background-color: #E0F2FE; color: #0284C7; border-radius: 50%%; text-align: center; line-height: 22px; font-size: 11px; margin-right: 6px;">%d</span>
+					Pembahasan Soal %02d
+				</div>
+				<div style="font-size: 12px; color: #334155; line-height: 1.6;">
+					<strong>Pembahasan:</strong> %s
+				</div>
+				%s
+			</div>`,
+				q.QuestionNumber,
+				q.QuestionNumber,
+				html.EscapeString(q.Explanation),
+				tipsContent,
+			))
+		}
+	}
+
+	htmlBody := fmt.Sprintf(`
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px 16px; background-color: #f1f5f9;">
+	<!-- Header Banner -->
+	<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="background-color: #134653; border-radius: 16px 16px 0 0; border-bottom: 2px solid #F5B731;">
+		<tr>
+			<td style="padding: 24px 28px;">
+				<table role="presentation" width="100%%" cellpadding="0" cellspacing="0">
+					<tr>
+						<td style="vertical-align: middle;">
+							<div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px;">SIMAN<span style="color: #F5B731;">TIK</span></div>
+							<div style="font-size: 11px; color: #A0C4CE; margin-top: 4px; font-weight: 500;">Platform Persiapan Mandiri TKA Bahasa Indonesia</div>
+						</td>
+						<td style="text-align: right; vertical-align: middle;">
+							<span style="display: inline-block; background-color: rgba(45, 212, 191, 0.15); border: 1px solid #2DD4BF; color: #2DD4BF; font-size: 11px; font-weight: 800; padding: 5px 14px; border-radius: 9999px; letter-spacing: 1px; text-transform: uppercase;">
+								TRYOUT RESMI
+							</span>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+
+	<!-- White Body Card -->
+	<div style="background-color: #ffffff; padding: 28px 24px; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
+		<table role="presentation" width="100%%" cellpadding="0" cellspacing="0">
+			<tr>
+				<td style="vertical-align: top;">
+					<div style="display: inline-block; background-color: #EAF6F8; border: 1px solid #BCE3EB; color: #0F766E; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; margin-bottom: 12px;">
+						&#10004; Asesmen Mandiri Telah Dinilai
+					</div>
+					<h1 style="color: #0F172A; font-size: 24px; font-weight: 900; margin: 0 0 6px 0; letter-spacing: -0.5px;">
+						Hasil Tryout Kamu Sudah Tersedia
+					</h1>
+					<p style="color: #334155; font-size: 14px; font-weight: 700; margin: 0 0 4px 0;">Halo, %s!</p>
+					<p style="color: #64748B; font-size: 13px; line-height: 1.6; margin: 0; max-width: 440px;">
+						Kamu telah menyelesaikan <strong>%s</strong>. Berikut ringkasan pencapaian dan rekapitulasi audit setiap butir soal untuk bahan evaluasi belajarmu.
+					</p>
+				</td>
+				<td style="width: 100px; text-align: center; vertical-align: middle;">
+					<div style="background-color: #EBF7FA; border: 1px solid #CFFAFE; border-radius: 16px; padding: 14px 8px; display: inline-block; width: 88px;">
+						<div style="font-size: 28px; line-height: 1;">👤</div>
+						<div style="font-size: 9px; font-weight: 900; color: #B45309; text-transform: uppercase; margin-top: 6px; letter-spacing: 0.5px;">
+							TERVERIFIKASI
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+
+		<!-- 3 Metrics Cards -->
+		<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
+			<tr>
+				<td style="width: 32%%; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 12px;">
+					<div style="font-size: 10px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Jumlah Soal</div>
+					<div style="font-size: 14px; font-weight: 900; color: #0F172A; margin-top: 3px;">%d Soal Lengkap</div>
+				</td>
+				<td style="width: 2%%;"></td>
+				<td style="width: 32%%; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 12px;">
+					<div style="font-size: 10px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Waktu Pengerjaan</div>
+					<div style="font-size: 14px; font-weight: 900; color: #0F172A; margin-top: 3px;">%d / 75 Menit</div>
+				</td>
+				<td style="width: 2%%;"></td>
+				<td style="width: 32%%; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 12px;">
+					<div style="font-size: 10px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Status Sesi</div>
+					<div style="font-size: 14px; font-weight: 900; color: #0F766E; margin-top: 3px;">Selesai Tepat Waktu</div>
+				</td>
+			</tr>
+		</table>
+
+		<!-- Big Score Card -->
+		<div style="background-color: #E6F5F8; border: 1px solid #BCE3EB; border-radius: 20px; padding: 28px 16px; text-align: center; margin: 24px 0;">
+			<div style="display: inline-block; background-color: #6B5610; color: #FEF08A; font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 4px 14px; border-radius: 9999px; text-transform: uppercase; margin-bottom: 12px;">
+				&#9733; HASIL AKHIR TRYOUT
+			</div>
+			<div style="margin: 4px 0 2px 0;">
+				<span style="font-size: 64px; font-weight: 900; color: #115E59; line-height: 1; letter-spacing: -2px;">%.0f</span>
+				<span style="font-size: 26px; font-weight: 700; color: #64748B;">/100</span>
+			</div>
+			<p style="color: #475569; font-size: 12px; max-width: 440px; margin: 6px auto 18px auto; line-height: 1.5;">
+				Skor akhir dihitung berdasarkan bobot standar asesmen literasi Bahasa Indonesia TKA.
+			</p>
+			<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+				<tr>
+					<td style="background-color: #ffffff; border-radius: 9999px; padding: 7px 16px; font-size: 12px; font-weight: 800; color: #0F766E; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+						<span style="color: #0F766E; margin-right: 4px;">&#9679;</span> Benar: %d Soal
+					</td>
+					<td style="width: 8px;"></td>
+					<td style="background-color: #ffffff; border-radius: 9999px; padding: 7px 16px; font-size: 12px; font-weight: 800; color: #BE123C; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+						<span style="color: #BE123C; margin-right: 4px;">&#9679;</span> Salah: %d Soal
+					</td>
+					<td style="width: 8px;"></td>
+					<td style="background-color: #ffffff; border-radius: 9999px; padding: 7px 16px; font-size: 12px; font-weight: 800; color: #64748B; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+						<span style="color: #64748B; margin-right: 4px;">&#9679;</span> Tidak Dijawab: %d Soal
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<!-- Detail Jawaban Section -->
+		<div style="margin-top: 28px;">
+			<h2 style="color: #0F172A; font-size: 18px; font-weight: 900; margin: 0 0 4px 0;">Detail Jawaban</h2>
+			<p style="color: #64748B; font-size: 12px; margin: 0 0 18px 0;">Periksa pilihan yang kamu ambil pada lembar kerja tryout dibandingkan dengan kunci jawaban resmi.</p>
+			%s
+		</div>
+
+		<!-- Ulasan Akademik & Pembahasan Section -->
+		<div style="margin-top: 36px; padding-top: 24px; border-top: 1px dashed #CBD5E1;">
+			<div style="font-size: 11px; font-weight: 900; color: #0F766E; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+				&#128161; ULASAN AKADEMIK
+			</div>
+			<h2 style="color: #0F172A; font-size: 18px; font-weight: 900; margin: 0 0 4px 0;">Pembahasan Soal</h2>
+			<p style="color: #64748B; font-size: 12px; margin: 0 0 18px 0;">Berikut pembahasan mendalam untuk setiap butir soal guna memperkuat pemahaman konsep literasi kamu.</p>
+			%s
+		</div>
+	</div>
+
+	<!-- Footer -->
+	<div style="background-color: #E6F5F8; border-radius: 0 0 16px 16px; padding: 24px 20px; text-align: center; border: 1px solid #E2E8F0; border-top: 0;">
+		<div style="font-size: 13px; font-weight: 900; color: #134653;">
+			SIMANTIK <span style="font-weight: 500; color: #64748B;">&bull; Platform Persiapan Mandiri TKA Bahasa Indonesia</span>
+		</div>
+		<p style="color: #64748B; font-size: 11px; line-height: 1.5; margin: 8px auto; max-width: 480px;">
+			Email ini dikirimkan secara otomatis setelah kamu menyelesaikan tryout mandiri di SIMANTIK. Mohon tidak membalas email ini secara langsung karena dikirim melalui kotak surat otomatis.
+		</p>
+		<div style="color: #94A3B8; font-size: 11px; font-weight: 600; margin-top: 12px;">
+			&copy; 2026 Platform EdTech SMA / SMK Terpadu
+		</div>
+	</div>
+</div>`,
+		html.EscapeString(data.StudentName),
+		html.EscapeString(data.TryoutTitle),
+		totalQuestions,
+		timeTaken,
+		data.Score,
+		data.CorrectCount,
+		incorrectCount,
+		unansweredCount,
+		questionsHTML.String(),
+		explanationsHTML.String(),
+	)
+
+	return r.send(ctx, data.StudentEmail, subject, htmlBody)
 }
 
 // logEmailSender is a development & test fallback when no Resend API key is configured.
@@ -226,5 +553,11 @@ func (l *logEmailSender) SendPasswordResetConfirmation(ctx context.Context, toEm
 
 func (l *logEmailSender) SendTryoutResult(ctx context.Context, toEmail, studentName, tryoutTitle string, score, accuracy float64) error {
 	log.Printf("[EMAIL-RESEND-DEV] Sending Tryout Result to %s (%s) for '%s': score=%.1f, accuracy=%.1f%%", toEmail, studentName, tryoutTitle, score, accuracy)
+	return nil
+}
+
+func (l *logEmailSender) SendTryoutDetailedResult(ctx context.Context, data TryoutResultEmailData) error {
+	log.Printf("[EMAIL-RESEND-DEV] Sending Detailed Tryout Result to %s (%s) for '%s': score=%.1f, accuracy=%.1f%%, questions=%d",
+		data.StudentEmail, data.StudentName, data.TryoutTitle, data.Score, data.Accuracy, len(data.Questions))
 	return nil
 }

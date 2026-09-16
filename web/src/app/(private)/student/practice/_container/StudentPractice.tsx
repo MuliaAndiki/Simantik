@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import type { PracticePackageItem } from '@/components/molecules/student/PracticePackageCard';
 import { StudentPracticePage } from '@/components/page/private/student/StudentPracticePage';
 import { useApi } from '@/hooks/useApi';
-import type { PaginatedEvaluationsResponse } from '@/types/service';
+import type { PaginatedEvaluationsResponse, PracticePackageResponse } from '@/types/service';
 
 const COMPETENCIES_LIMIT = 100;
 const PRACTICE_EVALUATIONS_LIMIT = 100;
@@ -20,16 +20,13 @@ type PracticeResult = {
 type PracticeResultMap = Map<string, PracticeResult>;
 
 /**
- * Backend belum punya entitas "paket latihan". Latihan dipetakan dari
- * kompetensi (satu kompetensi = satu paket latihan) + riwayat evaluasi
- * `source_type: practice` untuk status "sudah dikerjakan" dan nilainya.
+ * Fallback mapping if backend practice packages are empty or in migration.
  */
 function buildPracticeResultMap(
   evaluationsPage: PaginatedEvaluationsResponse | null | undefined
 ): PracticeResultMap {
   const map: PracticeResultMap = new Map();
 
-  // Evaluations diurutkan created_at DESC, jadi yang pertama = terbaru.
   for (const evaluation of evaluationsPage?.evaluations ?? []) {
     for (const comp of evaluation.competency_evaluations ?? []) {
       if (!map.has(comp.competency_id)) {
@@ -44,7 +41,7 @@ function buildPracticeResultMap(
   return map;
 }
 
-function toPracticePackages(
+function toPracticePackagesFromCompetencies(
   competencies: Competency[] | undefined,
   results: PracticeResultMap
 ): PracticePackageItem[] {
@@ -65,14 +62,48 @@ function toPracticePackages(
   });
 }
 
+/**
+ * Maps real backend practice packages from GET /api/v1/practices (practice_routes.go).
+ */
+function mapBackendPackages(
+  packages: PracticePackageResponse[] | undefined
+): PracticePackageItem[] {
+  return (packages ?? []).map((pkg) => {
+    const isCompleted = pkg.is_completed ?? false;
+    return {
+      id: pkg.id,
+      title: pkg.title,
+      description: pkg.description,
+      competencyCode: pkg.competency_code || 'pemahaman-tekstual',
+      competencyName: pkg.competency_name || 'Kompetensi Umum',
+      status: isCompleted ? 'sudah-dikerjakan' : 'belum-dikerjakan',
+      totalQuestions: pkg.total_questions ?? 0,
+      score:
+        pkg.latest_score !== undefined && pkg.latest_score !== null
+          ? Math.round(pkg.latest_score)
+          : undefined,
+    };
+  });
+}
+
 export default function StudentPractice() {
   const router = useRouter();
-  const { evaluation, question } = useApi();
+  const { evaluation, practice, question } = useApi();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompetency, setSelectedCompetency] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
 
-  const { data: competenciesPage } = question.query.competencies({ limit: COMPETENCIES_LIMIT });
+  // 1. Fetch practice packages directly from GET /api/v1/practices
+  const { data: practicePage, isLoading: isPracticeLoading } = practice.query.list({
+    limit: 100,
+  });
+
+  // 2. Fetch competencies for filters and fallback
+  const { data: competenciesPage } = question.query.competencies({
+    limit: COMPETENCIES_LIMIT,
+  });
+
+  // 3. Fallback evaluation query in case no practice packages are created yet
   const { data: evaluationsPage } = evaluation.query.list({
     source_type: 'practice',
     limit: PRACTICE_EVALUATIONS_LIMIT,
@@ -80,20 +111,42 @@ export default function StudentPractice() {
 
   const practiceResults = useMemo(() => buildPracticeResultMap(evaluationsPage), [evaluationsPage]);
 
-  const packages = useMemo(
-    () => toPracticePackages(competenciesPage?.competencies, practiceResults),
-    [competenciesPage, practiceResults]
-  );
+  // Use backend packages if available, otherwise graceful fallback
+  const packages = useMemo(() => {
+    if (practicePage?.packages && practicePage.packages.length > 0) {
+      return mapBackendPackages(practicePage.packages);
+    }
+    return toPracticePackagesFromCompetencies(competenciesPage?.competencies, practiceResults);
+  }, [practicePage?.packages, competenciesPage?.competencies, practiceResults]);
 
   const competencyOptions = useMemo(() => {
+    const list = competenciesPage?.competencies ?? [];
+    if (list.length > 0) {
+      return [
+        { value: 'all', label: 'Semua Kompetensi' },
+        ...list.map((competency) => ({
+          value: competency.code,
+          label: competency.name,
+        })),
+      ];
+    }
+
+    // Extract unique competencies from packages if list is empty
+    const uniqueCompetencies = new Map<string, string>();
+    for (const pkg of packages) {
+      if (pkg.competencyCode && !uniqueCompetencies.has(pkg.competencyCode)) {
+        uniqueCompetencies.set(pkg.competencyCode, pkg.competencyName);
+      }
+    }
+
     return [
       { value: 'all', label: 'Semua Kompetensi' },
-      ...(competenciesPage?.competencies ?? []).map((competency) => ({
-        value: competency.code,
-        label: competency.name,
+      ...Array.from(uniqueCompetencies.entries()).map(([code, name]) => ({
+        value: code,
+        label: name,
       })),
     ];
-  }, [competenciesPage]);
+  }, [competenciesPage, packages]);
 
   const filteredPackages = useMemo(() => {
     return packages.filter((pkg) => {
@@ -126,8 +179,8 @@ export default function StudentPractice() {
     router.push(`/student/practice/${packageId}`);
   };
 
-  const handleViewResult = (_packageId: string) => {
-    router.push('/student/evaluation');
+  const handleViewResult = (packageId: string) => {
+    router.push(`/student/practice/${packageId}/result`);
   };
 
   const handleRetryPractice = (packageId: string) => {

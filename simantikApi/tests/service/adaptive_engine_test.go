@@ -238,3 +238,99 @@ func TestAdaptiveEngine_ProcessStep(t *testing.T) {
 		t.Errorf("expected question q2 (diff 2) to be selected")
 	}
 }
+
+func TestAdaptiveEngine_DynamicStreakWindows(t *testing.T) {
+	engine := adaptive.NewEngine(adaptive.DefaultConfig())
+
+	// 1. Initial random difficulty range 1..5
+	for i := 0; i < 20; i++ {
+		diff := engine.RandomInitialDifficulty()
+		if diff < 1 || diff > 5 {
+			t.Fatalf("RandomInitialDifficulty() out of range 1..5: got %d", diff)
+		}
+	}
+
+	// 2. Initial streak window range 1..3
+	for i := 0; i < 20; i++ {
+		target := engine.RandomStreakWindow()
+		if target < 1 || target > 3 {
+			t.Fatalf("RandomStreakWindow() out of range 1..3: got %d", target)
+		}
+	}
+
+	// 3. Window of 1: single correct -> Level UP
+	res := engine.CalculateAdaptiveWindowStep(adaptive.WindowState{
+		CurrentDifficulty: 2,
+		TargetStreak:      1,
+	}, true)
+	if res.NextDifficulty != 3 {
+		t.Errorf("expected next diff 3, got %d", res.NextDifficulty)
+	}
+	if res.Action != "LEVEL_UP" {
+		t.Errorf("expected action LEVEL_UP, got %s", res.Action)
+	}
+
+	// 4. Window of 1: single incorrect -> Level DOWN
+	res = engine.CalculateAdaptiveWindowStep(adaptive.WindowState{
+		CurrentDifficulty: 3,
+		TargetStreak:      1,
+	}, false)
+	if res.NextDifficulty != 2 {
+		t.Errorf("expected next diff 2, got %d", res.NextDifficulty)
+	}
+	if res.Action != "LEVEL_DOWN" {
+		t.Errorf("expected action LEVEL_DOWN, got %s", res.Action)
+	}
+
+	// 5. Window of 2: 1 correct + 1 incorrect -> Stuck tie! -> odd tie-breaker window (1 or 3)
+	// Step 1: 1 correct
+	res1 := engine.CalculateAdaptiveWindowStep(adaptive.WindowState{
+		CurrentDifficulty: 2,
+		TargetStreak:      2,
+		WindowCorrect:     0,
+		WindowIncorrect:   0,
+	}, true)
+	if res1.Action != "STAY" || res1.NextWindowCorrect != 1 {
+		t.Errorf("expected STAY with 1 correct, got %+v", res1)
+	}
+
+	// Step 2: 1 incorrect -> Tie!
+	res2 := engine.CalculateAdaptiveWindowStep(adaptive.WindowState{
+		CurrentDifficulty: 2,
+		TargetStreak:      2,
+		WindowCorrect:     1,
+		WindowIncorrect:   0,
+	}, false)
+	if res2.Action != "TIE_BREAKER" {
+		t.Errorf("expected action TIE_BREAKER, got %s", res2.Action)
+	}
+	if res2.NextTargetStreak != 1 && res2.NextTargetStreak != 3 {
+		t.Errorf("expected odd tie-breaker (1 or 3), got %d", res2.NextTargetStreak)
+	}
+	if res2.NextDifficulty != 2 {
+		t.Errorf("expected difficulty to stay 2 during tie, got %d", res2.NextDifficulty)
+	}
+
+	// 6. Window of 3: majority rule
+	// 2 correct out of 3 -> Level UP
+	res = engine.CalculateAdaptiveWindowStep(adaptive.WindowState{
+		CurrentDifficulty: 2,
+		TargetStreak:      3,
+		WindowCorrect:     1,
+		WindowIncorrect:   0,
+	}, true)
+	if res.NextDifficulty != 3 || res.Action != "LEVEL_UP" {
+		t.Errorf("expected Level UP with 2 correct in window 3, got %+v", res)
+	}
+
+	// 2 incorrect out of 3 -> Level DOWN
+	res = engine.CalculateAdaptiveWindowStep(adaptive.WindowState{
+		CurrentDifficulty: 4,
+		TargetStreak:      3,
+		WindowCorrect:     0,
+		WindowIncorrect:   1,
+	}, false)
+	if res.NextDifficulty != 3 || res.Action != "LEVEL_DOWN" {
+		t.Errorf("expected Level DOWN with 2 incorrect in window 3, got %+v", res)
+	}
+}

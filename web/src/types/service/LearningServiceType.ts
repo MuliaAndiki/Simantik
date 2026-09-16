@@ -11,6 +11,7 @@ import type { ApiResponse, ContentStatus, MaterialType } from '../model';
 export interface CreateLearningModuleRequest {
   title: string;
   description?: string;
+  label?: string;
   display_order?: number;
 }
 
@@ -21,6 +22,7 @@ export interface CreateLearningModuleRequest {
 export interface UpdateLearningModuleRequest {
   title?: string;
   description?: string;
+  label?: string;
   display_order?: number;
   status?: ContentStatus | string;
 }
@@ -33,6 +35,7 @@ export interface LearningModuleResponse {
   id: string;
   title: string;
   description: string;
+  label?: string;
   display_order: number;
   status: string;
   materials_count: number;
@@ -70,6 +73,7 @@ export interface LearningModuleDetailResponse extends LearningModuleResponse {
  */
 export interface ListModuleFilter {
   search?: string;
+  label?: string;
   status?: ContentStatus | string;
   limit?: number;
   offset?: number;

@@ -21,3 +21,7 @@ export interface AlertContexType {
   modal: (p: ModalProps) => void;
   confirm: (p: ModalProps) => Promise<boolean>;
 }
+
+export * from './practice.types';
+export * from './practice-result.types';
+export * from './tryout.types';

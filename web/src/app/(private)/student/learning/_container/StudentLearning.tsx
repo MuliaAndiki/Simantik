@@ -5,9 +5,9 @@ import { useMemo, useState } from 'react';
 import type { LearningMaterialItem } from '@/components/molecules/student/LearningMaterialItemCard';
 import { StudentLearningPage } from '@/components/page/private/student/StudentLearningPage';
 import { useApi } from '@/hooks/useApi';
-import type { PaginatedMaterialsResponse } from '@/types/service';
+import type { PaginatedModulesResponse } from '@/types/service';
 
-const MATERIALS_LIMIT = 100;
+const MODULES_LIMIT = 100;
 const COMPETENCIES_LIMIT = 50;
 
 type CompetencyMap = Map<string, { code: string; name: string }>;
@@ -22,89 +22,104 @@ function buildCompetencyMap(
   return map;
 }
 
-function toLearningMaterials(
-  materialsPage: PaginatedMaterialsResponse | null | undefined,
-  competencyMap: CompetencyMap
+function toLearningModules(
+  modulesPage: PaginatedModulesResponse | null | undefined
 ): LearningMaterialItem[] {
-  return (materialsPage?.materials ?? []).map((material) => {
-    const competency = material.competency_id
-      ? competencyMap.get(material.competency_id)
-      : undefined;
+  return (modulesPage?.modules ?? []).map((module) => {
+    const materialsCount = module.materials_count ?? 0;
+    const completedCount = module.completed_count ?? 0;
+    const labelBadge =
+      module.label ||
+      (materialsCount > 0 ? `${completedCount}/${materialsCount} Materi Selesai` : 'Modul Belajar');
+
     return {
-      id: material.id,
-      title: material.title,
-      description: material.description,
-      competencyCode: competency?.code ?? material.competency_id ?? '',
-      competencyName: competency?.name ?? material.competency_name ?? '',
+      id: module.id,
+      title: module.title,
+      description:
+        module.description ||
+        `${materialsCount} materi pembelajaran terstruktur disiapkan dalam modul ini.`,
+      competencyCode: module.label || 'all',
+      competencyName: labelBadge,
+      href: `/student/learning/${module.id}`,
     };
   });
 }
 
 export default function StudentLearningContainer() {
   const router = useRouter();
-  const { learning, question } = useApi();
+  const { learning } = useApi();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCompetency, setSelectedCompetency] = useState('all');
+  const [selectedLabel, setSelectedLabel] = useState('all');
 
-  const { data: materialsPage } = learning.query.materials({ limit: MATERIALS_LIMIT });
-  const { data: competenciesPage } = question.query.competencies({ limit: COMPETENCIES_LIMIT });
+  // 1. Fetch modules: mod.Get("/", lh.ListModules) with label query support
+  const { data: modulesPage } = learning.query.modules({
+    limit: MODULES_LIMIT,
+    label: selectedLabel !== 'all' ? selectedLabel : undefined,
+  });
 
-  const competencyMap = useMemo(
-    () => buildCompetencyMap(competenciesPage?.competencies),
-    [competenciesPage]
-  );
+  // 2. Fetch distinct labels: mod.Get("/labels", lh.ListModuleLabels) for dropdown
+  const { data: moduleLabels } = learning.query.moduleLabels();
 
-  const materials = useMemo(
-    () => toLearningMaterials(materialsPage, competencyMap),
-    [materialsPage, competencyMap]
-  );
+  const modules = useMemo(() => toLearningModules(modulesPage), [modulesPage]);
 
-  const competencyOptions = useMemo(() => {
-    return [
-      { value: 'all', label: 'Semua Kompetensi' },
-      ...(competenciesPage?.competencies ?? []).map((competency) => ({
-        value: competency.code,
-        label: competency.name,
-      })),
-    ];
-  }, [competenciesPage]);
+  // Build category/label dropdown options
+  const labelOptions = useMemo(() => {
+    const options = [{ value: 'all', label: 'Semua Kategori' }];
+    const seen = new Set<string>();
 
-  const filteredMaterials = useMemo(() => {
-    return materials.filter((material) => {
-      const matchesCompetency =
-        selectedCompetency === 'all' || material.competencyCode === selectedCompetency;
+    // From backend labels endpoint
+    for (const label of moduleLabels ?? []) {
+      if (label && !seen.has(label)) {
+        seen.add(label);
+        options.push({ value: label, label });
+      }
+    }
+
+    // From loaded modules if any
+    for (const mod of modulesPage?.modules ?? []) {
+      if (mod.label && !seen.has(mod.label)) {
+        seen.add(mod.label);
+        options.push({ value: mod.label, label: mod.label });
+      }
+    }
+
+    return options;
+  }, [moduleLabels, modulesPage]);
+
+  const filteredModules = useMemo(() => {
+    return modules.filter((module) => {
+      const matchesLabel = selectedLabel === 'all' || module.competencyCode === selectedLabel;
 
       const trimmedQuery = searchQuery.trim().toLowerCase();
       const matchesSearch =
         trimmedQuery === '' ||
-        material.title.toLowerCase().includes(trimmedQuery) ||
-        material.description.toLowerCase().includes(trimmedQuery) ||
-        material.competencyName.toLowerCase().includes(trimmedQuery);
+        module.title.toLowerCase().includes(trimmedQuery) ||
+        module.description.toLowerCase().includes(trimmedQuery);
 
-      return matchesCompetency && matchesSearch;
+      return matchesLabel && matchesSearch;
     });
-  }, [materials, searchQuery, selectedCompetency]);
+  }, [modules, searchQuery, selectedLabel]);
 
-  const isFiltered = searchQuery.trim() !== '' || selectedCompetency !== 'all';
+  const isFiltered = searchQuery.trim() !== '' || selectedLabel !== 'all';
 
   const handleResetFilters = () => {
     setSearchQuery('');
-    setSelectedCompetency('all');
+    setSelectedLabel('all');
   };
 
-  const handleLearnMaterial = (materialId: string) => {
-    router.push(`/student/learning/${materialId}`);
+  const handleLearnModule = (moduleId: string) => {
+    router.push(`/student/learning/${moduleId}`);
   };
 
   return (
     <StudentLearningPage
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
-      selectedCompetency={selectedCompetency}
-      onCompetencyChange={setSelectedCompetency}
-      competencyOptions={competencyOptions}
-      materials={filteredMaterials}
-      onLearnMaterial={handleLearnMaterial}
+      selectedCompetency={selectedLabel}
+      onCompetencyChange={setSelectedLabel}
+      competencyOptions={labelOptions}
+      materials={filteredModules}
+      onLearnMaterial={handleLearnModule}
       onResetFilters={handleResetFilters}
       isFiltered={isFiltered}
     />
