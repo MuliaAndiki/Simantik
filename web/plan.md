@@ -1,1446 +1,665 @@
-# Page & Screen Requirements Plan
+Saya ingin kamu melakukan AUDIT lalu IMPLEMENTASI fitur Practice / Latihan pada backend SIMANTIK.
 
-## 1. Purpose
+PENTING:
+Jangan langsung coding sebelum memahami struktur project dan file-file yang saya tag.
 
-Dokumen ini mendefinisikan kebutuhan setiap **page/screen** yang terdapat dalam SIMANTIK berdasarkan:
+Saya akan tag beberapa file yang berhubungan dengan:
+- Question
+- Practice / Latihan jika sudah ada
+- Tryout
+- Module / Learning
+- Model
+- Repository
+- Service
+- Handler
+- Routes
+- DTO
+- Migration jika relevan
 
-- Information Architecture
-- User Flow
-- User Journey
-- User Role & Permission
-- Learning Flow
-- Practice Flow
-- Tryout Flow
-- Evaluation & Recommendation Flow
-- Content Management System
-- Existing Frontend Route Structure
+==================================================
+CONTEXT PROJECT
+==================================================
 
-Dokumen ini menjadi acuan bersama untuk:
+Backend:
+- Go
+- GoFiber v2
+- GORM
+- PostgreSQL (Neon)
 
-- Product
-- UI/UX
-- Frontend
-- Backend
-- QA
+Arsitektur backend kurang lebih:
 
-sebelum implementasi halaman dimulai.
-
-> Dokumen ini mendefinisikan **apa yang harus tersedia pada sebuah halaman**, bukan detail visual final seperti warna, typography, spacing, atau design system.
-
----
-
-# 2. Page Architecture
-
-Struktur halaman SIMANTIK mengikuti pembagian berdasarkan role.
-
-````text
-APP
-│
-├── Public
-│
-├── Authentication
-│
-└── Protected Area
-    │
-    ├── Dashboard
-    │
-    ├── Student
-    │
-    ├── Admin
-    │
-    └── Content Manager
-
-    Existing application structure:
-
-Area	Role	Access
-Public	Guest	Public
-Authentication	Guest	Public
-Dashboard	Authenticated User	Authenticated
-Student	Student	Student
-Admin	Admin	Admin
-Content Manager	Content Manager	Content Manager
-
-Permission detail tetap mengacu pada dokumen User Roles & Permissions.
-
-3. Page Classification
-Group	Description
-Public	Halaman yang dapat diakses tanpa login
-Authentication	Halaman authentication
-Dashboard	Dashboard berdasarkan authenticated user
-Student	Fitur pembelajaran siswa
-Admin	Administrasi sistem dan pengguna
-Content Manager	Pengelolaan konten pembelajaran
-4. Page Inventory
-4.1 Public Pages
-Page	Route	Priority
-Beranda	/	MVP
-Tentang SIMANTIK	/tentang	MVP
-Materi	/materi	MVP
-Berita	/berita	P1
-Dokumentasi	/dokumentasi	P1
-Testimoni	/testimoni	P1
-Tutorial	/tutorial	P1
-5. Authentication Pages
-
-Authentication page berada di luar role karena digunakan sebelum user memiliki role aktif di application session.
-
-Page	Route	Priority
-Login	/login	MVP
-Register	/register	TBD
-Forgot Password	/forgot-password	MVP
-Verify OTP	/verify-otp	MVP
-Reset Password	/reset-password	MVP
-Authentication Flow
-Login
+Handler
   ↓
-Authentication
+Service
   ↓
-Identify Role
-  │
-  ├── Student
-  │      ↓
-  │   Dashboard / Student Area
-  │
-  ├── Admin
-  │      ↓
-  │   Admin Area
-  │
-  └── Content Manager
-         ↓
-      Content Manager Area
-
-Registration masih TBD sesuai keputusan product sebelumnya.
-
-6. Dashboard Pages
-
-Directory:
-
-app/
-└── dashboard/
-
-Dashboard merupakan entry point setelah user berhasil login.
-
-6.1 Dashboard
-
-Route: /dashboard
-
-Access: Authenticated User
-
-Purpose
-
-Memberikan overview aktivitas dan informasi utama user setelah login.
-
-Student Dashboard
-
-Minimal menampilkan:
-
-Learning progress
-Aktivitas terakhir
-Latihan terakhir
-Tryout terakhir
-Score terakhir
-Competency overview
-Recommendation
-CTA aktivitas berikutnya
-Admin Dashboard
-
-Jika dashboard digunakan sebagai entry point admin, dapat menampilkan:
-
-Total student
-Active student
-Total material
-Total question
-Total tryout
-Recent activity
-Content status
-Content Manager Dashboard
-
-Dapat menampilkan:
-
-Total material
-Total question
-Total tryout
-Draft content
-Content awaiting review
-Published content
-Recent content activity
-
-Bentuk dashboard dapat berbeda berdasarkan role. Implementasi harus mengikuti role & permission.
-
-7. Student Pages
-
-Directory:
-
-app/
-└── student/
-
-Seluruh page di bawah /student hanya dapat diakses oleh role:
-
-STUDENT
-8. Student Learning Pages
-8.1 Learning Overview
-
-Route:
-
-/student/belajar
-
-Role: Student
-
-Purpose
-
-Menjadi halaman utama aktivitas pembelajaran siswa.
-
-Information
-
-Minimal:
-
-Daftar materi
-Category
-Difficulty
-Progress
-Completion status
-Estimated learning time
-Actions
-Search
-Filter
-Open material
-Continue learning
-States
-Loading
-Empty
-No search result
-Error
-8.2 Material Detail
-
-Route:
-
-/student/belajar/[slug]
-
-Role: Student
-
-Purpose
-
-Menampilkan materi pembelajaran secara lengkap.
-
-Information
-Title
-Description
-Content
-Learning objective
-Category
-Difficulty
-Progress
-Related material
-Actions
-Start learning
-Continue learning
-Start practice
-Open related material
-States
-Loading
-Not found
-Unavailable
-Error
-8.3 Learning Recommendation
-
-Route:
-
-/student/belajar/rekomendasi
-
-Role: Student
-
-Purpose
-
-Menampilkan materi yang direkomendasikan berdasarkan performa siswa.
-
-Information
-Recommended material
-Related competency
-Recommendation reason
-Priority
-Learning progress
-Primary Action
-Mulai Belajar
-9. Student Practice Pages
-9.1 Practice Overview
-
-Route:
-
-/student/latihan
-
-Role: Student
-
-Purpose
-
-Menampilkan latihan yang tersedia untuk siswa.
-
-Information
-Practice title
-Category
-Number of questions
-Difficulty
-Previous result
-Status
-Actions
-Start practice
-Continue practice
-View result
-States
-Loading
-Empty
-Error
-10. Practice Session
-
-Route:
-
-/student/latihan/[id]
-
-Role: Student
-
-Purpose
-
-Menjadi workspace siswa saat mengerjakan latihan.
-
-Main Information
-Question
-Question number
-Answer options
-Progress
-Answer status
-Actions
-Select answer
-Next question
-Previous question
-Submit
-Flow
-Practice
-   ↓
-Start
-   ↓
-Practice Session
-   ↓
-Answer
-   ↓
-Save Answer
-   ↓
-Next / Previous
-   ↓
-Finish
-   ↓
-Submit
-   ↓
-Practice Result
-TBD
-Apakah latihan menggunakan timer?
-Apakah student dapat kembali ke soal sebelumnya?
-Apakah student dapat mengubah jawaban?
-Apakah student dapat skip question?
-11. Practice Result
-
-Route:
-
-/student/latihan/[id]/hasil
-
-Role: Student
-
-Purpose
-
-Menampilkan hasil latihan dan feedback.
-
-Information
-Score
-Total questions
-Correct
-Incorrect
-Unanswered
-Question review
-Explanation
-Competency performance jika tersedia
-Actions
-Review answers
-Try again
-Continue learning
-12. Student Tryout Pages
-12.1 Tryout Overview
-
-Route:
-
-/student/tryout
-
-Role: Student
-
-Purpose
-
-Menampilkan daftar tryout yang tersedia.
-
-Information
-Tryout title
-Description
-Number of questions
-Duration
-Difficulty
-Availability
-Previous attempt
-Previous score
-Actions
-View detail
-Start tryout
-View result
-13. Tryout Detail
-
-Route:
-
-/student/tryout/[id]
-
-Role: Student
-
-Purpose
-
-Memberikan informasi sebelum siswa memulai tryout.
-
-Information
-Tryout title
-Description
-Number of questions
-Duration
-Difficulty
-Rules
-Instructions
-Attempt information
-Primary Action
-Mulai Tryout
-Flow
-Tryout Detail
-      ↓
-Read Instructions
-      ↓
-Start
-      ↓
-Tryout Session
-TBD
-Maximum attempt
-Retake policy
-Previous result visibility
-Availability period
-14. Tryout Session
-
-Route:
-
-/student/tryout/[id]/session
-
-Role: Student
-
-Purpose
-
-Menjadi workspace utama siswa ketika mengerjakan tryout.
-
-Main Information
-Question
-Question number
-Answer options
-Progress
-Timer
-Answer status
-Question navigation
-Actions
-Select answer
-Navigate question
-Submit tryout
-Timer
-
-Timer merupakan bagian penting dari tryout.
-
-Start Tryout
-      ↓
-Start Timer
-      ↓
-Answer Questions
-      │
-      ├── Manual Submit
-      │       ↓
-      │   Submit
-      │
-      └── Timer = 0
-              ↓
-          Auto Submit
-
-Frontend bertugas menampilkan countdown.
-
-Backend menjadi authority terhadap:
-
-startedAt
-expiresAt
-submit time
-session status
-15. Adaptive Tryout
-
-Tryout SIMANTIK menggunakan adaptive difficulty sesuai requirement product.
-
-Tryout terdiri dari:
-
-5 Difficulty Levels
-30 Questions
-5 Answer Choices
-
-Adaptive behavior:
-
-Current Difficulty
-       ↓
-Answer
-       ↓
-Evaluate
-       │
-       ├── Correct consecutively
-       │       ↓
-       │   Increase difficulty
-       │
-       └── Incorrect
-               ↓
-          Decrease difficulty
-
-Rule detail adaptive testing harus mengikuti dokumen:
-
-06. Tryout System/03. Adaptive Test Requirements
-
-Detail algoritma adaptive tidak didefinisikan ulang pada page requirement.
-
-16. Tryout Result
-
-Route:
-
-/student/tryout/[id]/hasil
-
-Role: Student
-
-Purpose
-
-Menampilkan hasil tryout setelah session selesai.
-
-Information
-Score
-Total questions
-Correct
-Incorrect
-Unanswered
-Performance
-Competency
-Difficulty performance
-Strength
-Weakness
-Actions
-Lihat evaluasi
-Lihat rekomendasi
-Review result
-Flow
-Tryout Result
-      ↓
-Evaluation
-      ↓
-Competency Analysis
-      ↓
-Recommendation
-17. Student Evaluation Pages
-17.1 Evaluation Overview
-
-Route:
-
-/student/evaluasi
-
-Role: Student
-
-Purpose
-
-Menampilkan gambaran kemampuan siswa berdasarkan aktivitas assessment.
-
-Information
-Overall score
-Performance
-Competency summary
-Strength
-Weakness
-Performance trend
-Recommendation
-Primary Actions
-Lihat kompetensi
-Lihat rekomendasi
-Mulai belajar
-18. Competency Evaluation
-
-Route:
-
-/student/evaluasi/kompetensi
-
-Role: Student
-
-Purpose
-
-Menampilkan performa berdasarkan competency.
-
-Information
-Competency
-Score
-Performance status
-Trend
-Related learning material
-Performance Status
-
-Conceptually:
-
-STRONG
-DEVELOPING
-NEEDS_IMPROVEMENT
-INSUFFICIENT_DATA
-
-Threshold final mengikuti Evaluation Requirements.
-
-19. Recommendation
-
-Route:
-
-/student/evaluasi/rekomendasi
-
-Role: Student
-
-Purpose
-
-Mengubah hasil evaluasi menjadi tindakan belajar berikutnya.
-
-Recommendation Types
-Learning material
-Practice
-Tryout
-Competency improvement
-Information
-
-Setiap recommendation minimal memiliki:
-
-Recommendation
-Reason
-Related competency
-Priority
-Action
-Flow
-Performance
-     ↓
-Evaluation
-     ↓
-Weak / Developing Competency
-     ↓
-Recommendation
-     ↓
-Learning Action
-20. Student Profile
-
-Route:
-
-/student/profile
-
-Role: Student
-
-Purpose
-
-Mengelola informasi akun siswa.
-
-Information
-Full name
-Email
-Profile information
-Account information
-Actions
-Edit profile
-Change password
-Logout
-
-Detail field mengikuti:
-
-04. User & Role/02. Student Requirements
-
-21. Admin Pages
-
-Directory:
-
-app/
-└── admin/
-
-Seluruh halaman admin hanya dapat diakses oleh:
-
-ADMIN
-22. Admin Dashboard
-
-Route:
-
-/admin
-
-atau mengikuti existing route convention project.
-
-Role: Admin
-
-Purpose
-
-Memberikan overview operasional sistem.
-
-Information
-Total students
-Active students
-Total materials
-Total questions
-Total tryouts
-Recent activities
-System status
-Actions
-Manage students
-Manage content
-Manage questions
-Manage tryouts
-23. Admin Student Management
-
-Route:
-
-/admin/students
-
-Role: Admin
-
-Purpose
-
-Mengelola user/student.
-
-Information
-Student name
-Email
-Registration date
-Status
-Latest activity
-Latest performance
-Actions
-Search
-Filter
-View detail
-Edit
-Activate
-Deactivate
-TBD
-Delete student
-Reset password
-Export data
-View detailed activity
-
-Permission final mengikuti User Roles & Permissions.
-
-24. Admin Student Detail
-
-Route:
-
-/admin/students/[id]
-
-Role: Admin
-
-Purpose
-
-Menampilkan detail student.
-
-Information
-Profile
-Account status
-Learning activity
-Practice history
-Tryout history
-Performance
-Competency
-Actions
-
-Sesuai permission Admin.
-
-25. Admin System Management
-
-Jika terdapat fitur administrasi sistem, page dapat mencakup:
-
-/admin/users
-/admin/roles
-/admin/settings
-
-Namun page tersebut belum dianggap final sebelum kebutuhan system administration didefinisikan.
-
-26. Content Manager Pages
-
-Directory:
-
-app/
-└── content_manager/
-
-Seluruh halaman di bawah area ini hanya dapat diakses oleh:
-
-CONTENT_MANAGER
-
-Permission harus mengikuti:
-
-04. User & Role/04. Content Manager Requirements
-
-27. Content Manager Dashboard
-
-Route:
-
-/content_manager
-
-Role: Content Manager
-
-Purpose
-
-Memberikan overview pengelolaan konten.
-
-Information
-Total materials
-Total questions
-Total tryouts
-Draft content
-Published content
-Content awaiting review
-Recent updates
-28. Material Management
-
-Route:
-
-/content_manager/materials
-
-Role: Content Manager
-
-Purpose
-
-Mengelola materi pembelajaran.
-
-Information
-Title
-Category
-Difficulty
-Status
-Author
-Created date
-Updated date
-Actions
-Create
-View
-Edit
-Preview
-Publish
-Unpublish
-Archive
-Content Lifecycle
-DRAFT
+Repository
   ↓
-REVIEW
-  ↓
-PUBLISHED
-  ↓
-ARCHIVED
-29. Material Editor
+Database
 
-Route:
+Business logic harus berada di Service Layer.
+Handler hanya menangani HTTP request/response.
+Repository hanya menangani akses data.
 
-/content_manager/materials/create
-/content_manager/materials/[id]/edit
+Jangan merusak architecture atau pattern yang sudah ada.
+Ikuti naming convention, response format, error handling,
+dependency injection, validation, pagination, dan pattern
+repository/service yang sudah digunakan project.
 
-Role: Content Manager
+==================================================
+MASALAH YANG INGIN DIPERBAIKI
+==================================================
 
-Purpose
+Saat ini sistem sudah memiliki konsep Question dan Tryout,
+tetapi endpoint untuk Practice / Latihan belum tersedia atau
+belum lengkap.
 
-Membuat dan mengedit material.
+Practice TIDAK sama dengan Tryout.
 
-Information
-Title
-Description
-Category
-Difficulty
-Learning objectives
-Content
-Related competency
-Related practice
-Actions
-Save draft
-Preview
-Submit/review
-Publish
-30. Question Bank Management
+Saya ingin Practice menjadi fitur tersendiri dan nantinya
+ditampilkan sebagai menu/flow yang berbeda di Web App.
 
-Route:
+Sebelum implementasi, periksa seluruh file yang saya tag dan
+tentukan terlebih dahulu:
 
-/content_manager/questions
+1. Apakah sebenarnya model/entity Practice sudah tersedia?
+2. Apakah sudah ada konsep Practice Package?
+3. Apakah Question saat ini hanya terhubung ke Tryout?
+4. Apakah schema Question memungkinkan digunakan oleh Practice?
+5. Apakah repository Practice sudah ada?
+6. Apakah service Practice sudah ada?
+7. Apakah handler/controller Practice sudah ada?
+8. Apakah route Practice sudah terdaftar?
+9. Apakah DTO request/response Practice sudah tersedia?
+10. Apakah ada bagian existing code yang bisa digunakan kembali
+    tanpa membuat duplicate logic?
 
-Role: Content Manager
+JANGAN berasumsi fitur belum ada.
+Audit source code terlebih dahulu.
 
-Purpose
+==================================================
+BUSINESS RULE — PRACTICE
+==================================================
 
-Mengelola question bank.
+Practice / Latihan berbeda dengan Tryout.
 
-Information
-Question
-Question type
-Difficulty
-Competency
-Status
-Author
-Actions
-Search
-Filter
-Create
-Edit
-Preview
-Publish
-Archive
-Delete
-Question Requirements
+Practice TIDAK memiliki difficulty level.
 
-Untuk current tryout requirement:
+Jangan menggunakan adaptive difficulty untuk Practice.
 
-Difficulty
-├── Level 1
-├── Level 2
-├── Level 3
-├── Level 4
-└── Level 5
+Jangan membuat:
+- current_level
+- difficulty progression
+- adaptive question selection
+- level up
+- level down
+- difficulty streak
 
-Answer
-└── 5 choices
-31. Question Editor
+pada Practice.
 
-Route:
-
-/content_manager/questions/create
-/content_manager/questions/[id]/edit
-
-Role: Content Manager
-
-Information
-
-Minimal:
-
-Question
-Question type
-Choices
-Correct answer
-Explanation
-Difficulty
-Competency
-Related material
-Status
-Actions
-Save draft
-Preview
-Publish
-Archive
-
-Correct answer tidak boleh diekspos kepada student pada active tryout session.
-
-32. Tryout Management
-
-Route:
-
-/content_manager/tryouts
-
-Role: Content Manager
-
-Purpose
-
-Mengelola tryout.
-
-Information
-Tryout title
-Description
-Question count
-Duration
-Difficulty configuration
-Status
-Availability
-Actions
-Create
-Edit
-Configure
-Assign questions
-Preview
-Publish
-Unpublish
-Archive
-33. Tryout Editor
-
-Route:
-
-/content_manager/tryouts/create
-/content_manager/tryouts/[id]/edit
-Information
-Title
-Description
-Instructions
-Duration
-Question configuration
-Availability
-Scoring configuration
-Adaptive configuration
-Question Configuration
-
-Tryout current requirement:
-
-30 Questions
-      ↓
-5 Choices / Question
-      ↓
-5 Difficulty Levels
-      ↓
-Adaptive Selection
-34. News Management
-
-Route:
-
-/content_manager/news
-
-Role: Content Manager
-
-Information
-Title
-Thumbnail
-Content
-Author
-Publish date
-Status
-Actions
-Create
-Edit
-Preview
-Publish
-Unpublish
-Archive
-35. Documentation Management
-
-Route:
-
-/content_manager/documentation
-Information
-Title
-Category
-Content
-Author
-Status
-Updated date
-Actions
-Create
-Edit
-Preview
-Publish
-Unpublish
-Archive
-36. Testimonial Management
-
-Route:
-
-/content_manager/testimonials
-Information
-Name
-Role / description
-Testimonial
-Photo
-Status
-Actions
-Create
-Edit
-Preview
-Publish
-Unpublish
-Archive
-37. Tutorial Management
-
-Route:
-
-/content_manager/tutorials
-Information
-Title
-Description
-Content
-Thumbnail
-Video/media
-Status
-Actions
-Create
-Edit
-Preview
-Publish
-Unpublish
-Archive
-38. Page Access Matrix
-Page Area	Guest	Student	Admin	Content Manager
-Public	✓	✓	✓	✓
-Authentication	✓	✓	✓	✓
-Dashboard	-	✓	✓	✓
-Student	-	✓	-	-
-Admin	-	-	✓	-
-Content Manager	-	-	-	✓
-
-Permission dapat diperluas jika role tertentu membutuhkan read-only access terhadap area tertentu. Hal tersebut harus mengikuti dokumen User Roles & Permissions.
-
-39. Page State Requirements
-
-Setiap page yang mengambil data dari backend minimal harus menangani:
-
-Loading
-Empty
-Error
-Success
-Not Found
-Unauthorized
-Forbidden
-Loading
-Request
-  ↓
-Loading
-  ↓
-Content
-Empty
-Request Success
-      ↓
-No Data
-      ↓
-Empty State
-Error
-Request
-  ↓
-Error
-  ↓
-Error State
-  ↓
-Retry
-Unauthorized
-Protected Page
-      ↓
-Authentication Check
-      ↓
-Not Authenticated
-      ↓
-Login
-Forbidden
-Authenticated
-      ↓
-Role / Permission Check
-      ↓
-Forbidden
+Semua question di dalam sebuah Practice Package dianggap
+sebagai kumpulan soal latihan biasa.
 
 Contoh:
 
-Student
-  ↓
-/admin
-  ↓
-403 Forbidden
-40. Page Responsibility
-
-Page requirement harus membedakan antara:
-
-Page
-  ↓
-Container
-  ↓
-Atomic UI
-
-Frontend implementation mengikuti architecture existing project.
-
-Container
-
-Bertanggung jawab terhadap:
-
-Client state
-API interaction
-Query/mutation
-Business flow
-Navigation
-Event handlers
-Loading
-Error handling
-Page / Template / Organism / Molecule / Atom
-
-Bertanggung jawab terhadap presentation dan composition.
-
-Strict Client Rule
-
-Untuk interactive authentication dan application flow:
-
-'use client'
-
-hanya berada pada Container sesuai frontend architecture project.
-
-UI components tidak boleh mengambil alih business logic Container.
-
-41. Page-to-Feature Mapping
-Role	Page	Feature
-Public	Beranda	Public
-Public	Materi	Learning
-Student	Dashboard	Dashboard
-Student	Belajar	Learning
-Student	Material Detail	Learning
-Student	Latihan	Practice
-Student	Practice Session	Practice
-Student	Practice Result	Practice
-Student	Tryout	Tryout
-Student	Tryout Detail	Tryout
-Student	Tryout Session	Tryout
-Student	Tryout Result	Tryout
-Student	Evaluasi	Evaluation
-Student	Kompetensi	Evaluation
-Student	Rekomendasi	Recommendation
-Student	Profile	Profile
-Admin	Dashboard	Administration
-Admin	Students	User Management
-Content Manager	Dashboard	Content Management
-Content Manager	Materials	Learning Content
-Content Manager	Questions	Question Bank
-Content Manager	Tryouts	Tryout Management
-Content Manager	News	CMS
-Content Manager	Documentation	CMS
-Content Manager	Testimonials	CMS
-Content Manager	Tutorials	CMS
-42. Recommended Route Structure
-
-Target route structure:
-
-/
-├── login
-├── register
-├── forgot-password
-├── verify-otp
-├── reset-password
-│
-├── dashboard
-│
-├── student
-│   ├── belajar
-│   │   ├── rekomendasi
-│   │   └── [slug]
-│   │
-│   ├── latihan
-│   │   └── [id]
-│   │       └── hasil
-│   │
-│   ├── tryout
-│   │   └── [id]
-│   │       ├── session
-│   │       └── hasil
-│   │
-│   ├── evaluasi
-│   │   ├── kompetensi
-│   │   └── rekomendasi
-│   │
-│   └── profile
-│
-├── admin
-│   ├── students
-│   │   └── [id]
-│   │
-│   └── ...
-│
-└── content_manager
-    ├── materials
-    │   ├── create
-    │   └── [id]/edit
-    │
-    ├── questions
-    │   ├── create
-    │   └── [id]/edit
-    │
-    ├── tryouts
-    │   ├── create
-    │   └── [id]/edit
-    │
-    ├── news
-    ├── documentation
-    ├── testimonials
-    └── tutorials
-
-Struktur route di atas adalah target logical structure. Sebelum implementasi, route harus disesuaikan dengan struktur existing repository agar tidak terjadi perubahan arsitektur yang tidak diperlukan.
-
-43. Implementation Priority
-P0 — Core MVP
-Authentication
-Login
-Forgot Password
-Verify OTP
-Reset Password
-Student
-Dashboard
-Belajar
-Material Detail
-Latihan
-Practice Session
-Practice Result
-Tryout
-Tryout Detail
-Tryout Session
-Tryout Result
-Evaluasi
-Kompetensi
-Rekomendasi
-Profile
-Admin
-Admin Dashboard
-Students
-Content Manager
-Content Manager Dashboard
-Materials
-Questions
-Tryouts
-44. P1
-
-Public:
-
-Berita
-Dokumentasi
-Testimoni
-Tutorial
-
-Content Manager:
-
-News Management
-Documentation Management
-Testimonial Management
-Tutorial Management
-
-Additional management features dapat ditambahkan setelah core learning flow selesai.
-
-45. Definition of Done
-
-Page dianggap siap diimplementasikan apabila:
-
-[ ] Route sudah ditentukan
-[ ] Role access sudah ditentukan
-[ ] Purpose sudah jelas
-[ ] Information yang ditampilkan sudah jelas
-[ ] Primary action sudah jelas
-[ ] Secondary action sudah jelas
-[ ] Loading state sudah ditentukan
-[ ] Empty state sudah ditentukan
-[ ] Error state sudah ditentukan
-[ ] Unauthorized state sudah ditentukan jika protected
-[ ] Forbidden state sudah ditentukan jika role restricted
-[ ] Dependency dengan backend sudah diketahui
-[ ] Dependency dengan feature lain sudah diketahui
-
-Untuk page interactive:
-
-[ ] User flow sudah jelas
-[ ] Submit flow sudah jelas
-[ ] Success flow sudah jelas
-[ ] Error flow sudah jelas
-[ ] Navigation flow sudah jelas
-46. Final Page Architecture
-
-SIMANTIK menggunakan struktur:
-
-                    SIMANTIK
-                       │
-          ┌────────────┼────────────┐
-          │            │            │
-       PUBLIC       AUTHENTICATION  PROTECTED
-                                    │
-                       ┌────────────┼────────────┐
-                       │            │            │
-                   DASHBOARD      STUDENT      MANAGEMENT
-                                                  │
-                                          ┌───────┴───────┐
-                                          │               │
-                                        ADMIN      CONTENT MANAGER
-
-Student flow:
-
-Dashboard
-    ↓
-Learning
-    ↓
 Practice
-    ↓
-Tryout
-    ↓
-Result
-    ↓
-Evaluation
-    ↓
-Recommendation
-    ↓
-Learning Again
+└── Paket Latihan 1
+    ├── Question 1
+    ├── Question 2
+    ├── Question 3
+    └── Question N
 
-Management flow:
+Practice
+└── Paket Latihan 2
+    ├── Question 1
+    ├── Question 2
+    └── Question N
 
-Admin
-  ↓
-Students
-  ↓
-User Management
-Content Manager
+Jadi user nantinya melihat:
+
+Latihan
+├── Paket Latihan 1
+├── Paket Latihan 2
+├── Paket Latihan 3
+└── ...
+
+User memilih salah satu paket kemudian mengerjakan soal
+di dalam paket tersebut.
+
+==================================================
+PRACTICE PACKAGE
+==================================================
+
+Saya membutuhkan konsep Practice Package.
+
+Contoh conceptual entity:
+
+PracticePackage
+- id
+- title
+- description
+- slug (jika pattern project menggunakan slug)
+- status
+- total_questions / atau dihitung dari relation
+- created_at
+- updated_at
+
+Tetapi:
+
+JANGAN langsung membuat model berdasarkan contoh tersebut.
+
+Periksa model dan schema existing terlebih dahulu.
+
+Jika struktur project sudah memiliki entity yang dapat
+merepresentasikan Practice Package, gunakan existing entity
+daripada membuat duplicate model.
+
+Jika memang belum ada, baru usulkan model yang paling sesuai
+dengan architecture project.
+
+==================================================
+QUESTION RELATION
+==================================================
+
+Periksa bagaimana Question saat ini dimodelkan.
+
+Saya ingin Question Bank tetap menjadi source utama soal.
+
+Question dapat digunakan pada:
+
+Question Bank
+      │
+      ├───────────────┐
+      ↓               ↓
+Practice Package    Tryout
+      │               │
+Normal Practice    Adaptive Test
+      │               │
+No Difficulty      Difficulty 1–5
+Progression        Adaptive Selection
+
+Jangan duplicate Question hanya karena digunakan pada
+Practice dan Tryout.
+
+Jika dibutuhkan many-to-many relation, pertimbangkan
+junction/pivot entity seperti:
+
+PracticePackageQuestion
+
+dan gunakan pattern yang paling sesuai dengan existing
+database architecture.
+
+Contoh conceptual relation:
+
+PracticePackage
+        │
+        │ 1:N / M:N
+        ↓
+PracticePackageQuestion
+        │
+        ↓
+Question
+
+Tetapi kembali:
+audit schema existing terlebih dahulu sebelum menentukan
+implementasi final.
+
+==================================================
+TRYOUT TIDAK BOLEH BERUBAH
+==================================================
+
+Jangan mengubah business rule Tryout yang sudah ada.
+
+Tryout tetap:
+
+- 30 questions per tryout
+- 5 answer choices per question
+- 5 difficulty levels
+- adaptive question selection
+
+Adaptive rule yang saat ini digunakan:
+
+Correct streak
       ↓
-Materials
-Questions
-Tryouts
-Content
+2 consecutive correct
       ↓
-Published Content
+level +1
+
+Jika mencapai rule berikutnya sesuai implementasi existing,
+level dapat naik lagi.
+
+Incorrect
       ↓
-Student Learning
-47. Core Principle
+level -1
 
-Page/screen SIMANTIK harus mendukung learning loop utama:
+Difficulty dibatasi:
 
-LEARN
-  ↓
-PRACTICE
-  ↓
-TRYOUT
-  ↓
-RESULT
-  ↓
-EVALUATION
-  ↓
-RECOMMENDATION
-  ↓
-LEARN AGAIN
+1 <= difficulty <= 5
 
-Halaman tidak hanya menampilkan data, tetapi harus membantu user memahami apa yang sedang terjadi dan tindakan berikutnya.
+Practice TIDAK menggunakan mekanisme tersebut.
 
-Khusus student:
+==================================================
+PRACTICE API
+==================================================
 
-Score bukan akhir dari flow.
+Setelah audit, implementasikan API Practice yang diperlukan.
 
-Hasil assessment harus dapat mengarah ke:
+Gunakan route naming/versioning yang sudah digunakan project.
+Jangan membuat convention baru jika project sudah memiliki
+pattern sendiri.
 
-Score
-  ↓
-Performance
-  ↓
-Competency
-  ↓
-Strength / Weakness
-  ↓
-Recommendation
-  ↓
-Learning Action
+Secara capability, saya membutuhkan endpoint equivalent untuk:
 
-Dengan demikian Page & Screen Requirements menjadi penghubung antara:
+STUDENT
+--------------------------------------------------
 
-Product Requirement
+GET /practices
+
+Mengambil daftar Practice Package yang tersedia.
+
+Response minimal harus memungkinkan frontend menampilkan:
+
+- package id
+- title
+- description
+- total questions
+- status/progress user jika memang architecture sudah mendukung
+
+--------------------------------------------------
+
+GET /practices/:id
+
+Mengambil detail Practice Package.
+
+Jangan expose correct answer jika endpoint ini digunakan
+sebelum user mengerjakan soal.
+
+--------------------------------------------------
+
+POST /practices/:id/start
+
+Memulai Practice Attempt.
+
+Backend harus membuat attempt/session sehingga progress
+latihan tidak hanya disimpan di frontend.
+
+Return data yang dibutuhkan frontend untuk membuka halaman
+latihan.
+
+--------------------------------------------------
+
+GET /practice-attempts/:attemptId
+
+Mengambil state attempt yang sedang berjalan.
+
+Harus memungkinkan refresh halaman tanpa kehilangan progress.
+
+--------------------------------------------------
+
+POST /practice-attempts/:attemptId/answer
+
+Submit/save jawaban user.
+
+Gunakan DTO yang jelas.
+
+Contoh conceptual payload:
+
+{
+  "question_id": "...",
+  "answer": "..."
+}
+
+Sesuaikan dengan Question Type dan DTO existing.
+
+--------------------------------------------------
+
+POST /practice-attempts/:attemptId/submit
+
+Menyelesaikan Practice Attempt.
+
+Backend melakukan scoring.
+
+--------------------------------------------------
+
+GET /practice-attempts/:attemptId/result
+
+Mengambil hasil latihan.
+
+Result minimal:
+
+- total questions
+- correct
+- incorrect
+- unanswered
+- score
+- answers/review jika diperbolehkan business rule
+- explanation/discussion jika tersedia
+
+==================================================
+MANAGEMENT API
+==================================================
+
+Periksa role dan permission existing.
+
+Admin atau Content Manager harus dapat mengelola
+Practice Package sesuai authorization architecture project.
+
+Capability yang dibutuhkan:
+
+GET    /practice-packages
+POST   /practice-packages
+GET    /practice-packages/:id
+PUT    /practice-packages/:id
+DELETE /practice-packages/:id
+
+Kemudian perlu capability untuk mengatur soal dalam paket:
+
+POST   /practice-packages/:id/questions
+DELETE /practice-packages/:id/questions/:questionId
+
+Jika project menggunakan bulk assignment, lebih baik gunakan
+pattern existing.
+
+Contoh:
+
+PUT /practice-packages/:id/questions
+
+{
+  "question_ids": [
+    "...",
+    "...",
+    "..."
+  ]
+}
+
+Jangan membuat endpoint duplicate apabila existing architecture
+sudah mempunyai generic question assignment mechanism.
+
+==================================================
+PRACTICE ATTEMPT
+==================================================
+
+Periksa apakah existing Attempt model untuk Tryout bisa
+digeneralisasi.
+
+JANGAN otomatis membuat PracticeAttempt baru.
+
+Analisis dahulu apakah:
+
+Option A
+
+Attempt
+├── PRACTICE
+└── TRYOUT
+
+lebih cocok,
+
+atau:
+
+Option B
+
+PracticeAttempt
+TryoutAttempt
+
+lebih cocok dengan existing architecture.
+
+Pilih berdasarkan source code yang ada, bukan berdasarkan
+preferensi semata.
+
+Jika reuse Attempt menyebabkan Tryout adaptive logic menjadi
+terlalu coupled dengan Practice, lebih baik pisahkan.
+
+Jelaskan keputusan tersebut sebelum implementasi.
+
+==================================================
+SCORING PRACTICE
+==================================================
+
+Practice menggunakan scoring sederhana:
+
+score = (correct / total_questions) * 100
+
+Answer status:
+
+CORRECT
+INCORRECT
+UNANSWERED
+
+Tidak ada negative marking.
+
+Scoring harus dilakukan backend.
+
+Frontend tidak boleh menjadi source of truth untuk score.
+
+==================================================
+SECURITY
+==================================================
+
+Pastikan:
+
+- student hanya bisa mengakses attempt miliknya
+- correct answer tidak dikirim sebelum waktunya
+- scoring dilakukan server-side
+- management endpoint menggunakan role middleware
+- request ID harus divalidasi
+- package harus published/active sebelum bisa dikerjakan student
+- question yang inactive/unpublished tidak boleh masuk attempt
+  kecuali architecture existing mempunyai version/snapshot rule
+- client tidak boleh menentukan score sendiri
+
+==================================================
+WEB APP INTEGRATION CONTRACT
+==================================================
+
+Walaupun task utama adalah backend, response API harus dibuat
+agar nantinya mudah diintegrasikan ke frontend.
+
+Frontend nantinya memiliki flow:
+
+/student/latihan
         ↓
-Information Architecture
+Practice Package List
         ↓
-User Flow
+/student/latihan/[id]
         ↓
-Page Requirements
+Package Detail
         ↓
-UI/UX Design
+Start Practice
         ↓
-Frontend
+Practice Session
         ↓
-Backend
+Submit
         ↓
-QA
+Practice Result
 
-Jadi sekarang pembagiannya **role-first**, sesuai folder `app` kamu:
+Practice harus benar-benar terpisah secara UX dari:
 
-```text
-app/
-├── dashboard/          → Dashboard authenticated
-├── student/            → Student
-├── admin/              → Admin
-└── content_manager/    → Content Manager
+/student/tryout
 
-Sedangkan Atomic Design tetap berada di src/components dan tidak dicampur dengan struktur route/page. Ini lebih konsisten dengan arsitektur project kamu.
-````
+Jangan memasukkan konsep adaptive level ke response Practice
+jika tidak dibutuhkan.
+
+==================================================
+IMPLEMENTATION PROCESS
+==================================================
+
+Kerjakan dalam urutan berikut.
+
+PHASE 1 — AUDIT
+
+Baca semua file yang saya tag.
+
+Buat laporan singkat:
+
+Existing:
+- Models
+- Relations
+- DTO
+- Repository
+- Service
+- Handler
+- Routes
+- Middleware
+- Question assignment
+- Attempt system
+- Scoring system
+
+Kemudian buat:
+
+FOUND
+MISSING
+NEEDS MODIFICATION
+CAN REUSE
+
+Jangan coding sebelum audit selesai.
+
+PHASE 2 — GAP ANALYSIS
+
+Bandingkan existing implementation dengan requirement Practice.
+
+Tuliskan:
+
+Existing Architecture
+        ↓
+Missing Components
+        ↓
+Required Changes
+
+Identifikasi juga potensi breaking changes.
+
+PHASE 3 — IMPLEMENTATION PLAN
+
+Sebelum coding, tuliskan file mana yang akan:
+
+CREATE
+MODIFY
+REUSE
+NOT TOUCH
+
+Contoh:
+
+CREATE
+internal/models/practice_package.go
+internal/service/practice_service.go
+...
+
+MODIFY
+internal/routes/...
+...
+
+REUSE
+QuestionRepository
+ScoringService
+...
+
+NOT TOUCH
+Tryout adaptive engine
+...
+
+Gunakan actual path dari repository.
+Jangan mengarang path.
+
+PHASE 4 — IMPLEMENTATION
+
+Setelah plan jelas, implementasikan feature end-to-end:
+
+Model
+  ↓
+DTO
+  ↓
+Repository
+  ↓
+Service
+  ↓
+Handler
+  ↓
+Routes
+
+Jika schema database berubah, sesuaikan dengan migration
+strategy/GORM migration mechanism yang memang digunakan project.
+
+Jangan membuat migration mechanism baru.
+
+PHASE 5 — VALIDATION
+
+Setelah implementasi:
+
+- jalankan formatter
+- jalankan build
+- jalankan tests yang tersedia
+- perbaiki compile error
+- periksa route registration
+- periksa dependency injection
+- periksa GORM relation
+- periksa JSON serialization
+- periksa authorization
+- periksa ownership
+- periksa error handling
+
+Jangan menganggap task selesai jika code belum compile.
+
+==================================================
+IMPORTANT CONSTRAINTS
+==================================================
+
+1. Practice != Tryout.
+2. Practice tidak memiliki difficulty level.
+3. Practice tidak adaptive.
+4. Practice memiliki Practice Package.
+5. Satu package berisi banyak questions.
+6. Question Bank tetap menjadi source utama Question.
+7. Jangan duplicate Question tanpa alasan architecture yang kuat.
+8. Jangan merusak Tryout adaptive engine.
+9. Backend adalah source of truth.
+10. Jangan mengubah architecture project tanpa kebutuhan.
+11. Reuse existing repository/service/helper jika memungkinkan.
+12. Jangan membuat duplicate utility.
+13. Jangan membuat endpoint berdasarkan asumsi jika sebenarnya
+    endpoint equivalent sudah ada.
+14. Ikuti response/error format existing.
+15. Semua perubahan harus backward-compatible sebisa mungkin.
+
+==================================================
+EXPECTED FINAL REPORT
+==================================================
+
+Setelah selesai berikan:
+
+1. Audit Result
+2. Gap Analysis
+3. Architecture Decision
+4. Database Changes
+5. Files Created
+6. Files Modified
+7. Endpoints Added
+8. Example Request/Response
+9. Authorization Rules
+10. Testing/Build Result
+11. Remaining TODO / unresolved business decisions
+
+Yang paling penting:
+
+JANGAN sekadar menambahkan route.
+
+Pastikan flow:
+
+Practice Package
+      ↓
+Question Assignment
+      ↓
+Student Start Practice
+      ↓
+Practice Attempt
+      ↓
+Answer Persistence
+      ↓
+Submit
+      ↓
+Server-side Scoring
+      ↓
+Practice Result
+
+benar-benar bekerja end-to-end.
+
+Mulai dengan membaca dan menganalisis semua file yang saya tag.
+Jangan melakukan perubahan sebelum kamu memahami existing
+implementation.

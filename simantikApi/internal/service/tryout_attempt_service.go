@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -13,15 +14,17 @@ import (
 	"simantikApi/internal/dto"
 	"simantikApi/internal/models"
 	"simantikApi/internal/repository"
+	"simantikApi/pkg/utils"
 )
 
 // TryoutAttemptService defines business operations for the Attempt Engine.
 type TryoutAttemptService interface {
+	AutoMatchTryout(ctx context.Context, userID uuid.UUID) (*models.Tryout, error)
 	StartAttempt(ctx context.Context, tryoutID, userID uuid.UUID) (*dto.StartAttemptResponse, error)
 	GetAttemptStatus(ctx context.Context, attemptID, userID uuid.UUID) (*dto.AttemptStatusResponse, error)
 	GetAttemptQuestion(ctx context.Context, attemptID uuid.UUID, questionNumber int, userID uuid.UUID) (*dto.AttemptQuestionResponse, error)
 	SubmitAnswer(ctx context.Context, attemptID, userID uuid.UUID, req dto.SubmitAnswerRequest) (*dto.SubmitAnswerResponse, error)
-	CompleteAttempt(ctx context.Context, attemptID, userID uuid.UUID) (*dto.CompleteAttemptResponse, error)
+	CompleteAttempt(ctx context.Context, attemptID, userID uuid.UUID, autoSubmitReq ...dto.AutoSubmitAttemptRequest) (*dto.CompleteAttemptResponse, error)
 	ListMyAttempts(ctx context.Context, userID uuid.UUID, filter dto.MyAttemptsFilter) (*dto.PaginatedAttemptsResponse, error)
 }
 
@@ -30,10 +33,17 @@ type tryoutAttemptService struct {
 	attemptRepo    repository.TryoutAttemptRepository
 	tryoutRepo     repository.TryoutRepository
 	adaptiveEngine adaptive.Engine
+	emailSender    utils.EmailSender
 }
 
 // NewTryoutAttemptService constructs a TryoutAttemptService.
-func NewTryoutAttemptService(db *gorm.DB, attemptRepo repository.TryoutAttemptRepository, tryoutRepo repository.TryoutRepository, adaptiveEng ...adaptive.Engine) TryoutAttemptService {
+func NewTryoutAttemptService(
+	db *gorm.DB,
+	attemptRepo repository.TryoutAttemptRepository,
+	tryoutRepo repository.TryoutRepository,
+	emailSender utils.EmailSender,
+	adaptiveEng ...adaptive.Engine,
+) TryoutAttemptService {
 	var eng adaptive.Engine
 	if len(adaptiveEng) > 0 && adaptiveEng[0] != nil {
 		eng = adaptiveEng[0]
@@ -46,10 +56,98 @@ func NewTryoutAttemptService(db *gorm.DB, attemptRepo repository.TryoutAttemptRe
 		attemptRepo:    attemptRepo,
 		tryoutRepo:     tryoutRepo,
 		adaptiveEngine: eng,
+		emailSender:    emailSender,
 	}
 }
 
+func (s *tryoutAttemptService) AutoMatchTryout(ctx context.Context, userID uuid.UUID) (*models.Tryout, error) {
+	publishedTryouts, total, err := s.tryoutRepo.ListPublished(ctx, dto.ListTryoutFilter{Limit: 50})
+	if err != nil || total == 0 || len(publishedTryouts) == 0 {
+		return nil, ErrTryoutNotAvailable
+	}
+
+	// 1. If student already has an active attempt, return that tryout
+	activeAttempts, _, _ := s.attemptRepo.ListByUserID(ctx, userID, dto.MyAttemptsFilter{Status: string(models.AttemptStatusInProgress)})
+	for _, a := range activeAttempts {
+		if t, err := s.tryoutRepo.FindByID(ctx, a.TryoutID); err == nil && t.Status == models.ContentStatusPublished {
+			return t, nil
+		}
+	}
+
+	// 2. Identify completed tryouts
+	completedAttempts, _, _ := s.attemptRepo.ListByUserID(ctx, userID, dto.MyAttemptsFilter{Status: string(models.AttemptStatusCompleted)})
+	completedMap := make(map[uuid.UUID]bool, len(completedAttempts))
+	for _, a := range completedAttempts {
+		completedMap[a.TryoutID] = true
+	}
+
+	// 3. Identify weak competencies from evaluations
+	weakCompetencies := make(map[uuid.UUID]bool)
+	if s.db != nil {
+		var compEvals []models.CompetencyEvaluation
+		_ = s.db.WithContext(ctx).Where("user_id = ? AND (score < 60 OR accuracy < 60)", userID).Find(&compEvals).Error
+		for _, ce := range compEvals {
+			weakCompetencies[ce.CompetencyID] = true
+		}
+	}
+
+	// 4. Score candidate tryouts
+	type scoredTryout struct {
+		tryout *models.Tryout
+		score  int
+	}
+	var scored []scoredTryout
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	weakKeys := make([]uuid.UUID, 0, len(weakCompetencies))
+	for k := range weakCompetencies {
+		weakKeys = append(weakKeys, k)
+	}
+
+	for i := range publishedTryouts {
+		t := &publishedTryouts[i]
+		pts := 0
+
+		// Strongly prioritize tryouts not yet completed
+		if !completedMap[t.ID] {
+			pts += 100
+		}
+
+		// Bonus for matching weak competencies
+		if s.db != nil && len(weakKeys) > 0 {
+			var matchCount int64
+			_ = s.db.WithContext(ctx).Table("tryout_questions").
+				Joins("JOIN question_competencies ON question_competencies.question_id = tryout_questions.question_id").
+				Where("tryout_questions.tryout_id = ? AND question_competencies.competency_id IN ?", t.ID, weakKeys).
+				Count(&matchCount).Error
+			pts += int(matchCount) * 10
+		}
+
+		pts += rng.Intn(10) // random tie-breaker noise
+		scored = append(scored, scoredTryout{tryout: t, score: pts})
+	}
+
+	best := scored[0].tryout
+	bestScore := scored[0].score
+	for _, st := range scored {
+		if st.score > bestScore {
+			bestScore = st.score
+			best = st.tryout
+		}
+	}
+
+	return best, nil
+}
+
 func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userID uuid.UUID) (*dto.StartAttemptResponse, error) {
+	if tryoutID == uuid.Nil {
+		matched, err := s.AutoMatchTryout(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+		tryoutID = matched.ID
+	}
+
 	tryout, err := s.tryoutRepo.FindByID(ctx, tryoutID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -86,29 +184,87 @@ func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userI
 		return nil, ErrInsufficientPool
 	}
 
-	// Shuffle and select
-	rng := rand.New(rand.NewSource(now.UnixNano()))
-	rng.Shuffle(len(poolQuestions), func(i, j int) {
-		poolQuestions[i], poolQuestions[j] = poolQuestions[j], poolQuestions[i]
-	})
-	selectedQuestions := poolQuestions[:tryout.TotalQuestions]
+	// 1. Initial random difficulty between 1 and 5
+	initialDifficulty := s.adaptiveEngine.RandomInitialDifficulty()
+	initialTargetStreak := s.adaptiveEngine.RandomStreakWindow()
 
 	attempt := models.TryoutAttempt{
-		UserID:    userID,
-		TryoutID:  tryoutID,
-		Status:    models.AttemptStatusInProgress,
-		StartedAt: now,
+		UserID:                 userID,
+		TryoutID:               tryoutID,
+		Status:                 models.AttemptStatusInProgress,
+		CurrentQuestionNumber:  1,
+		CurrentDifficultyLevel: initialDifficulty,
+		TargetStreak:           initialTargetStreak,
+		WindowCorrect:          0,
+		WindowIncorrect:        0,
+		IsTieBreaker:           false,
+		CorrectStreak:          0,
+		StartedAt:              now,
 	}
 
-	aqs := make([]models.AttemptQuestion, len(selectedQuestions))
-	for i, qid := range selectedQuestions {
-		aqs[i] = models.AttemptQuestion{
-			QuestionID:      qid,
-			QuestionNumber:  i + 1,
-			DifficultyLevel: 1, // default; adaptive updates in future
-			PresentedAt:     now,
+	// Build pool candidates with difficulty levels
+	var candidates []adaptive.QuestionCandidate
+	if s.db != nil {
+		var poolQModels []models.Question
+		_ = s.db.WithContext(ctx).Where("id IN ?", poolQuestions).Find(&poolQModels).Error
+		candidates = make([]adaptive.QuestionCandidate, len(poolQModels))
+		for i, q := range poolQModels {
+			candidates[i] = adaptive.QuestionCandidate{
+				ID:              q.ID,
+				DifficultyLevel: q.DifficultyLevel,
+			}
 		}
-		// AttemptID will be set after attempt is created
+	} else {
+		candidates = make([]adaptive.QuestionCandidate, len(poolQuestions))
+		for i, id := range poolQuestions {
+			candidates[i] = adaptive.QuestionCandidate{
+				ID:              id,
+				DifficultyLevel: (i % 5) + 1,
+			}
+		}
+	}
+
+	// Select Question 1 matching initialDifficulty
+	firstQ := s.adaptiveEngine.SelectNextQuestion(candidates, nil, initialDifficulty)
+	firstQID := poolQuestions[0]
+	firstQDiff := initialDifficulty
+	if firstQ != nil {
+		firstQID = firstQ.ID
+		firstQDiff = firstQ.DifficultyLevel
+	}
+
+	usedMap := map[uuid.UUID]bool{firstQID: true}
+	aqs := make([]models.AttemptQuestion, tryout.TotalQuestions)
+	aqs[0] = models.AttemptQuestion{
+		QuestionID:      firstQID,
+		QuestionNumber:  1,
+		DifficultyLevel: firstQDiff,
+		PresentedAt:     now,
+	}
+
+	// Pre-populate remaining slots from pool
+	slot := 1
+	for _, qid := range poolQuestions {
+		if slot >= tryout.TotalQuestions {
+			break
+		}
+		if !usedMap[qid] {
+			usedMap[qid] = true
+			diff := initialDifficulty
+			for _, c := range candidates {
+				if c.ID == qid {
+					diff = c.DifficultyLevel
+					break
+				}
+			}
+			aqs[slot] = models.AttemptQuestion{
+				QuestionID:      qid,
+				QuestionNumber:  slot + 1,
+				DifficultyLevel: diff,
+				PresentedAt:     now,
+			}
+			slot++
+		}
 	}
 
 	if s.db != nil {
@@ -336,10 +492,79 @@ func (s *tryoutAttemptService) SubmitAnswer(ctx context.Context, attemptID, user
 		return nil, err
 	}
 
-	// Update adaptive progression state (difficulty & correct streak)
-	nextDiff, newStreak, _ := s.adaptiveEngine.CalculateNextState(attempt.CurrentDifficultyLevel, attempt.CorrectStreak, isCorrect)
-	attempt.CurrentDifficultyLevel = nextDiff
-	attempt.CorrectStreak = newStreak
+	// Update adaptive progression state using dynamic window streak & tie breaker
+	windowState := adaptive.WindowState{
+		CurrentDifficulty: attempt.CurrentDifficultyLevel,
+		TargetStreak:      attempt.TargetStreak,
+		WindowCorrect:     attempt.WindowCorrect,
+		WindowIncorrect:   attempt.WindowIncorrect,
+		IsTieBreaker:      attempt.IsTieBreaker,
+	}
+	stepResult := s.adaptiveEngine.CalculateAdaptiveWindowStep(windowState, isCorrect)
+	attempt.CurrentDifficultyLevel = stepResult.NextDifficulty
+	attempt.TargetStreak = stepResult.NextTargetStreak
+	attempt.WindowCorrect = stepResult.NextWindowCorrect
+	attempt.WindowIncorrect = stepResult.NextWindowIncorrect
+	attempt.IsTieBreaker = stepResult.IsTieBreaker
+
+	if isCorrect {
+		attempt.CorrectStreak++
+	} else {
+		attempt.CorrectStreak = 0
+	}
+
+	// Adapt next question difficulty (questionNumber + 1)
+	nextQNum := aq.QuestionNumber + 1
+	if nextQNum <= tryout.TotalQuestions {
+		nextAQ, err := s.attemptRepo.FindAttemptQuestionByNumber(ctx, attemptID, nextQNum)
+		if err == nil && nextAQ != nil {
+			existingAns, _ := s.attemptRepo.FindAnswer(ctx, attemptID, nextAQ.QuestionID)
+			if existingAns == nil {
+				poolQIDs, err := s.tryoutRepo.GetPoolQuestionIDs(ctx, attempt.TryoutID)
+				if err == nil && len(poolQIDs) > 0 {
+					allAQs, _ := s.attemptRepo.FindAttemptQuestions(ctx, attemptID)
+					exposedIDs := make([]uuid.UUID, 0, len(allAQs))
+					for _, item := range allAQs {
+						if item.QuestionNumber <= aq.QuestionNumber {
+							exposedIDs = append(exposedIDs, item.QuestionID)
+						}
+					}
+
+					var candidates []adaptive.QuestionCandidate
+					if s.db != nil {
+						var poolQModels []models.Question
+						_ = s.db.WithContext(ctx).Where("id IN ?", poolQIDs).Find(&poolQModels).Error
+						candidates = make([]adaptive.QuestionCandidate, len(poolQModels))
+						for i, q := range poolQModels {
+							candidates[i] = adaptive.QuestionCandidate{
+								ID:              q.ID,
+								DifficultyLevel: q.DifficultyLevel,
+							}
+						}
+					} else {
+						candidates = make([]adaptive.QuestionCandidate, len(poolQIDs))
+						for i, id := range poolQIDs {
+							candidates[i] = adaptive.QuestionCandidate{
+								ID:              id,
+								DifficultyLevel: (i % 5) + 1,
+							}
+						}
+					}
+
+					chosen := s.adaptiveEngine.SelectNextQuestion(candidates, exposedIDs, attempt.CurrentDifficultyLevel)
+					if chosen != nil && chosen.ID != nextAQ.QuestionID {
+						nextAQ.QuestionID = chosen.ID
+						nextAQ.DifficultyLevel = chosen.DifficultyLevel
+						if s.db != nil {
+							_ = s.db.WithContext(ctx).Save(nextAQ).Error
+						}
+					}
+				}
+			}
+		}
+		attempt.CurrentQuestionNumber = nextQNum
+	}
+
 	_ = s.attemptRepo.UpdateAttempt(ctx, attempt)
 
 	remaining := tryout.DurationSeconds - elapsed
@@ -354,7 +579,7 @@ func (s *tryoutAttemptService) SubmitAnswer(ctx context.Context, attemptID, user
 	}, nil
 }
 
-func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, userID uuid.UUID) (*dto.CompleteAttemptResponse, error) {
+func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, userID uuid.UUID, autoSubmitReq ...dto.AutoSubmitAttemptRequest) (*dto.CompleteAttemptResponse, error) {
 	attempt, err := s.attemptRepo.FindAttemptByID(ctx, attemptID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -367,6 +592,23 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 	}
 	if attempt.Status != models.AttemptStatusInProgress {
 		return nil, ErrAttemptNotActive
+	}
+
+	isAutoSubmit := false
+	autoSubmitReason := ""
+	if len(autoSubmitReq) > 0 {
+		isAutoSubmit = true
+		autoSubmitReason = autoSubmitReq[0].Reason
+		if autoSubmitReason == "" {
+			autoSubmitReason = "VIOLATION_THRESHOLD_EXCEEDED"
+		}
+
+		// Flush any pending answers sent along with auto-submit payload
+		for _, ansReq := range autoSubmitReq[0].Answers {
+			if ansReq.QuestionID != uuid.Nil {
+				_ , _ = s.SubmitAnswer(ctx, attemptID, userID, ansReq)
+			}
+		}
 	}
 
 	tryout, err := s.tryoutRepo.FindByID(ctx, attempt.TryoutID)
@@ -479,6 +721,8 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 	attempt.Status = models.AttemptStatusCompleted
 	attempt.Score = &score
 	attempt.SubmittedAt = &now
+	attempt.IsAutoSubmitted = isAutoSubmit
+	attempt.AutoSubmitReason = autoSubmitReason
 
 	if s.db != nil {
 		err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -503,6 +747,13 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 		_ = s.attemptRepo.UpdateAttempt(ctx, attempt)
 	}
 
+	timeTakenSec := int(now.Sub(attempt.StartedAt).Seconds())
+
+	// Dispatch detailed result email in background (non-blocking)
+	if s.emailSender != nil {
+		go s.sendTryoutResultEmailAsync(attempt.ID, userID, tryout.Title, score, accuracy, timeTakenSec)
+	}
+
 	return &dto.CompleteAttemptResponse{
 		AttemptID:        attempt.ID,
 		Status:           string(attempt.Status),
@@ -510,9 +761,128 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 		TotalQuestions:   tryout.TotalQuestions,
 		CorrectAnswers:   correctCount,
 		Accuracy:         accuracy,
-		TimeTakenSeconds: int(now.Sub(attempt.StartedAt).Seconds()),
+		TimeTakenSeconds: timeTakenSec,
 		EvaluationID:     evalID,
+		IsAutoSubmitted:  isAutoSubmit,
+		AutoSubmitReason: autoSubmitReason,
 	}, nil
+}
+
+// sendTryoutResultEmailAsync fetches the 30 delivered questions, their correctness, options, and explanations in bulk,
+// then delivers a rich HTML report email to the student asynchronously.
+func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid.UUID, tryoutTitle string, score, accuracy float64, timeTakenSec int) {
+	if s.emailSender == nil || s.db == nil {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// 1. Fetch student user record
+	var user models.User
+	if err := s.db.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil || user.Email == "" {
+		return
+	}
+
+	// 2. Fetch all 30 AttemptQuestion records for this attempt in bulk with preloads
+	var aqs []models.AttemptQuestion
+	err := s.db.WithContext(ctx).
+		Preload("Question").
+		Preload("Question.Options", func(db *gorm.DB) *gorm.DB {
+			return db.Order("display_order ASC")
+		}).
+		Preload("Question.Explanation").
+		Where("attempt_id = ?", attemptID).
+		Order("question_number ASC").
+		Find(&aqs).Error
+	if err != nil || len(aqs) == 0 {
+		return
+	}
+
+	// 3. Fetch all student answers for this attempt in bulk
+	var answers []models.StudentAnswer
+	_ = s.db.WithContext(ctx).Where("attempt_id = ?", attemptID).Find(&answers).Error
+
+	ansMap := make(map[uuid.UUID]models.StudentAnswer, len(answers))
+	for _, a := range answers {
+		ansMap[a.QuestionID] = a
+	}
+
+	// 4. Build email question items
+	items := make([]utils.TryoutQuestionEmailItem, len(aqs))
+	correctCount := 0
+
+	for i, aq := range aqs {
+		q := aq.Question
+		ans, hasAns := ansMap[aq.QuestionID]
+
+		isCorrect := false
+		studentAnsText := "(Tidak dijawab)"
+		correctAnsText := ""
+
+		if hasAns && ans.IsCorrect != nil {
+			isCorrect = *ans.IsCorrect
+			if isCorrect {
+				correctCount++
+			}
+		}
+
+		if q != nil {
+			for _, opt := range q.Options {
+				if opt.IsCorrect {
+					correctAnsText = fmt.Sprintf("%s. %s", opt.OptionLabel, opt.OptionText)
+				}
+				if hasAns && ans.SelectedOptionID != nil && *ans.SelectedOptionID == opt.ID {
+					studentAnsText = fmt.Sprintf("%s. %s", opt.OptionLabel, opt.OptionText)
+				}
+			}
+			if studentAnsText == "(Tidak dijawab)" && hasAns && ans.AnswerData != "" {
+				studentAnsText = ans.AnswerData
+			}
+		}
+
+		explanation := ""
+		tips := ""
+		if q != nil && q.Explanation != nil {
+			explanation = q.Explanation.Explanation
+			tips = q.Explanation.AnsweringTips
+		}
+
+		qText := ""
+		if q != nil {
+			qText = q.QuestionText
+		}
+
+		items[i] = utils.TryoutQuestionEmailItem{
+			QuestionNumber: aq.QuestionNumber,
+			QuestionText:   qText,
+			Difficulty:     aq.DifficultyLevel,
+			StudentAnswer:  studentAnsText,
+			CorrectAnswer:  correctAnsText,
+			IsCorrect:      isCorrect,
+			Explanation:    explanation,
+			AnsweringTips:  tips,
+		}
+	}
+
+	timeTakenMin := int(timeTakenSec / 60)
+	if timeTakenMin < 1 && timeTakenSec > 0 {
+		timeTakenMin = 1
+	}
+
+	emailData := utils.TryoutResultEmailData{
+		StudentEmail:   user.Email,
+		StudentName:    user.FullName,
+		TryoutTitle:    tryoutTitle,
+		Score:          score,
+		Accuracy:       accuracy,
+		TotalQuestions: len(aqs),
+		CorrectCount:   correctCount,
+		TimeTakenMin:   timeTakenMin,
+		Questions:      items,
+	}
+
+	_ = s.emailSender.SendTryoutDetailedResult(ctx, emailData)
 }
 
 func (s *tryoutAttemptService) ListMyAttempts(ctx context.Context, userID uuid.UUID, filter dto.MyAttemptsFilter) (*dto.PaginatedAttemptsResponse, error) {

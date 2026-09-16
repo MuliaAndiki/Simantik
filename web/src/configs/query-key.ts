@@ -48,6 +48,17 @@ export const queryKey = {
       ['tryout', 'attemptQuestion', attemptId, String(number)] as const,
   },
 
+  practiceRoot: () => ['practice'] as const,
+  practice: {
+    list: (query?: Record<string, any>) => ['practice', 'list', query] as const,
+    detail: (id: string) => ['practice', 'detail', id] as const,
+    attempts: (query?: Record<string, any>) => ['practice', 'attempts', query] as const,
+    attemptState: (attemptId: string) => ['practice', 'attemptState', attemptId] as const,
+    result: (attemptId: string) => ['practice', 'result', attemptId] as const,
+    packages: (query?: Record<string, any>) => ['practice', 'packages', query] as const,
+    packageDetail: (id: string) => ['practice', 'packageDetail', id] as const,
+  },
+
   evaluationRoot: () => ['evaluation'] as const,
   evaluation: {
     profile: () => ['evaluation', 'profile'] as const,
@@ -66,6 +77,7 @@ export const queryKey = {
   learningRoot: () => ['learning'] as const,
   learning: {
     modules: (query?: Record<string, any>) => ['learning', 'modules', query] as const,
+    moduleLabels: () => ['learning', 'moduleLabels'] as const,
     moduleDetail: (id: string) => ['learning', 'moduleDetail', id] as const,
     moduleProgress: (id: string) => ['learning', 'moduleProgress', id] as const,
     materials: (query?: Record<string, any>) => ['learning', 'materials', query] as const,

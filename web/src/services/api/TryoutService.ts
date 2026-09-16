@@ -5,6 +5,7 @@ import type {
   AddTryoutQuestionsRequest,
   AttemptQuestionResponse,
   AttemptStatusResponse,
+  AutoSubmitAttemptRequest,
   CompleteAttemptResponse,
   CreateTryoutRequest,
   ListTryoutFilter,
@@ -170,6 +171,19 @@ class TryoutService {
   ): Promise<TResponse<CompleteAttemptResponse>> {
     const res = await getHttp().PostResponse<CompleteAttemptResponse>(
       EndpointEntry.tryout.completeAttempt(attemptId)
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async AutoSubmitAttemptService(
+    attemptId: string,
+    payload?: AutoSubmitAttemptRequest
+  ): Promise<TResponse<CompleteAttemptResponse>> {
+    const res = await getHttp().PostResponse<CompleteAttemptResponse>(
+      EndpointEntry.tryout.autoSubmit(attemptId),
+      payload
     );
     return toServiceResponse(res, {
       message: res.message,

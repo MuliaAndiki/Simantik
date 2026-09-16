@@ -74,6 +74,20 @@ func (m *mockModuleRepo) ListPublished(_ context.Context, _ dto.ListModuleFilter
 	return result, int64(len(result)), nil
 }
 
+func (m *mockModuleRepo) GetDistinctLabels(_ context.Context) ([]string, error) {
+	labelMap := make(map[string]bool)
+	for _, mod := range m.modules {
+		if mod.Label != "" {
+			labelMap[mod.Label] = true
+		}
+	}
+	var labels []string
+	for l := range labelMap {
+		labels = append(labels, l)
+	}
+	return labels, nil
+}
+
 // ─── Mock: MaterialRepository ────────────────────────────────────────────────
 
 type mockMaterialRepo struct {
@@ -346,5 +360,31 @@ func TestLearningService_ProgressTracking(t *testing.T) {
 	}
 	if p2.CompletedMaterials != 2 || p2.ProgressPercentage != 100.0 {
 		t.Errorf("expected 100%% progress, got %+v", p2)
+	}
+}
+
+func TestLearningService_ListModuleLabels(t *testing.T) {
+	ctx := context.Background()
+	modRepo := newMockModuleRepo()
+	matRepo := newMockMaterialRepo()
+	progRepo := newMockProgressRepo(modRepo, matRepo)
+	svc := service.NewLearningService(modRepo, matRepo, progRepo)
+
+	adminID := uuid.New()
+	_, _ = svc.CreateModule(ctx, dto.CreateLearningModuleRequest{
+		Title: "Module 1",
+		Label: "Pemahaman Tekstual",
+	}, adminID)
+	_, _ = svc.CreateModule(ctx, dto.CreateLearningModuleRequest{
+		Title: "Module 2",
+		Label: "Pemahaman Inferensial",
+	}, adminID)
+
+	labels, err := svc.ListModuleLabels(ctx)
+	if err != nil {
+		t.Fatalf("ListModuleLabels failed: %v", err)
+	}
+	if len(labels) != 2 {
+		t.Errorf("expected 2 labels, got %d", len(labels))
 	}
 }

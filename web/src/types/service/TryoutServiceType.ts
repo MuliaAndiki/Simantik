@@ -163,6 +163,16 @@ export interface SubmitAnswerResponse {
 }
 
 /**
+ * Payload when attempt is auto-submitted due to violations or session expiry
+ * Maps to backend: `dto.AutoSubmitAttemptRequest`
+ */
+export interface AutoSubmitAttemptRequest {
+  reason?: string;
+  violation_count?: number;
+  answers?: SubmitAnswerRequest[];
+}
+
+/**
  * Result returned upon completing / submitting the entire attempt
  * Maps to backend: `dto.CompleteAttemptResponse`
  */
@@ -175,6 +185,8 @@ export interface CompleteAttemptResponse {
   accuracy: number;
   time_taken_seconds: number;
   evaluation_id: string;
+  is_auto_submitted?: boolean;
+  auto_submit_reason?: string;
 }
 
 /**

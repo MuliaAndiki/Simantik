@@ -172,6 +172,16 @@ func (h *LearningHandler) ListModules(c *fiber.Ctx) error {
 	return utils.Success(c, "modules fetched successfully", res)
 }
 
+// ListModuleLabels handles GET /api/v1/learning-modules/labels.
+func (h *LearningHandler) ListModuleLabels(c *fiber.Ctx) error {
+	res, err := h.learnService.ListModuleLabels(c.UserContext())
+	if err != nil {
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to fetch module labels", err)
+	}
+
+	return utils.Success(c, "module labels fetched successfully", res)
+}
+
 // ─── Material Endpoints ──────────────────────────────────────────────────────
 
 // CreateMaterial handles POST /api/v1/materials.

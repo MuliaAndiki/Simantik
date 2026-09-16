@@ -19,7 +19,6 @@ func RegisterSchoolRoutes(api fiber.Router, cfg *config.Config, h *handler.Schoo
 	schools.Patch("/:id", h.UpdateSchool)
 	schools.Delete("/:id", h.DeleteSchool)
 
-
 	api.Get("/schools", h.ListSchools)
 	api.Get("/schools/:id", h.GetSchool)
 }

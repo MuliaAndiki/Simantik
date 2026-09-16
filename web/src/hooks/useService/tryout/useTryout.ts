@@ -1,5 +1,6 @@
 import {
   useAddQuestionsToTryout,
+  useAutoSubmitAttempt,
   useCompleteAttempt,
   useCreateTryout,
   useDeleteTryout,
@@ -36,6 +37,7 @@ export const useTryout = () => {
       startAttempt: useStartAttempt,
       submitAnswer: useSubmitAnswer,
       completeAttempt: useCompleteAttempt,
+      autoSubmit: useAutoSubmitAttempt,
     },
   };
 };

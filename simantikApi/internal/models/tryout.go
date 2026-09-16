@@ -61,7 +61,13 @@ type TryoutAttempt struct {
 	Status                 AttemptStatus `gorm:"type:varchar(20);not null;default:'in_progress';index" json:"status"`
 	CurrentQuestionNumber  int           `gorm:"not null;default:1" json:"currentQuestionNumber"`
 	CurrentDifficultyLevel int           `gorm:"not null;default:1" json:"currentDifficultyLevel"` // 1 to 5
+	TargetStreak           int           `gorm:"not null;default:2" json:"targetStreak"`           // dynamic window (1 to 3)
+	WindowCorrect          int           `gorm:"not null;default:0" json:"windowCorrect"`          // correct answers in current window
+	WindowIncorrect        int           `gorm:"not null;default:0" json:"windowIncorrect"`        // incorrect answers in current window
+	IsTieBreaker           bool          `gorm:"not null;default:false" json:"isTieBreaker"`       // true if resolving a tie
 	CorrectStreak          int           `gorm:"not null;default:0" json:"correctStreak"`
+	IsAutoSubmitted        bool          `gorm:"not null;default:false" json:"isAutoSubmitted"`
+	AutoSubmitReason       string        `gorm:"type:varchar(100)" json:"autoSubmitReason,omitempty"`
 	Score                  *float64      `gorm:"type:numeric(10,2)" json:"score"`
 	StartedAt              time.Time     `gorm:"not null" json:"startedAt"`
 	SubmittedAt            *time.Time    `json:"submittedAt"`

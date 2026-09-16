@@ -5,6 +5,7 @@ import ContentService from './api/ContentService';
 import EvaluationService from './api/EvaluationService';
 import LearningService from './api/LearningService';
 import NotificationService from './api/NotificationService';
+import PracticeService from './api/PracticeService';
 import QuestionService from './api/QuestionService';
 import RecommendationService from './api/RecommendationService';
 import ReportingService from './api/ReportingService';
@@ -22,6 +23,7 @@ const wrappedRecommendation = WrapApi(RecommendationService);
 const wrappedLearning = WrapApi(LearningService);
 const wrappedContent = WrapApi(ContentService);
 const wrappedNotification = WrapApi(NotificationService);
+const wrappedPractice = WrapApi(PracticeService);
 const wrappedReporting = WrapApi(ReportingService);
 const wrappedSchool = WrapApi(SchoolService);
 
@@ -36,6 +38,7 @@ export const Api = {
   learning: wrappedLearning,
   content: wrappedContent,
   notification: wrappedNotification,
+  practice: wrappedPractice,
   reporting: wrappedReporting,
   school: wrappedSchool,
 
@@ -49,6 +52,7 @@ export const Api = {
   Learning: wrappedLearning,
   Content: wrappedContent,
   Notification: wrappedNotification,
+  Practice: wrappedPractice,
   Reporting: wrappedReporting,
   School: wrappedSchool,
 };

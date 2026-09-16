@@ -22,6 +22,7 @@ type LearningService interface {
 	UpdateModuleStatus(ctx context.Context, id uuid.UUID, status string, updatedByID uuid.UUID) (*dto.LearningModuleResponse, error)
 	DeleteModule(ctx context.Context, id uuid.UUID) error
 	ListModules(ctx context.Context, filter dto.ListModuleFilter, userID uuid.UUID, isAdmin bool) (*dto.PaginatedModulesResponse, error)
+	ListModuleLabels(ctx context.Context) ([]string, error)
 
 	// Materials
 	CreateMaterial(ctx context.Context, req dto.CreateMaterialRequest, createdByID uuid.UUID) (*dto.MaterialResponse, error)
@@ -62,6 +63,7 @@ func (s *learningService) CreateModule(ctx context.Context, req dto.CreateLearni
 		ID:           uuid.New(),
 		Title:        req.Title,
 		Description:  req.Description,
+		Label:        req.Label,
 		DisplayOrder: req.DisplayOrder,
 		Status:       models.ContentStatusDraft,
 		CreatedBy:    createdByID,
@@ -149,6 +151,9 @@ func (s *learningService) UpdateModule(ctx context.Context, id uuid.UUID, req dt
 	if req.Description != "" {
 		mod.Description = req.Description
 	}
+	if req.Label != "" {
+		mod.Label = req.Label
+	}
 	if req.DisplayOrder > 0 {
 		mod.DisplayOrder = req.DisplayOrder
 	}
@@ -227,6 +232,10 @@ func (s *learningService) ListModules(ctx context.Context, filter dto.ListModule
 		Limit:   filter.Limit,
 		Offset:  filter.Offset,
 	}, nil
+}
+
+func (s *learningService) ListModuleLabels(ctx context.Context) ([]string, error) {
+	return s.moduleRepo.GetDistinctLabels(ctx)
 }
 
 // ─── Material Operations ─────────────────────────────────────────────────────
@@ -478,6 +487,7 @@ func (s *learningService) mapToModuleResponse(m *models.LearningModule, totalCou
 		ID:                 m.ID,
 		Title:              m.Title,
 		Description:        m.Description,
+		Label:              m.Label,
 		DisplayOrder:       m.DisplayOrder,
 		Status:             string(m.Status),
 		MaterialsCount:     totalCount,

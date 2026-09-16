@@ -12,6 +12,7 @@ import (
 	"simantikApi/internal/dto"
 	"simantikApi/internal/models"
 	"simantikApi/internal/service"
+	"simantikApi/pkg/utils"
 )
 
 type mockNotificationRepo struct {
@@ -137,6 +138,16 @@ func (s *spyEmailSender) SendTryoutResult(ctx context.Context, toEmail, studentN
 	s.lastRecipient = toEmail
 	s.lastScore = score
 	s.lastTitle = tryoutTitle
+	s.sentCount++
+	return nil
+}
+
+func (s *spyEmailSender) SendTryoutDetailedResult(ctx context.Context, data utils.TryoutResultEmailData) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.lastRecipient = data.StudentEmail
+	s.lastScore = data.Score
+	s.lastTitle = data.TryoutTitle
 	s.sentCount++
 	return nil
 }

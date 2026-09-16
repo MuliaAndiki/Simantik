@@ -23,6 +23,17 @@ export function useModuleList(query?: ListModuleFilter, options?: { enabled?: bo
   });
 }
 
+export function useModuleLabelList(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.learning.moduleLabels(),
+    queryFn: async () => {
+      const res = await Api.learning.ListModuleLabelsService();
+      return res.data;
+    },
+    enabled: options?.enabled,
+  });
+}
+
 export function useModuleDetail(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKey.learning.moduleDetail(id),
