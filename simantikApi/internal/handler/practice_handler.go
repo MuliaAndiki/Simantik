@@ -252,7 +252,12 @@ func (h *PracticeHandler) GetStudentPractice(c *fiber.Ctx) error {
 		return utils.Error(c, fiber.StatusBadRequest, "invalid practice package id", err)
 	}
 
-	res, err := h.practiceService.GetPackageForStudent(c.UserContext(), id)
+	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
+	if !ok {
+		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
+	}
+
+	res, err := h.practiceService.GetPackageForStudent(c.UserContext(), id, userID)
 	if err != nil {
 		if errors.Is(err, service.ErrPracticePackageNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)

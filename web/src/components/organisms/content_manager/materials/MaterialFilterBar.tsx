@@ -1,14 +1,16 @@
 import { ChevronDown, RotateCw, Search } from 'lucide-react';
 import React from 'react';
-import { MATERIAL_CATEGORIES, MATERIAL_STATUSES } from '@/data/materialManager.data';
+import { MATERIAL_STATUSES } from '@/data/materialManager.data';
 import type { MaterialFilterState } from '@/types/ui/material-manager.types';
+
+const JENJANG_FILTER_OPTIONS = ['Semua Jenjang', 'SD', 'SMP', 'SMA', 'SMK'];
 
 interface MaterialFilterBarProps {
   filters: MaterialFilterState;
   totalItems: number;
   displayedCount: number;
   onSearchChange: (val: string) => void;
-
+  onJenjangChange: (val: string) => void;
   onStatusChange: (val: string) => void;
   onRefresh: () => void;
   isRefreshing?: boolean;
@@ -19,6 +21,7 @@ export const MaterialFilterBar: React.FC<MaterialFilterBarProps> = ({
   totalItems,
   displayedCount,
   onSearchChange,
+  onJenjangChange,
   onStatusChange,
   onRefresh,
   isRefreshing = false,
@@ -37,6 +40,22 @@ export const MaterialFilterBar: React.FC<MaterialFilterBarProps> = ({
             placeholder="Cari judul materi, bab, ID..."
             className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-cyan-600 focus:bg-white transition"
           />
+        </div>
+
+        {/* Jenjang Dropdown */}
+        <div className="relative min-w-[130px]">
+          <select
+            value={filters.jenjang}
+            onChange={(e) => onJenjangChange(e.target.value)}
+            className="w-full appearance-none pl-3.5 pr-8 py-2 text-xs sm:text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-700 font-medium cursor-pointer focus:outline-none focus:border-cyan-600 focus:bg-white transition"
+          >
+            {JENJANG_FILTER_OPTIONS.map((j) => (
+              <option key={j} value={j}>
+                {j}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
         </div>
 
         {/* Status Dropdown */}

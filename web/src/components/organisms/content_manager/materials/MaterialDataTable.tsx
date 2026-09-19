@@ -57,6 +57,36 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
     }
   };
 
+  const renderJenjangBadge = (jenjang?: string) => {
+    const j = (jenjang || 'sma').toLowerCase();
+    switch (j) {
+      case 'sd':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            SD
+          </span>
+        );
+      case 'smp':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+            SMP
+          </span>
+        );
+      case 'smk':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            SMK
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            SMA
+          </span>
+        );
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden flex flex-col justify-between">
       {/* Table Container with Horizontal Scroll */}
@@ -66,6 +96,7 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
             <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] uppercase tracking-wider font-bold text-slate-400">
               <th className="py-3 px-4 w-14 text-center">No</th>
               <th className="py-3 px-4">Judul Modul Pembelajaran</th>
+              <th className="py-3 px-4 text-center">Jenjang</th>
               <th className="py-3 px-4 text-center">Total Materi</th>
               <th className="py-3 px-4 text-center">Status</th>
               <th className="py-3 px-4">Pembaruan</th>
@@ -75,7 +106,7 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
           <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
             {modules.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
+                <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
                   Belum ada modul pembelajaran terdaftar. Silakan buat modul atau materi baru.
                 </td>
               </tr>
@@ -122,6 +153,11 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
                           {item.description || 'Modul Pembelajaran Kurikulum Terpadu'}
                         </p>
                       </div>
+                    </td>
+
+                    {/* Jenjang */}
+                    <td className="py-3.5 px-4 text-center align-top whitespace-nowrap">
+                      {renderJenjangBadge(item.jenjang)}
                     </td>
 
                     {/* Total Materi */}

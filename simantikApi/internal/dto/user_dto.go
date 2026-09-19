@@ -129,7 +129,8 @@ type UserResponse struct {
 // UpdateMeRequest allows authenticated users to update their own profile.
 // Only non-sensitive fields are editable via this request.
 type UpdateMeRequest struct {
-	FullName string `json:"fullName" validate:"omitempty,min=2,max=150"`
+	FullName string  `json:"fullName" validate:"omitempty,min=2,max=150"`
+	Jenjang  *string `json:"jenjang" validate:"omitempty,oneof=sd smp sma smk"`
 }
 
 // ChangePasswordRequest allows authenticated users to change their own password.

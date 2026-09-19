@@ -22,6 +22,7 @@ type Tryout struct {
 	ID              uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
 	Title           string         `gorm:"type:varchar(200);not null" json:"title"`
 	Description     string         `gorm:"type:text" json:"description"`
+	Jenjang         SchoolLevel    `gorm:"column:jenjang;type:varchar(20);not null;default:'sma';index" json:"jenjang"`
 	DurationSeconds int            `gorm:"not null;default:4500" json:"durationSeconds"` // e.g. 75 mins = 4500s
 	TotalQuestions  int            `gorm:"not null;default:30" json:"totalQuestions"`    // baseline: 30 questions
 	Status          ContentStatus  `gorm:"type:varchar(20);not null;default:'draft';index" json:"status"`

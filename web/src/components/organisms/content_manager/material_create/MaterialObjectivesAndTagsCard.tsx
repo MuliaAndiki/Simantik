@@ -79,6 +79,7 @@ export const MaterialObjectivesAndTagsCard: React.FC<MaterialObjectivesAndTagsCa
       </div>
 
       {/* 2. Materi Terkait (Topik Relevan) */}
+      {/*  Tidak Benar */}
       <div className="space-y-3 pt-2 border-t border-slate-100">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">

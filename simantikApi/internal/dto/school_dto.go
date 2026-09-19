@@ -9,7 +9,7 @@ import (
 type CreateSchoolRequest struct {
 	NPSN      string  `json:"npsn" validate:"required,max=20"`
 	Name      string  `json:"nama" validate:"required,min=2,max=255"`
-	Level     string  `json:"jenjang" validate:"required,oneof=tk sd smp sma smk"`
+	Level     string  `json:"jenjang" validate:"required,oneof=sd smp sma smk"`
 	Status    string  `json:"status" validate:"required,oneof=negeri swasta"`
 	LogoURL   *string `json:"logo" validate:"omitempty,max=500"`
 	Address   string  `json:"alamat" validate:"required,max=500"`
@@ -21,7 +21,7 @@ type CreateSchoolRequest struct {
 type UpdateSchoolRequest struct {
 	NPSN      string  `json:"npsn" validate:"omitempty,max=20"`
 	Name      string  `json:"nama" validate:"omitempty,min=2,max=255"`
-	Level     string  `json:"jenjang" validate:"omitempty,oneof=tk sd smp sma smk"`
+	Level     string  `json:"jenjang" validate:"omitempty,oneof=sd smp sma smk"`
 	Status    string  `json:"status" validate:"omitempty,oneof=negeri swasta"`
 	LogoURL   *string `json:"logo" validate:"omitempty,max=500"`
 	Address   string  `json:"alamat" validate:"omitempty,max=500"`

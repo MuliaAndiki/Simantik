@@ -1,10 +1,11 @@
 package routes
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"simantikApi/config"
 	"simantikApi/internal/handler"
 	"simantikApi/internal/middleware"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func RegisterTryoutRoutes(api fiber.Router, cfg *config.Config, th *handler.TryoutHandler) {

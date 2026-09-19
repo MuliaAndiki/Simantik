@@ -134,15 +134,19 @@ func (m *mockQuestionRepo) ReplaceCompetencies(ctx context.Context, tx *gorm.DB,
 	return nil
 }
 
-func (m *mockQuestionRepo) PublishQuestionsByIDs(ctx context.Context, ids []uuid.UUID, updatedByID uuid.UUID) error {
+func (m *mockQuestionRepo) UpdateStatusByIDs(_ context.Context, ids []uuid.UUID, status models.ContentStatus, updatedByID uuid.UUID) error {
 	for _, id := range ids {
 		if q, ok := m.questions[id]; ok {
-			q.Status = models.ContentStatusPublished
+			q.Status = status
 			q.UpdatedBy = &updatedByID
 			q.UpdatedAt = time.Now()
 		}
 	}
 	return nil
+}
+
+func (m *mockQuestionRepo) PublishQuestionsByIDs(ctx context.Context, ids []uuid.UUID, updatedByID uuid.UUID) error {
+	return m.UpdateStatusByIDs(ctx, ids, models.ContentStatusPublished, updatedByID)
 }
 
 // Tests

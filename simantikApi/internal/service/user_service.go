@@ -77,12 +77,28 @@ func (s *userService) UpdateMe(ctx context.Context, userID uuid.UUID, req dto.Up
 		user.FullName = req.FullName
 	}
 
+	if req.Jenjang != nil {
+		if err := s.updateProfileJenjang(ctx, userID, *req.Jenjang); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		return nil, err
 	}
 
 	res := ToUserResponse(user)
 	return &res, nil
+}
+
+// updateProfileJenjang menyimpan jenjang eksplisit siswa (misal gap year) ke StudentProfile.
+func (s *userService) updateProfileJenjang(ctx context.Context, userID uuid.UUID, jenjang string) error {
+	profile, err := s.profileRepo.FindByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	profile.Jenjang = &jenjang
+	return s.profileRepo.Update(ctx, profile)
 }
 
 func (s *userService) ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error {
@@ -301,6 +317,7 @@ func ToUserResponse(u *models.User) dto.UserResponse {
 		resp.StudentProfile = &dto.StudentProfileResponse{
 			School:           u.StudentProfile.School,
 			Grade:            u.StudentProfile.Grade,
+			Jenjang:          u.StudentProfile.Jenjang,
 			Major:            u.StudentProfile.Major,
 			TargetUniversity: u.StudentProfile.TargetUniversity,
 			TargetMajor:      u.StudentProfile.TargetMajor,

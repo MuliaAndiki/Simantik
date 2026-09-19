@@ -13,6 +13,7 @@ type PracticePackage struct {
 	Title          string         `gorm:"type:varchar(200);not null" json:"title"`
 	Description    string         `gorm:"type:text" json:"description"`
 	CompetencyID   *uuid.UUID     `gorm:"type:uuid;index" json:"competencyId"` // optional competency categorization
+	Jenjang        SchoolLevel    `gorm:"column:jenjang;type:varchar(20);not null;default:'sma';index" json:"jenjang"`
 	TotalQuestions int            `gorm:"not null;default:0" json:"totalQuestions"`
 	Status         ContentStatus  `gorm:"type:varchar(20);not null;default:'draft';index" json:"status"`
 	CreatedBy      uuid.UUID      `gorm:"type:uuid;not null;index" json:"createdBy"`

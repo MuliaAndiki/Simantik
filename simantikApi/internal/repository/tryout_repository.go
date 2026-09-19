@@ -74,6 +74,9 @@ func (r *tryoutRepository) List(ctx context.Context, filter dto.ListTryoutFilter
 	if filter.Status != "" {
 		query = query.Where("status = ?", filter.Status)
 	}
+	if filter.Jenjang != "" {
+		query = query.Where("jenjang = ?", filter.Jenjang)
+	}
 
 	err := query.Count(&total).Error
 	if err != nil {

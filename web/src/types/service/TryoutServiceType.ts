@@ -1,5 +1,6 @@
 import type { ApiResponse, AttemptStatus, ContentStatus } from '../model';
 import type { QuestionStudentResponse } from './QuestionServiceType';
+import type { SchoolLevel } from './SchoolServiceType';
 
 // ============================================================================
 // Tryout Management Request Payloads (Admin / Content Manager)
@@ -12,6 +13,7 @@ import type { QuestionStudentResponse } from './QuestionServiceType';
 export interface CreateTryoutRequest {
   title: string;
   description?: string;
+  jenjang: SchoolLevel;
   duration_seconds: number;
   total_questions: number;
 }
@@ -23,6 +25,7 @@ export interface CreateTryoutRequest {
 export interface UpdateTryoutRequest {
   title?: string;
   description?: string;
+  jenjang?: SchoolLevel;
   duration_seconds?: number;
   total_questions?: number;
 }
@@ -58,6 +61,7 @@ export interface RemoveTryoutQuestionRequest {
 export interface ListTryoutFilter {
   search?: string;
   status?: ContentStatus | string;
+  jenjang?: SchoolLevel | string;
   limit?: number;
   offset?: number;
 }
@@ -74,6 +78,7 @@ export interface TryoutResponse {
   id: string;
   title: string;
   description: string;
+  jenjang: string;
   duration_seconds: number;
   total_questions: number;
   status: string;

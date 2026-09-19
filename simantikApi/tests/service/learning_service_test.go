@@ -151,14 +151,18 @@ func (m *mockMaterialRepo) ListPublished(_ context.Context, filter dto.ListMater
 	return result, int64(len(result)), nil
 }
 
-func (m *mockMaterialRepo) PublishMaterialsByModuleID(_ context.Context, moduleID uuid.UUID, updatedByID uuid.UUID) error {
+func (m *mockMaterialRepo) UpdateStatusByModuleID(_ context.Context, moduleID uuid.UUID, status models.ContentStatus, updatedByID uuid.UUID) error {
 	for _, mat := range m.materials {
 		if mat.ModuleID == moduleID {
-			mat.Status = models.ContentStatusPublished
+			mat.Status = status
 			mat.UpdatedBy = &updatedByID
 		}
 	}
 	return nil
+}
+
+func (m *mockMaterialRepo) PublishMaterialsByModuleID(ctx context.Context, moduleID uuid.UUID, updatedByID uuid.UUID) error {
+	return m.UpdateStatusByModuleID(ctx, moduleID, models.ContentStatusPublished, updatedByID)
 }
 
 // ─── Mock: LearningProgressRepository ────────────────────────────────────────
@@ -456,5 +460,21 @@ func TestLearningService_CascadingPublishMaterials(t *testing.T) {
 	}
 	if mat2.Status != models.ContentStatusPublished {
 		t.Errorf("expected Material 2 to be published automatically, got %s", mat2.Status)
+	}
+
+	// 5. Update module status back to draft -> verify child materials also revert to draft!
+	_, err = svc.UpdateModuleStatus(ctx, mod.ID, string(models.ContentStatusDraft), adminID)
+	if err != nil {
+		t.Fatalf("UpdateModuleStatus back to draft failed: %v", err)
+	}
+
+	mat1Draft, _ := matRepo.FindByID(ctx, m1.ID)
+	mat2Draft, _ := matRepo.FindByID(ctx, m2.ID)
+
+	if mat1Draft.Status != models.ContentStatusDraft {
+		t.Errorf("expected Material 1 to revert to draft, got %s", mat1Draft.Status)
+	}
+	if mat2Draft.Status != models.ContentStatusDraft {
+		t.Errorf("expected Material 2 to revert to draft, got %s", mat2Draft.Status)
 	}
 }

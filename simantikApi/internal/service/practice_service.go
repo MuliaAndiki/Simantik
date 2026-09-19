@@ -27,7 +27,7 @@ type PracticeService interface {
 
 	// Student Practice Execution
 	ListPublishedPackages(ctx context.Context, filter dto.ListPracticePackageFilter, userID uuid.UUID) (*dto.PaginatedPracticePackagesResponse, error)
-	GetPackageForStudent(ctx context.Context, id uuid.UUID) (*dto.PracticePackageDetailResponse, error)
+	GetPackageForStudent(ctx context.Context, id, userID uuid.UUID) (*dto.PracticePackageDetailResponse, error)
 	StartPracticeAttempt(ctx context.Context, packageID, userID uuid.UUID) (*dto.StartPracticeResponse, error)
 	GetAttemptState(ctx context.Context, attemptID, userID uuid.UUID) (*dto.PracticeAttemptDetailResponse, error)
 	SubmitAnswer(ctx context.Context, attemptID, userID uuid.UUID, req dto.SubmitPracticeAnswerRequest) (*dto.SubmitPracticeAnswerResponse, error)
@@ -41,6 +41,7 @@ type practiceService struct {
 	practiceRepo   repository.PracticeRepository
 	questionRepo   repository.QuestionRepository
 	evaluationRepo repository.EvaluationRepository
+	resolver       *JenjangResolver
 }
 
 // NewPracticeService constructs a PracticeService with required dependencies.
@@ -49,12 +50,18 @@ func NewPracticeService(
 	practiceRepo repository.PracticeRepository,
 	questionRepo repository.QuestionRepository,
 	evaluationRepo repository.EvaluationRepository,
+	resolver ...*JenjangResolver,
 ) PracticeService {
+	var r *JenjangResolver
+	if len(resolver) > 0 {
+		r = resolver[0]
+	}
 	return &practiceService{
 		db:             db,
 		practiceRepo:   practiceRepo,
 		questionRepo:   questionRepo,
 		evaluationRepo: evaluationRepo,
+		resolver:       r,
 	}
 }
 
@@ -65,6 +72,7 @@ func (s *practiceService) CreatePackage(ctx context.Context, req dto.CreatePract
 		Title:          req.Title,
 		Description:    req.Description,
 		CompetencyID:   req.CompetencyID,
+		Jenjang:        models.SchoolLevel(req.Jenjang),
 		TotalQuestions: 0,
 		Status:         models.ContentStatusDraft,
 		CreatedBy:      createdByID,
@@ -112,6 +120,9 @@ func (s *practiceService) UpdatePackage(ctx context.Context, id uuid.UUID, req d
 	if req.CompetencyID != nil {
 		pkg.CompetencyID = req.CompetencyID
 	}
+	if req.Jenjang != "" {
+		pkg.Jenjang = models.SchoolLevel(req.Jenjang)
+	}
 	if req.Status != "" {
 		pkg.Status = models.ContentStatus(req.Status)
 	}
@@ -121,10 +132,10 @@ func (s *practiceService) UpdatePackage(ctx context.Context, id uuid.UUID, req d
 		return nil, err
 	}
 
-	// Cascading publish: when practice package is published, publish all questions in the package
-	if pkg.Status == models.ContentStatusPublished && s.questionRepo != nil {
+	// Cascading status: sinkronisasi status semua soal dalam paket latihan
+	if req.Status != "" && s.questionRepo != nil {
 		if qIDs, err := s.practiceRepo.GetPackageQuestionIDs(ctx, pkg.ID); err == nil && len(qIDs) > 0 {
-			_ = s.questionRepo.PublishQuestionsByIDs(ctx, qIDs, updatedByID)
+			_ = s.questionRepo.UpdateStatusByIDs(ctx, qIDs, pkg.Status, updatedByID)
 		}
 	}
 
@@ -157,10 +168,10 @@ func (s *practiceService) UpdatePackageStatus(ctx context.Context, id uuid.UUID,
 		return nil, err
 	}
 
-	// Cascading publish: when practice package is published, publish all questions in the package
-	if pkg.Status == models.ContentStatusPublished && s.questionRepo != nil {
+	// Cascading status: sinkronisasi status semua soal dalam paket latihan (published, draft, archived)
+	if s.questionRepo != nil {
 		if qIDs, err := s.practiceRepo.GetPackageQuestionIDs(ctx, id); err == nil && len(qIDs) > 0 {
-			_ = s.questionRepo.PublishQuestionsByIDs(ctx, qIDs, updatedByID)
+			_ = s.questionRepo.UpdateStatusByIDs(ctx, qIDs, pkg.Status, updatedByID)
 		}
 	}
 
@@ -255,6 +266,13 @@ func (s *practiceService) RemoveQuestionFromPackage(ctx context.Context, package
 func (s *practiceService) ListPublishedPackages(ctx context.Context, filter dto.ListPracticePackageFilter, userID uuid.UUID) (*dto.PaginatedPracticePackagesResponse, error) {
 	filter.Status = string(models.ContentStatusPublished)
 
+	// Pisahkan berdasarkan jenjang siswa.
+	if filter.Jenjang == "" && s.resolver != nil {
+		if jenjang, err := s.resolver.Resolve(ctx, userID); err == nil && jenjang != "" {
+			filter.Jenjang = jenjang
+		}
+	}
+
 	res, err := s.ListPackages(ctx, filter, false)
 	if err != nil {
 		return nil, err
@@ -277,8 +295,20 @@ func (s *practiceService) ListPublishedPackages(ctx context.Context, filter dto.
 	return res, nil
 }
 
-func (s *practiceService) GetPackageForStudent(ctx context.Context, id uuid.UUID) (*dto.PracticePackageDetailResponse, error) {
-	return s.GetPackage(ctx, id, false)
+func (s *practiceService) GetPackageForStudent(ctx context.Context, id, userID uuid.UUID) (*dto.PracticePackageDetailResponse, error) {
+	pkg, err := s.GetPackage(ctx, id, false)
+	if err != nil {
+		return nil, err
+	}
+
+	// Siswa hanya boleh mengakses paket dengan jenjang yang sesuai.
+	if s.resolver != nil {
+		if jenjang, rerr := s.resolver.Resolve(ctx, userID); rerr == nil && jenjang != "" && pkg.Jenjang != jenjang {
+			return nil, ErrPracticePackageNotFound
+		}
+	}
+
+	return pkg, nil
 }
 
 func (s *practiceService) StartPracticeAttempt(ctx context.Context, packageID, userID uuid.UUID) (*dto.StartPracticeResponse, error) {
@@ -292,6 +322,13 @@ func (s *practiceService) StartPracticeAttempt(ctx context.Context, packageID, u
 
 	if pkg.Status != models.ContentStatusPublished {
 		return nil, ErrPracticeNotAvailable
+	}
+
+	// Siswa hanya boleh mengerjakan paket dengan jenjang yang sesuai.
+	if s.resolver != nil {
+		if jenjang, rerr := s.resolver.Resolve(ctx, userID); rerr == nil && jenjang != "" && pkg.Jenjang != models.SchoolLevel(jenjang) {
+			return nil, ErrPracticeNotAvailable
+		}
 	}
 
 	// Resume active attempt if one already exists
@@ -812,6 +849,7 @@ func (s *practiceService) mapToPackageResponse(p *models.PracticePackage) *dto.P
 		CompetencyID:   p.CompetencyID,
 		CompetencyName: compName,
 		CompetencyCode: compCode,
+		Jenjang:        string(p.Jenjang),
 		TotalQuestions: p.TotalQuestions,
 		Status:         string(p.Status),
 		CreatedBy:      p.CreatedBy,

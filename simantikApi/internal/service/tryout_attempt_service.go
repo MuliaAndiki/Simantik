@@ -34,6 +34,7 @@ type tryoutAttemptService struct {
 	tryoutRepo     repository.TryoutRepository
 	adaptiveEngine adaptive.Engine
 	emailSender    utils.EmailSender
+	resolver       *JenjangResolver
 }
 
 // NewTryoutAttemptService constructs a TryoutAttemptService.
@@ -42,14 +43,9 @@ func NewTryoutAttemptService(
 	attemptRepo repository.TryoutAttemptRepository,
 	tryoutRepo repository.TryoutRepository,
 	emailSender utils.EmailSender,
-	adaptiveEng ...adaptive.Engine,
+	resolver *JenjangResolver,
 ) TryoutAttemptService {
-	var eng adaptive.Engine
-	if len(adaptiveEng) > 0 && adaptiveEng[0] != nil {
-		eng = adaptiveEng[0]
-	} else {
-		eng = adaptive.NewEngine(adaptive.DefaultConfig())
-	}
+	eng := adaptive.NewEngine(adaptive.DefaultConfig())
 
 	return &tryoutAttemptService{
 		db:             db,
@@ -57,11 +53,19 @@ func NewTryoutAttemptService(
 		tryoutRepo:     tryoutRepo,
 		adaptiveEngine: eng,
 		emailSender:    emailSender,
+		resolver:       resolver,
 	}
 }
 
 func (s *tryoutAttemptService) AutoMatchTryout(ctx context.Context, userID uuid.UUID) (*models.Tryout, error) {
-	publishedTryouts, total, err := s.tryoutRepo.ListPublished(ctx, dto.ListTryoutFilter{Limit: 50})
+	filter := dto.ListTryoutFilter{Limit: 50}
+	if s.resolver != nil {
+		if jenjang, err := s.resolver.Resolve(ctx, userID); err == nil && jenjang != "" {
+			filter.Jenjang = jenjang
+		}
+	}
+
+	publishedTryouts, total, err := s.tryoutRepo.ListPublished(ctx, filter)
 	if err != nil || total == 0 || len(publishedTryouts) == 0 {
 		return nil, ErrTryoutNotAvailable
 	}
@@ -158,6 +162,13 @@ func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userI
 
 	if tryout.Status != models.ContentStatusPublished {
 		return nil, ErrTryoutNotAvailable
+	}
+
+	// Siswa hanya boleh mengerjakan tryout dengan jenjang yang sesuai.
+	if s.resolver != nil {
+		if jenjang, rerr := s.resolver.Resolve(ctx, userID); rerr == nil && jenjang != "" && tryout.Jenjang != models.SchoolLevel(jenjang) {
+			return nil, ErrTryoutNotAvailable
+		}
 	}
 
 	now := time.Now()

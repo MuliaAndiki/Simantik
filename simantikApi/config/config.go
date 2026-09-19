@@ -178,7 +178,10 @@ func NewDatabase(cfg *Config) (*gorm.DB, error) {
 		},
 	)
 
-	db, err := gorm.Open(postgres.Open(cfg.DSN()), &gorm.Config{
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  cfg.DSN(),
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{
 		Logger: customLogger,
 	})
 	if err != nil {
