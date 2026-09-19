@@ -13,6 +13,7 @@ type CreatePracticePackageRequest struct {
 	Title        string     `json:"title" validate:"required,min=3,max=200"`
 	Description  string     `json:"description" validate:"omitempty"`
 	CompetencyID *uuid.UUID `json:"competency_id" validate:"omitempty,uuid"`
+	Jenjang      string     `json:"jenjang" validate:"required,oneof=sd smp sma smk"`
 }
 
 // UpdatePracticePackageRequest payload for updating practice package metadata.
@@ -20,6 +21,7 @@ type UpdatePracticePackageRequest struct {
 	Title        string     `json:"title" validate:"omitempty,min=3,max=200"`
 	Description  string     `json:"description" validate:"omitempty"`
 	CompetencyID *uuid.UUID `json:"competency_id" validate:"omitempty,uuid"`
+	Jenjang      string     `json:"jenjang" validate:"omitempty,oneof=sd smp sma smk"`
 	Status       string     `json:"status" validate:"omitempty,oneof=draft published archived"`
 }
 
@@ -32,6 +34,7 @@ type AddPracticeQuestionsRequest struct {
 type ListPracticePackageFilter struct {
 	Search       string     `query:"search"`
 	Status       string     `query:"status"`
+	Jenjang      string     `query:"jenjang"`
 	CompetencyID *uuid.UUID `query:"competency_id"`
 	Limit        int        `query:"limit"`
 	Offset       int        `query:"offset"`
@@ -45,6 +48,7 @@ type PracticePackageResponse struct {
 	CompetencyID   *uuid.UUID `json:"competency_id"`
 	CompetencyName string     `json:"competency_name,omitempty"`
 	CompetencyCode string     `json:"competency_code,omitempty"`
+	Jenjang        string     `json:"jenjang"`
 	TotalQuestions int        `json:"total_questions"`
 	Status         string     `json:"status"`
 	CreatedBy      uuid.UUID  `json:"created_by"`

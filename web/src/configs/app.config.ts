@@ -144,8 +144,8 @@ export const ROLE_SIDEBAR_MENU: Record<string, NavItem[]> = {
   CONTENT_MANAGER: [
     { name: 'Dashboard', url: '/content_manager/dashboard', icon: LayoutDashboard, subMenu: [] },
     { name: 'Materi', url: '/content_manager/materials', icon: BookOpen, subMenu: [] },
-    { name: 'Bank Soal', url: '/content_manager/questions', icon: FileQuestion, subMenu: [] },
-    { name: 'Tryout', url: '/content_manager/tryouts', icon: Trophy, subMenu: [] },
+    { name: 'Paket Latihan', url: '/content_manager/practice', icon: FileQuestion, subMenu: [] },
+    { name: 'Paket Tryout', url: '/content_manager/tryouts', icon: Trophy, subMenu: [] },
     { name: 'News', url: '/content_manager/news', icon: Newspaper, subMenu: [] },
     { name: 'Documentation', url: '/content_manager/documentation', icon: FileText, subMenu: [] },
     {

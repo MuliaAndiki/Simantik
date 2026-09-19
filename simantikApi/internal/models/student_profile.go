@@ -15,8 +15,9 @@ type StudentProfile struct {
 	UserID           uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex" json:"userId"`
 	SchoolID         *uuid.UUID `gorm:"type:uuid;index" json:"schoolId"`
 	School           string     `gorm:"type:varchar(150)" json:"school"`
-	Grade            string     `gorm:"type:varchar(50)" json:"grade"`  // e.g. "12 SMA", "Gap Year"
-	Major            string     `gorm:"type:varchar(100)" json:"major"` // e.g. "IPA", "IPS"
+	Grade            string     `gorm:"type:varchar(50)" json:"grade"` // e.g. "12 SMA", "Gap Year"
+	Jenjang          *string    `gorm:"column:jenjang;type:varchar(20);index" json:"jenjang"` // eksplisit (gap year), fallback ke jenjang sekolah
+	Major            string     `gorm:"type:varchar(100)" json:"major"`                      // e.g. "IPA", "IPS"
 	TargetUniversity string     `gorm:"type:varchar(150)" json:"targetUniversity"`
 	TargetMajor      string     `gorm:"type:varchar(100)" json:"targetMajor"`
 	Bio              string     `gorm:"type:text" json:"bio"`

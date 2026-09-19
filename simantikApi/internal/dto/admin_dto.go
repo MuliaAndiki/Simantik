@@ -20,12 +20,13 @@ type RecentAttemptItem struct {
 
 // StudentProfileResponse represents student academic details.
 type StudentProfileResponse struct {
-	School           string `json:"school"`
-	Grade            string `json:"grade"`
-	Major            string `json:"major"`
-	TargetUniversity string `json:"target_university"`
-	TargetMajor      string `json:"target_major"`
-	Bio              string `json:"bio"`
+	School           string  `json:"school"`
+	Grade            string  `json:"grade"`
+	Jenjang          *string `json:"jenjang,omitempty"`
+	Major            string  `json:"major"`
+	TargetUniversity string  `json:"target_university"`
+	TargetMajor      string  `json:"target_major"`
+	Bio              string  `json:"bio"`
 }
 
 // AdminDashboardStatsResponse aggregates high-level platform health metrics.

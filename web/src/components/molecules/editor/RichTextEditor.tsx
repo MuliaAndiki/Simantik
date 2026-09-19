@@ -17,6 +17,7 @@ import {
   Link2,
   List,
   ListOrdered,
+  Loader2,
   Maximize2,
   Minimize2,
   Minus,
@@ -27,6 +28,7 @@ import {
   RotateCcw,
   RotateCw,
   Table as TableIcon,
+  Trash2,
   Underline,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -35,6 +37,8 @@ import { cn } from '@/utils/classname';
 export interface RichTextEditorProps {
   value?: string;
   onChange?: (content: string) => void;
+  onUploadImage?: (file: File) => Promise<string>;
+  onDeleteImage?: (url: string) => Promise<void>;
   apiKey?: string;
   placeholder?: string;
   readOnly?: boolean;
@@ -42,6 +46,8 @@ export interface RichTextEditorProps {
   onWordCountChange?: (count: number) => void;
   documentTitle?: string;
   documentSubtitle?: string;
+  variant?: 'full' | 'compact';
+  minHeight?: string;
 }
 
 export const DEFAULT_DOCUMENT_HTML = `
@@ -115,13 +121,16 @@ function countWords(html: string): number {
 }
 
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({
-  value = DEFAULT_DOCUMENT_HTML,
+  value,
   onChange,
-  apiKey,
+  onUploadImage,
+  onDeleteImage,
   placeholder = 'Mulai menulis materi...',
   readOnly = false,
   className,
   onWordCountChange,
+  variant = 'full',
+  minHeight,
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState<number>(16);
@@ -131,18 +140,107 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [scale, setScale] = useState<number>(100);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isSavedCloud, setIsSavedCloud] = useState<boolean>(true);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [savedSelection, setSavedSelection] = useState<Range | null>(null);
+  const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(null);
+  const [selectedImageRect, setSelectedImageRect] = useState<DOMRect | null>(null);
+  const [isTableMenuOpen, setIsTableMenuOpen] = useState<boolean>(false);
+  const [tableSize, setTableSize] = useState<{ rows: number; cols: number }>({
+    rows: 0,
+    cols: 0,
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const pendingDeletions = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const isReplacingContentRef = useRef<boolean>(false);
 
   // Sync initial content
   useEffect(() => {
-    if (editorRef.current && value) {
-      if (editorRef.current.innerHTML !== value) {
-        editorRef.current.innerHTML = value;
+    if (editorRef.current) {
+      const nextHtml = value !== undefined ? value : DEFAULT_DOCUMENT_HTML;
+      if (editorRef.current.innerHTML !== nextHtml) {
+        isReplacingContentRef.current = true;
+        editorRef.current.innerHTML = nextHtml;
+        setTimeout(() => {
+          isReplacingContentRef.current = false;
+        }, 50);
       }
-      const words = countWords(value);
-      setWordCount(words || 384);
-      onWordCountChange?.(words || 384);
+      const words = countWords(nextHtml);
+      setWordCount(words);
+      onWordCountChange?.(words);
     }
   }, [value, onWordCountChange]);
+
+  // Observe node removal to delete images
+  useEffect(() => {
+    if (!editorRef.current || !onDeleteImage) return;
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        // Cancel deletion if image is added back (e.g. Undo)
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLElement) {
+            const checkAndCancel = (element: HTMLElement) => {
+              if (element.nodeName === 'IMG') {
+                const src = (element as HTMLImageElement).src;
+                if (pendingDeletions.current.has(src)) {
+                  clearTimeout(pendingDeletions.current.get(src)!);
+                  pendingDeletions.current.delete(src);
+                }
+              }
+              if (element.querySelectorAll) {
+                const imgs = element.querySelectorAll('img');
+                imgs.forEach((img) => {
+                  if (pendingDeletions.current.has(img.src)) {
+                    clearTimeout(pendingDeletions.current.get(img.src)!);
+                    pendingDeletions.current.delete(img.src);
+                  }
+                });
+              }
+            };
+            checkAndCancel(node);
+          }
+        });
+
+        // Skip deletion if replacing the entire editor content
+        if (isReplacingContentRef.current) return;
+
+        // Schedule deletion for removed images
+        mutation.removedNodes.forEach((node) => {
+          if (node instanceof HTMLElement) {
+            const checkAndQueue = (element: HTMLElement) => {
+              if (element.nodeName === 'IMG') {
+                const src = (element as HTMLImageElement).src;
+                if (!pendingDeletions.current.has(src)) {
+                  const timer = setTimeout(() => {
+                    onDeleteImage(src).catch(console.error);
+                    pendingDeletions.current.delete(src);
+                  }, 5000); // 5s delay
+                  pendingDeletions.current.set(src, timer);
+                }
+              }
+              if (element.querySelectorAll) {
+                const imgs = element.querySelectorAll('img');
+                imgs.forEach((img) => {
+                  if (!pendingDeletions.current.has(img.src)) {
+                    const timer = setTimeout(() => {
+                      onDeleteImage(img.src).catch(console.error);
+                      pendingDeletions.current.delete(img.src);
+                    }, 5000); // 5s delay
+                    pendingDeletions.current.set(img.src, timer);
+                  }
+                });
+              }
+            };
+            checkAndQueue(node);
+          }
+        });
+      });
+    });
+
+    observer.observe(editorRef.current, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [onDeleteImage]);
 
   const handleInput = useCallback(() => {
     if (editorRef.current) {
@@ -180,34 +278,141 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   };
 
   const handleInsertLink = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      alert('Pilih teks terlebih dahulu sebelum menyisipkan tautan.');
+      return;
+    }
     const url = prompt('Masukkan URL tautan:');
     if (url) executeCommand('createLink', url);
   };
 
   const handleInsertImage = () => {
-    const url = prompt('Masukkan URL Gambar:');
-    if (url) executeCommand('insertImage', url);
+    if (onUploadImage) {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        setSavedSelection(selection.getRangeAt(0));
+      }
+      fileInputRef.current?.click();
+    } else {
+      const url = prompt('Masukkan URL Gambar:');
+      if (url) {
+        const imgHtml = `<img src="${url}" alt="image" class="max-w-full h-auto rounded-xl my-4" />`;
+        executeCommand('insertHTML', imgHtml);
+      }
+    }
   };
 
-  const handleInsertTable = () => {
-    const tableHtml = `
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUploadImage) return;
+
+    // Optional validation (can also be done on the server/hook)
+    if (!file.type.startsWith('image/')) {
+      alert('File harus berupa gambar (JPG, PNG, WEBP, dll)');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const url = await onUploadImage(file);
+
+      // Restore selection before inserting
+      if (savedSelection) {
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(savedSelection);
+      } else {
+        editorRef.current?.focus();
+      }
+
+      const imgHtml = `<img src="${url}" alt="${file.name}" class="max-w-full h-auto rounded-xl my-4" />`;
+      executeCommand('insertHTML', imgHtml);
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+    } finally {
+      setIsUploading(false);
+      setSavedSelection(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const buildTableHtml = (rows: number, cols: number): string => {
+    const headerCells = Array.from(
+      { length: cols },
+      (_, c) => `<th class="border border-slate-200 p-2 font-bold text-left">Kolom ${c + 1}</th>`
+    ).join('');
+    const bodyRows = Array.from(
+      { length: Math.max(0, rows - 1) },
+      (_, r) =>
+        `<tr>${Array.from(
+          { length: cols },
+          (_, c) => `<td class="border border-slate-200 p-2">Baris ${r + 1} Kolom ${c + 1}</td>`
+        ).join('')}</tr>`
+    ).join('');
+
+    return `
       <table class="w-full border-collapse border border-slate-200 my-4 text-xs">
         <thead>
-          <tr class="bg-slate-50">
-            <th class="border border-slate-200 p-2 font-bold text-left">Kolom 1</th>
-            <th class="border border-slate-200 p-2 font-bold text-left">Kolom 2</th>
-          </tr>
+          <tr class="bg-slate-50">${headerCells}</tr>
         </thead>
-        <tbody>
-          <tr>
-            <td class="border border-slate-200 p-2">Baris 1 Data A</td>
-            <td class="border border-slate-200 p-2">Baris 1 Data B</td>
-          </tr>
-        </tbody>
+        <tbody>${bodyRows}</tbody>
       </table>
     `;
-    executeCommand('insertHTML', tableHtml);
   };
+
+  const handleInsertTable = (rows: number, cols: number) => {
+    executeCommand('insertHTML', buildTableHtml(rows, cols));
+    setIsTableMenuOpen(false);
+    setTableSize({ rows: 0, cols: 0 });
+  };
+
+  const clearImageSelection = () => {
+    if (selectedImage) {
+      selectedImage.style.outline = '';
+      selectedImage.style.outlineOffset = '';
+    }
+    setSelectedImage(null);
+    setSelectedImageRect(null);
+  };
+
+  const handleEditorClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (readOnly) return;
+    const target = e.target as HTMLElement;
+    if (target instanceof HTMLImageElement) {
+      if (selectedImage && selectedImage !== target) {
+        selectedImage.style.outline = '';
+        selectedImage.style.outlineOffset = '';
+      }
+      target.style.outline = '2px solid #0EA5E9';
+      target.style.outlineOffset = '2px';
+      setSelectedImage(target);
+      setSelectedImageRect(target.getBoundingClientRect());
+    } else {
+      clearImageSelection();
+    }
+  };
+
+  const handleDeleteSelectedImage = () => {
+    if (selectedImage) {
+      selectedImage.remove();
+      clearImageSelection();
+      handleInput();
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedImage) return;
+    const hide = () => {
+      selectedImage.style.outline = '';
+      setSelectedImage(null);
+      setSelectedImageRect(null);
+    };
+    window.addEventListener('scroll', hide, true);
+    return () => window.removeEventListener('scroll', hide, true);
+  }, [selectedImage]);
 
   return (
     <div
@@ -218,31 +423,33 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       )}
     >
       {/* 1. Top Menubar Row */}
-      <div className="flex items-center justify-between px-6 py-2.5 border-b border-slate-100 bg-white select-none">
-        <div className="flex items-center gap-5 text-xs font-semibold text-slate-600">
-          <button type="button" className="hover:text-slate-900 transition cursor-pointer">
-            Berkas
-          </button>
-          <button type="button" className="hover:text-slate-900 transition cursor-pointer">
-            Edit
-          </button>
-          <button type="button" className="hover:text-slate-900 transition cursor-pointer">
-            Sisipkan
-          </button>
-          <button type="button" className="hover:text-slate-900 transition cursor-pointer">
-            Format
-          </button>
-          <button type="button" className="hover:text-slate-900 transition cursor-pointer">
-            Alat
-          </button>
-        </div>
+      {variant !== 'compact' && (
+        <div className="flex items-center justify-between px-6 py-2.5 border-b border-slate-100 bg-white select-none">
+          <div className="flex items-center gap-5 text-xs font-semibold text-slate-600">
+            <button type="button" className="hover:text-slate-900 transition cursor-pointer">
+              Berkas
+            </button>
+            <button type="button" className="hover:text-slate-900 transition cursor-pointer">
+              Edit
+            </button>
+            <button type="button" className="hover:text-slate-900 transition cursor-pointer">
+              Sisipkan
+            </button>
+            <button type="button" className="hover:text-slate-900 transition cursor-pointer">
+              Format
+            </button>
+            <button type="button" className="hover:text-slate-900 transition cursor-pointer">
+              Alat
+            </button>
+          </div>
 
-        {/* Cloud Sync Badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-bold">
-          <Cloud className="w-3.5 h-3.5" />
-          <span>{isSavedCloud ? 'Tersimpan ' : 'Menyimpan...'}</span>
+          {/* Cloud Sync Badge */}
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-bold">
+            <Cloud className="w-3.5 h-3.5" />
+            <span>{isSavedCloud ? 'Tersimpan ' : 'Menyimpan...'}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 2. Full Word/Docs Toolbar Controls */}
       <div className="flex items-center flex-wrap gap-1 px-4 sm:px-6 py-2 border-b border-slate-100 bg-[#FAFCFF] text-slate-700 select-none">
@@ -459,6 +666,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             type="button"
             title="Sisipkan Tautan"
             onClick={handleInsertLink}
+            onMouseDown={(e) => e.preventDefault()}
             className="p-1.5 rounded-lg hover:bg-slate-200/70 text-slate-600 transition cursor-pointer"
           >
             <Link2 className="w-4 h-4" />
@@ -467,18 +675,72 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             type="button"
             title="Sisipkan Gambar"
             onClick={handleInsertImage}
-            className="p-1.5 rounded-lg hover:bg-slate-200/70 text-slate-600 transition cursor-pointer"
+            disabled={isUploading}
+            onMouseDown={(e) => e.preventDefault()}
+            className="p-1.5 rounded-lg hover:bg-slate-200/70 text-slate-600 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ImageIcon className="w-4 h-4" />
+            {isUploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ImageIcon className="w-4 h-4" />
+            )}
           </button>
-          <button
-            type="button"
-            title="Sisipkan Tabel"
-            onClick={handleInsertTable}
-            className="p-1.5 rounded-lg hover:bg-slate-200/70 text-slate-600 transition cursor-pointer"
-          >
-            <TableIcon className="w-4 h-4" />
-          </button>
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <div className="relative">
+            <button
+              type="button"
+              title="Sisipkan Tabel"
+              onClick={() => setIsTableMenuOpen((open) => !open)}
+              onMouseDown={(e) => e.preventDefault()}
+              className="p-1.5 rounded-lg hover:bg-slate-200/70 text-slate-600 transition cursor-pointer"
+            >
+              <TableIcon className="w-4 h-4" />
+            </button>
+
+            {isTableMenuOpen && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Tutup pemilih ukuran tabel"
+                  className="fixed inset-0 z-40 w-full h-full cursor-default border-0 bg-transparent"
+                  onClick={() => setIsTableMenuOpen(false)}
+                />
+                <div className="absolute z-50 top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl p-3">
+                  <p className="text-xs font-semibold text-slate-600 mb-2 text-center">
+                    {tableSize.rows > 0
+                      ? `${tableSize.rows} × ${tableSize.cols} tabel`
+                      : 'Pilih ukuran tabel'}
+                  </p>
+                  <div className="grid grid-cols-6 gap-1">
+                    {Array.from({ length: 36 }, (_, i) => {
+                      const row = Math.floor(i / 6) + 1;
+                      const col = (i % 6) + 1;
+                      const isActive = row <= tableSize.rows && col <= tableSize.cols;
+                      return (
+                        <button
+                          type="button"
+                          key={i}
+                          aria-label={`${row} baris ${col} kolom`}
+                          onMouseEnter={() => setTableSize({ rows: row, cols: col })}
+                          onClick={() => handleInsertTable(row, col)}
+                          className={cn(
+                            'w-5 h-5 rounded border cursor-pointer transition-colors',
+                            isActive ? 'bg-sky-400 border-sky-500' : 'bg-slate-100 border-slate-200'
+                          )}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button
             type="button"
             title="Blok Kode"
@@ -499,67 +761,112 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       </div>
 
       {/* 3. Document Canvas Area */}
-      <div className="flex-1 bg-[#F4F7FA] p-4 sm:p-8 md:p-10 overflow-auto flex justify-center items-start min-h-[560px]">
-        {/* Document Paper Sheet */}
-        <div
-          style={{ transform: `scale(${scale / 100})`, transformOrigin: 'top center' }}
-          className="w-full max-w-4xl bg-white rounded-2xl shadow-sm border border-slate-200/70 p-6 sm:p-12 md:p-16 min-h-[640px] focus:outline-none transition-transform duration-200"
-        >
+      {variant === 'compact' ? (
+        <div className="p-3 sm:p-4 bg-white overflow-auto">
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: editor contentEditable, klik hanya untuk seleksi gambar */}
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: editor contentEditable, keyboard ditangani native */}
           <div
             ref={editorRef}
             contentEditable={!readOnly}
             onInput={handleInput}
+            onClick={handleEditorClick}
             suppressContentEditableWarning
-            className="prose prose-slate max-w-none focus:outline-none min-h-[500px]"
+            className={cn(
+              'prose prose-slate max-w-none focus:outline-none text-xs sm:text-sm leading-relaxed text-slate-800 empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none',
+              minHeight || 'min-h-[120px]'
+            )}
             data-placeholder={placeholder}
           />
         </div>
-      </div>
+      ) : (
+        <div className="flex-1 bg-[#F4F7FA] p-4 sm:p-8 md:p-10 overflow-auto flex justify-center items-start min-h-[560px]">
+          {/* Document Paper Sheet */}
+          <div
+            style={{ transform: `scale(${scale / 100})`, transformOrigin: 'top center' }}
+            className="w-full max-w-4xl bg-white rounded-2xl shadow-sm border border-slate-200/70 p-6 sm:p-12 md:p-16 min-h-[640px] focus:outline-none transition-transform duration-200"
+          >
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: editor contentEditable, klik hanya untuk seleksi gambar */}
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: editor contentEditable, keyboard ditangani native */}
+            <div
+              ref={editorRef}
+              contentEditable={!readOnly}
+              onInput={handleInput}
+              onClick={handleEditorClick}
+              suppressContentEditableWarning
+              className={cn(
+                'prose prose-slate max-w-none focus:outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none',
+                minHeight || 'min-h-[500px]'
+              )}
+              data-placeholder={placeholder}
+            />
+          </div>
+        </div>
+      )}
 
       {/* 4. Bottom Document Status Footer Bar */}
-      <div className="flex items-center justify-between px-6 py-3 border-t border-slate-100 bg-white select-none text-xs text-slate-500 font-medium">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-slate-700 font-bold">
-            <FileText className="w-4 h-4 text-slate-400" />
-            <span>{wordCount} kata</span>
+      {variant !== 'compact' && (
+        <div className="flex items-center justify-between px-6 py-3 border-t border-slate-100 bg-white select-none text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-slate-700 font-bold">
+              <FileText className="w-4 h-4 text-slate-400" />
+              <span>{wordCount} kata</span>
+            </div>
+            <span className="text-slate-300">&bull;</span>
+            <div className="flex items-center gap-1.5 text-teal-700 font-bold">
+              <span className="w-2 h-2 rounded-full bg-teal-500" />
+              <span>Status Dokumen: Valid</span>
+            </div>
           </div>
-          <span className="text-slate-300">&bull;</span>
-          <div className="flex items-center gap-1.5 text-teal-700 font-bold">
-            <span className="w-2 h-2 rounded-full bg-teal-500" />
-            <span>Status Dokumen: Valid</span>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span>Skala Dokumen:</span>
-            <select
-              value={scale}
-              onChange={(e) => setScale(Number(e.target.value))}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-0.5 text-xs font-bold text-slate-700 focus:outline-none"
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span>Skala Dokumen:</span>
+              <select
+                value={scale}
+                onChange={(e) => setScale(Number(e.target.value))}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-0.5 text-xs font-bold text-slate-700 focus:outline-none"
+              >
+                <option value={75}>75%</option>
+                <option value={90}>90%</option>
+                <option value={100}>100%</option>
+                <option value={110}>110%</option>
+                <option value={125}>125%</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              title={isFullscreen ? 'Keluar Layar Penuh' : 'Layar Penuh'}
+              className="p-1 rounded-lg hover:bg-slate-100 text-slate-600 transition cursor-pointer"
             >
-              <option value={75}>75%</option>
-              <option value={90}>90%</option>
-              <option value={100}>100%</option>
-              <option value={110}>110%</option>
-              <option value={125}>125%</option>
-            </select>
+              {isFullscreen ? (
+                <Minimize2 className="w-4 h-4 text-slate-700" />
+              ) : (
+                <Maximize2 className="w-4 h-4 text-slate-700" />
+              )}
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            title={isFullscreen ? 'Keluar Layar Penuh' : 'Layar Penuh'}
-            className="p-1 rounded-lg hover:bg-slate-100 text-slate-600 transition cursor-pointer"
-          >
-            {isFullscreen ? (
-              <Minimize2 className="w-4 h-4 text-slate-700" />
-            ) : (
-              <Maximize2 className="w-4 h-4 text-slate-700" />
-            )}
-          </button>
         </div>
-      </div>
+      )}
+
+      {/* Floating delete button for selected image */}
+      {!readOnly && selectedImage && selectedImageRect && (
+        <button
+          type="button"
+          onClick={handleDeleteSelectedImage}
+          title="Hapus gambar"
+          className="fixed z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold shadow-lg hover:bg-rose-700 transition cursor-pointer"
+          style={{
+            top: selectedImageRect.top + selectedImageRect.height / 2,
+            left: selectedImageRect.left - 8,
+            transform: 'translate(-100%, -50%)',
+          }}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          <span>Hapus</span>
+        </button>
+      )}
     </div>
   );
 };

@@ -8,7 +8,7 @@ import { ApiResponse } from '@/server/type';
  * Jenjang pendidikan sekolah
  * Maps to backend: `models.SchoolLevel`
  */
-export type SchoolLevel = 'tk' | 'sd' | 'smp' | 'sma' | 'smk';
+export type SchoolLevel = 'sd' | 'smp' | 'sma' | 'smk';
 
 /**
  * Status kepemilikan sekolah (negeri/swasta)

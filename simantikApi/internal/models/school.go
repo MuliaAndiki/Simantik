@@ -11,7 +11,6 @@ import (
 type SchoolLevel string
 
 const (
-	SchoolLevelTK  SchoolLevel = "tk"
 	SchoolLevelSD  SchoolLevel = "sd"
 	SchoolLevelSMP SchoolLevel = "smp"
 	SchoolLevelSMA SchoolLevel = "sma"

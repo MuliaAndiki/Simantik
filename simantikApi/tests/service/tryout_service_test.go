@@ -113,7 +113,7 @@ func (m *mockTryoutRepo) GetPoolQuestionIDs(_ context.Context, tryoutID uuid.UUI
 
 func TestTryoutService_CRUD(t *testing.T) {
 	repo := newMockTryoutRepo()
-	svc := service.NewTryoutService(repo)
+	svc := service.NewTryoutService(repo, nil, nil)
 	ctx := context.Background()
 	adminID := uuid.New()
 
@@ -138,7 +138,7 @@ func TestTryoutService_CRUD(t *testing.T) {
 	tryoutID := created.ID
 
 	// Get
-	detail, err := svc.GetTryout(ctx, tryoutID, true)
+	detail, err := svc.GetTryout(ctx, tryoutID, uuid.Nil, true)
 	if err != nil {
 		t.Fatalf("GetTryout failed: %v", err)
 	}
@@ -159,7 +159,7 @@ func TestTryoutService_CRUD(t *testing.T) {
 	if err := svc.DeleteTryout(ctx, tryoutID); err != nil {
 		t.Fatalf("DeleteTryout failed: %v", err)
 	}
-	_, err = svc.GetTryout(ctx, tryoutID, true)
+	_, err = svc.GetTryout(ctx, tryoutID, uuid.Nil, true)
 	if err == nil {
 		t.Fatal("expected error after delete, got nil")
 	}
@@ -167,7 +167,7 @@ func TestTryoutService_CRUD(t *testing.T) {
 
 func TestTryoutService_QuestionPool(t *testing.T) {
 	repo := newMockTryoutRepo()
-	svc := service.NewTryoutService(repo)
+	svc := service.NewTryoutService(repo, nil, nil)
 	ctx := context.Background()
 	adminID := uuid.New()
 
@@ -190,7 +190,7 @@ func TestTryoutService_QuestionPool(t *testing.T) {
 	}
 
 	// Verify pool count
-	detail, err := svc.GetTryout(ctx, tryoutID, true)
+	detail, err := svc.GetTryout(ctx, tryoutID, uuid.Nil, true)
 	if err != nil {
 		t.Fatalf("GetTryout failed: %v", err)
 	}

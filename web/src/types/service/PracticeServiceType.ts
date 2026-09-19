@@ -1,6 +1,7 @@
 import type { ApiResponse } from '../model';
 import type { OptionReviewResponse } from './EvaluationServiceType';
 import type { CompetencyResponse, QuestionStudentResponse } from './QuestionServiceType';
+import type { SchoolLevel } from './SchoolServiceType';
 
 // ============================================================================
 // Practice Package DTOs (Management & Catalog)
@@ -10,12 +11,14 @@ export interface CreatePracticePackageRequest {
   title: string;
   description?: string;
   competency_id?: string | null;
+  jenjang: SchoolLevel;
 }
 
 export interface UpdatePracticePackageRequest {
   title?: string;
   description?: string;
   competency_id?: string | null;
+  jenjang?: SchoolLevel;
   status?: string;
 }
 
@@ -26,6 +29,7 @@ export interface AddPracticeQuestionsRequest {
 export interface ListPracticePackageFilter {
   search?: string;
   status?: string;
+  jenjang?: SchoolLevel | string;
   competency_id?: string;
   limit?: number;
   offset?: number;
@@ -38,6 +42,7 @@ export interface PracticePackageResponse {
   competency_id: string | null;
   competency_name?: string;
   competency_code?: string;
+  jenjang: string;
   total_questions: number;
   status: string;
   created_by: string;

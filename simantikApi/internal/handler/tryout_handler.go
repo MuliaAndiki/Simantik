@@ -54,8 +54,9 @@ func (h *TryoutHandler) GetTryout(c *fiber.Ctx) error {
 
 	role, _ := c.Locals(middleware.LocalsRole).(string)
 	isAdmin := role == "admin" || role == "content_manager"
+	userID, _ := c.Locals(middleware.LocalsUserID).(uuid.UUID)
 
-	res, err := h.tryoutService.GetTryout(c.UserContext(), id, isAdmin)
+	res, err := h.tryoutService.GetTryout(c.UserContext(), id, userID, isAdmin)
 	if err != nil {
 		if errors.Is(err, service.ErrTryoutNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
@@ -163,8 +164,9 @@ func (h *TryoutHandler) ListTryouts(c *fiber.Ctx) error {
 
 	role, _ := c.Locals(middleware.LocalsRole).(string)
 	isAdmin := role == "admin" || role == "content_manager"
+	userID, _ := c.Locals(middleware.LocalsUserID).(uuid.UUID)
 
-	res, err := h.tryoutService.ListTryouts(c.UserContext(), filter, isAdmin)
+	res, err := h.tryoutService.ListTryouts(c.UserContext(), filter, userID, isAdmin)
 	if err != nil {
 		return utils.Error(c, fiber.StatusInternalServerError, "failed to list tryouts", err)
 	}

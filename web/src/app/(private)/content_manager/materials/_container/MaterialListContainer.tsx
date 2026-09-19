@@ -5,6 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { MaterialListPage } from '@/components/page/private/content_manager/MaterialListPage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
+import type { SchoolLevel } from '@/types/service';
 import type {
   InspectorViewMode,
   MaterialFilterState,
@@ -19,6 +20,7 @@ const EMPTY_MODULE_FORM: ModuleDialogForm = {
   title: '',
   description: '',
   label: '',
+  jenjang: 'sma',
   status: 'DRAFT',
 };
 
@@ -41,6 +43,7 @@ export const MaterialListContainer: React.FC = () => {
   const [filters, setFilters] = useState<MaterialFilterState>({
     search: '',
     category: 'Semua Kategori',
+    jenjang: 'Semua Jenjang',
     status: 'Semua Status',
     page: 1,
     perPage: 6,
@@ -60,10 +63,17 @@ export const MaterialListContainer: React.FC = () => {
     }
   }, [filters.status]);
 
+  const apiJenjang = useMemo(() => {
+    return filters.jenjang !== 'Semua Jenjang'
+      ? (filters.jenjang.toLowerCase() as SchoolLevel)
+      : undefined;
+  }, [filters.jenjang]);
+
   // 1. Primary Query: List Modul Pembelajaran
   const modulesQuery = api.learning.query.modules({
     search: filters.search.trim() || undefined,
     status: apiStatus,
+    jenjang: apiJenjang,
     limit: filters.perPage,
     offset: (filters.page - 1) * filters.perPage,
   });
@@ -96,7 +106,8 @@ export const MaterialListContainer: React.FC = () => {
       id: item.id,
       title: item.title,
       description: item.description,
-      label: '',
+      label: item.label,
+      jenjang: 'sma',
       status: item.status,
     });
     setModuleFormError(null);
@@ -128,6 +139,7 @@ export const MaterialListContainer: React.FC = () => {
           title: moduleDialogForm.title.trim(),
           description: moduleDialogForm.description.trim(),
           label: moduleDialogForm.label.trim(),
+          jenjang: moduleDialogForm.jenjang,
         });
       } else {
         if (!moduleDialogForm.id) return;
@@ -137,6 +149,7 @@ export const MaterialListContainer: React.FC = () => {
             title: moduleDialogForm.title.trim(),
             description: moduleDialogForm.description.trim(),
             label: moduleDialogForm.label.trim(),
+            jenjang: moduleDialogForm.jenjang,
           },
         });
         await updateModuleStatusMutation.mutateAsync({
@@ -184,6 +197,8 @@ export const MaterialListContainer: React.FC = () => {
         number: String((filters.page - 1) * filters.perPage + idx + 1).padStart(2, '0'),
         title: m.title,
         description: m.description || 'Modul kurikulum terpadu',
+        label: m.label || 'Modul kurikulum terpadu',
+        jenjang: m.jenjang || 'sma',
         materialsCount: m.materials_count || 0,
         status,
         updatedAt,
@@ -289,6 +304,10 @@ export const MaterialListContainer: React.FC = () => {
   // Handlers
   const handleSearchChange = (search: string) => {
     setFilters((prev) => ({ ...prev, search, page: 1 }));
+  };
+
+  const handleJenjangChange = (jenjang: string) => {
+    setFilters((prev) => ({ ...prev, jenjang, page: 1 }));
   };
 
   const handleStatusChange = (status: string) => {
@@ -406,6 +425,7 @@ export const MaterialListContainer: React.FC = () => {
       totalItems={totalItems}
       isRefreshing={isRefreshing}
       onSearchChange={handleSearchChange}
+      onJenjangChange={handleJenjangChange}
       onStatusChange={handleStatusChange}
       onRefresh={handleRefresh}
       onSelectModule={handleSelectModule}
