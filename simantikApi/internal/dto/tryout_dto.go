@@ -9,6 +9,7 @@ import (
 type CreateTryoutRequest struct {
 	Title           string `json:"title" validate:"required,min=3,max=200"`
 	Description     string `json:"description"`
+	Jenjang         string `json:"jenjang" validate:"required,oneof=sd smp sma smk"`
 	DurationSeconds int    `json:"duration_seconds" validate:"required,min=60"`
 	TotalQuestions  int    `json:"total_questions" validate:"required,min=1"`
 }
@@ -16,6 +17,7 @@ type CreateTryoutRequest struct {
 type UpdateTryoutRequest struct {
 	Title           string `json:"title" validate:"omitempty,min=3,max=200"`
 	Description     string `json:"description"`
+	Jenjang         string `json:"jenjang" validate:"omitempty,oneof=sd smp sma smk"`
 	DurationSeconds int    `json:"duration_seconds" validate:"omitempty,min=60"`
 	TotalQuestions  int    `json:"total_questions" validate:"omitempty,min=1"`
 }
@@ -36,6 +38,7 @@ type TryoutResponse struct {
 	ID              uuid.UUID  `json:"id"`
 	Title           string     `json:"title"`
 	Description     string     `json:"description"`
+	Jenjang         string     `json:"jenjang"`
 	DurationSeconds int        `json:"duration_seconds"`
 	TotalQuestions  int        `json:"total_questions"`
 	Status          string     `json:"status"`
@@ -59,10 +62,11 @@ type TryoutQuestionResponse struct {
 }
 
 type ListTryoutFilter struct {
-	Search string `query:"search"`
-	Status string `query:"status"`
-	Limit  int    `query:"limit"`
-	Offset int    `query:"offset"`
+	Search  string `query:"search"`
+	Status  string `query:"status"`
+	Jenjang string `query:"jenjang"`
+	Limit   int    `query:"limit"`
+	Offset  int    `query:"offset"`
 }
 
 type PaginatedTryoutsResponse struct {

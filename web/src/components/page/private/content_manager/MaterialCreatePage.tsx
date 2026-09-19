@@ -11,6 +11,8 @@ export interface MaterialCreatePageProps {
   onMetadataChange?: (next: Partial<MaterialMetadata>) => void;
   onContentChange?: (content: string) => void;
   onWordCountChange?: (count: number) => void;
+  onUploadImage?: (file: File) => Promise<string>;
+  onDeleteImage?: (url: string) => Promise<void>;
   onAddTopic?: (label: string) => void;
   onRemoveTopic?: (id: string) => void;
   isAddingTopic?: boolean;
@@ -35,6 +37,8 @@ export const MaterialCreatePage: React.FC<MaterialCreatePageProps> = ({
   onMetadataChange,
   onContentChange,
   onWordCountChange,
+  onUploadImage,
+  onDeleteImage,
   onAddTopic,
   onRemoveTopic,
   isAddingTopic,
@@ -61,6 +65,8 @@ export const MaterialCreatePage: React.FC<MaterialCreatePageProps> = ({
         content,
         onChange: onContentChange,
         onWordCountChange,
+        onUploadImage,
+        onDeleteImage,
       }}
       objectivesProps={{
         objectives,

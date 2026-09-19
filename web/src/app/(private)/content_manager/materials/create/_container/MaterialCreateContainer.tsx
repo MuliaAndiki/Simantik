@@ -7,6 +7,7 @@ import { MaterialCreatePage } from '@/components/page/private/content_manager/Ma
 import { useApi } from '@/hooks/useApi';
 import { useAppNameSpace } from '@/hooks/useAppNameSpace';
 import type { LearningObjectiveItem, MaterialMetadata, RelevantTopicTag } from '@/types/ui';
+import { deleteObject, uploadAvatar } from '@/utils/r2-utils';
 
 const INITIAL_METADATA: MaterialMetadata = {
   judulMateri: '',
@@ -104,6 +105,31 @@ export function MaterialCreateContainer() {
     setTopics((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const handleUploadImage = async (file: File): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const url = await uploadAvatar(formData, 'materials');
+      return url;
+    } catch (error) {
+      ns.alert.toast({
+        title: 'Upload Gagal',
+        message: error instanceof Error ? error.message : 'Gagal mengunggah gambar materi',
+        icon: 'error',
+      });
+      throw error;
+    }
+  };
+
+  const handleDeleteImage = async (url: string): Promise<void> => {
+    try {
+      await deleteObject(url);
+    } catch (error) {
+      console.error('Failed to delete orphaned image:', error);
+    }
+  };
+
   const handleCancel = () => {
     router.push('/content_manager/materials');
   };
@@ -167,6 +193,7 @@ export function MaterialCreateContainer() {
         const newMod = await createModuleMutation.mutateAsync({
           title: 'Modul Bahasa Indonesia',
           description: 'Kumpulan bahan ajar resmi Kurikulum Merdeka SIMANTIK',
+          jenjang: 'sma',
           display_order: 1,
         });
         targetModuleId = newMod.data?.id;
@@ -258,6 +285,8 @@ export function MaterialCreateContainer() {
       onConfirmAddTopic={handleConfirmAddTopic}
       onMetadataChange={handleMetadataChange}
       onContentChange={handleContentChange}
+      onUploadImage={handleUploadImage}
+      onDeleteImage={handleDeleteImage}
       onAddTopic={handleAddTopic}
       onRemoveTopic={handleRemoveTopic}
       onCancel={handleCancel}

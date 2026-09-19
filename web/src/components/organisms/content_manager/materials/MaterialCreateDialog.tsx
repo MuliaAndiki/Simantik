@@ -16,7 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/atoms';
+import type { SchoolLevel } from '@/types/service';
 import type { MaterialStatusType, ModuleDialogForm } from '@/types/ui/material-manager.types';
+import { SCHOOL_LEVEL_OPTIONS } from '@/types/ui/material-manager.types';
 
 export interface MaterialCreateDialogProps {
   open: boolean;
@@ -112,6 +114,30 @@ export function MaterialCreateDialog({
               className="h-11 rounded-xl border-gray-200 bg-white text-sm focus-visible:ring-cyan-500/30"
               required
             />
+          </div>
+
+          {/* Field: Jenjang */}
+          <div className="space-y-1.5 text-left">
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700">Jenjang</label>
+            <Select
+              value={form.jenjang}
+              onValueChange={(val) => onChange('jenjang', val as SchoolLevel)}
+            >
+              <SelectTrigger className="w-full h-11 rounded-xl border-gray-200 bg-white text-sm focus:ring-cyan-500/30">
+                <SelectValue placeholder="Pilih jenjang" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-gray-100 shadow-xl">
+                {SCHOOL_LEVEL_OPTIONS.map((level) => (
+                  <SelectItem
+                    key={level.value}
+                    value={level.value}
+                    className="text-sm cursor-pointer rounded-lg hover:bg-slate-50 focus:bg-slate-50 my-0.5"
+                  >
+                    {level.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Field: Deskripsi */}

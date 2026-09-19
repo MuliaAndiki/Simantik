@@ -72,9 +72,7 @@ func (r *practiceRepository) FindPackageByIDWithQuestions(ctx context.Context, i
 	var pkg models.PracticePackage
 	err := r.db.WithContext(ctx).
 		Preload("Competency").
-		Preload("Questions", func(db *gorm.DB) *gorm.DB {
-			return db.Order("practice_package_questions.display_order ASC")
-		}).
+		Preload("Questions").
 		Preload("Questions.Options", func(db *gorm.DB) *gorm.DB {
 			return db.Order("display_order ASC")
 		}).
@@ -84,6 +82,23 @@ func (r *practiceRepository) FindPackageByIDWithQuestions(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
+
+	// Reorder questions based on join table manually to prevent GORM many2many preload errors
+	var orderedIDs []uuid.UUID
+	r.db.WithContext(ctx).Model(&models.PracticePackageQuestion{}).Where("package_id = ?", id).Order("display_order ASC").Pluck("question_id", &orderedIDs)
+
+	questionMap := make(map[uuid.UUID]models.Question)
+	for _, q := range pkg.Questions {
+		questionMap[q.ID] = q
+	}
+	orderedQuestions := make([]models.Question, 0, len(pkg.Questions))
+	for _, qid := range orderedIDs {
+		if q, ok := questionMap[qid]; ok {
+			orderedQuestions = append(orderedQuestions, q)
+		}
+	}
+	pkg.Questions = orderedQuestions
+
 	return &pkg, nil
 }
 
@@ -105,6 +120,9 @@ func (r *practiceRepository) ListPackages(ctx context.Context, filter dto.ListPr
 	}
 	if filter.Status != "" {
 		query = query.Where("status = ?", filter.Status)
+	}
+	if filter.Jenjang != "" {
+		query = query.Where("jenjang = ?", filter.Jenjang)
 	}
 	if filter.CompetencyID != nil {
 		query = query.Where("competency_id = ?", filter.CompetencyID)
@@ -187,9 +205,7 @@ func (r *practiceRepository) FindAttemptByIDWithDetails(ctx context.Context, id 
 	var attempt models.Practice
 	err := r.db.WithContext(ctx).
 		Preload("Package").
-		Preload("Package.Questions", func(db *gorm.DB) *gorm.DB {
-			return db.Order("practice_package_questions.display_order ASC")
-		}).
+		Preload("Package.Questions").
 		Preload("Package.Questions.Options", func(db *gorm.DB) *gorm.DB {
 			return db.Order("display_order ASC")
 		}).
@@ -200,6 +216,24 @@ func (r *practiceRepository) FindAttemptByIDWithDetails(ctx context.Context, id 
 	if err != nil {
 		return nil, err
 	}
+
+	if attempt.Package != nil && len(attempt.Package.Questions) > 0 {
+		var orderedIDs []uuid.UUID
+		r.db.WithContext(ctx).Model(&models.PracticePackageQuestion{}).Where("package_id = ?", attempt.PackageID).Order("display_order ASC").Pluck("question_id", &orderedIDs)
+
+		questionMap := make(map[uuid.UUID]models.Question)
+		for _, q := range attempt.Package.Questions {
+			questionMap[q.ID] = q
+		}
+		orderedQuestions := make([]models.Question, 0, len(attempt.Package.Questions))
+		for _, qid := range orderedIDs {
+			if q, ok := questionMap[qid]; ok {
+				orderedQuestions = append(orderedQuestions, q)
+			}
+		}
+		attempt.Package.Questions = orderedQuestions
+	}
+
 	return &attempt, nil
 }
 

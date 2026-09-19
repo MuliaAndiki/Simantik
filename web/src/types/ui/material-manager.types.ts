@@ -1,4 +1,4 @@
-import type { CreateLearningModuleRequest } from '@/types/service';
+import type { CreateLearningModuleRequest, SchoolLevel } from '@/types/service';
 
 export type MaterialStatusType = 'PUBLISHED' | 'IN_REVIEW' | 'DRAFT';
 
@@ -9,6 +9,8 @@ export interface ModuleItem {
   number: string;
   title: string;
   description: string;
+  label: string;
+  jenjang: string;
   materialsCount: number;
   status: MaterialStatusType;
   updatedAt: string;
@@ -67,6 +69,7 @@ export interface MaterialStats {
 export interface MaterialFilterState {
   search: string;
   category: string;
+  jenjang: string;
   status: string;
   page: number;
   perPage: number;
@@ -78,3 +81,10 @@ export type ModuleDialogForm = CreateLearningModuleRequest & {
   label: string;
   status: MaterialStatusType;
 };
+
+export const SCHOOL_LEVEL_OPTIONS: { value: SchoolLevel; label: string }[] = [
+  { value: 'sd', label: 'SD / MI' },
+  { value: 'smp', label: 'SMP / MTs' },
+  { value: 'sma', label: 'SMA / MA' },
+  { value: 'smk', label: 'SMK' },
+];

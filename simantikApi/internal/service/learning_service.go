@@ -42,17 +42,24 @@ type learningService struct {
 	moduleRepo   repository.LearningModuleRepository
 	materialRepo repository.MaterialRepository
 	progressRepo repository.LearningProgressRepository
+	resolver     *JenjangResolver
 }
 
 func NewLearningService(
 	moduleRepo repository.LearningModuleRepository,
 	materialRepo repository.MaterialRepository,
 	progressRepo repository.LearningProgressRepository,
+	resolver ...*JenjangResolver,
 ) LearningService {
+	var r *JenjangResolver
+	if len(resolver) > 0 {
+		r = resolver[0]
+	}
 	return &learningService{
 		moduleRepo:   moduleRepo,
 		materialRepo: materialRepo,
 		progressRepo: progressRepo,
+		resolver:     r,
 	}
 }
 
@@ -64,6 +71,7 @@ func (s *learningService) CreateModule(ctx context.Context, req dto.CreateLearni
 		Title:        req.Title,
 		Description:  req.Description,
 		Label:        req.Label,
+		Jenjang:      models.SchoolLevel(req.Jenjang),
 		DisplayOrder: req.DisplayOrder,
 		Status:       models.ContentStatusDraft,
 		CreatedBy:    createdByID,
@@ -88,6 +96,13 @@ func (s *learningService) GetModule(ctx context.Context, id, userID uuid.UUID, i
 
 	if !isAdmin && mod.Status != models.ContentStatusPublished {
 		return nil, ErrModuleNotFound
+	}
+
+	// Pisahkan konten berdasarkan jenjang: siswa hanya boleh akses modul jenjangnya.
+	if !isAdmin && s.resolver != nil {
+		if jenjang, err := s.resolver.Resolve(ctx, userID); err == nil && jenjang != "" && mod.Jenjang != models.SchoolLevel(jenjang) {
+			return nil, ErrModuleNotFound
+		}
 	}
 
 	// Fetch user progress for materials in this module
@@ -154,6 +169,9 @@ func (s *learningService) UpdateModule(ctx context.Context, id uuid.UUID, req dt
 	if req.Label != "" {
 		mod.Label = req.Label
 	}
+	if req.Jenjang != "" {
+		mod.Jenjang = models.SchoolLevel(req.Jenjang)
+	}
 	if req.DisplayOrder > 0 {
 		mod.DisplayOrder = req.DisplayOrder
 	}
@@ -166,9 +184,9 @@ func (s *learningService) UpdateModule(ctx context.Context, id uuid.UUID, req dt
 		return nil, err
 	}
 
-	// Cascading publish: when module is published, automatically publish all of its materials
-	if mod.Status == models.ContentStatusPublished {
-		_ = s.materialRepo.PublishMaterialsByModuleID(ctx, id, updatedByID)
+	// Cascading status: sinkronisasi status semua materi dalam modul
+	if req.Status != "" {
+		_ = s.materialRepo.UpdateStatusByModuleID(ctx, id, mod.Status, updatedByID)
 	}
 
 	totalMat, _ := s.progressRepo.CountMaterialsByModule(ctx, id)
@@ -191,10 +209,8 @@ func (s *learningService) UpdateModuleStatus(ctx context.Context, id uuid.UUID, 
 		return nil, err
 	}
 
-	// Cascading publish: when module is published, automatically publish all of its materials
-	if mod.Status == models.ContentStatusPublished {
-		_ = s.materialRepo.PublishMaterialsByModuleID(ctx, id, updatedByID)
-	}
+	// Cascading status: sinkronisasi status semua materi dalam modul (published, draft, archived)
+	_ = s.materialRepo.UpdateStatusByModuleID(ctx, id, mod.Status, updatedByID)
 
 	totalMat, _ := s.progressRepo.CountMaterialsByModule(ctx, id)
 	return s.mapToModuleResponse(mod, int(totalMat), 0), nil
@@ -216,6 +232,12 @@ func (s *learningService) ListModules(ctx context.Context, filter dto.ListModule
 	var modules []models.LearningModule
 	var total int64
 	var err error
+
+	if !isAdmin && filter.Jenjang == "" && s.resolver != nil {
+		if jenjang, rerr := s.resolver.Resolve(ctx, userID); rerr == nil && jenjang != "" {
+			filter.Jenjang = jenjang
+		}
+	}
 
 	if isAdmin {
 		modules, total, err = s.moduleRepo.List(ctx, filter)
@@ -291,6 +313,15 @@ func (s *learningService) GetMaterial(ctx context.Context, id, userID uuid.UUID,
 
 	if !isAdmin && mat.Status != models.ContentStatusPublished {
 		return nil, ErrMaterialNotFound
+	}
+
+	// Akses materi mengikuti jenjang modul induknya
+	if !isAdmin && s.resolver != nil {
+		if mod, err := s.moduleRepo.FindByID(ctx, mat.ModuleID); err == nil && mod != nil {
+			if jenjang, rerr := s.resolver.Resolve(ctx, userID); rerr == nil && jenjang != "" && mod.Jenjang != models.SchoolLevel(jenjang) {
+				return nil, ErrMaterialNotFound
+			}
+		}
 	}
 
 	isDone := false
@@ -498,6 +529,7 @@ func (s *learningService) mapToModuleResponse(m *models.LearningModule, totalCou
 		Title:              m.Title,
 		Description:        m.Description,
 		Label:              m.Label,
+		Jenjang:            string(m.Jenjang),
 		DisplayOrder:       m.DisplayOrder,
 		Status:             string(m.Status),
 		MaterialsCount:     totalCount,

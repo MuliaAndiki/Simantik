@@ -32,6 +32,7 @@ type LearningModule struct {
 	Title        string         `gorm:"type:varchar(200);not null" json:"title"`
 	Description  string         `gorm:"type:text" json:"description"`
 	Label        string         `gorm:"type:varchar(100);index" json:"label"`
+	Jenjang      SchoolLevel    `gorm:"column:jenjang;type:varchar(20);not null;default:'sma';index" json:"jenjang"`
 	DisplayOrder int            `gorm:"not null;default:0" json:"displayOrder"`
 	Status       ContentStatus  `gorm:"type:varchar(20);not null;default:'draft'" json:"status"`
 	CreatedBy    uuid.UUID      `gorm:"type:uuid;not null;index" json:"createdBy"`

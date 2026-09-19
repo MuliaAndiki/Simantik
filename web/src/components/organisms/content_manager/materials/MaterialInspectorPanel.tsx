@@ -341,13 +341,6 @@ export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
                 ))}
               </ul>
             </div>
-
-            <div className="p-3 rounded-lg bg-[#FEF6E8]/70 border border-[#F5B731]/40 flex items-start gap-2 text-xs text-slate-700">
-              <Lightbulb className="w-4 h-4 text-[#F5B731] shrink-0 mt-0.5" />
-              <p className="text-[11px] leading-relaxed">
-                <strong>Tip Kurator:</strong> {material.previewDocument.curatorTip}
-              </p>
-            </div>
           </div>
         </div>
 

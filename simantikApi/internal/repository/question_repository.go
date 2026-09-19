@@ -21,6 +21,7 @@ type QuestionRepository interface {
 	CountByFilter(ctx context.Context, filter dto.ListQuestionFilter) (int64, error)
 	ReplaceCompetencies(ctx context.Context, tx *gorm.DB, questionID uuid.UUID, competencyIDs []uuid.UUID) error
 	PublishQuestionsByIDs(ctx context.Context, ids []uuid.UUID, updatedByID uuid.UUID) error
+	UpdateStatusByIDs(ctx context.Context, ids []uuid.UUID, status models.ContentStatus, updatedByID uuid.UUID) error
 }
 
 type questionRepository struct {
@@ -159,6 +160,10 @@ func (r *questionRepository) ReplaceCompetencies(ctx context.Context, tx *gorm.D
 }
 
 func (r *questionRepository) PublishQuestionsByIDs(ctx context.Context, ids []uuid.UUID, updatedByID uuid.UUID) error {
+	return r.UpdateStatusByIDs(ctx, ids, models.ContentStatusPublished, updatedByID)
+}
+
+func (r *questionRepository) UpdateStatusByIDs(ctx context.Context, ids []uuid.UUID, status models.ContentStatus, updatedByID uuid.UUID) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -166,7 +171,7 @@ func (r *questionRepository) PublishQuestionsByIDs(ctx context.Context, ids []uu
 		Model(&models.Question{}).
 		Where("id IN ?", ids).
 		Updates(map[string]interface{}{
-			"status":     models.ContentStatusPublished,
+			"status":     status,
 			"updated_by": updatedByID,
 			"updated_at": time.Now(),
 		}).Error

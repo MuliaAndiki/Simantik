@@ -79,6 +79,9 @@ func (r *learningModuleRepository) List(ctx context.Context, filter dto.ListModu
 	if filter.Label != "" {
 		query = query.Where("label = ?", filter.Label)
 	}
+	if filter.Jenjang != "" {
+		query = query.Where("jenjang = ?", filter.Jenjang)
+	}
 	if filter.Status != "" {
 		query = query.Where("status = ?", filter.Status)
 	}
@@ -131,6 +134,7 @@ type MaterialRepository interface {
 	List(ctx context.Context, filter dto.ListMaterialFilter) ([]models.Material, int64, error)
 	ListPublished(ctx context.Context, filter dto.ListMaterialFilter) ([]models.Material, int64, error)
 	PublishMaterialsByModuleID(ctx context.Context, moduleID uuid.UUID, updatedByID uuid.UUID) error
+	UpdateStatusByModuleID(ctx context.Context, moduleID uuid.UUID, status models.ContentStatus, updatedByID uuid.UUID) error
 }
 
 type materialRepository struct {
@@ -218,11 +222,15 @@ func (r *materialRepository) ListPublished(ctx context.Context, filter dto.ListM
 }
 
 func (r *materialRepository) PublishMaterialsByModuleID(ctx context.Context, moduleID uuid.UUID, updatedByID uuid.UUID) error {
+	return r.UpdateStatusByModuleID(ctx, moduleID, models.ContentStatusPublished, updatedByID)
+}
+
+func (r *materialRepository) UpdateStatusByModuleID(ctx context.Context, moduleID uuid.UUID, status models.ContentStatus, updatedByID uuid.UUID) error {
 	return r.db.WithContext(ctx).
 		Model(&models.Material{}).
 		Where("module_id = ?", moduleID).
 		Updates(map[string]interface{}{
-			"status":     models.ContentStatusPublished,
+			"status":     status,
 			"updated_by": updatedByID,
 			"updated_at": time.Now(),
 		}).Error
@@ -293,7 +301,7 @@ func (r *learningProgressRepository) CountMaterialsByModule(ctx context.Context,
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&models.Material{}).
-		Where("module_id = ? AND status = ?", moduleID, models.ContentStatusPublished).
+		Where("module_id = ?", moduleID).
 		Count(&count).Error
 	return count, err
 }

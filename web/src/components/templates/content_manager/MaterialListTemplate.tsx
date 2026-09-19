@@ -29,6 +29,7 @@ export interface MaterialListTemplateProps {
   totalItems: number;
   isRefreshing?: boolean;
   onSearchChange: (val: string) => void;
+  onJenjangChange: (val: string) => void;
   isModuleDialogOpen: boolean;
   onOpenDialogChange: (open: boolean) => void;
   dialogMode?: 'create' | 'edit';
@@ -66,6 +67,7 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
   totalItems,
   isRefreshing = false,
   onSearchChange,
+  onJenjangChange,
   onStatusChange,
   onRefresh,
   onSelectModule,
@@ -143,6 +145,7 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
         totalItems={totalItems}
         displayedCount={modules.length}
         onSearchChange={onSearchChange}
+        onJenjangChange={onJenjangChange}
         onStatusChange={onStatusChange}
         onRefresh={onRefresh}
         isRefreshing={isRefreshing}
