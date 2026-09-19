@@ -172,6 +172,10 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
     router.push('/student/tryout');
   }, [router]);
 
+  const handlePreStartCheckChange = useCallback((checked: boolean) => {
+    setIsPreStartChecked(checked);
+  }, []);
+
   const handleTimeoutProceed = useCallback(() => {
     setIsTimeoutModalOpen(false);
     const targetAttemptId = attemptId || attemptIdRef.current;
@@ -465,7 +469,7 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
       paletteItems={paletteItems}
       isPreStartModalOpen={isPreStartModalOpen}
       isPreStartChecked={isPreStartChecked}
-      onPreStartCheckChange={setIsPreStartChecked}
+      onPreStartCheckChange={handlePreStartCheckChange}
       onPreStartConfirm={handlePreStartConfirm}
       onPreStartClose={handlePreStartClose}
       isWarningModalOpen={isWarningModalOpen}

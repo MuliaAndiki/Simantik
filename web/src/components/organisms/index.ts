@@ -6,4 +6,5 @@ export * from './auth/VerifyOtpForm';
 export * from './ComingSoonFeatures';
 export * from './ComingSoonFooter';
 export * from './ComingSoonHero';
+export * from './content_manager';
 export * from './student';

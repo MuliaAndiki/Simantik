@@ -6,6 +6,7 @@ export * from './auth/PasswordField';
 export * from './auth/SchoolSearchSelect';
 export * from './auth/SocialLoginButton';
 export * from './CountdownTimer';
+export * from './editor';
 export * from './FeaturePreviewCard';
 export * from './NotifyMeForm';
 export * from './SocialLinks';

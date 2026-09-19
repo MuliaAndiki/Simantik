@@ -22,6 +22,9 @@ export interface AlertContexType {
   confirm: (p: ModalProps) => Promise<boolean>;
 }
 
+export * from './content-manager-dashboard.types';
+export * from './material-editor.types';
+export * from './material-manager.types';
 export * from './practice.types';
 export * from './practice-result.types';
 export * from './tryout.types';

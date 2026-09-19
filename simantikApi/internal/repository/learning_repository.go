@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -129,6 +130,7 @@ type MaterialRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, filter dto.ListMaterialFilter) ([]models.Material, int64, error)
 	ListPublished(ctx context.Context, filter dto.ListMaterialFilter) ([]models.Material, int64, error)
+	PublishMaterialsByModuleID(ctx context.Context, moduleID uuid.UUID, updatedByID uuid.UUID) error
 }
 
 type materialRepository struct {
@@ -213,6 +215,17 @@ func (r *materialRepository) List(ctx context.Context, filter dto.ListMaterialFi
 func (r *materialRepository) ListPublished(ctx context.Context, filter dto.ListMaterialFilter) ([]models.Material, int64, error) {
 	filter.Status = string(models.ContentStatusPublished)
 	return r.List(ctx, filter)
+}
+
+func (r *materialRepository) PublishMaterialsByModuleID(ctx context.Context, moduleID uuid.UUID, updatedByID uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Model(&models.Material{}).
+		Where("module_id = ?", moduleID).
+		Updates(map[string]interface{}{
+			"status":     models.ContentStatusPublished,
+			"updated_by": updatedByID,
+			"updated_at": time.Now(),
+		}).Error
 }
 
 // ─── Progress Repository ─────────────────────────────────────────────────────

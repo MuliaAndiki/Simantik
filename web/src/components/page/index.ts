@@ -7,7 +7,11 @@ export * from './ComingSoonPage';
 export * from './legal/HelpPage';
 export * from './legal/PrivacyPage';
 export * from './legal/TermsPage';
+export * from './private/content_manager/ContentManagerDashboardPage';
+export * from './private/content_manager/MaterialCreatePage';
+export * from './private/content_manager/MaterialListPage';
 export * from './private/student/DashboardStudentPage';
+
 export * from './private/student/StudentEvaluationPage';
 export * from './private/student/StudentLearningDetailPage';
 export * from './private/student/StudentLearningPage';

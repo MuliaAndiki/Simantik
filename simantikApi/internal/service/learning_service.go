@@ -166,6 +166,11 @@ func (s *learningService) UpdateModule(ctx context.Context, id uuid.UUID, req dt
 		return nil, err
 	}
 
+	// Cascading publish: when module is published, automatically publish all of its materials
+	if mod.Status == models.ContentStatusPublished {
+		_ = s.materialRepo.PublishMaterialsByModuleID(ctx, id, updatedByID)
+	}
+
 	totalMat, _ := s.progressRepo.CountMaterialsByModule(ctx, id)
 	return s.mapToModuleResponse(mod, int(totalMat), 0), nil
 }
@@ -184,6 +189,11 @@ func (s *learningService) UpdateModuleStatus(ctx context.Context, id uuid.UUID, 
 
 	if err := s.moduleRepo.Update(ctx, mod); err != nil {
 		return nil, err
+	}
+
+	// Cascading publish: when module is published, automatically publish all of its materials
+	if mod.Status == models.ContentStatusPublished {
+		_ = s.materialRepo.PublishMaterialsByModuleID(ctx, id, updatedByID)
 	}
 
 	totalMat, _ := s.progressRepo.CountMaterialsByModule(ctx, id)

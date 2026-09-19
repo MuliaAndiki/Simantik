@@ -175,6 +175,18 @@ export default function StudentPractice() {
     setSelectedStatus('all');
   };
 
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleCompetencyChange = (competency: string) => {
+    setSelectedCompetency(competency);
+  };
+
+  const handleStatusChange = (status: string) => {
+    setSelectedStatus(status);
+  };
+
   const handleStartPractice = (packageId: string) => {
     router.push(`/student/practice/${packageId}`);
   };
@@ -190,11 +202,11 @@ export default function StudentPractice() {
   return (
     <StudentPracticePage
       searchQuery={searchQuery}
-      onSearchChange={setSearchQuery}
+      onSearchChange={handleSearchChange}
       selectedCompetency={selectedCompetency}
-      onCompetencyChange={setSelectedCompetency}
+      onCompetencyChange={handleCompetencyChange}
       selectedStatus={selectedStatus}
-      onStatusChange={setSelectedStatus}
+      onStatusChange={handleStatusChange}
       competencyOptions={competencyOptions}
       packages={filteredPackages}
       totalAllPackages={packages.length}

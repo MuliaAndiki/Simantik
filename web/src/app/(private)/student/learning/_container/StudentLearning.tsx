@@ -49,12 +49,12 @@ export default function StudentLearningContainer() {
   const router = useRouter();
   const { learning } = useApi();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLabel, setSelectedLabel] = useState('all');
+  const [selectedCompetency, setSelectedCompetency] = useState('all');
 
   // 1. Fetch modules: mod.Get("/", lh.ListModules) with label query support
   const { data: modulesPage } = learning.query.modules({
     limit: MODULES_LIMIT,
-    label: selectedLabel !== 'all' ? selectedLabel : undefined,
+    label: selectedCompetency !== 'all' ? selectedCompetency : undefined,
   });
 
   // 2. Fetch distinct labels: mod.Get("/labels", lh.ListModuleLabels) for dropdown
@@ -88,7 +88,8 @@ export default function StudentLearningContainer() {
 
   const filteredModules = useMemo(() => {
     return modules.filter((module) => {
-      const matchesLabel = selectedLabel === 'all' || module.competencyCode === selectedLabel;
+      const matchesLabel =
+        selectedCompetency === 'all' || module.competencyCode === selectedCompetency;
 
       const trimmedQuery = searchQuery.trim().toLowerCase();
       const matchesSearch =
@@ -98,13 +99,21 @@ export default function StudentLearningContainer() {
 
       return matchesLabel && matchesSearch;
     });
-  }, [modules, searchQuery, selectedLabel]);
+  }, [modules, searchQuery, selectedCompetency]);
 
-  const isFiltered = searchQuery.trim() !== '' || selectedLabel !== 'all';
+  const isFiltered = searchQuery.trim() !== '' || selectedCompetency !== 'all';
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleCompetencyChange = (competency: string) => {
+    setSelectedCompetency(competency);
+  };
 
   const handleResetFilters = () => {
     setSearchQuery('');
-    setSelectedLabel('all');
+    setSelectedCompetency('all');
   };
 
   const handleLearnModule = (moduleId: string) => {
@@ -114,9 +123,9 @@ export default function StudentLearningContainer() {
   return (
     <StudentLearningPage
       searchQuery={searchQuery}
-      onSearchChange={setSearchQuery}
-      selectedCompetency={selectedLabel}
-      onCompetencyChange={setSelectedLabel}
+      onSearchChange={handleSearchChange}
+      selectedCompetency={selectedCompetency}
+      onCompetencyChange={handleCompetencyChange}
       competencyOptions={labelOptions}
       materials={filteredModules}
       onLearnMaterial={handleLearnModule}
