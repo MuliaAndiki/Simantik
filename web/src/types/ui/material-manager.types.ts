@@ -1,8 +1,8 @@
-import type { CreateLearningModuleRequest, SchoolLevel } from '@/types/service';
+import type { CreateLearningModuleRequest, SchoolLevel } from "@/types/service";
 
-export type MaterialStatusType = 'PUBLISHED' | 'IN_REVIEW' | 'DRAFT';
+export type MaterialStatusType = "PUBLISHED" | "IN_REVIEW" | "DRAFT";
 
-export type InspectorViewMode = 'module_materials' | 'material_detail';
+export type InspectorViewMode = "module_materials" | "material_detail";
 
 export interface ModuleItem {
   id: string;
@@ -15,6 +15,28 @@ export interface ModuleItem {
   status: MaterialStatusType;
   updatedAt: string;
 }
+
+export const MODULE_STATUS_OPTIONS = [
+  {
+    value: "PUBLISHED",
+    label: "Published",
+    color: "bg-[#10B981]",
+  },
+  {
+    value: "IN_REVIEW",
+    label: "In Review",
+    color: "bg-[#F5B731]",
+  },
+  {
+    value: "DRAFT",
+    label: "Draft",
+    color: "bg-[#94A3B8]",
+  },
+] satisfies {
+  value: MaterialStatusType;
+  label: string;
+  color: string;
+}[];
 
 export interface MaterialObjectivePoint {
   id: number;
@@ -83,8 +105,8 @@ export type ModuleDialogForm = CreateLearningModuleRequest & {
 };
 
 export const SCHOOL_LEVEL_OPTIONS: { value: SchoolLevel; label: string }[] = [
-  { value: 'sd', label: 'SD / MI' },
-  { value: 'smp', label: 'SMP / MTs' },
-  { value: 'sma', label: 'SMA / MA' },
-  { value: 'smk', label: 'SMK' },
+  { value: "sd", label: "SD / MI" },
+  { value: "smp", label: "SMP / MTs" },
+  { value: "sma", label: "SMA / MA" },
+  { value: "smk", label: "SMK" },
 ];

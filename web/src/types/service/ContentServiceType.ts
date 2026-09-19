@@ -1,4 +1,4 @@
-import type { ApiResponse, ContentStatus, TestimonialStatus } from '../model';
+import type { ApiResponse, ContentStatus, TestimonialStatus } from "../model";
 
 // ============================================================================
 // News CMS DTOs
@@ -9,6 +9,7 @@ import type { ApiResponse, ContentStatus, TestimonialStatus } from '../model';
  * Maps to backend: `dto.CreateNewsRequest`
  */
 export interface CreateNewsRequest {
+  id?: string;
   title: string;
   slug?: string;
   content: string;
@@ -219,6 +220,8 @@ export interface PaginatedTestimonialsResponse {
 export type NewsApiResponse = ApiResponse<NewsResponse>;
 export type PaginatedNewsApiResponse = ApiResponse<PaginatedNewsResponse>;
 export type DocumentationApiResponse = ApiResponse<DocumentationResponse>;
-export type PaginatedDocumentationApiResponse = ApiResponse<PaginatedDocumentationResponse>;
+export type PaginatedDocumentationApiResponse =
+  ApiResponse<PaginatedDocumentationResponse>;
 export type TestimonialApiResponse = ApiResponse<TestimonialResponse>;
-export type PaginatedTestimonialsApiResponse = ApiResponse<PaginatedTestimonialsResponse>;
+export type PaginatedTestimonialsApiResponse =
+  ApiResponse<PaginatedTestimonialsResponse>;

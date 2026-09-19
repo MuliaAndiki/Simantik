@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import React, { useMemo, useState } from 'react';
-import { MaterialListPage } from '@/components/page/private/content_manager/MaterialListPage';
-import { useApi } from '@/hooks/useApi';
-import useAppNameSpace from '@/hooks/useAppNameSpace';
-import type { SchoolLevel } from '@/types/service';
+import { useRouter } from "next/navigation";
+import React, { useMemo, useState } from "react";
+import { MaterialListPage } from "@/components/page/private/content_manager/MaterialListPage";
+import { useApi } from "@/hooks/useApi";
+import useAppNameSpace from "@/hooks/useAppNameSpace";
+import type { SchoolLevel } from "@/types/service";
 import type {
   InspectorViewMode,
   MaterialFilterState,
@@ -14,14 +14,15 @@ import type {
   MaterialStatusType,
   ModuleDialogForm,
   ModuleItem,
-} from '@/types/ui/material-manager.types';
+} from "@/types/ui/material-manager.types";
+import { TMode } from "@/types/app";
 
 const EMPTY_MODULE_FORM: ModuleDialogForm = {
-  title: '',
-  description: '',
-  label: '',
-  jenjang: 'sma',
-  status: 'DRAFT',
+  title: "",
+  description: "",
+  label: "",
+  jenjang: "sma",
+  status: "DRAFT",
 };
 
 export const MaterialListContainer: React.FC = () => {
@@ -30,21 +31,25 @@ export const MaterialListContainer: React.FC = () => {
   const ns = useAppNameSpace();
 
   // Local state
-  const [selectedModuleId, setSelectedModuleId] = useState<string>('');
-  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
-  const [inspectorMode, setInspectorMode] = useState<InspectorViewMode>('module_materials');
+  const [selectedModuleId, setSelectedModuleId] = useState<string>("");
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
+    null,
+  );
+  const [inspectorMode, setInspectorMode] =
+    useState<InspectorViewMode>("module_materials");
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [moduleDialogForm, setModuleDialogForm] = useState<ModuleDialogForm>(EMPTY_MODULE_FORM);
+  const [moduleDialogForm, setModuleDialogForm] =
+    useState<ModuleDialogForm>(EMPTY_MODULE_FORM);
   const [isModuleDialogOpen, setIsModuleDialogOpen] = useState<boolean>(false);
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [dialogMode, setDialogMode] = useState<TMode>("create");
   const [moduleFormError, setModuleFormError] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<MaterialFilterState>({
-    search: '',
-    category: 'Semua Kategori',
-    jenjang: 'Semua Jenjang',
-    status: 'Semua Status',
+    search: "",
+    category: "Semua Kategori",
+    jenjang: "Semua Jenjang",
+    status: "Semua Status",
     page: 1,
     perPage: 6,
   });
@@ -52,19 +57,19 @@ export const MaterialListContainer: React.FC = () => {
   // Map UI status filter to API status filter
   const apiStatus = useMemo(() => {
     switch (filters.status) {
-      case 'Published':
-        return 'published';
-      case 'In Review':
-        return 'in_review';
-      case 'Draft':
-        return 'draft';
+      case "Published":
+        return "published";
+      case "In Review":
+        return "in_review";
+      case "Draft":
+        return "draft";
       default:
         return undefined;
     }
   }, [filters.status]);
 
   const apiJenjang = useMemo(() => {
-    return filters.jenjang !== 'Semua Jenjang'
+    return filters.jenjang !== "Semua Jenjang"
       ? (filters.jenjang.toLowerCase() as SchoolLevel)
       : undefined;
   }, [filters.jenjang]);
@@ -85,7 +90,7 @@ export const MaterialListContainer: React.FC = () => {
 
   const handleModuleFormChange = <K extends keyof ModuleDialogForm>(
     field: K,
-    value: ModuleDialogForm[K]
+    value: ModuleDialogForm[K],
   ) => {
     setModuleDialogForm((prev) => ({ ...prev, [field]: value }));
     setModuleFormError(null);
@@ -93,7 +98,7 @@ export const MaterialListContainer: React.FC = () => {
 
   const handleOpenDialogChange = (open: boolean) => {
     if (open) {
-      setDialogMode('create');
+      setDialogMode("create");
       setModuleDialogForm(EMPTY_MODULE_FORM);
       setModuleFormError(null);
     }
@@ -101,13 +106,13 @@ export const MaterialListContainer: React.FC = () => {
   };
 
   const handleEditModule = (item: ModuleItem) => {
-    setDialogMode('edit');
+    setDialogMode("edit");
     setModuleDialogForm({
       id: item.id,
       title: item.title,
       description: item.description,
       label: item.label,
-      jenjang: 'sma',
+      jenjang: "sma",
       status: item.status,
     });
     setModuleFormError(null);
@@ -116,10 +121,10 @@ export const MaterialListContainer: React.FC = () => {
 
   const handleDeleteModule = (item: ModuleItem) => {
     ns.alert.confirm({
-      title: 'Hapus Modul',
-      deskripsi: 'Apakah anda yakin ingin menghapus modul ini',
+      title: "Hapus Modul",
+      deskripsi: "Apakah anda yakin ingin menghapus modul ini",
       onConfirm: () => deleteModuleMutation.mutate(item.id),
-      icon: 'error',
+      icon: "error",
     });
   };
 
@@ -129,12 +134,12 @@ export const MaterialListContainer: React.FC = () => {
       !moduleDialogForm.label.trim() ||
       !moduleDialogForm.description.trim()
     ) {
-      setModuleFormError('Judul, label, dan deskripsi wajib diisi.');
+      setModuleFormError("Judul, label, dan deskripsi wajib diisi.");
       return;
     }
 
     try {
-      if (dialogMode === 'create') {
+      if (dialogMode === "create") {
         await createModuleMutation.mutateAsync({
           title: moduleDialogForm.title.trim(),
           description: moduleDialogForm.description.trim(),
@@ -172,7 +177,7 @@ export const MaterialListContainer: React.FC = () => {
       module_id: selectedModuleId || undefined,
       limit: 100,
     },
-    { enabled: !!selectedModuleId }
+    { enabled: !!selectedModuleId },
   );
 
   // Map modules into ModuleItem table format
@@ -180,25 +185,32 @@ export const MaterialListContainer: React.FC = () => {
     const list = modulesQuery.data?.modules ?? [];
 
     return list.map((m, idx) => {
-      const rawStatus = (m.status || 'draft').toUpperCase();
+      const rawStatus = (m.status || "draft").toUpperCase();
       const status: MaterialStatusType =
-        rawStatus === 'PUBLISHED' ? 'PUBLISHED' : rawStatus === 'IN_REVIEW' ? 'IN_REVIEW' : 'DRAFT';
+        rawStatus === "PUBLISHED"
+          ? "PUBLISHED"
+          : rawStatus === "IN_REVIEW"
+            ? "IN_REVIEW"
+            : "DRAFT";
 
       const updatedAt = m.updated_at
-        ? new Date(m.updated_at).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
+        ? new Date(m.updated_at).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
           })
-        : 'Baru saja';
+        : "Baru saja";
 
       return {
         id: m.id,
-        number: String((filters.page - 1) * filters.perPage + idx + 1).padStart(2, '0'),
+        number: String((filters.page - 1) * filters.perPage + idx + 1).padStart(
+          2,
+          "0",
+        ),
         title: m.title,
-        description: m.description || 'Modul kurikulum terpadu',
-        label: m.label || 'Modul kurikulum terpadu',
-        jenjang: m.jenjang || 'sma',
+        description: m.description || "Modul kurikulum terpadu",
+        label: m.label || "Modul kurikulum terpadu",
+        jenjang: m.jenjang || "sma",
         materialsCount: m.materials_count || 0,
         status,
         updatedAt,
@@ -211,56 +223,69 @@ export const MaterialListContainer: React.FC = () => {
     const rawList = moduleMaterialsQuery.data?.materials ?? [];
 
     return rawList.map((m, idx) => {
-      const rawStatus = (m.status || 'draft').toUpperCase();
+      const rawStatus = (m.status || "draft").toUpperCase();
       const status: MaterialStatusType =
-        rawStatus === 'PUBLISHED' ? 'PUBLISHED' : rawStatus === 'IN_REVIEW' ? 'IN_REVIEW' : 'DRAFT';
+        rawStatus === "PUBLISHED"
+          ? "PUBLISHED"
+          : rawStatus === "IN_REVIEW"
+            ? "IN_REVIEW"
+            : "DRAFT";
 
-      const code = `MAT-${m.id.slice(0, 4).toUpperCase()}-${String(m.display_order || idx + 1).padStart(3, '0')}`;
+      const code = `MAT-${m.id.slice(0, 4).toUpperCase()}-${String(m.display_order || idx + 1).padStart(3, "0")}`;
       const updatedAt = m.updated_at
-        ? new Date(m.updated_at).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
+        ? new Date(m.updated_at).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
           })
-        : 'Baru saja';
+        : "Baru saja";
 
       return {
         id: m.id,
-        number: String(idx + 1).padStart(2, '0'),
+        number: String(idx + 1).padStart(2, "0"),
         code,
-        fase: 'Fase F • Kurikulum Merdeka',
+        fase: "Fase F • Kurikulum Merdeka",
         title: m.title,
         pagesInfo: `${m.display_order || 1} Halaman Modul • Bahan Ajar SIMANTIK`,
-        category: m.competency_name || 'Bahasa Indonesia',
+        category: m.competency_name || "Bahasa Indonesia",
         status,
         updatedAt,
         learningObjectives: [
           {
             id: 1,
-            title: 'Capaian Pembelajaran:',
-            desc: m.description || 'Memahami materi terstruktur sesuai standar Diknas dan TKA.',
+            title: "Capaian Pembelajaran:",
+            desc:
+              m.description ||
+              "Memahami materi terstruktur sesuai standar Diknas dan TKA.",
           },
         ],
         previewDocument: {
-          categoryBadge: (m.competency_name || 'MODUL PEMBELAJARAN').toUpperCase(),
+          categoryBadge: (
+            m.competency_name || "MODUL PEMBELAJARAN"
+          ).toUpperCase(),
           chapterInfo: `Unit ${m.display_order || 1}`,
           title: m.title,
-          contentParagraph: m.content || m.description || 'Isi konten bahan ajar modul.',
-          structureTitle: 'Struktur Modul Ajar:',
+          contentParagraph:
+            m.content || m.description || "Isi konten bahan ajar modul.",
+          structureTitle: "Struktur Modul Ajar:",
           structureItems: [
-            { label: '1. Pokok Bahasan:', text: m.description || 'Uraian inti materi.' },
             {
-              label: '2. Pendalaman Materi:',
-              text: 'Konsep dasar dan analisis wacana komprehensif.',
+              label: "1. Pokok Bahasan:",
+              text: m.description || "Uraian inti materi.",
+            },
+            {
+              label: "2. Pendalaman Materi:",
+              text: "Konsep dasar dan analisis wacana komprehensif.",
             },
           ],
-          curatorTip: 'Gunakan panduan ini sebagai rujukan kurikulum dan latihan terpadu.',
+          curatorTip:
+            "Gunakan panduan ini sebagai rujukan kurikulum dan latihan terpadu.",
         },
         auditInfo: {
-          createdByName: 'Content Manager',
-          curatorId: 'CM-01',
+          createdByName: "Content Manager",
+          curatorId: "CM-01",
           lastUpdated: updatedAt,
-          documentVersion: 'v1.0',
+          documentVersion: "v1.0",
         },
       };
     });
@@ -285,9 +310,9 @@ export const MaterialListContainer: React.FC = () => {
     let published = 0;
 
     for (const item of list) {
-      const st = (item.status || '').toLowerCase();
-      if (st === 'published') published++;
-      else if (st === 'in_review') review++;
+      const st = (item.status || "").toLowerCase();
+      if (st === "published") published++;
+      else if (st === "in_review") review++;
       else draft++;
     }
 
@@ -331,21 +356,21 @@ export const MaterialListContainer: React.FC = () => {
   const handleSelectModule = (item: ModuleItem) => {
     setSelectedModuleId(item.id);
     setSelectedMaterialId(null);
-    setInspectorMode('module_materials');
+    setInspectorMode("module_materials");
     setIsInspectorOpen(true);
   };
 
   // User clicks a material item inside the sidebar list -> view switches to material detail
   const handleSelectMaterial = (item: MaterialItem) => {
     setSelectedMaterialId(item.id);
-    setInspectorMode('material_detail');
+    setInspectorMode("material_detail");
     setIsInspectorOpen(true);
   };
 
   // User clicks "<- Kembali ke Daftar Materi" in the detail sidebar
   const handleBackToMaterialsList = () => {
     setSelectedMaterialId(null);
-    setInspectorMode('module_materials');
+    setInspectorMode("module_materials");
   };
 
   const handleCloseInspector = () => {
@@ -354,7 +379,7 @@ export const MaterialListContainer: React.FC = () => {
 
   const handleEditMaterial = (item: MaterialItem) => {
     router.push(
-      `/content_manager/materials/create?id=${item.id}${selectedModuleId ? `&moduleId=${selectedModuleId}` : ''}`
+      `/content_manager/materials/create?id=${item.id}${selectedModuleId ? `&moduleId=${selectedModuleId}` : ""}`,
     );
   };
 
@@ -362,7 +387,7 @@ export const MaterialListContainer: React.FC = () => {
     router.push(
       selectedModuleId
         ? `/content_manager/materials/create?moduleId=${selectedModuleId}`
-        : '/content_manager/materials/create'
+        : "/content_manager/materials/create",
     );
   };
 
@@ -371,25 +396,25 @@ export const MaterialListContainer: React.FC = () => {
   };
 
   const handleExportSyllabus = () => {
-    const syllabusContent = `SILABUS MODUL DAN MATERI SIMANTIK\n\nTotal Modul: ${stats.totalMaterials}\nTanggal Unduh: ${new Date().toLocaleDateString('id-ID')}\n\nDaftar Modul:\n${modules.map((m, i) => `${i + 1}. ${m.title} (${m.materialsCount} Materi) - ${m.status}`).join('\n')}`;
+    const syllabusContent = `SILABUS MODUL DAN MATERI SIMANTIK\n\nTotal Modul: ${stats.totalMaterials}\nTanggal Unduh: ${new Date().toLocaleDateString("id-ID")}\n\nDaftar Modul:\n${modules.map((m, i) => `${i + 1}. ${m.title} (${m.materialsCount} Materi) - ${m.status}`).join("\n")}`;
     const blob = new Blob([syllabusContent], {
-      type: 'text/plain;charset=utf-8',
+      type: "text/plain;charset=utf-8",
     });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = 'Silabus-Modul-SIMANTIK.txt';
+    link.download = "Silabus-Modul-SIMANTIK.txt";
     link.click();
     URL.revokeObjectURL(url);
   };
 
   const handleDownloadModule = (item: MaterialItem) => {
-    const moduleContent = `MODUL PEMBELAJARAN SIMANTIK\n\nID: ${item.code}\nJudul: ${item.title}\nKategori: ${item.category}\nFase: ${item.fase}\nStatus: ${item.status}\n\nTUJUAN PEMBELAJARAN:\n${item.learningObjectives.map((o) => `${o.id}. ${o.title} ${o.desc}`).join('\n')}\n\nKONTEN BACAAN:\n${item.previewDocument.title}\n\n${item.previewDocument.contentParagraph}\n\n${item.previewDocument.structureTitle}\n${item.previewDocument.structureItems.map((s) => `${s.label} ${s.text}`).join('\n')}\n\nTip Kurator: ${item.previewDocument.curatorTip}\n\nAudit: Dibuat oleh ${item.auditInfo.createdByName} (${item.auditInfo.curatorId}), ${item.auditInfo.lastUpdated}, Versi ${item.auditInfo.documentVersion}`;
+    const moduleContent = `MODUL PEMBELAJARAN SIMANTIK\n\nID: ${item.code}\nJudul: ${item.title}\nKategori: ${item.category}\nFase: ${item.fase}\nStatus: ${item.status}\n\nTUJUAN PEMBELAJARAN:\n${item.learningObjectives.map((o) => `${o.id}. ${o.title} ${o.desc}`).join("\n")}\n\nKONTEN BACAAN:\n${item.previewDocument.title}\n\n${item.previewDocument.contentParagraph}\n\n${item.previewDocument.structureTitle}\n${item.previewDocument.structureItems.map((s) => `${s.label} ${s.text}`).join("\n")}\n\nTip Kurator: ${item.previewDocument.curatorTip}\n\nAudit: Dibuat oleh ${item.auditInfo.createdByName} (${item.auditInfo.curatorId}), ${item.auditInfo.lastUpdated}, Versi ${item.auditInfo.documentVersion}`;
     const blob = new Blob([moduleContent], {
-      type: 'text/plain;charset=utf-8',
+      type: "text/plain;charset=utf-8",
     });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = `${item.code}-Modul.txt`;
     link.click();
