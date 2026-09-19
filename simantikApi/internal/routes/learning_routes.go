@@ -12,7 +12,7 @@ import (
 func RegisterLearningRoutes(api fiber.Router, cfg *config.Config, lh *handler.LearningHandler) {
 	auth := middleware.JWTAuth(cfg.JWTSecret)
 	adminOrCM := middleware.RequireRoles("admin", "content_manager")
-	adminOnly := middleware.RequireRoles("admin")
+	
 
 	// ─── Learning Modules ──────────────────────────────────────────────────────
 	mod := api.Group("/learning-modules", auth)
@@ -22,7 +22,7 @@ func RegisterLearningRoutes(api fiber.Router, cfg *config.Config, lh *handler.Le
 	mod.Get("/:id", lh.GetModule)
 	mod.Patch("/:id", adminOrCM, lh.UpdateModule)
 	mod.Patch("/:id/status", adminOrCM, lh.UpdateModuleStatus)
-	mod.Delete("/:id", adminOnly, lh.DeleteModule)
+	mod.Delete("/:id", adminOrCM, lh.DeleteModule)
 	mod.Get("/:id/progress", lh.GetModuleProgress)
 
 	// ─── Materials ─────────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ func RegisterLearningRoutes(api fiber.Router, cfg *config.Config, lh *handler.Le
 	mat.Get("/:id", lh.GetMaterial)
 	mat.Patch("/:id", adminOrCM, lh.UpdateMaterial)
 	mat.Patch("/:id/status", adminOrCM, lh.UpdateMaterialStatus)
-	mat.Delete("/:id", adminOnly, lh.DeleteMaterial)
+	mat.Delete("/:id", adminOrCM, lh.DeleteMaterial)
 	mat.Post("/:id/progress", lh.MarkMaterialProgress)
 
 	// ─── Progress ──────────────────────────────────────────────────────────────

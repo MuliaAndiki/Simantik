@@ -134,6 +134,17 @@ func (m *mockQuestionRepo) ReplaceCompetencies(ctx context.Context, tx *gorm.DB,
 	return nil
 }
 
+func (m *mockQuestionRepo) PublishQuestionsByIDs(ctx context.Context, ids []uuid.UUID, updatedByID uuid.UUID) error {
+	for _, id := range ids {
+		if q, ok := m.questions[id]; ok {
+			q.Status = models.ContentStatusPublished
+			q.UpdatedBy = &updatedByID
+			q.UpdatedAt = time.Now()
+		}
+	}
+	return nil
+}
+
 // Tests
 
 func TestQuestionService_CompetencyCRUD(t *testing.T) {

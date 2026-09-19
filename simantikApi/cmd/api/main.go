@@ -118,7 +118,7 @@ func main() {
 	)
 	userService := service.NewUserService(userRepo, refreshTokenRepo, schoolRepo, profileRepo)
 	questionService := service.NewQuestionService(competencyRepo, questionRepo, db)
-	tryoutService := service.NewTryoutService(tryoutRepo)
+	tryoutService := service.NewTryoutService(tryoutRepo, questionRepo)
 	attemptService := service.NewTryoutAttemptService(db, attemptRepo, tryoutRepo, emailSender)
 	evaluationService := service.NewEvaluationService(evaluationRepo, attemptRepo, tryoutRepo, db)
 	recommendationService := service.NewRecommendationService(recommendationRepo, evaluationRepo, materialRepo)

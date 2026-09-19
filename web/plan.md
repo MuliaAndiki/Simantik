@@ -1,665 +1,604 @@
-Saya ingin kamu melakukan AUDIT lalu IMPLEMENTASI fitur Practice / Latihan pada backend SIMANTIK.
+Saya ingin kamu melakukan **refactor dan standardisasi penulisan code** pada file-file yang saya tag berdasarkan architecture pattern project ini.
 
-PENTING:
-Jangan langsung coding sebelum memahami struktur project dan file-file yang saya tag.
+Tujuan utama refactor ini adalah membuat code:
 
-Saya akan tag beberapa file yang berhubungan dengan:
-- Question
-- Practice / Latihan jika sudah ada
-- Tryout
-- Module / Learning
-- Model
-- Repository
-- Service
-- Handler
-- Routes
-- DTO
-- Migration jika relevan
+* konsisten,
+* readable,
+* type-safe,
+* reusable,
+* mudah di-maintain,
+* tidak memiliki inline type yang berantakan,
+* dan mengikuti pattern **Orchestration Layer** yang sudah digunakan di project.
 
-==================================================
-CONTEXT PROJECT
-==================================================
+## Architecture Rule
 
-Backend:
-- Go
-- GoFiber v2
-- GORM
-- PostgreSQL (Neon)
+Project menggunakan pattern:
 
-Arsitektur backend kurang lebih:
+```txt
+page.tsx
+   ↓
+_container/
+   ↓
+sections / components
+   ↓
+atoms / molecules
+```
 
-Handler
-  ↓
+Contoh struktur:
+
+```txt
+materials/
+├── _container/
+├── create/
+└── page.tsx
+```
+
+`_container` adalah **Orchestration Layer**.
+
+Semua logic berikut harus sebisa mungkin berada di container:
+
+* state
+* API hooks
+* mutation/query
+* handler
+* navigation
+* modal state
+* loading state
+* form state
+* transformation data
+* business logic
+* interaction logic
+
+Sedangkan component/section di bawahnya sebisa mungkin hanya menerima data dan action melalui props dan fokus pada UI.
+
+---
+
+## 1. API Hooks Pattern
+
+Gunakan pattern hooks seperti ini sebagai referensi:
+
+```ts
+export function useCreateModule() {
+  const ns = useAppNameSpace();
+
+  return useMutation<
+    TResponse<LearningModuleResponse>,
+    Error,
+    CreateLearningModuleRequest,
+    LearningCacheContext
+  >({
+    mutationFn: (body: CreateLearningModuleRequest) =>
+      Api.learning.CreateModuleService(body),
+
+    onSettled: async () => {
+      await ns.queryClient.invalidateQueries({
+        queryKey: queryKey.learningRoot(),
+      });
+    },
+
+    onMutate: async () => {
+      await ns.queryClient.cancelQueries({
+        queryKey: queryKey.learningRoot(),
+      });
+
+      const previousModules = readLearningSnapshot(ns);
+
+      return { previousModules };
+    },
+
+    onSuccess: (res) => {
+      ns.alert.toast({
+        title: res.title,
+        message: res.message,
+        icon: 'success',
+      });
+    },
+
+    onError: (err) => {
+      ns.alert.toast({
+        title: ResponseTitles.error,
+        message: err.message,
+        icon: 'error',
+      });
+    },
+  });
+}
+```
+
+Jangan membuat API call langsung di presentational component apabila sudah ada service/hook yang sesuai.
+
+Gunakan flow:
+
+```txt
+Component
+   ↓
+Container
+   ↓
+Custom Hook
+   ↓
 Service
-  ↓
-Repository
-  ↓
-Database
+   ↓
+API Client
+```
 
-Business logic harus berada di Service Layer.
-Handler hanya menangani HTTP request/response.
-Repository hanya menangani akses data.
+---
 
-Jangan merusak architecture atau pattern yang sudah ada.
-Ikuti naming convention, response format, error handling,
-dependency injection, validation, pagination, dan pattern
-repository/service yang sudah digunakan project.
+## 2. Form State Pattern
 
-==================================================
-MASALAH YANG INGIN DIPERBAIKI
-==================================================
+Untuk form, gunakan satu object state apabila field-field tersebut merupakan satu kesatuan form.
 
-Saat ini sistem sudah memiliki konsep Question dan Tryout,
-tetapi endpoint untuk Practice / Latihan belum tersedia atau
-belum lengkap.
+Contoh:
 
-Practice TIDAK sama dengan Tryout.
-
-Saya ingin Practice menjadi fitur tersendiri dan nantinya
-ditampilkan sebagai menu/flow yang berbeda di Web App.
-
-Sebelum implementasi, periksa seluruh file yang saya tag dan
-tentukan terlebih dahulu:
-
-1. Apakah sebenarnya model/entity Practice sudah tersedia?
-2. Apakah sudah ada konsep Practice Package?
-3. Apakah Question saat ini hanya terhubung ke Tryout?
-4. Apakah schema Question memungkinkan digunakan oleh Practice?
-5. Apakah repository Practice sudah ada?
-6. Apakah service Practice sudah ada?
-7. Apakah handler/controller Practice sudah ada?
-8. Apakah route Practice sudah terdaftar?
-9. Apakah DTO request/response Practice sudah tersedia?
-10. Apakah ada bagian existing code yang bisa digunakan kembali
-    tanpa membuat duplicate logic?
-
-JANGAN berasumsi fitur belum ada.
-Audit source code terlebih dahulu.
-
-==================================================
-BUSINESS RULE — PRACTICE
-==================================================
-
-Practice / Latihan berbeda dengan Tryout.
-
-Practice TIDAK memiliki difficulty level.
-
-Jangan menggunakan adaptive difficulty untuk Practice.
+```ts
+const [formCreateModule, setFormCreateModule] =
+  useState<CreateLearningModuleRequest>({
+    title: '',
+    description: '',
+    label: '',
+  });
+```
 
 Jangan membuat:
-- current_level
-- difficulty progression
-- adaptive question selection
-- level up
-- level down
-- difficulty streak
 
-pada Practice.
+```ts
+const [title, setTitle] = useState('');
+const [description, setDescription] = useState('');
+const [label, setLabel] = useState('');
+```
 
-Semua question di dalam sebuah Practice Package dianggap
-sebagai kumpulan soal latihan biasa.
+jika semuanya merupakan satu form yang sama.
 
-Contoh:
+Gunakan type request/domain yang sudah tersedia apabila memang cocok, misalnya:
 
-Practice
-└── Paket Latihan 1
-    ├── Question 1
-    ├── Question 2
-    ├── Question 3
-    └── Question N
+```ts
+CreateLearningModuleRequest
+```
 
-Practice
-└── Paket Latihan 2
-    ├── Question 1
-    ├── Question 2
-    └── Question N
+Jangan membuat type baru yang sebenarnya menduplikasi type yang sudah ada.
 
-Jadi user nantinya melihat:
+---
 
-Latihan
-├── Paket Latihan 1
-├── Paket Latihan 2
-├── Paket Latihan 3
-└── ...
+## 3. Props Typing
 
-User memilih salah satu paket kemudian mengerjakan soal
-di dalam paket tersebut.
+Jangan menulis type props secara asal atau inline seperti:
 
-==================================================
-PRACTICE PACKAGE
-==================================================
-
-Saya membutuhkan konsep Practice Package.
-
-Contoh conceptual entity:
-
-PracticePackage
-- id
-- title
-- description
-- slug (jika pattern project menggunakan slug)
-- status
-- total_questions / atau dihitung dari relation
-- created_at
-- updated_at
-
-Tetapi:
-
-JANGAN langsung membuat model berdasarkan contoh tersebut.
-
-Periksa model dan schema existing terlebih dahulu.
-
-Jika struktur project sudah memiliki entity yang dapat
-merepresentasikan Practice Package, gunakan existing entity
-daripada membuat duplicate model.
-
-Jika memang belum ada, baru usulkan model yang paling sesuai
-dengan architecture project.
-
-==================================================
-QUESTION RELATION
-==================================================
-
-Periksa bagaimana Question saat ini dimodelkan.
-
-Saya ingin Question Bank tetap menjadi source utama soal.
-
-Question dapat digunakan pada:
-
-Question Bank
-      │
-      ├───────────────┐
-      ↓               ↓
-Practice Package    Tryout
-      │               │
-Normal Practice    Adaptive Test
-      │               │
-No Difficulty      Difficulty 1–5
-Progression        Adaptive Selection
-
-Jangan duplicate Question hanya karena digunakan pada
-Practice dan Tryout.
-
-Jika dibutuhkan many-to-many relation, pertimbangkan
-junction/pivot entity seperti:
-
-PracticePackageQuestion
-
-dan gunakan pattern yang paling sesuai dengan existing
-database architecture.
-
-Contoh conceptual relation:
-
-PracticePackage
-        │
-        │ 1:N / M:N
-        ↓
-PracticePackageQuestion
-        │
-        ↓
-Question
-
-Tetapi kembali:
-audit schema existing terlebih dahulu sebelum menentukan
-implementasi final.
-
-==================================================
-TRYOUT TIDAK BOLEH BERUBAH
-==================================================
-
-Jangan mengubah business rule Tryout yang sudah ada.
-
-Tryout tetap:
-
-- 30 questions per tryout
-- 5 answer choices per question
-- 5 difficulty levels
-- adaptive question selection
-
-Adaptive rule yang saat ini digunakan:
-
-Correct streak
-      ↓
-2 consecutive correct
-      ↓
-level +1
-
-Jika mencapai rule berikutnya sesuai implementasi existing,
-level dapat naik lagi.
-
-Incorrect
-      ↓
-level -1
-
-Difficulty dibatasi:
-
-1 <= difficulty <= 5
-
-Practice TIDAK menggunakan mekanisme tersebut.
-
-==================================================
-PRACTICE API
-==================================================
-
-Setelah audit, implementasikan API Practice yang diperlukan.
-
-Gunakan route naming/versioning yang sudah digunakan project.
-Jangan membuat convention baru jika project sudah memiliki
-pattern sendiri.
-
-Secara capability, saya membutuhkan endpoint equivalent untuk:
-
-STUDENT
---------------------------------------------------
-
-GET /practices
-
-Mengambil daftar Practice Package yang tersedia.
-
-Response minimal harus memungkinkan frontend menampilkan:
-
-- package id
-- title
-- description
-- total questions
-- status/progress user jika memang architecture sudah mendukung
-
---------------------------------------------------
-
-GET /practices/:id
-
-Mengambil detail Practice Package.
-
-Jangan expose correct answer jika endpoint ini digunakan
-sebelum user mengerjakan soal.
-
---------------------------------------------------
-
-POST /practices/:id/start
-
-Memulai Practice Attempt.
-
-Backend harus membuat attempt/session sehingga progress
-latihan tidak hanya disimpan di frontend.
-
-Return data yang dibutuhkan frontend untuk membuka halaman
-latihan.
-
---------------------------------------------------
-
-GET /practice-attempts/:attemptId
-
-Mengambil state attempt yang sedang berjalan.
-
-Harus memungkinkan refresh halaman tanpa kehilangan progress.
-
---------------------------------------------------
-
-POST /practice-attempts/:attemptId/answer
-
-Submit/save jawaban user.
-
-Gunakan DTO yang jelas.
-
-Contoh conceptual payload:
-
+```ts
 {
-  "question_id": "...",
-  "answer": "..."
+  formCreateModule: CreateLearningModuleRequest;
+  setFormCreateModule: React.Dispatch<
+    React.SetStateAction<CreateLearningModuleRequest>
+  >;
 }
-
-Sesuaikan dengan Question Type dan DTO existing.
-
---------------------------------------------------
-
-POST /practice-attempts/:attemptId/submit
-
-Menyelesaikan Practice Attempt.
-
-Backend melakukan scoring.
-
---------------------------------------------------
-
-GET /practice-attempts/:attemptId/result
-
-Mengambil hasil latihan.
-
-Result minimal:
-
-- total questions
-- correct
-- incorrect
-- unanswered
-- score
-- answers/review jika diperbolehkan business rule
-- explanation/discussion jika tersedia
-
-==================================================
-MANAGEMENT API
-==================================================
-
-Periksa role dan permission existing.
-
-Admin atau Content Manager harus dapat mengelola
-Practice Package sesuai authorization architecture project.
-
-Capability yang dibutuhkan:
-
-GET    /practice-packages
-POST   /practice-packages
-GET    /practice-packages/:id
-PUT    /practice-packages/:id
-DELETE /practice-packages/:id
-
-Kemudian perlu capability untuk mengatur soal dalam paket:
-
-POST   /practice-packages/:id/questions
-DELETE /practice-packages/:id/questions/:questionId
-
-Jika project menggunakan bulk assignment, lebih baik gunakan
-pattern existing.
-
-Contoh:
-
-PUT /practice-packages/:id/questions
-
-{
-  "question_ids": [
-    "...",
-    "...",
-    "..."
-  ]
-}
-
-Jangan membuat endpoint duplicate apabila existing architecture
-sudah mempunyai generic question assignment mechanism.
-
-==================================================
-PRACTICE ATTEMPT
-==================================================
-
-Periksa apakah existing Attempt model untuk Tryout bisa
-digeneralisasi.
-
-JANGAN otomatis membuat PracticeAttempt baru.
-
-Analisis dahulu apakah:
-
-Option A
-
-Attempt
-├── PRACTICE
-└── TRYOUT
-
-lebih cocok,
+```
 
 atau:
 
-Option B
+```ts
+function Component({
+  form,
+  setForm,
+}: {
+  form: CreateLearningModuleRequest;
+  setForm: React.Dispatch<
+    React.SetStateAction<CreateLearningModuleRequest>
+  >;
+}) {}
+```
 
-PracticeAttempt
-TryoutAttempt
-
-lebih cocok dengan existing architecture.
-
-Pilih berdasarkan source code yang ada, bukan berdasarkan
-preferensi semata.
-
-Jika reuse Attempt menyebabkan Tryout adaptive logic menjadi
-terlalu coupled dengan Practice, lebih baik pisahkan.
-
-Jelaskan keputusan tersebut sebelum implementasi.
-
-==================================================
-SCORING PRACTICE
-==================================================
-
-Practice menggunakan scoring sederhana:
-
-score = (correct / total_questions) * 100
-
-Answer status:
-
-CORRECT
-INCORRECT
-UNANSWERED
-
-Tidak ada negative marking.
-
-Scoring harus dilakukan backend.
-
-Frontend tidak boleh menjadi source of truth untuk score.
-
-==================================================
-SECURITY
-==================================================
-
-Pastikan:
-
-- student hanya bisa mengakses attempt miliknya
-- correct answer tidak dikirim sebelum waktunya
-- scoring dilakukan server-side
-- management endpoint menggunakan role middleware
-- request ID harus divalidasi
-- package harus published/active sebelum bisa dikerjakan student
-- question yang inactive/unpublished tidak boleh masuk attempt
-  kecuali architecture existing mempunyai version/snapshot rule
-- client tidak boleh menentukan score sendiri
-
-==================================================
-WEB APP INTEGRATION CONTRACT
-==================================================
-
-Walaupun task utama adalah backend, response API harus dibuat
-agar nantinya mudah diintegrasikan ke frontend.
-
-Frontend nantinya memiliki flow:
-
-/student/latihan
-        ↓
-Practice Package List
-        ↓
-/student/latihan/[id]
-        ↓
-Package Detail
-        ↓
-Start Practice
-        ↓
-Practice Session
-        ↓
-Submit
-        ↓
-Practice Result
-
-Practice harus benar-benar terpisah secara UX dari:
-
-/student/tryout
-
-Jangan memasukkan konsep adaptive level ke response Practice
-jika tidak dibutuhkan.
-
-==================================================
-IMPLEMENTATION PROCESS
-==================================================
-
-Kerjakan dalam urutan berikut.
-
-PHASE 1 — AUDIT
-
-Baca semua file yang saya tag.
-
-Buat laporan singkat:
-
-Existing:
-- Models
-- Relations
-- DTO
-- Repository
-- Service
-- Handler
-- Routes
-- Middleware
-- Question assignment
-- Attempt system
-- Scoring system
-
-Kemudian buat:
-
-FOUND
-MISSING
-NEEDS MODIFICATION
-CAN REUSE
-
-Jangan coding sebelum audit selesai.
-
-PHASE 2 — GAP ANALYSIS
-
-Bandingkan existing implementation dengan requirement Practice.
-
-Tuliskan:
-
-Existing Architecture
-        ↓
-Missing Components
-        ↓
-Required Changes
-
-Identifikasi juga potensi breaking changes.
-
-PHASE 3 — IMPLEMENTATION PLAN
-
-Sebelum coding, tuliskan file mana yang akan:
-
-CREATE
-MODIFY
-REUSE
-NOT TOUCH
+Buat type props yang jelas dan terstruktur.
 
 Contoh:
 
-CREATE
-internal/models/practice_package.go
-internal/service/practice_service.go
-...
+```ts
+type CreateModuleSectionProps = {
+  formCreateModule: CreateLearningModuleRequest;
+  setFormCreateModule: React.Dispatch<
+    React.SetStateAction<CreateLearningModuleRequest>
+  >;
+};
+```
 
-MODIFY
-internal/routes/...
-...
+Kemudian:
 
-REUSE
-QuestionRepository
-ScoringService
-...
+```ts
+export function CreateModuleSection({
+  formCreateModule,
+  setFormCreateModule,
+}: CreateModuleSectionProps) {
+  // ...
+}
+```
 
-NOT TOUCH
-Tryout adaptive engine
-...
+Jika props mulai banyak, jangan terus menambahkan setter mentah ke component.
 
-Gunakan actual path dari repository.
-Jangan mengarang path.
+Lebih baik container menyediakan handler yang memiliki intent jelas.
 
-PHASE 4 — IMPLEMENTATION
+Contoh:
 
-Setelah plan jelas, implementasikan feature end-to-end:
+```ts
+type CreateModuleSectionProps = {
+  form: CreateLearningModuleRequest;
+  onChange: <K extends keyof CreateLearningModuleRequest>(
+    field: K,
+    value: CreateLearningModuleRequest[K],
+  ) => void;
+  onSubmit: () => void;
+  isSubmitting: boolean;
+};
+```
 
-Model
-  ↓
-DTO
-  ↓
-Repository
-  ↓
-Service
-  ↓
-Handler
-  ↓
-Routes
+Container:
 
-Jika schema database berubah, sesuaikan dengan migration
-strategy/GORM migration mechanism yang memang digunakan project.
+```ts
+const handleFormChange = <K extends keyof CreateLearningModuleRequest>(
+  field: K,
+  value: CreateLearningModuleRequest[K],
+) => {
+  setFormCreateModule((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
+```
 
-Jangan membuat migration mechanism baru.
+Dengan begitu component di bawah tidak perlu mengetahui implementation detail berupa `setState`.
 
-PHASE 5 — VALIDATION
+Prioritaskan:
 
-Setelah implementasi:
+```txt
+form
+onChange
+onSubmit
+onCancel
+isLoading
+```
 
-- jalankan formatter
-- jalankan build
-- jalankan tests yang tersedia
-- perbaiki compile error
-- periksa route registration
-- periksa dependency injection
-- periksa GORM relation
-- periksa JSON serialization
-- periksa authorization
-- periksa ownership
-- periksa error handling
+daripada:
 
-Jangan menganggap task selesai jika code belum compile.
+```txt
+form
+setForm
+mutation
+router
+queryClient
+setModal
+setLoading
+```
 
-==================================================
-IMPORTANT CONSTRAINTS
-==================================================
+Presentational component tidak perlu mengetahui orchestration internal.
 
-1. Practice != Tryout.
-2. Practice tidak memiliki difficulty level.
-3. Practice tidak adaptive.
-4. Practice memiliki Practice Package.
-5. Satu package berisi banyak questions.
-6. Question Bank tetap menjadi source utama Question.
-7. Jangan duplicate Question tanpa alasan architecture yang kuat.
-8. Jangan merusak Tryout adaptive engine.
-9. Backend adalah source of truth.
-10. Jangan mengubah architecture project tanpa kebutuhan.
-11. Reuse existing repository/service/helper jika memungkinkan.
-12. Jangan membuat duplicate utility.
-13. Jangan membuat endpoint berdasarkan asumsi jika sebenarnya
-    endpoint equivalent sudah ada.
-14. Ikuti response/error format existing.
-15. Semua perubahan harus backward-compatible sebisa mungkin.
+---
 
-==================================================
-EXPECTED FINAL REPORT
-==================================================
+## 4. Props Type Organization
 
-Setelah selesai berikan:
+Gunakan nama type berdasarkan component:
 
-1. Audit Result
-2. Gap Analysis
-3. Architecture Decision
-4. Database Changes
-5. Files Created
-6. Files Modified
-7. Endpoints Added
-8. Example Request/Response
-9. Authorization Rules
-10. Testing/Build Result
-11. Remaining TODO / unresolved business decisions
+```ts
+type CreateModuleSectionProps = {}
+type ModuleFormProps = {}
+type MaterialCardProps = {}
+type MaterialTableProps = {}
+```
 
-Yang paling penting:
+Jangan gunakan nama generic seperti:
 
-JANGAN sekadar menambahkan route.
+```ts
+type Props = {}
+```
 
-Pastikan flow:
+jika file memiliki lebih dari satu type/component atau nama tersebut membuat context menjadi tidak jelas.
 
-Practice Package
-      ↓
-Question Assignment
-      ↓
-Student Start Practice
-      ↓
-Practice Attempt
-      ↓
-Answer Persistence
-      ↓
-Submit
-      ↓
-Server-side Scoring
-      ↓
-Practice Result
+Jika type hanya digunakan oleh satu component, type boleh berada di file component tersebut.
 
-benar-benar bekerja end-to-end.
+Jika digunakan oleh beberapa component dalam satu feature, pindahkan ke file type feature, misalnya:
 
-Mulai dengan membaca dan menganalisis semua file yang saya tag.
-Jangan melakukan perubahan sebelum kamu memahami existing
-implementation.
+```txt
+materials/
+├── _container/
+│   └── MaterialsContainer.tsx
+├── _components/
+├── _types/
+│   └── materials.type.ts
+└── page.tsx
+```
+
+Jangan membuat file type baru jika type tersebut hanya satu baris dan hanya digunakan secara lokal.
+
+---
+
+## 5. Container Responsibilities
+
+Container harus menangani orchestration seperti:
+
+```ts
+const [formCreateModule, setFormCreateModule] = useState<...>();
+
+const createModule = useCreateModule();
+
+const handleFormChange = (...) => {
+  ...
+};
+
+const handleSubmit = () => {
+  createModule.mutate(formCreateModule);
+};
+
+return (
+  <CreateModuleSection
+    form={formCreateModule}
+    onChange={handleFormChange}
+    onSubmit={handleSubmit}
+    isSubmitting={createModule.isPending}
+  />
+);
+```
+
+Section/component tidak boleh melakukan:
+
+```ts
+useCreateModule();
+useRouter();
+useQueryClient();
+useState();
+```
+
+kecuali state tersebut memang benar-benar **UI-local state**, misalnya:
+
+```ts
+const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+```
+
+State yang mempengaruhi business flow harus berada di orchestration layer.
+
+---
+
+## 6. Avoid Prop Drilling yang Tidak Perlu
+
+Jika beberapa value memang satu context/form, kelompokkan secara masuk akal.
+
+Jangan membuat:
+
+```tsx
+<Component
+  title={form.title}
+  description={form.description}
+  label={form.label}
+  setTitle={...}
+  setDescription={...}
+  setLabel={...}
+/>
+```
+
+Lebih baik:
+
+```tsx
+<Component
+  form={formCreateModule}
+  onChange={handleFormChange}
+/>
+```
+
+Tetapi jangan juga membuat object props abstrak yang tidak diperlukan seperti:
+
+```tsx
+<Component
+  actions={{
+    module: {
+      form: {
+        handlers: {
+          ...
+        },
+      },
+    },
+  }}
+/>
+```
+
+Tetap sederhana dan eksplisit.
+
+---
+
+## 7. Handler Naming
+
+Gunakan naming yang konsisten:
+
+```ts
+handleCreateModule
+handleUpdateModule
+handleDeleteModule
+handleFormChange
+handleOpenModal
+handleCloseModal
+handleSubmit
+handleResetForm
+```
+
+Untuk props gunakan:
+
+```ts
+onCreate
+onUpdate
+onDelete
+onChange
+onSubmit
+onCancel
+onOpen
+onClose
+```
+
+Pattern:
+
+```txt
+Container implementation → handleXxx
+Component props         → onXxx
+```
+
+Contoh:
+
+```tsx
+<CreateModuleSection
+  onSubmit={handleCreateModule}
+  onCancel={handleCancel}
+/>
+```
+
+---
+
+## 8. Jangan Gunakan `any`
+
+Tidak boleh memperbaiki error TypeScript dengan:
+
+```ts
+any
+as any
+unknown as X
+// @ts-ignore
+// @ts-expect-error
+```
+
+Cari type sebenarnya dari:
+
+* DTO
+* API request
+* API response
+* domain type
+* existing type definitions
+
+Reuse existing type jika tersedia.
+
+---
+
+## 9. State Naming
+
+Gunakan nama state yang menjelaskan context.
+
+Good:
+
+```ts
+formCreateModule
+selectedModule
+isCreateModalOpen
+isEditModalOpen
+moduleToDelete
+```
+
+Avoid:
+
+```ts
+data
+form
+item
+value
+temp
+open
+selected
+```
+
+jika context-nya menjadi ambigu.
+
+---
+
+## 10. Mutation Usage
+
+Container cukup menggunakan API hook seperti:
+
+```ts
+const createModule = useCreateModule();
+```
+
+Kemudian:
+
+```ts
+const handleCreateModule = () => {
+  createModule.mutate(formCreateModule);
+};
+```
+
+Jangan menduplikasi logic seperti:
+
+* toast
+* invalidate query
+* query cache handling
+* API service call
+
+di container jika logic tersebut sudah ditangani hook.
+
+---
+
+## 11. Jangan Overengineering
+
+Refactor ini bukan untuk membuat abstraction sebanyak mungkin.
+
+Hindari:
+
+* wrapper yang tidak diperlukan,
+* custom hook hanya untuk 2-3 baris state sederhana,
+* type duplikat,
+* interface berlapis-lapis,
+* helper yang hanya dipakai satu kali tanpa manfaat readability,
+* file baru yang tidak diperlukan.
+
+Utamakan:
+
+```txt
+simple
+explicit
+typed
+consistent
+maintainable
+```
+
+---
+
+## 12. Yang Harus Kamu Kerjakan
+
+Analisis semua file yang saya tag.
+
+Kemudian:
+
+1. Identifikasi penulisan yang tidak mengikuti architecture di atas.
+2. Identifikasi inline props type.
+3. Identifikasi penggunaan setter langsung yang seharusnya diganti handler.
+4. Identifikasi state yang seharusnya berada di `_container`.
+5. Identifikasi API/query/mutation logic yang berada di presentational component.
+6. Cari existing request/response/domain type sebelum membuat type baru.
+7. Refactor props agar typed dan terstruktur.
+8. Rapikan naming state, handler, props, type, dan function.
+9. Pastikan tidak ada perubahan behavior aplikasi.
+10. Pastikan TypeScript tetap strict dan tidak menggunakan `any`.
+11. Pastikan import yang tidak lagi digunakan dihapus.
+12. Jangan mengubah UI/design kecuali diperlukan untuk refactor code.
+13. Jangan mengubah API contract/backend contract.
+14. Jangan membuat abstraction baru jika tidak memberikan manfaat nyata.
+
+Sebelum melakukan perubahan, pahami dependency antar file yang saya tag agar refactor tidak merusak flow yang sudah berjalan.
+
+Setelah refactor, pastikan pattern akhirnya kurang lebih menjadi:
+
+```txt
+page.tsx
+   ↓
+FeatureContainer
+   ├── state
+   ├── query/mutation hooks
+   ├── handlers
+   ├── navigation
+   └── orchestration
+          ↓
+       Section
+       ├── typed props
+       ├── data
+       ├── onChange
+       ├── onSubmit
+       └── UI state only
+              ↓
+         Molecules / Atoms
+```
+
+PENTING:
+
+Jangan sekadar menjalankan formatter atau mengubah indentasi.
+
+Saya ingin kamu melakukan **architectural code cleanup** berdasarkan pattern yang sudah ada di codebase.
+
+Existing code yang sudah mengikuti pattern project harus dijadikan referensi utama. Jangan menciptakan pattern baru yang bertentangan dengan existing architecture.

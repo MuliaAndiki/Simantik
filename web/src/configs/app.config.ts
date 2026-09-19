@@ -146,15 +146,15 @@ export const ROLE_SIDEBAR_MENU: Record<string, NavItem[]> = {
     { name: 'Materi', url: '/content_manager/materials', icon: BookOpen, subMenu: [] },
     { name: 'Bank Soal', url: '/content_manager/questions', icon: FileQuestion, subMenu: [] },
     { name: 'Tryout', url: '/content_manager/tryouts', icon: Trophy, subMenu: [] },
-    { name: 'Berita', url: '/content_manager/news', icon: Newspaper, subMenu: [] },
-    { name: 'Dokumentasi', url: '/content_manager/documentation', icon: FileText, subMenu: [] },
+    { name: 'News', url: '/content_manager/news', icon: Newspaper, subMenu: [] },
+    { name: 'Documentation', url: '/content_manager/documentation', icon: FileText, subMenu: [] },
     {
-      name: 'Testimoni',
+      name: 'Testimonials',
       url: '/content_manager/testimonials',
       icon: MessageSquareQuote,
       subMenu: [],
     },
-    { name: 'Tutorial', url: '/content_manager/tutorials', icon: Video, subMenu: [] },
+    { name: 'Tutorials', url: '/content_manager/tutorials', icon: Video, subMenu: [] },
   ],
 };
 

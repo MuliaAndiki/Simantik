@@ -31,6 +31,19 @@ export default function ContainerPilihSekolah() {
       jenjang: s.jenjang,
     })) ?? [];
 
+  const handleSchoolSearchChange = (search: string) => {
+    setSchoolSearch(search);
+  };
+
+  const handleSchoolSelect = (school: SchoolOption) => {
+    setSelectedSchool(school);
+    setError(undefined);
+  };
+
+  const handleSchoolClear = () => {
+    setSelectedSchool(null);
+  };
+
   const handleSubmit = () => {
     if (!selectedSchool) {
       setError('Sekolah wajib dipilih');
@@ -51,15 +64,12 @@ export default function ContainerPilihSekolah() {
   return (
     <SchoolOnboardingPage
       schoolSearch={schoolSearch}
-      onSchoolSearchChange={setSchoolSearch}
+      onSchoolSearchChange={handleSchoolSearchChange}
       schoolOptions={schoolOptions}
       schoolLoading={schoolQuery.isFetching}
       selectedSchool={selectedSchool}
-      onSchoolSelect={(school) => {
-        setSelectedSchool(school);
-        setError(undefined);
-      }}
-      onSchoolClear={() => setSelectedSchool(null)}
+      onSchoolSelect={handleSchoolSelect}
+      onSchoolClear={handleSchoolClear}
       onSubmit={handleSubmit}
       loading={updateMySchool.isPending}
       error={error}

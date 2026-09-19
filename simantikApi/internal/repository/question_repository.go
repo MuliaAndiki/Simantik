@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -19,6 +20,7 @@ type QuestionRepository interface {
 	FindByIDWithAnswers(ctx context.Context, id uuid.UUID) (*models.Question, error)
 	CountByFilter(ctx context.Context, filter dto.ListQuestionFilter) (int64, error)
 	ReplaceCompetencies(ctx context.Context, tx *gorm.DB, questionID uuid.UUID, competencyIDs []uuid.UUID) error
+	PublishQuestionsByIDs(ctx context.Context, ids []uuid.UUID, updatedByID uuid.UUID) error
 }
 
 type questionRepository struct {
@@ -154,4 +156,18 @@ func (r *questionRepository) ReplaceCompetencies(ctx context.Context, tx *gorm.D
 		}
 	}
 	return nil
+}
+
+func (r *questionRepository) PublishQuestionsByIDs(ctx context.Context, ids []uuid.UUID, updatedByID uuid.UUID) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).
+		Model(&models.Question{}).
+		Where("id IN ?", ids).
+		Updates(map[string]interface{}{
+			"status":     models.ContentStatusPublished,
+			"updated_by": updatedByID,
+			"updated_at": time.Now(),
+		}).Error
 }

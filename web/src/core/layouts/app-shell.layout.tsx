@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import type * as React from 'react';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/atoms';
 import { AppSidebar } from '@/core/components/app-sidebar';
@@ -16,6 +17,8 @@ interface AppShellProps {
  * Dipakai oleh seluruh halaman dashboard role (student/admin/content_manager).
  */
 export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
+
   return (
     <SidebarProvider defaultOpen>
       <div className="flex min-h-screen w-full">
@@ -24,7 +27,24 @@ export function AppShell({ children }: AppShellProps) {
           <div className="flex h-full flex-col w-full">
             <div className="flex p-4 items-center gap-2 border-b w-full h-20">
               <div className="flex items-center justify-between max-w-full mx-auto w-full">
-                <SidebarTrigger />
+                <div className="flex items-center gap-3">
+                  <SidebarTrigger />
+                  {pathname.startsWith('/content_manager/materials/create') ? (
+                    <span className="font-bold text-slate-900 text-lg sm:text-xl tracking-tight hidden sm:inline-block">
+                      Tambah Materi
+                    </span>
+                  ) : pathname.startsWith('/content_manager/materials') ? (
+                    <span className="font-bold text-slate-900 text-lg sm:text-xl tracking-tight hidden sm:inline-block">
+                      Daftar Materi
+                    </span>
+                  ) : (
+                    pathname.startsWith('/content_manager') && (
+                      <span className="font-bold text-slate-900 text-lg sm:text-xl tracking-tight hidden sm:inline-block">
+                        Management Dashboard
+                      </span>
+                    )
+                  )}
+                </div>
                 <div className="flex items-center gap-4">
                   <NotificationDropdown />
                   <ProfileDropdown />
