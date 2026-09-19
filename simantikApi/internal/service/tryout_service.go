@@ -25,12 +25,17 @@ type TryoutService interface {
 }
 
 type tryoutService struct {
-	repo repository.TryoutRepository
+	repo         repository.TryoutRepository
+	questionRepo repository.QuestionRepository
 }
 
 // NewTryoutService constructs a TryoutService backed by the provided repository.
-func NewTryoutService(repo repository.TryoutRepository) TryoutService {
-	return &tryoutService{repo: repo}
+func NewTryoutService(repo repository.TryoutRepository, questionRepo ...repository.QuestionRepository) TryoutService {
+	var qRepo repository.QuestionRepository
+	if len(questionRepo) > 0 {
+		qRepo = questionRepo[0]
+	}
+	return &tryoutService{repo: repo, questionRepo: qRepo}
 }
 
 func (s *tryoutService) CreateTryout(ctx context.Context, req dto.CreateTryoutRequest, createdByID uuid.UUID) (*dto.TryoutResponse, error) {
@@ -120,6 +125,13 @@ func (s *tryoutService) UpdateTryout(ctx context.Context, id uuid.UUID, req dto.
 		return nil, err
 	}
 
+	// Cascading publish: when tryout is published, automatically publish all questions in its pool
+	if tryout.Status == models.ContentStatusPublished && s.questionRepo != nil {
+		if qIDs, err := s.repo.GetPoolQuestionIDs(ctx, id); err == nil && len(qIDs) > 0 {
+			_ = s.questionRepo.PublishQuestionsByIDs(ctx, qIDs, updatedByID)
+		}
+	}
+
 	poolCount, err := s.repo.CountPoolQuestions(ctx, id)
 	if err != nil {
 		return nil, err
@@ -152,6 +164,13 @@ func (s *tryoutService) UpdateTryoutStatus(ctx context.Context, id uuid.UUID, st
 
 	if err := s.repo.Update(ctx, tryout); err != nil {
 		return nil, err
+	}
+
+	// Cascading publish: when tryout is published, automatically publish all questions in its pool
+	if tryout.Status == models.ContentStatusPublished && s.questionRepo != nil {
+		if qIDs, err := s.repo.GetPoolQuestionIDs(ctx, id); err == nil && len(qIDs) > 0 {
+			_ = s.questionRepo.PublishQuestionsByIDs(ctx, qIDs, updatedByID)
+		}
 	}
 
 	poolCount, err := s.repo.CountPoolQuestions(ctx, id)

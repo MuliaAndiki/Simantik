@@ -14,16 +14,28 @@ import {
 } from '@/components/atoms';
 import { cn } from '@/utils/classname';
 
+export interface ChangePasswordForm {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export interface ChangePasswordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (payload: { currentPassword: string; newPassword: string }) => Promise<void> | void;
+  form: ChangePasswordForm;
+  onChange: (field: keyof ChangePasswordForm, value: string) => void;
+  error?: string | null;
+  onSubmit: () => Promise<void> | void;
   isSubmitting?: boolean;
 }
 
 export function ChangePasswordModal({
   open,
   onOpenChange,
+  form,
+  onChange,
+  error = null,
   onSubmit,
   isSubmitting = false,
 }: ChangePasswordModalProps) {
@@ -31,15 +43,11 @@ export function ChangePasswordModal({
   const newPasswordId = useId();
   const confirmPasswordId = useId();
 
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const { currentPassword, newPassword, confirmPassword } = form;
 
   // Criteria calculations
   const hasMinLength = newPassword.length >= 8;
@@ -60,48 +68,13 @@ export function ChangePasswordModal({
 
   const passwordsMatch = newPassword !== '' && newPassword === confirmPassword;
 
-  const handleResetForm = () => {
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setShowCurrent(false);
-    setShowNew(false);
-    setShowConfirm(false);
-    setValidationError(null);
-  };
-
   const handleClose = () => {
-    handleResetForm();
     onOpenChange(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setValidationError(null);
-
-    if (!currentPassword) {
-      setValidationError('Password saat ini harus diisi.');
-      return;
-    }
-    if (!hasMinLength) {
-      setValidationError('Password baru minimal harus 8 karakter.');
-      return;
-    }
-    if (!hasLetterAndNumber) {
-      setValidationError('Password baru harus mengandung kombinasi huruf dan angka.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setValidationError('Konfirmasi password tidak cocok dengan password baru.');
-      return;
-    }
-
-    try {
-      await onSubmit({ currentPassword, newPassword });
-      handleResetForm();
-    } catch {
-      // Error handled by parent / toast
-    }
+    onSubmit();
   };
 
   return (
@@ -139,8 +112,8 @@ export function ChangePasswordModal({
               <Input
                 id={currentPasswordId}
                 type={showCurrent ? 'text' : 'password'}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
+                value={form.currentPassword}
+                onChange={(e) => onChange('currentPassword', e.target.value)}
                 placeholder="Masukkan password saat ini"
                 className="pr-10 h-11 rounded-xl border-gray-200 bg-white text-sm focus-visible:ring-teal-500/30"
                 required
@@ -179,8 +152,8 @@ export function ChangePasswordModal({
               <Input
                 id={newPasswordId}
                 type={showNew ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                value={form.newPassword}
+                onChange={(e) => onChange('newPassword', e.target.value)}
                 placeholder="Masukkan password baru"
                 className="pr-10 h-11 rounded-xl border-gray-200 bg-white text-sm focus-visible:ring-teal-500/30"
                 required
@@ -282,8 +255,8 @@ export function ChangePasswordModal({
               <Input
                 id={confirmPasswordId}
                 type={showConfirm ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={form.confirmPassword}
+                onChange={(e) => onChange('confirmPassword', e.target.value)}
                 placeholder="Konfirmasi password baru"
                 className="pr-10 h-11 rounded-xl border-gray-200 bg-white text-sm focus-visible:ring-teal-500/30"
                 required
@@ -304,9 +277,9 @@ export function ChangePasswordModal({
           </div>
 
           {/* Validation Alert */}
-          {validationError && (
+          {error && (
             <p className="text-xs text-rose-600 font-medium bg-rose-50 border border-rose-200 rounded-xl p-2.5 text-left">
-              {validationError}
+              {error}
             </p>
           )}
 

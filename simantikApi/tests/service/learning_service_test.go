@@ -151,6 +151,16 @@ func (m *mockMaterialRepo) ListPublished(_ context.Context, filter dto.ListMater
 	return result, int64(len(result)), nil
 }
 
+func (m *mockMaterialRepo) PublishMaterialsByModuleID(_ context.Context, moduleID uuid.UUID, updatedByID uuid.UUID) error {
+	for _, mat := range m.materials {
+		if mat.ModuleID == moduleID {
+			mat.Status = models.ContentStatusPublished
+			mat.UpdatedBy = &updatedByID
+		}
+	}
+	return nil
+}
+
 // ─── Mock: LearningProgressRepository ────────────────────────────────────────
 
 type mockProgressRepo struct {
@@ -386,5 +396,65 @@ func TestLearningService_ListModuleLabels(t *testing.T) {
 	}
 	if len(labels) != 2 {
 		t.Errorf("expected 2 labels, got %d", len(labels))
+	}
+}
+
+func TestLearningService_CascadingPublishMaterials(t *testing.T) {
+	ctx := context.Background()
+	modRepo := newMockModuleRepo()
+	matRepo := newMockMaterialRepo()
+	progRepo := newMockProgressRepo(modRepo, matRepo)
+	svc := service.NewLearningService(modRepo, matRepo, progRepo)
+
+	adminID := uuid.New()
+
+	// 1. Create draft module
+	mod, err := svc.CreateModule(ctx, dto.CreateLearningModuleRequest{
+		Title: "Draft Module",
+	}, adminID)
+	if err != nil {
+		t.Fatalf("CreateModule failed: %v", err)
+	}
+
+	// 2. Create 2 draft materials under this module
+	m1, err := svc.CreateMaterial(ctx, dto.CreateMaterialRequest{
+		ModuleID: mod.ID,
+		Title:    "Material 1",
+		Content:  "Content 1",
+		Type:     "document",
+	}, adminID)
+	if err != nil {
+		t.Fatalf("CreateMaterial 1 failed: %v", err)
+	}
+
+	m2, err := svc.CreateMaterial(ctx, dto.CreateMaterialRequest{
+		ModuleID: mod.ID,
+		Title:    "Material 2",
+		Content:  "Content 2",
+		Type:     "document",
+	}, adminID)
+	if err != nil {
+		t.Fatalf("CreateMaterial 2 failed: %v", err)
+	}
+
+	if m1.Status != string(models.ContentStatusDraft) || m2.Status != string(models.ContentStatusDraft) {
+		t.Fatal("expected materials to be in draft initially")
+	}
+
+	// 3. Update module status to published
+	_, err = svc.UpdateModuleStatus(ctx, mod.ID, string(models.ContentStatusPublished), adminID)
+	if err != nil {
+		t.Fatalf("UpdateModuleStatus failed: %v", err)
+	}
+
+	// 4. Verify that child materials are now automatically published!
+	mat1, _ := matRepo.FindByID(ctx, m1.ID)
+	mat2, _ := matRepo.FindByID(ctx, m2.ID)
+
+	if mat1.Status != models.ContentStatusPublished {
+		t.Errorf("expected Material 1 to be published automatically, got %s", mat1.Status)
+	}
+	if mat2.Status != models.ContentStatusPublished {
+		t.Errorf("expected Material 2 to be published automatically, got %s", mat2.Status)
 	}
 }

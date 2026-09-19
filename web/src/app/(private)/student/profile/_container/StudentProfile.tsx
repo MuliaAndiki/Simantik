@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import type { ChangePasswordForm } from '@/components/organisms/student/ChangePasswordModal';
 import type { ProfileSchoolOption } from '@/components/organisms/student/ProfilePersonalInfoCard';
 import { StudentProfilePage } from '@/components/page/private/student/StudentProfilePage';
 import { useApi } from '@/hooks/useApi';
@@ -11,6 +12,12 @@ const DEFAULT_NAME = 'Anindya Humairah';
 const DEFAULT_EMAIL = 'anindya@example.com';
 const DEFAULT_SCHOOL = 'SMA N Modal Bangsa Arun';
 const DEFAULT_AVATAR = '/avatars/1.png';
+
+const EMPTY_CHANGE_PASSWORD_FORM: ChangePasswordForm = {
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+};
 
 export default function StudentProfile() {
   const { user, school } = useApi();
@@ -36,6 +43,12 @@ export default function StudentProfile() {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isChangeAvatarOpen, setIsChangeAvatarOpen] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  // 5. Change password form state
+  const [changePasswordForm, setChangePasswordForm] = useState<ChangePasswordForm>(
+    EMPTY_CHANGE_PASSWORD_FORM
+  );
+  const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
 
   // Synchronize initial data once fetched
   useEffect(() => {
@@ -107,14 +120,46 @@ export default function StudentProfile() {
     }
   };
 
-  const handleSubmitChangePassword = async (payload: {
-    currentPassword: string;
-    newPassword: string;
-  }) => {
+  const handleOpenChangePassword = (open: boolean) => {
+    if (open) {
+      setChangePasswordForm(EMPTY_CHANGE_PASSWORD_FORM);
+      setChangePasswordError(null);
+    }
+    setIsChangePasswordOpen(open);
+  };
+
+  const handleChangePasswordFormChange = <K extends keyof ChangePasswordForm>(
+    field: K,
+    value: ChangePasswordForm[K]
+  ) => {
+    setChangePasswordForm((prev) => ({ ...prev, [field]: value }));
+    setChangePasswordError(null);
+  };
+
+  const handleSubmitChangePassword = async () => {
+    const { currentPassword, newPassword, confirmPassword } = changePasswordForm;
+
+    if (!currentPassword) {
+      setChangePasswordError('Password saat ini harus diisi.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setChangePasswordError('Password baru minimal harus 8 karakter.');
+      return;
+    }
+    if (!(/[a-zA-Z]/.test(newPassword) && /\d/.test(newPassword))) {
+      setChangePasswordError('Password baru harus mengandung kombinasi huruf dan angka.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setChangePasswordError('Konfirmasi password tidak cocok dengan password baru.');
+      return;
+    }
+
     try {
       await changePasswordMutation.mutateAsync({
-        currentPassword: payload.currentPassword,
-        newPassword: payload.newPassword,
+        currentPassword,
+        newPassword,
       });
 
       setIsChangePasswordOpen(false);
@@ -131,8 +176,11 @@ export default function StudentProfile() {
         message: errorMessage,
         icon: 'error',
       });
-      throw err;
     }
+  };
+
+  const handleOpenChangeAvatar = (open: boolean) => {
+    setIsChangeAvatarOpen(open);
   };
 
   const handleSubmitChangeAvatar = async (avatar: string | File) => {
@@ -208,11 +256,14 @@ export default function StudentProfile() {
       isSubmittingPersonalInfo={isSubmittingPersonalInfo}
       isDirtyPersonalInfo={isDirty}
       isChangePasswordOpen={isChangePasswordOpen}
-      onOpenChangePassword={setIsChangePasswordOpen}
+      onOpenChangePassword={handleOpenChangePassword}
+      changePasswordForm={changePasswordForm}
+      onChangePasswordFormChange={handleChangePasswordFormChange}
+      changePasswordError={changePasswordError}
       onSubmitChangePassword={handleSubmitChangePassword}
       isSubmittingPassword={isSubmittingPassword}
       isChangeAvatarOpen={isChangeAvatarOpen}
-      onOpenChangeAvatar={setIsChangeAvatarOpen}
+      onOpenChangeAvatar={handleOpenChangeAvatar}
       onSubmitChangeAvatar={handleSubmitChangeAvatar}
       isSubmittingAvatar={isSubmittingAvatar}
     />

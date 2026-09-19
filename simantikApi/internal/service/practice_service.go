@@ -121,6 +121,13 @@ func (s *practiceService) UpdatePackage(ctx context.Context, id uuid.UUID, req d
 		return nil, err
 	}
 
+	// Cascading publish: when practice package is published, publish all questions in the package
+	if pkg.Status == models.ContentStatusPublished && s.questionRepo != nil {
+		if qIDs, err := s.practiceRepo.GetPackageQuestionIDs(ctx, pkg.ID); err == nil && len(qIDs) > 0 {
+			_ = s.questionRepo.PublishQuestionsByIDs(ctx, qIDs, updatedByID)
+		}
+	}
+
 	return s.mapToPackageResponse(pkg), nil
 }
 
@@ -148,6 +155,13 @@ func (s *practiceService) UpdatePackageStatus(ctx context.Context, id uuid.UUID,
 
 	if err := s.practiceRepo.UpdatePackage(ctx, pkg); err != nil {
 		return nil, err
+	}
+
+	// Cascading publish: when practice package is published, publish all questions in the package
+	if pkg.Status == models.ContentStatusPublished && s.questionRepo != nil {
+		if qIDs, err := s.practiceRepo.GetPackageQuestionIDs(ctx, id); err == nil && len(qIDs) > 0 {
+			_ = s.questionRepo.PublishQuestionsByIDs(ctx, qIDs, updatedByID)
+		}
 	}
 
 	return s.mapToPackageResponse(pkg), nil

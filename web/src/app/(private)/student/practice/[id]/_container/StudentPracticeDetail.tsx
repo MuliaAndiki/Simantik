@@ -290,6 +290,10 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
     router.push('/student/practice');
   }, [router]);
 
+  const handlePreStartCheckChange = useCallback((checked: boolean) => {
+    setIsPreStartChecked(checked);
+  }, []);
+
   // Direct Submission execution
   const executeSubmission = useCallback(
     async (isAutoSubmit = false) => {
@@ -474,7 +478,7 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
       onSelectQuestionNumber={handleSelectQuestionNumber}
       isPreStartModalOpen={isPreStartModalOpen}
       isPreStartChecked={isPreStartChecked}
-      onPreStartCheckChange={setIsPreStartChecked}
+      onPreStartCheckChange={handlePreStartCheckChange}
       onPreStartConfirm={handlePreStartConfirm}
       onPreStartClose={handlePreStartClose}
       isWarningModalOpen={isWarningModalOpen}

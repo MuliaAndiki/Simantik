@@ -1,4 +1,5 @@
 import type * as React from 'react';
+import type { ChangePasswordForm } from '@/components/organisms/student/ChangePasswordModal';
 import type { ProfileSchoolOption } from '@/components/organisms/student/ProfilePersonalInfoCard';
 import { StudentProfileTemplate } from '@/components/templates/student/StudentProfileTemplate';
 
@@ -26,10 +27,10 @@ export interface StudentProfilePageProps {
   // Change Password Modal
   isChangePasswordOpen: boolean;
   onOpenChangePassword: (open: boolean) => void;
-  onSubmitChangePassword: (payload: {
-    currentPassword: string;
-    newPassword: string;
-  }) => Promise<void> | void;
+  changePasswordForm: ChangePasswordForm;
+  onChangePasswordFormChange: (field: keyof ChangePasswordForm, value: string) => void;
+  changePasswordError?: string | null;
+  onSubmitChangePassword: () => Promise<void> | void;
   isSubmittingPassword?: boolean;
 
   // Change Avatar Modal
@@ -58,6 +59,9 @@ export function StudentProfilePage({
   isDirtyPersonalInfo = false,
   isChangePasswordOpen,
   onOpenChangePassword,
+  changePasswordForm,
+  onChangePasswordFormChange,
+  changePasswordError = null,
   onSubmitChangePassword,
   isSubmittingPassword = false,
   isChangeAvatarOpen,
@@ -99,6 +103,9 @@ export function StudentProfilePage({
       changePasswordModalProps={{
         open: isChangePasswordOpen,
         onOpenChange: onOpenChangePassword,
+        form: changePasswordForm,
+        onChange: onChangePasswordFormChange,
+        error: changePasswordError,
         onSubmit: onSubmitChangePassword,
         isSubmitting: isSubmittingPassword,
       }}
