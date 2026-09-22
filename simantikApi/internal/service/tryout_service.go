@@ -41,7 +41,6 @@ func (s *tryoutService) CreateTryout(ctx context.Context, req dto.CreateTryoutRe
 		Description:     req.Description,
 		Jenjang:         models.SchoolLevel(req.Jenjang),
 		DurationSeconds: req.DurationSeconds,
-		TotalQuestions:  req.TotalQuestions,
 		Status:          models.ContentStatusDraft,
 		CreatedBy:       createdByID,
 		UpdatedBy:       &createdByID,
@@ -124,9 +123,6 @@ func (s *tryoutService) UpdateTryout(ctx context.Context, id uuid.UUID, req dto.
 	if req.DurationSeconds > 0 {
 		tryout.DurationSeconds = req.DurationSeconds
 	}
-	if req.TotalQuestions > 0 {
-		tryout.TotalQuestions = req.TotalQuestions
-	}
 	tryout.UpdatedBy = &updatedByID
 
 	if err := s.repo.Update(ctx, tryout); err != nil {
@@ -155,16 +151,6 @@ func (s *tryoutService) UpdateTryoutStatus(ctx context.Context, id uuid.UUID, st
 			return nil, ErrTryoutNotFound
 		}
 		return nil, err
-	}
-
-	if status == string(models.ContentStatusPublished) {
-		poolCount, err := s.repo.CountPoolQuestions(ctx, id)
-		if err != nil {
-			return nil, err
-		}
-		if poolCount < int64(tryout.TotalQuestions) {
-			return nil, ErrInsufficientPool
-		}
 	}
 
 	tryout.Status = models.ContentStatus(status)
@@ -276,7 +262,7 @@ func (s *tryoutService) mapToTryoutResponse(t *models.Tryout, poolCount int) *dt
 		Description:     t.Description,
 		Jenjang:         string(t.Jenjang),
 		DurationSeconds: t.DurationSeconds,
-		TotalQuestions:  t.TotalQuestions,
+		TotalQuestions:  poolCount,
 		Status:          string(t.Status),
 		StartAt:         t.StartAt,
 		EndAt:           t.EndAt,

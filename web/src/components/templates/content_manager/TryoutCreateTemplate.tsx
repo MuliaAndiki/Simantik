@@ -29,7 +29,6 @@ export interface TryoutCreateTemplateProps {
   isSubmitting?: boolean;
   onPackageTitleChange: (val: string) => void;
   onPackageDurationChange: (val: number) => void;
-  onPackageTotalQuestionsChange: (val: number) => void;
   onPackageJenjangChange: (val: SchoolLevel) => void;
   onPackageDescriptionChange: (val: string) => void;
   onSaveDraft: () => void;
@@ -68,7 +67,6 @@ export const TryoutCreateTemplate: React.FC<TryoutCreateTemplateProps> = ({
   isSubmitting = false,
   onPackageTitleChange,
   onPackageDurationChange,
-  onPackageTotalQuestionsChange,
   onPackageJenjangChange,
   onPackageDescriptionChange,
   onSaveDraft,
@@ -125,7 +123,6 @@ export const TryoutCreateTemplate: React.FC<TryoutCreateTemplateProps> = ({
         description={packageForm.description}
         onTitleChange={onPackageTitleChange}
         onDurationChange={onPackageDurationChange}
-        onTotalQuestionsChange={onPackageTotalQuestionsChange}
         onJenjangChange={onPackageJenjangChange}
         onDescriptionChange={onPackageDescriptionChange}
       />

@@ -15,7 +15,6 @@ export interface CreateTryoutRequest {
   description?: string;
   jenjang: SchoolLevel;
   duration_seconds: number;
-  total_questions: number;
 }
 
 /**
@@ -27,7 +26,6 @@ export interface UpdateTryoutRequest {
   description?: string;
   jenjang?: SchoolLevel;
   duration_seconds?: number;
-  total_questions?: number;
 }
 
 /**

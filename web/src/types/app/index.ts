@@ -1,1 +1,1 @@
-export type TMode = "create" | "edit";
+export type TMode = 'create' | 'edit';

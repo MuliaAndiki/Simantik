@@ -36,6 +36,5 @@ export type TryoutDialogForm = {
   description: string;
   jenjang: string;
   duration_minutes: number;
-  total_questions: number;
   status: TryoutStatusType;
 };

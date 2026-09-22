@@ -122,7 +122,6 @@ func TestTryoutService_CRUD(t *testing.T) {
 		Title:           "Math Tryout",
 		Description:     "A test tryout",
 		DurationSeconds: 3600,
-		TotalQuestions:  10,
 	}
 	created, err := svc.CreateTryout(ctx, req, adminID)
 	if err != nil {
@@ -173,7 +172,7 @@ func TestTryoutService_QuestionPool(t *testing.T) {
 
 	// Create draft tryout
 	created, err := svc.CreateTryout(ctx, dto.CreateTryoutRequest{
-		Title: "Pool Test", DurationSeconds: 1800, TotalQuestions: 3,
+		Title: "Pool Test", DurationSeconds: 1800,
 	}, adminID)
 	if err != nil {
 		t.Fatalf("CreateTryout failed: %v", err)
@@ -198,27 +197,16 @@ func TestTryoutService_QuestionPool(t *testing.T) {
 		t.Errorf("expected pool count 2, got %d", detail.PoolCount)
 	}
 
-	// Try to publish with insufficient pool (need 3, have 2)
-	_, err = svc.UpdateTryoutStatus(ctx, tryoutID, "published", adminID)
-	if err == nil {
-		t.Fatal("expected ErrInsufficientPool, got nil")
-	}
-	if err != service.ErrInsufficientPool {
-		t.Errorf("expected ErrInsufficientPool, got %v", err)
-	}
-
-	// Add one more and publish
-	q3 := uuid.New()
-	_, _ = svc.AddQuestionsToPool(ctx, tryoutID, dto.AddTryoutQuestionsRequest{
-		QuestionIDs: []uuid.UUID{q3},
-	})
-
+	// Publish the tryout (total is derived from the pool, 2 questions)
 	published, err := svc.UpdateTryoutStatus(ctx, tryoutID, "published", adminID)
 	if err != nil {
 		t.Fatalf("publish failed: %v", err)
 	}
 	if published.Status != "published" {
 		t.Errorf("expected 'published', got %s", published.Status)
+	}
+	if published.TotalQuestions != 2 {
+		t.Errorf("expected total 2, got %d", published.TotalQuestions)
 	}
 
 	// Cannot delete a published tryout

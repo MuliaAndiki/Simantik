@@ -11,7 +11,6 @@ type CreateTryoutRequest struct {
 	Description     string `json:"description"`
 	Jenjang         string `json:"jenjang" validate:"required,oneof=sd smp sma smk"`
 	DurationSeconds int    `json:"duration_seconds" validate:"required,min=60"`
-	TotalQuestions  int    `json:"total_questions" validate:"required,min=1"`
 }
 
 type UpdateTryoutRequest struct {
@@ -19,7 +18,6 @@ type UpdateTryoutRequest struct {
 	Description     string `json:"description"`
 	Jenjang         string `json:"jenjang" validate:"omitempty,oneof=sd smp sma smk"`
 	DurationSeconds int    `json:"duration_seconds" validate:"omitempty,min=60"`
-	TotalQuestions  int    `json:"total_questions" validate:"omitempty,min=1"`
 }
 
 type PublishTryoutRequest struct {

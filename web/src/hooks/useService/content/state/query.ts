@@ -1,16 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
-import { queryKey } from "@/configs/query-key";
-import Api from "@/services/props.service";
+import { useQuery } from '@tanstack/react-query';
+import { queryKey } from '@/configs/query-key';
+import Api from '@/services/props.service';
 import type {
   ListDocumentationFilter,
   ListNewsFilter,
   ListTestimonialFilter,
-} from "@/types/service";
+} from '@/types/service';
 
-export function useCmsNewsList(
-  query?: ListNewsFilter,
-  options?: { enabled?: boolean },
-) {
+export function useCmsNewsList(query?: ListNewsFilter, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKey.content.cmsNews(query),
     queryFn: async () => {
@@ -34,7 +31,7 @@ export function useCmsNewsDetail(id: string, options?: { enabled?: boolean }) {
 
 export function useCmsDocumentationList(
   query?: ListDocumentationFilter,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean }
 ) {
   return useQuery({
     queryKey: queryKey.content.cmsDocumentation(query),
@@ -46,10 +43,7 @@ export function useCmsDocumentationList(
   });
 }
 
-export function useCmsDocumentationDetail(
-  id: string,
-  options?: { enabled?: boolean },
-) {
+export function useCmsDocumentationDetail(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKey.content.cmsDocumentationDetail(id),
     queryFn: async () => {
@@ -62,7 +56,7 @@ export function useCmsDocumentationDetail(
 
 export function useCmsTestimonialsList(
   query?: ListTestimonialFilter,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean }
 ) {
   return useQuery({
     queryKey: queryKey.content.cmsTestimonials(query),
@@ -74,10 +68,7 @@ export function useCmsTestimonialsList(
   });
 }
 
-export function usePublicNewsList(
-  query?: ListNewsFilter,
-  options?: { enabled?: boolean },
-) {
+export function usePublicNewsList(query?: ListNewsFilter, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKey.content.news(query),
     queryFn: async () => {
@@ -88,10 +79,7 @@ export function usePublicNewsList(
   });
 }
 
-export function usePublicNewsBySlug(
-  slug: string,
-  options?: { enabled?: boolean },
-) {
+export function usePublicNewsBySlug(slug: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKey.content.newsBySlug(slug),
     queryFn: async () => {
@@ -104,7 +92,7 @@ export function usePublicNewsBySlug(
 
 export function usePublicDocumentationList(
   query?: ListDocumentationFilter,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean }
 ) {
   return useQuery({
     queryKey: queryKey.content.documentation(query),
@@ -116,10 +104,7 @@ export function usePublicDocumentationList(
   });
 }
 
-export function usePublicDocumentationBySlug(
-  slug: string,
-  options?: { enabled?: boolean },
-) {
+export function usePublicDocumentationBySlug(slug: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKey.content.documentationBySlug(slug),
     queryFn: async () => {
@@ -132,7 +117,7 @@ export function usePublicDocumentationBySlug(
 
 export function usePublicTestimonialsList(
   query?: ListTestimonialFilter,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean }
 ) {
   return useQuery({
     queryKey: queryKey.content.testimonials(query),

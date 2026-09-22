@@ -61,6 +61,17 @@ const createDefaultAdaptiveQuestion = (number: number): TryoutAdaptiveQuestionIt
   },
 });
 
+const mapQuestionTypeCode = (type: PracticeQuestionType): string => {
+  switch (type) {
+    case 'pilihan-ganda':
+      return 'multiple_choice';
+    case 'pilihan-ganda-kompleks':
+      return 'complex_multiple_choice';
+    default:
+      return 'true_false';
+  }
+};
+
 export const TryoutQuestionContainer: React.FC = () => {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -87,13 +98,8 @@ export const TryoutQuestionContainer: React.FC = () => {
     jenjang: 'sma',
     description: '',
     duration_minutes: 75,
-    total_questions: 30,
     status: 'DRAFT',
-    questions: [
-      createDefaultAdaptiveQuestion(1),
-      createDefaultAdaptiveQuestion(2),
-      createDefaultAdaptiveQuestion(3),
-    ],
+    questions: [createDefaultAdaptiveQuestion(1)],
     activeQuestionIndex: 0,
   });
 
@@ -111,7 +117,6 @@ export const TryoutQuestionContainer: React.FC = () => {
         title: t.title || prev.title,
         jenjang: (t.jenjang as SchoolLevel) || prev.jenjang,
         duration_minutes: durationMinutes,
-        total_questions: t.total_questions || prev.total_questions,
         description: t.description || prev.description,
         status: (t.status || 'DRAFT').toUpperCase() as typeof prev.status,
       }));
@@ -164,10 +169,6 @@ export const TryoutQuestionContainer: React.FC = () => {
 
   const handlePackageDurationChange = (duration_minutes: number) => {
     setPackageForm((prev) => ({ ...prev, duration_minutes }));
-  };
-
-  const handlePackageTotalQuestionsChange = (total_questions: number) => {
-    setPackageForm((prev) => ({ ...prev, total_questions }));
   };
 
   const handlePackageJenjangChange = (jenjang: SchoolLevel) => {
@@ -520,20 +521,33 @@ export const TryoutQuestionContainer: React.FC = () => {
             description: packageForm.description.trim() || undefined,
             jenjang: packageForm.jenjang,
             duration_seconds: packageForm.duration_minutes * 60,
-            total_questions: packageForm.questions.length,
           },
         });
       }
 
       // 2. Iterate through questions and their 5 variants to create questions
       const questionTypes = questionTypesQuery.data ?? [];
-      const defaultTypeId = questionTypes[0]?.id || '1';
+      if (questionTypes.length === 0) {
+        ns.alert.toast({
+          title: 'Tipe Soal Belum Siap',
+          message: 'Daftar tipe soal belum dimuat. Muat ulang halaman lalu coba lagi.',
+          icon: 'warning',
+        });
+        return;
+      }
+
+      const typeIdByCode = new Map(questionTypes.map((qt) => [qt.code, qt.id]));
+      const fallbackTypeId = questionTypes[0]?.id;
       const createdQuestionIds: string[] = [];
 
       for (const q of packageForm.questions) {
         for (const lvl of [1, 2, 3, 4, 5] as TryoutDifficultyLevel[]) {
           const v = q.variants[lvl];
           if (!v?.questionText.trim()) continue;
+
+          const questionTypeId =
+            typeIdByCode.get(mapQuestionTypeCode(v.questionType)) ?? fallbackTypeId;
+          if (!questionTypeId) continue;
 
           const mappedOptions =
             v.questionType === 'benar-salah' ||
@@ -561,7 +575,7 @@ export const TryoutQuestionContainer: React.FC = () => {
               : v.questionText;
 
             const res = await createQuestionMutation.mutateAsync({
-              question_type_id: defaultTypeId,
+              question_type_id: questionTypeId,
               question_text: fullQuestionText,
               difficulty_level: lvl,
               options: mappedOptions,
@@ -615,7 +629,6 @@ export const TryoutQuestionContainer: React.FC = () => {
       isSubmitting={isSubmitting}
       onPackageTitleChange={handlePackageTitleChange}
       onPackageDurationChange={handlePackageDurationChange}
-      onPackageTotalQuestionsChange={handlePackageTotalQuestionsChange}
       onPackageJenjangChange={handlePackageJenjangChange}
       onPackageDescriptionChange={handlePackageDescriptionChange}
       onSaveDraft={handleSaveTryout}

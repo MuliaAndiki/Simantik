@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { BookOpen, Check, ShieldCheck } from "lucide-react";
-import type * as React from "react";
-import { useId } from "react";
+import { BookOpen, Check, ShieldCheck } from 'lucide-react';
+import type * as React from 'react';
+import { useId } from 'react';
 import {
   Button,
   Dialog,
@@ -15,21 +15,15 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/atoms";
-import type { SchoolLevel } from "@/types/service";
-import type {
-  MaterialStatusType,
-  ModuleDialogForm,
-} from "@/types/ui/material-manager.types";
-import {
-  MODULE_STATUS_OPTIONS,
-  SCHOOL_LEVEL_OPTIONS,
-} from "@/types/ui/material-manager.types";
+} from '@/components/atoms';
+import type { SchoolLevel } from '@/types/service';
+import type { MaterialStatusType, ModuleDialogForm } from '@/types/ui/material-manager.types';
+import { MODULE_STATUS_OPTIONS, SCHOOL_LEVEL_OPTIONS } from '@/types/ui/material-manager.types';
 
 export interface MaterialCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  mode?: "create" | "edit";
+  mode?: 'create' | 'edit';
   form: ModuleDialogForm;
   onChange: (field: keyof ModuleDialogForm, value: string) => void;
   error?: string | null;
@@ -40,7 +34,7 @@ export interface MaterialCreateDialogProps {
 export function MaterialCreateDialog({
   open,
   onOpenChange,
-  mode = "create",
+  mode = 'create',
   form,
   onChange,
   error = null,
@@ -73,14 +67,12 @@ export function MaterialCreateDialog({
         {/* Title & Description */}
         <div className="mt-4 space-y-1 text-left">
           <DialogTitle className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-            {mode === "create"
-              ? "Tambah Modul Baru"
-              : "Edit Modul Pembelajaran"}
+            {mode === 'create' ? 'Tambah Modul Baru' : 'Edit Modul Pembelajaran'}
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm text-gray-500 font-normal leading-relaxed">
-            {mode === "create"
-              ? "Silakan isi formulir di bawah ini untuk menambahkan modul pembelajaran baru."
-              : "Perbarui informasi dan status modul pembelajaran ini."}
+            {mode === 'create'
+              ? 'Silakan isi formulir di bawah ini untuk menambahkan modul pembelajaran baru.'
+              : 'Perbarui informasi dan status modul pembelajaran ini.'}
           </DialogDescription>
         </div>
 
@@ -98,7 +90,7 @@ export function MaterialCreateDialog({
               id={titleId}
               type="text"
               value={form.title}
-              onChange={(e) => onChange("title", e.target.value)}
+              onChange={(e) => onChange('title', e.target.value)}
               placeholder="Contoh: Modul Matematika Kelas X"
               className="h-11 rounded-xl border-gray-200 bg-white text-sm focus-visible:ring-cyan-500/30"
               required
@@ -117,7 +109,7 @@ export function MaterialCreateDialog({
               id={labelId}
               type="text"
               value={form.label}
-              onChange={(e) => onChange("label", e.target.value)}
+              onChange={(e) => onChange('label', e.target.value)}
               placeholder="Contoh: MAT-X-01"
               className="h-11 rounded-xl border-gray-200 bg-white text-sm focus-visible:ring-cyan-500/30"
               required
@@ -126,12 +118,10 @@ export function MaterialCreateDialog({
 
           {/* Field: Jenjang */}
           <div className="space-y-1.5 text-left">
-            <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-              Jenjang
-            </label>
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700">Jenjang</label>
             <Select
               value={form.jenjang}
-              onValueChange={(val) => onChange("jenjang", val as SchoolLevel)}
+              onValueChange={(val) => onChange('jenjang', val as SchoolLevel)}
             >
               <SelectTrigger className="w-full h-11 rounded-xl border-gray-200 bg-white text-sm focus:ring-cyan-500/30">
                 <SelectValue placeholder="Pilih jenjang" />
@@ -161,7 +151,7 @@ export function MaterialCreateDialog({
             <textarea
               id={descId}
               value={form.description}
-              onChange={(e) => onChange("description", e.target.value)}
+              onChange={(e) => onChange('description', e.target.value)}
               placeholder="Deskripsi singkat modul pembelajaran..."
               className="w-full flex rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px] resize-none"
               required
@@ -169,7 +159,7 @@ export function MaterialCreateDialog({
           </div>
 
           {/* Field: Status (Edit Only) */}
-          {mode === "edit" && (
+          {mode === 'edit' && (
             <div className="space-y-1.5 text-left">
               <label className="block text-xs sm:text-sm font-semibold text-gray-700">
                 Status Modul
@@ -177,9 +167,7 @@ export function MaterialCreateDialog({
 
               <Select
                 value={form.status}
-                onValueChange={(value) =>
-                  onChange("status", value as MaterialStatusType)
-                }
+                onValueChange={(value) => onChange('status', value as MaterialStatusType)}
               >
                 <SelectTrigger className="w-full h-11 rounded-xl border-gray-200 bg-white text-sm focus:ring-cyan-500/30">
                   <SelectValue placeholder="Pilih status" />
@@ -193,9 +181,7 @@ export function MaterialCreateDialog({
                       className="text-sm cursor-pointer rounded-lg hover:bg-slate-50 focus:bg-slate-50 my-0.5"
                     >
                       <div className="flex items-center gap-2">
-                        <span
-                          className={`w-2 h-2 rounded-full ${status.color}`}
-                        />
+                        <span className={`w-2 h-2 rounded-full ${status.color}`} />
                         <span>{status.label}</span>
                       </div>
                     </SelectItem>
@@ -226,13 +212,11 @@ export function MaterialCreateDialog({
 
             <Button
               type="submit"
-              disabled={
-                isSubmitting || !form.title || !form.label || !form.description
-              }
+              disabled={isSubmitting || !form.title || !form.label || !form.description}
               className="flex-1 h-11 rounded-xl bg-[#0E7490] hover:bg-[#155e75] text-white text-sm font-semibold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
             >
               <Check className="size-4 stroke-[2.5]" />
-              <span>{isSubmitting ? "Menyimpan..." : "Simpan Modul"}</span>
+              <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Modul'}</span>
             </Button>
           </div>
         </form>

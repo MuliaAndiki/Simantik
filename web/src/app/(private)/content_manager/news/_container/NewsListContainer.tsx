@@ -1,108 +1,102 @@
-"use client";
-import NewsPage from "@/components/page/private/content_manager/NewsPage";
-import useApi from "@/hooks/useApi";
-import useAppNameSpace from "@/hooks/useAppNameSpace";
-import { TMode } from "@/types/app";
-import { CreateNewsRequest } from "@/types/service";
-import { useState } from "react";
+'use client';
 
-const CREATE_EMPTY: CreateNewsRequest = {
-  content: "",
-  title: "",
-  slug: "",
-  status: "draft",
-  thumbnailUrl: "",
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import NewsPage from '@/components/page/private/content_manager/NewsPage';
+import useApi from '@/hooks/useApi';
+import type { NewsResponse } from '@/types/service';
+import type { NewsFilterState, NewsStats } from '@/types/ui/content-manager';
+
+const INITIAL_FILTERS: NewsFilterState = {
+  search: '',
+  status: 'Semua',
+  page: 1,
+  perPage: 6,
 };
 
-const NewsContainer = () => {
+const NewsListContainer = () => {
+  const router = useRouter();
   const api = useApi();
-  const ns = useAppNameSpace();
 
-  const useCreateNews = api.content.mutate.createNews();
-  const useUpdateNews = api.content.mutate.updateNews();
-  const useNewsData = api.content.query.cmsNews({ limit: 100 });
-  const { data: NewsData, isLoading } = useNewsData;
+  const [filters, setFilters] = useState<NewsFilterState>(INITIAL_FILTERS);
+  const [selectedNews, setSelectedNews] = useState<NewsResponse | null>(null);
 
-  console.log(NewsData, ":Datas");
+  const newsQuery = api.content.query.cmsNews({
+    search: filters.search.trim() || undefined,
+    status: filters.status !== 'Semua' ? filters.status : undefined,
+    limit: filters.perPage,
+    offset: (filters.page - 1) * filters.perPage,
+  });
 
-  const [formCreateNews, setFormCreateNews] =
-    useState<CreateNewsRequest>(CREATE_EMPTY);
-  const [openPopUp, setOpenPopUp] = useState<boolean>(false);
+  const news = newsQuery.data?.news ?? [];
+  const totalItems = newsQuery.data?.total ?? 0;
 
-  const [mode, setMode] = useState<TMode>("create");
-  const onOpenDialogChange = (open: boolean) => {
-    if (open) {
-      setMode("create");
-      setFormCreateNews(CREATE_EMPTY);
+  const stats = useMemo<NewsStats>(() => {
+    let published = 0;
+    let draft = 0;
+    let unpublished = 0;
+
+    for (const item of news) {
+      const status = item.status.toLowerCase();
+      if (status === 'published') published++;
+      else if (status === 'draft') draft++;
+      else unpublished++;
     }
-    setOpenPopUp(open);
+
+    return {
+      total: totalItems,
+      totalChange: '+3 bulan ini',
+      published,
+      draft,
+      unpublished,
+    };
+  }, [news, totalItems]);
+
+  const handleAddNews = () => {
+    router.push('/content_manager/news/create');
   };
 
-  const handleNewsFormChange = <K extends keyof CreateNewsRequest>(
-    field: K,
-    value: CreateNewsRequest[K],
-  ) => {
-    setFormCreateNews((prev) => ({ ...prev, [field]: value }));
+  const handleEditNews = (item: NewsResponse) => {
+    router.push(`/content_manager/news/create?id=${item.id}`);
   };
 
-  const handleSubmitNews = async () => {
-    if (
-      !formCreateNews.content ||
-      !formCreateNews.title ||
-      !formCreateNews.slug ||
-      !formCreateNews.status ||
-      !formCreateNews.thumbnailUrl
-    ) {
-      return ns.alert.toast({
-        title: "Pesan",
-        message: "Judul, Content, Slug, Status tidak boleh kosong",
-        icon: "info",
-      });
-    }
+  const handleSearchChange = (search: string) => {
+    setFilters((prev) => ({ ...prev, search, page: 1 }));
+  };
 
-    try {
-      if (mode === "create") {
-        await useCreateNews.mutateAsync(formCreateNews);
-        setOpenPopUp(false);
-        setFormCreateNews(CREATE_EMPTY);
-      } else {
-        if (!formCreateNews.id) {
-          return ns.alert.toast({
-            title: "Pesan",
-            message: "Kamu Tidak Memiliki ID",
-            icon: "info",
-          });
-        }
+  const handleStatusChange = (status: string) => {
+    setFilters((prev) => ({ ...prev, status, page: 1 }));
+  };
 
-        await useUpdateNews.mutateAsync({
-          id: formCreateNews.id,
-          body: {
-            content: formCreateNews.content,
-            slug: formCreateNews.slug,
-            status: formCreateNews.status,
-            thumbnailUrl: formCreateNews.thumbnailUrl,
-            title: formCreateNews.title,
-          },
-        });
+  const handleSelectNews = (item: NewsResponse) => {
+    setSelectedNews(item);
+  };
 
-        setOpenPopUp(false);
-      }
-    } catch (error) {
-      console.error(error);
-    }
+  const handleClosePreview = () => {
+    setSelectedNews(null);
+  };
+
+  const handlePageChange = (page: number) => {
+    setFilters((prev) => ({ ...prev, page }));
   };
 
   return (
     <NewsPage
-      onOpenDialogChange={onOpenDialogChange}
-      mode={mode}
-      handleSubmit={handleSubmitNews}
-      open={openPopUp}
-      form={formCreateNews}
-      onNewsFormChange={handleNewsFormChange}
-      setMode={setMode}
+      stats={stats}
+      news={news}
+      selectedNews={selectedNews}
+      filters={filters}
+      totalItems={totalItems}
+      isPending={newsQuery.isPending}
+      onAddNews={handleAddNews}
+      onSearchChange={handleSearchChange}
+      onStatusChange={handleStatusChange}
+      onSelectNews={handleSelectNews}
+      onEditNews={handleEditNews}
+      onClosePreview={handleClosePreview}
+      onPageChange={handlePageChange}
     />
   );
 };
 
-export default NewsContainer;
+export default NewsListContainer;

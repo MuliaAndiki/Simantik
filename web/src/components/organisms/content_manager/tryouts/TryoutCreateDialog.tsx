@@ -42,7 +42,6 @@ export const TryoutCreateDialog: React.FC<TryoutCreateDialogProps> = ({
   const titleId = useId();
   const descId = useId();
   const durationId = useId();
-  const quotaId = useId();
   const statusId = useId();
 
   const handleSubmit = (e: React.FormEvent) => {

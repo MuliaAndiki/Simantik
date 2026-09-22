@@ -35,7 +35,6 @@ export interface TryoutPackageEditorForm {
   jenjang: SchoolLevel;
   description: string;
   duration_minutes: number;
-  total_questions: number;
   status: 'DRAFT' | 'PUBLISHED' | 'UNPUBLISHED';
   questions: TryoutAdaptiveQuestionItemForm[];
   activeQuestionIndex: number;

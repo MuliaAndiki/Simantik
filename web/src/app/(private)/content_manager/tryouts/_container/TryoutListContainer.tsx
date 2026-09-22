@@ -19,7 +19,6 @@ const EMPTY_TRYOUT_FORM: TryoutDialogForm = {
   description: '',
   jenjang: 'sma',
   duration_minutes: 75,
-  total_questions: 0,
   status: 'DRAFT',
 };
 
@@ -113,7 +112,7 @@ export const TryoutListContainer: React.FC = () => {
         author: 'Tim Litbang Asesmen SIMANTIK',
         jenjang: t.jenjang || 'sma',
         durationMinutes,
-        totalQuestions: t.total_questions || 150,
+        totalQuestions: t.total_questions || 0,
         status,
         updatedAt,
         description: t.description || undefined,
@@ -200,7 +199,6 @@ export const TryoutListContainer: React.FC = () => {
       description: item.description || '',
       jenjang: item.jenjang || 'sma',
       duration_minutes: item.durationMinutes,
-      total_questions: item.totalQuestions,
       status: item.status,
     });
     setDialogError(null);
@@ -241,10 +239,6 @@ export const TryoutListContainer: React.FC = () => {
       setDialogError('Durasi tryout minimal 1 menit.');
       return;
     }
-    if (!dialogForm.total_questions || dialogForm.total_questions < 1) {
-      setDialogError('Kuota soal minimal 1 butir.');
-      return;
-    }
 
     try {
       if (dialogMode === 'create') {
@@ -253,7 +247,6 @@ export const TryoutListContainer: React.FC = () => {
           description: dialogForm.description.trim() || undefined,
           jenjang: dialogForm.jenjang as SchoolLevel,
           duration_seconds: dialogForm.duration_minutes * 60,
-          total_questions: dialogForm.total_questions,
         });
       } else {
         if (!dialogForm.id) return;
@@ -264,7 +257,6 @@ export const TryoutListContainer: React.FC = () => {
             description: dialogForm.description.trim() || undefined,
             jenjang: dialogForm.jenjang as SchoolLevel,
             duration_seconds: dialogForm.duration_minutes * 60,
-            total_questions: dialogForm.total_questions,
           },
         });
         await updateStatusMutation.mutateAsync({

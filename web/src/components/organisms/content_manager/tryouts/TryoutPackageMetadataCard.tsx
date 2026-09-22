@@ -11,7 +11,6 @@ export interface TryoutPackageMetadataCardProps {
   description: string;
   onTitleChange: (val: string) => void;
   onDurationChange: (val: number) => void;
-  onTotalQuestionsChange: (val: number) => void;
   onJenjangChange: (val: SchoolLevel) => void;
   onDescriptionChange: (val: string) => void;
 }
@@ -24,7 +23,6 @@ export const TryoutPackageMetadataCard: React.FC<TryoutPackageMetadataCardProps>
   description,
   onTitleChange,
   onDurationChange,
-  onTotalQuestionsChange,
   onJenjangChange,
   onDescriptionChange,
 }) => {
