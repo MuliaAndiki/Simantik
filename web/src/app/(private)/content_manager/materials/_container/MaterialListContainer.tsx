@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import { MaterialListPage } from '@/components/page/private/content_manager/MaterialListPage';
 import { useApi } from '@/hooks/useApi';
@@ -27,8 +27,10 @@ const EMPTY_MODULE_FORM: ModuleDialogForm = {
 
 export const MaterialListContainer: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const api = useApi();
   const ns = useAppNameSpace();
+  const basePath = pathname.startsWith('/admin') ? '/admin' : '/content_manager';
 
   // Local state
   const [selectedModuleId, setSelectedModuleId] = useState<string>('');
@@ -358,20 +360,20 @@ export const MaterialListContainer: React.FC = () => {
 
   const handleEditMaterial = (item: MaterialItem) => {
     router.push(
-      `/content_manager/materials/create?id=${item.id}${selectedModuleId ? `&moduleId=${selectedModuleId}` : ''}`
+      `${basePath}/materials/create?id=${item.id}${selectedModuleId ? `&moduleId=${selectedModuleId}` : ''}`
     );
   };
 
   const handleCreateMaterial = () => {
     router.push(
       selectedModuleId
-        ? `/content_manager/materials/create?moduleId=${selectedModuleId}`
-        : '/content_manager/materials/create'
+        ? `${basePath}/materials/create?moduleId=${selectedModuleId}`
+        : `${basePath}/materials/create`
     );
   };
 
   const handleCreateMaterialInModule = (moduleId: string) => {
-    router.push(`/content_manager/materials/create?moduleId=${moduleId}`);
+    router.push(`${basePath}/materials/create?moduleId=${moduleId}`);
   };
 
   const handleExportSyllabus = () => {

@@ -1,3 +1,4 @@
+export * from './admin';
 export * from './auth/ForgotPasswordForm';
 export * from './auth/LoginForm';
 export * from './auth/RegisterForm';

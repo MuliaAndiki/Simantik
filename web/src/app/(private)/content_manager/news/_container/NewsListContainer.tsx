@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import NewsPage from '@/components/page/private/content_manager/NewsPage';
 import useApi from '@/hooks/useApi';
@@ -16,7 +16,9 @@ const INITIAL_FILTERS: NewsFilterState = {
 
 const NewsListContainer = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const api = useApi();
+  const basePath = pathname.startsWith('/admin') ? '/admin' : '/content_manager';
 
   const [filters, setFilters] = useState<NewsFilterState>(INITIAL_FILTERS);
   const [selectedNews, setSelectedNews] = useState<NewsResponse | null>(null);
@@ -53,11 +55,11 @@ const NewsListContainer = () => {
   }, [news, totalItems]);
 
   const handleAddNews = () => {
-    router.push('/content_manager/news/create');
+    router.push(`${basePath}/news/create`);
   };
 
   const handleEditNews = (item: NewsResponse) => {
-    router.push(`/content_manager/news/create?id=${item.id}`);
+    router.push(`${basePath}/news/create?id=${item.id}`);
   };
 
   const handleSearchChange = (search: string) => {

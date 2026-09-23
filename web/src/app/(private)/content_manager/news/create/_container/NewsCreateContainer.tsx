@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import NewsCreatePage from '@/components/page/private/content_manager/NewsCreatePage';
 import { useApi } from '@/hooks/useApi';
@@ -18,8 +18,10 @@ const EMPTY_NEWS_FORM: CreateNewsRequest = {
 
 const NewsCreateContainer = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const editId = searchParams.get('id');
+  const basePath = pathname.startsWith('/admin') ? '/admin' : '/content_manager';
 
   const api = useApi();
   const ns = useAppNameSpace();
@@ -97,7 +99,7 @@ const NewsCreateContainer = () => {
   };
 
   const handleCancel = () => {
-    router.push('/content_manager/news');
+    router.push(`${basePath}/news`);
   };
 
   const executeSave = (status: string) => {
@@ -121,13 +123,13 @@ const NewsCreateContainer = () => {
     if (editId) {
       updateNewsMutation.mutate(
         { id: editId, body },
-        { onSuccess: () => router.push('/content_manager/news') }
+        { onSuccess: () => router.push(`${basePath}/news`) }
       );
       return;
     }
 
     createNewsMutation.mutate(body, {
-      onSuccess: () => router.push('/content_manager/news'),
+      onSuccess: () => router.push(`${basePath}/news`),
     });
   };
 

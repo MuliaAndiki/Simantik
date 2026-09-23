@@ -104,6 +104,10 @@ type CreateQuestionRequest struct {
 	Explanation     *CreateQuestionExplanationRequest `json:"explanation"`
 }
 
+type CreateQuestionsBulkRequest struct {
+	Questions []CreateQuestionRequest `json:"questions" validate:"required,min=1,dive"`
+}
+
 type UpdateQuestionRequest struct {
 	QuestionText    string      `json:"question_text" validate:"required"`
 	DifficultyLevel int         `json:"difficulty_level" validate:"required,min=1,max=5"`

@@ -48,9 +48,13 @@ type TryoutResponse struct {
 	PoolCount       int        `json:"pool_count"`
 }
 
+type SyncTryoutQuestionsRequest struct {
+	Questions []CreateQuestionRequest `json:"questions" validate:"required,min=1,dive"`
+}
+
 type TryoutDetailResponse struct {
 	TryoutResponse
-	Questions []TryoutQuestionResponse `json:"questions"`
+	Questions []QuestionAdminResponse `json:"questions"`
 }
 
 type TryoutQuestionResponse struct {

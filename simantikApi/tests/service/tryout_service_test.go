@@ -88,6 +88,12 @@ func (m *mockTryoutRepo) AddQuestions(_ context.Context, tryoutID uuid.UUID, que
 	return nil
 }
 
+func (m *mockTryoutRepo) SyncQuestions(_ context.Context, tryoutID uuid.UUID, questionIDs []uuid.UUID) error {
+	m.poolIDs[tryoutID] = questionIDs
+	m.poolCounts[tryoutID] = int64(len(questionIDs))
+	return nil
+}
+
 func (m *mockTryoutRepo) RemoveQuestion(_ context.Context, tryoutID, questionID uuid.UUID) error {
 	ids := m.poolIDs[tryoutID]
 	var updated []uuid.UUID
@@ -212,5 +218,51 @@ func TestTryoutService_QuestionPool(t *testing.T) {
 	// Cannot delete a published tryout
 	if err := svc.DeleteTryout(ctx, tryoutID); err == nil {
 		t.Fatal("expected ErrCannotDeletePublishedTryout, got nil")
+	}
+}
+
+func TestTryoutService_SyncQuestionsAndAdaptiveCount(t *testing.T) {
+	repo := newMockTryoutRepo()
+	svc := service.NewTryoutService(repo, nil, nil)
+	ctx := context.Background()
+	adminID := uuid.New()
+
+	// Create draft tryout
+	created, err := svc.CreateTryout(ctx, dto.CreateTryoutRequest{
+		Title: "Adaptive 5-Variant Tryout", DurationSeconds: 4500, Jenjang: "sma",
+	}, adminID)
+	if err != nil {
+		t.Fatalf("CreateTryout failed: %v", err)
+	}
+	tryoutID := created.ID
+
+	// Sync 5 questions (1 adaptive question with 5 variants C1-C5)
+	qIDs := []uuid.UUID{uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()}
+	var questionsReq []dto.CreateQuestionRequest
+	for i, qid := range qIDs {
+		questionsReq = append(questionsReq, dto.CreateQuestionRequest{
+			QuestionTypeID:  qid,
+			QuestionText:    "Soal Varian",
+			DifficultyLevel: i + 1,
+			Options: []dto.CreateQuestionOptionRequest{
+				{OptionLabel: "A", OptionText: "Opsi A", IsCorrect: true},
+				{OptionLabel: "B", OptionText: "Opsi B", IsCorrect: false},
+			},
+		})
+	}
+
+	res, err := svc.SyncQuestions(ctx, tryoutID, dto.SyncTryoutQuestionsRequest{
+		Questions: questionsReq,
+	}, adminID)
+	if err != nil {
+		t.Fatalf("SyncQuestions failed: %v", err)
+	}
+
+	// 5 pool questions = 1 logical adaptive question (TotalQuestions = 1, PoolCount = 5)
+	if res.PoolCount != 5 {
+		t.Errorf("expected pool count 5, got %d", res.PoolCount)
+	}
+	if res.TotalQuestions != 1 {
+		t.Errorf("expected TotalQuestions = 1 for 5 variants, got %d", res.TotalQuestions)
 	}
 }

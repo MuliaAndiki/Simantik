@@ -12,6 +12,7 @@ import type {
   StartAttemptResponse,
   SubmitAnswerRequest,
   SubmitAnswerResponse,
+  SyncTryoutQuestionsRequest,
   TryoutDetailResponse,
   TryoutResponse,
   UpdateTryoutRequest,
@@ -152,6 +153,38 @@ export function useAddQuestionsToTryout() {
   >({
     mutationFn: ({ id, body }: { id: string; body: AddTryoutQuestionsRequest }) =>
       Api.tryout.AddQuestionsService(id, body),
+    onSettled: async () => {
+      await ns.queryClient.invalidateQueries({
+        queryKey: queryKey.tryoutRoot(),
+      });
+    },
+    onSuccess: (res) => {
+      ns.alert.toast({
+        title: res.title,
+        message: res.message,
+        icon: 'success',
+      });
+    },
+    onError: (err) => {
+      ns.alert.toast({
+        title: ResponseTitles.error,
+        message: err.message,
+        icon: 'error',
+      });
+    },
+  });
+}
+
+export function useSyncTryoutQuestions() {
+  const ns = useAppNameSpace();
+  return useMutation<
+    TResponse<TryoutDetailResponse>,
+    Error,
+    { id: string; body: SyncTryoutQuestionsRequest },
+    TryoutCacheContext
+  >({
+    mutationFn: ({ id, body }: { id: string; body: SyncTryoutQuestionsRequest }) =>
+      Api.tryout.SyncQuestionsService(id, body),
     onSettled: async () => {
       await ns.queryClient.invalidateQueries({
         queryKey: queryKey.tryoutRoot(),

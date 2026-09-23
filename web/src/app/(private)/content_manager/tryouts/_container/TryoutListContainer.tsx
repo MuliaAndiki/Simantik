@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import { TryoutListPage } from '@/components/page/private/content_manager/TryoutListPage';
 import { useApi } from '@/hooks/useApi';
@@ -24,8 +24,10 @@ const EMPTY_TRYOUT_FORM: TryoutDialogForm = {
 
 export const TryoutListContainer: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const api = useApi();
   const ns = useAppNameSpace();
+  const basePath = pathname.startsWith('/admin') ? '/admin' : '/content_manager';
 
   // Local state
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -307,7 +309,7 @@ export const TryoutListContainer: React.FC = () => {
       onDialogFormChange={handleDialogFormChange}
       onSubmitDialog={handleSubmitDialog}
       onEdit={handleEdit}
-      onManageQuestions={(item) => router.push(`/content_manager/tryouts/${item.id}`)}
+      onManageQuestions={(item) => router.push(`${basePath}/tryouts/${item.id}`)}
       onToggleStatus={handleToggleStatus}
       onDelete={handleDelete}
       onExportSummary={handleExportSummary}

@@ -10,6 +10,7 @@ import {
   Settings,
   Trophy,
   User,
+  UserCheck,
   Users,
   Video,
 } from 'lucide-react';
@@ -158,8 +159,52 @@ export const ROLE_SIDEBAR_MENU: Record<string, NavItem[]> = {
       icon: LayoutDashboard,
       subMenu: [],
     },
-    { name: 'Siswa', url: '/admin/students', icon: Users, subMenu: [] },
-    { name: 'Sekolah', url: '/admin/schools', icon: School, subMenu: [] },
+    {
+      name: 'Materi',
+      url: '/admin/materials',
+      icon: BookOpen,
+      subMenu: [],
+    },
+    {
+      name: 'Paket Latihan',
+      url: '/admin/practice',
+      icon: FileQuestion,
+      subMenu: [],
+    },
+    {
+      name: 'Paket Tryout',
+      url: '/admin/tryouts',
+      icon: Trophy,
+      subMenu: [],
+    },
+    {
+      name: 'News',
+      url: '/admin/news',
+      icon: Newspaper,
+      subMenu: [],
+    },
+    {
+      name: 'Manajemen Data',
+      url: '/admin/schools',
+      icon: Users,
+      subMenu: [
+        {
+          name: 'Kelola Sekolah',
+          url: '/admin/schools',
+          icon: School,
+        },
+        {
+          name: 'Kelola Siswa',
+          url: '/admin/students',
+          icon: Users,
+        },
+        {
+          name: 'Kelola Content Manager',
+          url: '/admin/content-managers',
+          icon: UserCheck,
+        },
+      ],
+    },
   ],
   CONTENT_MANAGER: [
     {
