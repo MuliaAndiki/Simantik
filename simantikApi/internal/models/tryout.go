@@ -24,7 +24,6 @@ type Tryout struct {
 	Description     string         `gorm:"type:text" json:"description"`
 	Jenjang         SchoolLevel    `gorm:"column:jenjang;type:varchar(20);not null;default:'sma';index" json:"jenjang"`
 	DurationSeconds int            `gorm:"not null;default:4500" json:"durationSeconds"` // e.g. 75 mins = 4500s
-	TotalQuestions  int            `gorm:"not null;default:30" json:"totalQuestions"`    // baseline: 30 questions
 	Status          ContentStatus  `gorm:"type:varchar(20);not null;default:'draft';index" json:"status"`
 	StartAt         *time.Time     `json:"startAt"`
 	EndAt           *time.Time     `json:"endAt"`

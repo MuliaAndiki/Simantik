@@ -57,6 +57,18 @@ func NewTryoutAttemptService(
 	}
 }
 
+// totalQuestions returns the number of questions currently assigned to the
+// tryout pool (tryout_questions). It replaces the previous manually-stored
+// TotalQuestions column.
+func (s *tryoutAttemptService) totalQuestions(ctx context.Context, tryoutID uuid.UUID) int {
+	n, err := s.tryoutRepo.CountPoolQuestions(ctx, tryoutID)
+	if err != nil {
+		return 0
+	}
+	return int(n)
+}
+
+
 func (s *tryoutAttemptService) AutoMatchTryout(ctx context.Context, userID uuid.UUID) (*models.Tryout, error) {
 	filter := dto.ListTryoutFilter{Limit: 50}
 	if s.resolver != nil {
@@ -191,7 +203,7 @@ func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userI
 	if err != nil {
 		return nil, err
 	}
-	if len(poolQuestions) < tryout.TotalQuestions {
+	if len(poolQuestions) == 0 {
 		return nil, ErrInsufficientPool
 	}
 
@@ -245,7 +257,7 @@ func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userI
 	}
 
 	usedMap := map[uuid.UUID]bool{firstQID: true}
-	aqs := make([]models.AttemptQuestion, tryout.TotalQuestions)
+	aqs := make([]models.AttemptQuestion, len(poolQuestions))
 	aqs[0] = models.AttemptQuestion{
 		QuestionID:      firstQID,
 		QuestionNumber:  1,
@@ -256,7 +268,7 @@ func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userI
 	// Pre-populate remaining slots from pool
 	slot := 1
 	for _, qid := range poolQuestions {
-		if slot >= tryout.TotalQuestions {
+		if slot >= len(poolQuestions) {
 			break
 		}
 		if !usedMap[qid] {
@@ -311,7 +323,7 @@ func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userI
 	return &dto.StartAttemptResponse{
 		AttemptID:       attempt.ID,
 		TryoutID:        tryout.ID,
-		TotalQuestions:  tryout.TotalQuestions,
+		TotalQuestions:  len(poolQuestions),
 		DurationSeconds: tryout.DurationSeconds,
 		StartedAt:       attempt.StartedAt,
 		Status:          string(attempt.Status),
@@ -347,7 +359,7 @@ func (s *tryoutAttemptService) GetAttemptStatus(ctx context.Context, attemptID, 
 		AttemptID:             attempt.ID,
 		Status:                string(attempt.Status),
 		CurrentQuestionNumber: attempt.CurrentQuestionNumber,
-		TotalQuestions:        tryout.TotalQuestions,
+		TotalQuestions:        s.totalQuestions(ctx, attempt.TryoutID),
 		DurationSeconds:       tryout.DurationSeconds,
 		StartedAt:             attempt.StartedAt,
 		RemainingSeconds:      remaining,
@@ -421,7 +433,7 @@ func (s *tryoutAttemptService) GetAttemptQuestion(ctx context.Context, attemptID
 
 	return &dto.AttemptQuestionResponse{
 		QuestionNumber: aq.QuestionNumber,
-		TotalQuestions: tryout.TotalQuestions,
+		TotalQuestions: s.totalQuestions(ctx, attempt.TryoutID),
 		Question:       studentQ,
 	}, nil
 }
@@ -526,7 +538,7 @@ func (s *tryoutAttemptService) SubmitAnswer(ctx context.Context, attemptID, user
 
 	// Adapt next question difficulty (questionNumber + 1)
 	nextQNum := aq.QuestionNumber + 1
-	if nextQNum <= tryout.TotalQuestions {
+	if nextQNum <= s.totalQuestions(ctx, attempt.TryoutID) {
 		nextAQ, err := s.attemptRepo.FindAttemptQuestionByNumber(ctx, attemptID, nextQNum)
 		if err == nil && nextAQ != nil {
 			existingAns, _ := s.attemptRepo.FindAnswer(ctx, attemptID, nextAQ.QuestionID)
@@ -639,9 +651,10 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 		}
 	}
 
+	totalQ := s.totalQuestions(ctx, attempt.TryoutID)
 	score := 0.0
-	if tryout.TotalQuestions > 0 {
-		score = (float64(correctCount) / float64(tryout.TotalQuestions)) * 100
+	if totalQ > 0 {
+		score = (float64(correctCount) / float64(totalQ)) * 100
 	}
 	accuracy := 0.0
 	if len(answers) > 0 {
@@ -654,9 +667,9 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 		UserID:           userID,
 		SourceType:       models.EvaluationSourceTryout,
 		SourceID:         attempt.ID,
-		TotalQuestions:   tryout.TotalQuestions,
+		TotalQuestions:   totalQ,
 		CorrectAnswers:   correctCount,
-		IncorrectAnswers: tryout.TotalQuestions - correctCount,
+		IncorrectAnswers: totalQ - correctCount,
 		Score:            score,
 		Accuracy:         accuracy,
 	}
@@ -769,7 +782,7 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 		AttemptID:        attempt.ID,
 		Status:           string(attempt.Status),
 		Score:            score,
-		TotalQuestions:   tryout.TotalQuestions,
+		TotalQuestions:   totalQ,
 		CorrectAnswers:   correctCount,
 		Accuracy:         accuracy,
 		TimeTakenSeconds: timeTakenSec,
@@ -907,7 +920,7 @@ func (s *tryoutAttemptService) ListMyAttempts(ctx context.Context, userID uuid.U
 		var tq, ds int
 		tryout, err := s.tryoutRepo.FindByID(ctx, a.TryoutID)
 		if err == nil && tryout != nil {
-			tq = tryout.TotalQuestions
+			tq = s.totalQuestions(ctx, a.TryoutID)
 			ds = tryout.DurationSeconds
 		}
 

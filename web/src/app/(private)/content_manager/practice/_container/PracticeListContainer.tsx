@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 
 import { PracticeListPage } from '@/components/page/private/content_manager/PracticeListPage';
@@ -25,8 +25,10 @@ const EMPTY_PRACTICE_FORM: PracticeDialogForm = {
 
 export const PracticeListContainer: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const api = useApi();
   const ns = useAppNameSpace();
+  const basePath = pathname.startsWith('/admin') ? '/admin' : '/content_manager';
 
   // Local state
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -286,7 +288,7 @@ export const PracticeListContainer: React.FC = () => {
         });
         setIsDialogOpen(false);
         if (res?.data?.id) {
-          router.push(`/content_manager/practice/${res.data.id}`);
+          router.push(`${basePath}/practice/${res.data.id}`);
         }
         return;
       } else {
@@ -353,7 +355,7 @@ export const PracticeListContainer: React.FC = () => {
       onDelete={handleDelete}
       onExportSummary={handleExportSummary}
       onCreatePractice={() => handleOpenDialogChange(true)}
-      onManageQuestions={(item) => router.push(`/content_manager/practice/${item.id}`)}
+      onManageQuestions={(item) => router.push(`${basePath}/practice/${item.id}`)}
     />
   );
 };

@@ -1,13 +1,17 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { TryoutCreatePage } from '@/components/page/private/content_manager/TryoutCreatePage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
-import type { SchoolLevel } from '@/types/service';
+import type { CreateQuestionRequest, QuestionAdminResponse, SchoolLevel } from '@/types/service';
 import type { PracticeQuestionType } from '@/types/ui/practice.types';
-import type { QuestionStimulusForm } from '@/types/ui/practice-question-editor.types';
+import type {
+  QuestionChoiceOptionForm,
+  QuestionMatrixStatementForm,
+  QuestionStimulusForm,
+} from '@/types/ui/practice-question-editor.types';
 import type {
   TryoutAdaptiveQuestionItemForm,
   TryoutDifficultyLevel,
@@ -61,10 +65,137 @@ const createDefaultAdaptiveQuestion = (number: number): TryoutAdaptiveQuestionIt
   },
 });
 
+const mapQuestionTypeCode = (type: PracticeQuestionType): string => {
+  switch (type) {
+    case 'pilihan-ganda':
+      return 'multiple_choice';
+    case 'pilihan-ganda-kompleks':
+      return 'complex_multiple_choice';
+    default:
+      return 'true_false';
+  }
+};
+
+const mapApiToVariantForm = (
+  apiQ: QuestionAdminResponse,
+  level: TryoutDifficultyLevel
+): TryoutQuestionVariantForm => {
+  let hasStimulus = false;
+  let stimulusTitle = '';
+  let stimulusContent = '';
+  let questionText = apiQ.question_text || '';
+
+  const stimulusMatch = questionText.match(/^\[WACANA:\s*(.*?)\]\n([\s\S]*?)\n\n([\s\S]*)$/);
+  if (stimulusMatch) {
+    hasStimulus = true;
+    stimulusTitle = stimulusMatch[1] || '';
+    stimulusContent = stimulusMatch[2] || '';
+    questionText = stimulusMatch[3] || '';
+  }
+
+  const options = apiQ.options || [];
+  const hasMatrixKey = options.some((opt) =>
+    /\[KUNCI:\s*(BENAR|SALAH|TEPAT|TIDAK TEPAT|SETUJU|TIDAK SETUJU)\]/i.test(opt.option_text)
+  );
+
+  let questionType: PracticeQuestionType = 'pilihan-ganda';
+  let matrixStatements: QuestionMatrixStatementForm[] = [
+    { id: 'm1', label: 'A', statement: '', correctChoice: 'BENAR' },
+    { id: 'm2', label: 'B', statement: '', correctChoice: 'SALAH' },
+    { id: 'm3', label: 'C', statement: '', correctChoice: 'BENAR' },
+    { id: 'm4', label: 'D', statement: '', correctChoice: 'SALAH' },
+  ];
+  let choiceOptions: QuestionChoiceOptionForm[] = [
+    { id: '1', label: 'A', text: '', sublabel: 'Pernyataan wacana eksplisit' },
+    { id: '2', label: 'B', text: '', sublabel: 'Pernyataan pengecoh inferensial' },
+    { id: '3', label: 'C', text: '', sublabel: 'Pernyataan kontradiktif' },
+    { id: '4', label: 'D', text: '', sublabel: 'Pernyataan generalisasi bias' },
+  ];
+  let correctOptionLabel = 'A';
+  let correctOptionLabels: string[] = ['A', 'B'];
+
+  if (hasMatrixKey) {
+    let isTepat = false;
+    let isSetuju = false;
+
+    matrixStatements = options.map((opt, idx) => {
+      const match = opt.option_text.match(
+        /^(.*?)\s*\[KUNCI:\s*(BENAR|SALAH|TEPAT|TIDAK TEPAT|SETUJU|TIDAK SETUJU)\]$/i
+      );
+      const stmt = match ? match[1].trim() : opt.option_text;
+      const choice = (match ? match[2].toUpperCase() : 'BENAR') as
+        | 'BENAR'
+        | 'SALAH'
+        | 'TEPAT'
+        | 'TIDAK TEPAT'
+        | 'SETUJU'
+        | 'TIDAK SETUJU';
+      if (choice === 'TEPAT' || choice === 'TIDAK TEPAT') isTepat = true;
+      if (choice === 'SETUJU' || choice === 'TIDAK SETUJU') isSetuju = true;
+      return {
+        id: opt.id || `m-${idx + 1}`,
+        label: opt.option_label || String.fromCharCode(65 + idx),
+        statement: stmt,
+        correctChoice: choice,
+      };
+    });
+
+    if (isTepat) questionType = 'tepat-tidak-tepat';
+    else if (isSetuju) questionType = 'setuju-tidak-setuju';
+    else questionType = 'benar-salah';
+  } else if (options.length > 0) {
+    choiceOptions = options.map((opt, idx) => ({
+      id: opt.id || String(idx + 1),
+      label: opt.option_label || String.fromCharCode(65 + idx),
+      text: opt.option_text || '',
+      sublabel:
+        idx === 0
+          ? 'Pernyataan wacana eksplisit'
+          : idx === 1
+            ? 'Pernyataan pengecoh inferensial'
+            : idx === 2
+              ? 'Pernyataan kontradiktif'
+              : 'Pernyataan generalisasi bias',
+    }));
+
+    const correctOpts = options.filter((opt) => opt.is_correct);
+    if (correctOpts.length > 1) {
+      questionType = 'pilihan-ganda-kompleks';
+      correctOptionLabels = correctOpts.map((o) => o.option_label);
+      correctOptionLabel = correctOpts[0]?.option_label || 'A';
+    } else {
+      questionType = 'pilihan-ganda';
+      correctOptionLabel = correctOpts[0]?.option_label || options[0]?.option_label || 'A';
+      correctOptionLabels = [correctOptionLabel];
+    }
+  }
+
+  return {
+    id: apiQ.id || `v-${Date.now()}-${level}`,
+    difficultyLevel: level,
+    questionType,
+    stimulus: {
+      hasStimulus,
+      title: stimulusTitle,
+      content: stimulusContent,
+      source: '',
+    },
+    questionText,
+    options: choiceOptions,
+    correctOptionLabel,
+    correctOptionLabels,
+    matrixStatements,
+    explanation: apiQ.explanation?.explanation || '',
+    answeringTips: apiQ.explanation?.answering_tips || '',
+  };
+};
+
 export const TryoutQuestionContainer: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const params = useParams<{ id: string }>();
   const tryoutId = params?.id || '';
+  const basePath = pathname.startsWith('/admin') ? '/admin' : '/content_manager';
 
   const api = useApi();
   const ns = useAppNameSpace();
@@ -77,8 +208,7 @@ export const TryoutQuestionContainer: React.FC = () => {
 
   // Mutations
   const updateTryoutMutation = api.tryout.mutate.update();
-  const createQuestionMutation = api.question.mutate.create();
-  const addQuestionsMutation = api.tryout.mutate.addQuestions();
+  const syncQuestionsMutation = api.tryout.mutate.syncQuestions();
 
   // State: Tryout Form
   const [packageForm, setPackageForm] = useState<TryoutPackageEditorForm>({
@@ -87,13 +217,8 @@ export const TryoutQuestionContainer: React.FC = () => {
     jenjang: 'sma',
     description: '',
     duration_minutes: 75,
-    total_questions: 30,
     status: 'DRAFT',
-    questions: [
-      createDefaultAdaptiveQuestion(1),
-      createDefaultAdaptiveQuestion(2),
-      createDefaultAdaptiveQuestion(3),
-    ],
+    questions: [createDefaultAdaptiveQuestion(1)],
     activeQuestionIndex: 0,
   });
 
@@ -105,15 +230,50 @@ export const TryoutQuestionContainer: React.FC = () => {
       const t = tryoutDetailQuery.data;
       const durationMinutes = t.duration_seconds ? Math.round(t.duration_seconds / 60) : 75;
 
+      const loadedQuestions: QuestionAdminResponse[] = t.questions || [];
+      let mappedAdaptiveQuestions: TryoutAdaptiveQuestionItemForm[] = [];
+
+      if (loadedQuestions.length > 0) {
+        let currentItem: TryoutAdaptiveQuestionItemForm | null = null;
+
+        for (let i = 0; i < loadedQuestions.length; i++) {
+          const apiQ = loadedQuestions[i];
+          const level = Math.max(
+            1,
+            Math.min(5, apiQ.difficulty_level || 1)
+          ) as TryoutDifficultyLevel;
+
+          // If no current item or current item already has this level populated with text, start new item
+          if (!currentItem || currentItem.variants[level]?.questionText.trim()) {
+            if (currentItem) {
+              mappedAdaptiveQuestions.push(currentItem);
+            }
+            const qNum = mappedAdaptiveQuestions.length + 1;
+            currentItem = createDefaultAdaptiveQuestion(qNum);
+          }
+
+          currentItem.variants[level] = mapApiToVariantForm(apiQ, level);
+        }
+
+        if (currentItem) {
+          mappedAdaptiveQuestions.push(currentItem);
+        }
+      }
+
+      if (mappedAdaptiveQuestions.length === 0) {
+        mappedAdaptiveQuestions = [createDefaultAdaptiveQuestion(1)];
+      }
+
       setPackageForm((prev) => ({
         ...prev,
         id: t.id,
         title: t.title || prev.title,
         jenjang: (t.jenjang as SchoolLevel) || prev.jenjang,
         duration_minutes: durationMinutes,
-        total_questions: t.total_questions || prev.total_questions,
         description: t.description || prev.description,
         status: (t.status || 'DRAFT').toUpperCase() as typeof prev.status,
+        questions: mappedAdaptiveQuestions,
+        activeQuestionIndex: 0,
       }));
     }
   }, [tryoutDetailQuery.data]);
@@ -164,10 +324,6 @@ export const TryoutQuestionContainer: React.FC = () => {
 
   const handlePackageDurationChange = (duration_minutes: number) => {
     setPackageForm((prev) => ({ ...prev, duration_minutes }));
-  };
-
-  const handlePackageTotalQuestionsChange = (total_questions: number) => {
-    setPackageForm((prev) => ({ ...prev, total_questions }));
   };
 
   const handlePackageJenjangChange = (jenjang: SchoolLevel) => {
@@ -520,20 +676,33 @@ export const TryoutQuestionContainer: React.FC = () => {
             description: packageForm.description.trim() || undefined,
             jenjang: packageForm.jenjang,
             duration_seconds: packageForm.duration_minutes * 60,
-            total_questions: packageForm.questions.length,
           },
         });
       }
 
-      // 2. Iterate through questions and their 5 variants to create questions
+      // 2. Prepare questions payload across all adaptive question items & variants
       const questionTypes = questionTypesQuery.data ?? [];
-      const defaultTypeId = questionTypes[0]?.id || '1';
-      const createdQuestionIds: string[] = [];
+      if (questionTypes.length === 0) {
+        ns.alert.toast({
+          title: 'Tipe Soal Belum Siap',
+          message: 'Daftar tipe soal belum dimuat. Muat ulang halaman lalu coba lagi.',
+          icon: 'warning',
+        });
+        return;
+      }
+
+      const typeIdByCode = new Map(questionTypes.map((qt) => [qt.code, qt.id]));
+      const fallbackTypeId = questionTypes[0]?.id;
+      const questionsPayload: CreateQuestionRequest[] = [];
 
       for (const q of packageForm.questions) {
         for (const lvl of [1, 2, 3, 4, 5] as TryoutDifficultyLevel[]) {
           const v = q.variants[lvl];
           if (!v?.questionText.trim()) continue;
+
+          const questionTypeId =
+            typeIdByCode.get(mapQuestionTypeCode(v.questionType)) ?? fallbackTypeId;
+          if (!questionTypeId) continue;
 
           const mappedOptions =
             v.questionType === 'benar-salah' ||
@@ -555,52 +724,34 @@ export const TryoutQuestionContainer: React.FC = () => {
                   display_order: idx + 1,
                 }));
 
-          try {
-            const fullQuestionText = v.stimulus.hasStimulus
-              ? `[WACANA: ${v.stimulus.title || 'Wacana'}]\n${v.stimulus.content}\n\n${v.questionText}`
-              : v.questionText;
+          const fullQuestionText = v.stimulus.hasStimulus
+            ? `[WACANA: ${v.stimulus.title || 'Wacana'}]\n${v.stimulus.content}\n\n${v.questionText}`
+            : v.questionText;
 
-            const res = await createQuestionMutation.mutateAsync({
-              question_type_id: defaultTypeId,
-              question_text: fullQuestionText,
-              difficulty_level: lvl,
-              options: mappedOptions,
-              explanation: v.explanation
-                ? {
-                    explanation: v.explanation,
-                    answering_tips: v.answeringTips || undefined,
-                  }
-                : null,
-            });
-
-            if (res.data?.id) {
-              createdQuestionIds.push(res.data.id);
-            }
-          } catch {
-            // Continue saving remaining variants
-          }
-        }
-      }
-
-      // 3. Attach created questions to tryout pool
-      if (tryoutId && createdQuestionIds.length > 0) {
-        try {
-          await addQuestionsMutation.mutateAsync({
-            id: tryoutId,
-            body: { question_ids: createdQuestionIds },
+          questionsPayload.push({
+            question_type_id: questionTypeId,
+            question_text: fullQuestionText,
+            difficulty_level: lvl,
+            options: mappedOptions,
+            explanation: v.explanation
+              ? {
+                  explanation: v.explanation,
+                  answering_tips: v.answeringTips || undefined,
+                }
+              : null,
           });
-        } catch {
-          // Handled
         }
       }
 
-      ns.alert.toast({
-        title: 'Berhasil Menyimpan',
-        message: 'Paket tryout dan seluruh varian butir soal berhasil disimpan.',
-        icon: 'success',
-      });
+      // 3. Sync questions to tryout pool in one single batch request
+      if (tryoutId && questionsPayload.length > 0) {
+        await syncQuestionsMutation.mutateAsync({
+          id: tryoutId,
+          body: { questions: questionsPayload },
+        });
+      }
 
-      router.push('/content_manager/tryouts');
+      router.push(`${basePath}/tryouts`);
     } catch {
       // Handled by mutation toasts
     } finally {
@@ -615,7 +766,6 @@ export const TryoutQuestionContainer: React.FC = () => {
       isSubmitting={isSubmitting}
       onPackageTitleChange={handlePackageTitleChange}
       onPackageDurationChange={handlePackageDurationChange}
-      onPackageTotalQuestionsChange={handlePackageTotalQuestionsChange}
       onPackageJenjangChange={handlePackageJenjangChange}
       onPackageDescriptionChange={handlePackageDescriptionChange}
       onSaveDraft={handleSaveTryout}

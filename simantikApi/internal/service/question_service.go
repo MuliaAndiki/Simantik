@@ -20,6 +20,7 @@ type QuestionService interface {
 	ListQuestionTypes(ctx context.Context) ([]dto.QuestionTypeResponse, error)
 
 	CreateQuestion(ctx context.Context, req dto.CreateQuestionRequest, createdByID uuid.UUID) (*dto.QuestionAdminResponse, error)
+	CreateQuestionsBulk(ctx context.Context, req dto.CreateQuestionsBulkRequest, createdByID uuid.UUID) ([]dto.QuestionAdminResponse, error)
 	GetQuestionAdmin(ctx context.Context, id uuid.UUID) (*dto.QuestionAdminResponse, error)
 	GetQuestionStudent(ctx context.Context, id uuid.UUID) (*dto.QuestionStudentResponse, error)
 	UpdateQuestion(ctx context.Context, id uuid.UUID, req dto.UpdateQuestionRequest, updatedByID uuid.UUID) (*dto.QuestionAdminResponse, error)
@@ -222,6 +223,20 @@ func (s *questionService) CreateQuestion(ctx context.Context, req dto.CreateQues
 	}
 
 	return s.GetQuestionAdmin(ctx, q.ID)
+}
+
+func (s *questionService) CreateQuestionsBulk(ctx context.Context, req dto.CreateQuestionsBulkRequest, createdByID uuid.UUID) ([]dto.QuestionAdminResponse, error) {
+	var responses []dto.QuestionAdminResponse
+	for _, qReq := range req.Questions {
+		res, err := s.CreateQuestion(ctx, qReq, createdByID)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			responses = append(responses, *res)
+		}
+	}
+	return responses, nil
 }
 
 func (s *questionService) GetQuestionAdmin(ctx context.Context, id uuid.UUID) (*dto.QuestionAdminResponse, error) {

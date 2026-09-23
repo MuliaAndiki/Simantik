@@ -9,6 +9,7 @@ import type { ApiResponse, ContentStatus, TestimonialStatus } from '../model';
  * Maps to backend: `dto.CreateNewsRequest`
  */
 export interface CreateNewsRequest {
+  id?: string;
   title: string;
   slug?: string;
   content: string;

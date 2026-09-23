@@ -1,5 +1,7 @@
 import type { ApiResponse, UserRole, UserStatus } from '../model';
 
+export type { UserRole, UserStatus } from '../model';
+
 // ============================================================================
 // Admin Dashboard & Overview DTOs
 // ============================================================================

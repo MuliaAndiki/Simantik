@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import { TryoutListPage } from '@/components/page/private/content_manager/TryoutListPage';
 import { useApi } from '@/hooks/useApi';
@@ -19,14 +19,15 @@ const EMPTY_TRYOUT_FORM: TryoutDialogForm = {
   description: '',
   jenjang: 'sma',
   duration_minutes: 75,
-  total_questions: 0,
   status: 'DRAFT',
 };
 
 export const TryoutListContainer: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const api = useApi();
   const ns = useAppNameSpace();
+  const basePath = pathname.startsWith('/admin') ? '/admin' : '/content_manager';
 
   // Local state
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -113,7 +114,7 @@ export const TryoutListContainer: React.FC = () => {
         author: 'Tim Litbang Asesmen SIMANTIK',
         jenjang: t.jenjang || 'sma',
         durationMinutes,
-        totalQuestions: t.total_questions || 150,
+        totalQuestions: t.total_questions || 0,
         status,
         updatedAt,
         description: t.description || undefined,
@@ -200,7 +201,6 @@ export const TryoutListContainer: React.FC = () => {
       description: item.description || '',
       jenjang: item.jenjang || 'sma',
       duration_minutes: item.durationMinutes,
-      total_questions: item.totalQuestions,
       status: item.status,
     });
     setDialogError(null);
@@ -241,10 +241,6 @@ export const TryoutListContainer: React.FC = () => {
       setDialogError('Durasi tryout minimal 1 menit.');
       return;
     }
-    if (!dialogForm.total_questions || dialogForm.total_questions < 1) {
-      setDialogError('Kuota soal minimal 1 butir.');
-      return;
-    }
 
     try {
       if (dialogMode === 'create') {
@@ -253,7 +249,6 @@ export const TryoutListContainer: React.FC = () => {
           description: dialogForm.description.trim() || undefined,
           jenjang: dialogForm.jenjang as SchoolLevel,
           duration_seconds: dialogForm.duration_minutes * 60,
-          total_questions: dialogForm.total_questions,
         });
       } else {
         if (!dialogForm.id) return;
@@ -264,7 +259,6 @@ export const TryoutListContainer: React.FC = () => {
             description: dialogForm.description.trim() || undefined,
             jenjang: dialogForm.jenjang as SchoolLevel,
             duration_seconds: dialogForm.duration_minutes * 60,
-            total_questions: dialogForm.total_questions,
           },
         });
         await updateStatusMutation.mutateAsync({
@@ -315,7 +309,7 @@ export const TryoutListContainer: React.FC = () => {
       onDialogFormChange={handleDialogFormChange}
       onSubmitDialog={handleSubmitDialog}
       onEdit={handleEdit}
-      onManageQuestions={(item) => router.push(`/content_manager/tryouts/${item.id}`)}
+      onManageQuestions={(item) => router.push(`${basePath}/tryouts/${item.id}`)}
       onToggleStatus={handleToggleStatus}
       onDelete={handleDelete}
       onExportSummary={handleExportSummary}

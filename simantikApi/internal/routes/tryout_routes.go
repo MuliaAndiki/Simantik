@@ -21,6 +21,7 @@ func RegisterTryoutRoutes(api fiber.Router, cfg *config.Config, th *handler.Tryo
 	t.Patch("/:id/status", adminOrCM, th.UpdateTryoutStatus)
 	t.Delete("/:id", adminOnly, th.DeleteTryout)
 	t.Post("/:id/questions", adminOrCM, th.AddQuestions)
+	t.Post("/:id/questions/sync", adminOrCM, th.SyncQuestions)
 	t.Delete("/:id/questions/:questionId", adminOrCM, th.RemoveQuestion)
 }
 

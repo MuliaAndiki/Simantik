@@ -119,7 +119,7 @@ func main() {
 	userService := service.NewUserService(userRepo, refreshTokenRepo, schoolRepo, profileRepo)
 	jenjangResolver := service.NewJenjangResolver(profileRepo, schoolRepo)
 	questionService := service.NewQuestionService(competencyRepo, questionRepo, db)
-	tryoutService := service.NewTryoutService(tryoutRepo, questionRepo, jenjangResolver)
+	tryoutService := service.NewTryoutService(tryoutRepo, questionRepo, jenjangResolver, questionService, db)
 	attemptService := service.NewTryoutAttemptService(db, attemptRepo, tryoutRepo, emailSender, jenjangResolver)
 	evaluationService := service.NewEvaluationService(evaluationRepo, attemptRepo, tryoutRepo, db)
 	recommendationService := service.NewRecommendationService(recommendationRepo, evaluationRepo, materialRepo)

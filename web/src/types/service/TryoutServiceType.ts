@@ -1,5 +1,9 @@
 import type { ApiResponse, AttemptStatus, ContentStatus } from '../model';
-import type { QuestionStudentResponse } from './QuestionServiceType';
+import type {
+  CreateQuestionRequest,
+  QuestionAdminResponse,
+  QuestionStudentResponse,
+} from './QuestionServiceType';
 import type { SchoolLevel } from './SchoolServiceType';
 
 // ============================================================================
@@ -15,7 +19,6 @@ export interface CreateTryoutRequest {
   description?: string;
   jenjang: SchoolLevel;
   duration_seconds: number;
-  total_questions: number;
 }
 
 /**
@@ -27,7 +30,6 @@ export interface UpdateTryoutRequest {
   description?: string;
   jenjang?: SchoolLevel;
   duration_seconds?: number;
-  total_questions?: number;
 }
 
 /**
@@ -44,6 +46,14 @@ export interface PublishTryoutRequest {
  */
 export interface AddTryoutQuestionsRequest {
   question_ids: string[];
+}
+
+/**
+ * Payload for batch syncing questions with a tryout pool
+ * Maps to backend: `dto.SyncTryoutQuestionsRequest`
+ */
+export interface SyncTryoutQuestionsRequest {
+  questions: CreateQuestionRequest[];
 }
 
 /**
@@ -105,7 +115,7 @@ export interface TryoutQuestionResponse {
  * Maps to backend: `dto.TryoutDetailResponse`
  */
 export interface TryoutDetailResponse extends TryoutResponse {
-  questions: TryoutQuestionResponse[];
+  questions: QuestionAdminResponse[];
 }
 
 /**

@@ -16,6 +16,28 @@ export interface ModuleItem {
   updatedAt: string;
 }
 
+export const MODULE_STATUS_OPTIONS = [
+  {
+    value: 'PUBLISHED',
+    label: 'Published',
+    color: 'bg-[#10B981]',
+  },
+  {
+    value: 'IN_REVIEW',
+    label: 'In Review',
+    color: 'bg-[#F5B731]',
+  },
+  {
+    value: 'DRAFT',
+    label: 'Draft',
+    color: 'bg-[#94A3B8]',
+  },
+] satisfies {
+  value: MaterialStatusType;
+  label: string;
+  color: string;
+}[];
+
 export interface MaterialObjectivePoint {
   id: number;
   title: string;

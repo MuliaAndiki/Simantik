@@ -179,7 +179,6 @@ func TestAttemptService_StartAndComplete(t *testing.T) {
 	tryout := &models.Tryout{
 		ID:              tryoutID,
 		Title:           "Test Tryout",
-		TotalQuestions:  3,
 		DurationSeconds: 300,
 		Status:          models.ContentStatusPublished,
 	}
@@ -256,7 +255,6 @@ func TestAttemptService_DuplicateAttempt(t *testing.T) {
 	tryoutID := uuid.New()
 	tryout := &models.Tryout{
 		ID:              tryoutID,
-		TotalQuestions:  2,
 		DurationSeconds: 120,
 		Status:          models.ContentStatusPublished,
 	}
@@ -289,7 +287,6 @@ func TestAttemptService_AnswerIdempotency(t *testing.T) {
 	tryoutID := uuid.New()
 	tryout := &models.Tryout{
 		ID:              tryoutID,
-		TotalQuestions:  1,
 		DurationSeconds: 300,
 		Status:          models.ContentStatusPublished,
 	}

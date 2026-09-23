@@ -7,6 +7,7 @@ import {
   useRemoveQuestionFromTryout,
   useStartAttempt,
   useSubmitAnswer,
+  useSyncTryoutQuestions,
   useUpdateTryout,
   useUpdateTryoutStatus,
 } from './state/mutate';
@@ -33,6 +34,7 @@ export const useTryout = () => {
       updateStatus: useUpdateTryoutStatus,
       delete: useDeleteTryout,
       addQuestions: useAddQuestionsToTryout,
+      syncQuestions: useSyncTryoutQuestions,
       removeQuestion: useRemoveQuestionFromTryout,
       startAttempt: useStartAttempt,
       submitAnswer: useSubmitAnswer,

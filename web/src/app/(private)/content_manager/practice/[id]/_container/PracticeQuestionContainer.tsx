@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 import { PracticeCreatePage } from '@/components/page/private/content_manager/PracticeCreatePage';
 import { useApi } from '@/hooks/useApi';
@@ -47,8 +47,10 @@ const createDefaultQuestion = (
 
 export const PracticeQuestionContainer: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const params = useParams<{ id: string }>();
   const packageId = params?.id || '';
+  const basePath = pathname.startsWith('/admin') ? '/admin' : '/content_manager';
 
   const api = useApi();
   const ns = useAppNameSpace();
@@ -577,7 +579,7 @@ export const PracticeQuestionContainer: React.FC = () => {
         icon: 'success',
       });
 
-      router.push('/content_manager/practice');
+      router.push(`${basePath}/practice`);
     } catch {
       // Handled by mutation toasts
     } finally {

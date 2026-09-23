@@ -16,6 +16,7 @@ import type {
   StartAttemptResponse,
   SubmitAnswerRequest,
   SubmitAnswerResponse,
+  SyncTryoutQuestionsRequest,
   TryoutDetailResponse,
   TryoutResponse,
   UpdateTryoutRequest,
@@ -94,6 +95,19 @@ class TryoutService {
   ): Promise<TResponse<TryoutDetailResponse>> {
     const res = await getHttp().PostResponse<TryoutDetailResponse>(
       EndpointEntry.tryout.addQuestions(id),
+      payload
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async SyncQuestionsService(
+    id: string,
+    payload: SyncTryoutQuestionsRequest
+  ): Promise<TResponse<TryoutDetailResponse>> {
+    const res = await getHttp().PostResponse<TryoutDetailResponse>(
+      EndpointEntry.tryout.syncQuestions(id),
       payload
     );
     return toServiceResponse(res, {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 import { DEFAULT_DOCUMENT_HTML } from '@/components/molecules/editor';
 import { MaterialCreatePage } from '@/components/page/private/content_manager/MaterialCreatePage';
@@ -18,9 +18,11 @@ const INITIAL_METADATA: MaterialMetadata = {
 
 export function MaterialCreateContainer() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const editId = searchParams.get('id');
   const queryModuleId = searchParams.get('moduleId');
+  const basePath = pathname.startsWith('/admin') ? '/admin' : '/content_manager';
 
   const ns = useAppNameSpace();
   const api = useApi();
@@ -131,7 +133,7 @@ export function MaterialCreateContainer() {
   };
 
   const handleCancel = () => {
-    router.push('/content_manager/materials');
+    router.push(`${basePath}/materials`);
   };
 
   const executeSave = async (isReview: boolean) => {
@@ -169,7 +171,7 @@ export function MaterialCreateContainer() {
               message: `Materi "${metadata.judulMateri}" berhasil diperbarui.`,
               icon: 'success',
             });
-            router.push('/content_manager/materials');
+            router.push(`${basePath}/materials`);
           },
           onError: (err) => {
             ns.alert.toast({
@@ -239,7 +241,7 @@ export function MaterialCreateContainer() {
               : `Draft "${metadata.judulMateri}" berhasil disimpan di sistem.`,
             icon: 'success',
           });
-          router.push('/content_manager/materials');
+          router.push(`${basePath}/materials`);
         },
         onError: (err) => {
           ns.alert.toast({

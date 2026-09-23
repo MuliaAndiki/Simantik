@@ -165,6 +165,29 @@ func (h *QuestionHandler) CreateQuestion(c *fiber.Ctx) error {
 	return utils.Created(c, "question created successfully", res)
 }
 
+// CreateQuestionsBulk handles POST /api/v1/questions/bulk.
+func (h *QuestionHandler) CreateQuestionsBulk(c *fiber.Ctx) error {
+	var req dto.CreateQuestionsBulkRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid request body", err)
+	}
+	if errs := utils.ValidateStruct(req); errs != nil {
+		return utils.ValidationError(c, errs)
+	}
+
+	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
+	if !ok {
+		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
+	}
+
+	res, err := h.qService.CreateQuestionsBulk(c.UserContext(), req, userID)
+	if err != nil {
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to create questions in bulk", err)
+	}
+
+	return utils.Created(c, "questions created successfully", res)
+}
+
 // GetQuestion handles GET /api/v1/questions/:id.
 // Admin/content_manager sees IsCorrect + explanation; students do not.
 func (h *QuestionHandler) GetQuestion(c *fiber.Ctx) error {

@@ -19,6 +19,7 @@ type TryoutRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, filter dto.ListTryoutFilter) ([]models.Tryout, int64, error)
 	AddQuestions(ctx context.Context, tryoutID uuid.UUID, questionIDs []uuid.UUID) error
+	SyncQuestions(ctx context.Context, tryoutID uuid.UUID, questionIDs []uuid.UUID) error
 	RemoveQuestion(ctx context.Context, tryoutID, questionID uuid.UUID) error
 	CountPoolQuestions(ctx context.Context, tryoutID uuid.UUID) (int64, error)
 	ListPublished(ctx context.Context, filter dto.ListTryoutFilter) ([]models.Tryout, int64, error)
@@ -48,10 +49,37 @@ func (r *tryoutRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.
 
 func (r *tryoutRepository) FindByIDWithQuestions(ctx context.Context, id uuid.UUID) (*models.Tryout, error) {
 	var tryout models.Tryout
-	err := r.db.WithContext(ctx).Preload("Questions").First(&tryout, "id = ?", id).Error
+	err := r.db.WithContext(ctx).
+		Preload("Questions").
+		Preload("Questions.Options", func(db *gorm.DB) *gorm.DB {
+			return db.Order("display_order ASC")
+		}).
+		Preload("Questions.Type").
+		Preload("Questions.Explanation").
+		Preload("Questions.Competencies").
+		First(&tryout, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
+
+	// Reorder questions based on join table tryout_questions
+	var orderedIDs []uuid.UUID
+	r.db.WithContext(ctx).Model(&models.TryoutQuestion{}).Where("tryout_id = ?", id).Order("display_order ASC").Pluck("question_id", &orderedIDs)
+
+	if len(orderedIDs) > 0 {
+		questionMap := make(map[uuid.UUID]models.Question)
+		for _, q := range tryout.Questions {
+			questionMap[q.ID] = q
+		}
+		orderedQuestions := make([]models.Question, 0, len(tryout.Questions))
+		for _, qid := range orderedIDs {
+			if q, ok := questionMap[qid]; ok {
+				orderedQuestions = append(orderedQuestions, q)
+			}
+		}
+		tryout.Questions = orderedQuestions
+	}
+
 	return &tryout, nil
 }
 
@@ -107,6 +135,29 @@ func (r *tryoutRepository) AddQuestions(ctx context.Context, tryoutID uuid.UUID,
 	return r.db.WithContext(ctx).Clauses(
 		clause.OnConflict{DoNothing: true},
 	).CreateInBatches(tqs, 100).Error
+}
+
+func (r *tryoutRepository) SyncQuestions(ctx context.Context, tryoutID uuid.UUID, questionIDs []uuid.UUID) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("tryout_id = ?", tryoutID).Delete(&models.TryoutQuestion{}).Error; err != nil {
+			return err
+		}
+
+		if len(questionIDs) == 0 {
+			return nil
+		}
+
+		var tqs []models.TryoutQuestion
+		for i, qid := range questionIDs {
+			tqs = append(tqs, models.TryoutQuestion{
+				TryoutID:     tryoutID,
+				QuestionID:   qid,
+				DisplayOrder: i + 1,
+				ScoreWeight:  1.0,
+			})
+		}
+		return tx.CreateInBatches(tqs, 100).Error
+	})
 }
 
 func (r *tryoutRepository) RemoveQuestion(ctx context.Context, tryoutID, questionID uuid.UUID) error {
