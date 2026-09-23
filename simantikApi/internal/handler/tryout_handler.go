@@ -200,6 +200,37 @@ func (h *TryoutHandler) AddQuestions(c *fiber.Ctx) error {
 	return utils.Success(c, "questions added to pool successfully", res)
 }
 
+// SyncQuestions handles POST /api/v1/tryouts/:id/questions/sync.
+func (h *TryoutHandler) SyncQuestions(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid tryout id", err)
+	}
+
+	var req dto.SyncTryoutQuestionsRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid request body", err)
+	}
+	if details := utils.ValidateStruct(req); details != nil {
+		return utils.ValidationError(c, details)
+	}
+
+	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
+	if !ok {
+		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
+	}
+
+	res, err := h.tryoutService.SyncQuestions(c.UserContext(), id, req, userID)
+	if err != nil {
+		if errors.Is(err, service.ErrTryoutNotFound) {
+			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to sync questions", err)
+	}
+
+	return utils.Success(c, "tryout questions synchronized successfully", res)
+}
+
 // RemoveQuestion handles DELETE /api/v1/tryouts/:id/questions/:questionId.
 func (h *TryoutHandler) RemoveQuestion(c *fiber.Ctx) error {
 	tryoutID, err := uuid.Parse(c.Params("id"))

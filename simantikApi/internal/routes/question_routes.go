@@ -27,6 +27,7 @@ func RegisterQuestionRoutes(api fiber.Router, cfg *config.Config, h *handler.Que
 	q := api.Group("/questions", auth)
 	q.Get("/", h.ListQuestions)
 	q.Post("/", adminOrCM, h.CreateQuestion)
+	q.Post("/bulk", adminOrCM, h.CreateQuestionsBulk)
 	q.Get("/:id", h.GetQuestion)
 	q.Patch("/:id", adminOrCM, h.UpdateQuestion)
 	q.Patch("/:id/status", adminOrCM, h.UpdateQuestionStatus)

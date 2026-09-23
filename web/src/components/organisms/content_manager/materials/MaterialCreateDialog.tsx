@@ -18,7 +18,7 @@ import {
 } from '@/components/atoms';
 import type { SchoolLevel } from '@/types/service';
 import type { MaterialStatusType, ModuleDialogForm } from '@/types/ui/material-manager.types';
-import { SCHOOL_LEVEL_OPTIONS } from '@/types/ui/material-manager.types';
+import { MODULE_STATUS_OPTIONS, SCHOOL_LEVEL_OPTIONS } from '@/types/ui/material-manager.types';
 
 export interface MaterialCreateDialogProps {
   open: boolean;
@@ -164,41 +164,28 @@ export function MaterialCreateDialog({
               <label className="block text-xs sm:text-sm font-semibold text-gray-700">
                 Status Modul
               </label>
+
               <Select
                 value={form.status}
-                onValueChange={(val) => onChange('status', val as MaterialStatusType)}
+                onValueChange={(value) => onChange('status', value as MaterialStatusType)}
               >
                 <SelectTrigger className="w-full h-11 rounded-xl border-gray-200 bg-white text-sm focus:ring-cyan-500/30">
                   <SelectValue placeholder="Pilih status" />
                 </SelectTrigger>
+
                 <SelectContent className="rounded-xl border-gray-100 shadow-xl">
-                  <SelectItem
-                    value="PUBLISHED"
-                    className="text-sm cursor-pointer rounded-lg hover:bg-slate-50 focus:bg-slate-50 my-0.5"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#10B981]" />
-                      <span>Published</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem
-                    value="IN_REVIEW"
-                    className="text-sm cursor-pointer rounded-lg hover:bg-slate-50 focus:bg-slate-50 my-0.5"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#F5B731]" />
-                      <span>In Review</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem
-                    value="DRAFT"
-                    className="text-sm cursor-pointer rounded-lg hover:bg-slate-50 focus:bg-slate-50 my-0.5"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#94A3B8]" />
-                      <span>Draft</span>
-                    </div>
-                  </SelectItem>
+                  {MODULE_STATUS_OPTIONS.map((status) => (
+                    <SelectItem
+                      key={status.value}
+                      value={status.value}
+                      className="text-sm cursor-pointer rounded-lg hover:bg-slate-50 focus:bg-slate-50 my-0.5"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${status.color}`} />
+                        <span>{status.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

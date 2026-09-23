@@ -1,10 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import { MaterialListPage } from '@/components/page/private/content_manager/MaterialListPage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
+import { TMode } from '@/types/app';
 import type { SchoolLevel } from '@/types/service';
 import type {
   InspectorViewMode,
@@ -26,8 +27,10 @@ const EMPTY_MODULE_FORM: ModuleDialogForm = {
 
 export const MaterialListContainer: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const api = useApi();
   const ns = useAppNameSpace();
+  const basePath = pathname.startsWith('/admin') ? '/admin' : '/content_manager';
 
   // Local state
   const [selectedModuleId, setSelectedModuleId] = useState<string>('');
@@ -37,7 +40,7 @@ export const MaterialListContainer: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [moduleDialogForm, setModuleDialogForm] = useState<ModuleDialogForm>(EMPTY_MODULE_FORM);
   const [isModuleDialogOpen, setIsModuleDialogOpen] = useState<boolean>(false);
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [dialogMode, setDialogMode] = useState<TMode>('create');
   const [moduleFormError, setModuleFormError] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<MaterialFilterState>({
@@ -248,7 +251,10 @@ export const MaterialListContainer: React.FC = () => {
           contentParagraph: m.content || m.description || 'Isi konten bahan ajar modul.',
           structureTitle: 'Struktur Modul Ajar:',
           structureItems: [
-            { label: '1. Pokok Bahasan:', text: m.description || 'Uraian inti materi.' },
+            {
+              label: '1. Pokok Bahasan:',
+              text: m.description || 'Uraian inti materi.',
+            },
             {
               label: '2. Pendalaman Materi:',
               text: 'Konsep dasar dan analisis wacana komprehensif.',
@@ -354,20 +360,20 @@ export const MaterialListContainer: React.FC = () => {
 
   const handleEditMaterial = (item: MaterialItem) => {
     router.push(
-      `/content_manager/materials/create?id=${item.id}${selectedModuleId ? `&moduleId=${selectedModuleId}` : ''}`
+      `${basePath}/materials/create?id=${item.id}${selectedModuleId ? `&moduleId=${selectedModuleId}` : ''}`
     );
   };
 
   const handleCreateMaterial = () => {
     router.push(
       selectedModuleId
-        ? `/content_manager/materials/create?moduleId=${selectedModuleId}`
-        : '/content_manager/materials/create'
+        ? `${basePath}/materials/create?moduleId=${selectedModuleId}`
+        : `${basePath}/materials/create`
     );
   };
 
   const handleCreateMaterialInModule = (moduleId: string) => {
-    router.push(`/content_manager/materials/create?moduleId=${moduleId}`);
+    router.push(`${basePath}/materials/create?moduleId=${moduleId}`);
   };
 
   const handleExportSyllabus = () => {

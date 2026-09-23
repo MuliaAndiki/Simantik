@@ -10,6 +10,7 @@ import {
   Settings,
   Trophy,
   User,
+  UserCheck,
   Users,
   Video,
 } from 'lucide-react';
@@ -125,11 +126,26 @@ export interface NavItem {
 }
 
 export const SIDEBAR_MENU: NavItem[] = [
-  { name: 'Dashboard', url: '/student/dashboard', icon: LayoutDashboard, subMenu: [] },
+  {
+    name: 'Dashboard',
+    url: '/student/dashboard',
+    icon: LayoutDashboard,
+    subMenu: [],
+  },
   { name: 'Belajar', url: '/student/learning', icon: BookOpen, subMenu: [] },
-  { name: 'Latihan', url: '/student/practice', icon: FileQuestion, subMenu: [] },
+  {
+    name: 'Latihan',
+    url: '/student/practice',
+    icon: FileQuestion,
+    subMenu: [],
+  },
   { name: 'Tryout', url: '/student/tryout', icon: Trophy, subMenu: [] },
-  { name: 'Evaluasi', url: '/student/evaluation', icon: BarChart3, subMenu: [] },
+  {
+    name: 'Evaluasi',
+    url: '/student/evaluation',
+    icon: BarChart3,
+    subMenu: [],
+  },
   { name: 'Pengaturan', url: '/student/setting', icon: Settings, subMenu: [] },
   { name: 'Bantuan & Panduan', url: '/student/help', icon: User, subMenu: [] },
 ];
@@ -137,24 +153,90 @@ export const SIDEBAR_MENU: NavItem[] = [
 export const ROLE_SIDEBAR_MENU: Record<string, NavItem[]> = {
   STUDENT: SIDEBAR_MENU,
   ADMIN: [
-    { name: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard, subMenu: [] },
-    { name: 'Siswa', url: '/admin/students', icon: Users, subMenu: [] },
-    { name: 'Sekolah', url: '/admin/schools', icon: School, subMenu: [] },
-  ],
-  CONTENT_MANAGER: [
-    { name: 'Dashboard', url: '/content_manager/dashboard', icon: LayoutDashboard, subMenu: [] },
-    { name: 'Materi', url: '/content_manager/materials', icon: BookOpen, subMenu: [] },
-    { name: 'Paket Latihan', url: '/content_manager/practice', icon: FileQuestion, subMenu: [] },
-    { name: 'Paket Tryout', url: '/content_manager/tryouts', icon: Trophy, subMenu: [] },
-    { name: 'News', url: '/content_manager/news', icon: Newspaper, subMenu: [] },
-    { name: 'Documentation', url: '/content_manager/documentation', icon: FileText, subMenu: [] },
     {
-      name: 'Testimonials',
-      url: '/content_manager/testimonials',
-      icon: MessageSquareQuote,
+      name: 'Dashboard',
+      url: '/admin/dashboard',
+      icon: LayoutDashboard,
       subMenu: [],
     },
-    { name: 'Tutorials', url: '/content_manager/tutorials', icon: Video, subMenu: [] },
+    {
+      name: 'Materi',
+      url: '/admin/materials',
+      icon: BookOpen,
+      subMenu: [],
+    },
+    {
+      name: 'Paket Latihan',
+      url: '/admin/practice',
+      icon: FileQuestion,
+      subMenu: [],
+    },
+    {
+      name: 'Paket Tryout',
+      url: '/admin/tryouts',
+      icon: Trophy,
+      subMenu: [],
+    },
+    {
+      name: 'News',
+      url: '/admin/news',
+      icon: Newspaper,
+      subMenu: [],
+    },
+    {
+      name: 'Manajemen Data',
+      url: '/admin/schools',
+      icon: Users,
+      subMenu: [
+        {
+          name: 'Kelola Sekolah',
+          url: '/admin/schools',
+          icon: School,
+        },
+        {
+          name: 'Kelola Siswa',
+          url: '/admin/students',
+          icon: Users,
+        },
+        {
+          name: 'Kelola Content Manager',
+          url: '/admin/content-managers',
+          icon: UserCheck,
+        },
+      ],
+    },
+  ],
+  CONTENT_MANAGER: [
+    {
+      name: 'Dashboard',
+      url: '/content_manager/dashboard',
+      icon: LayoutDashboard,
+      subMenu: [],
+    },
+    {
+      name: 'Materi',
+      url: '/content_manager/materials',
+      icon: BookOpen,
+      subMenu: [],
+    },
+    {
+      name: 'Paket Latihan',
+      url: '/content_manager/practice',
+      icon: FileQuestion,
+      subMenu: [],
+    },
+    {
+      name: 'Paket Tryout',
+      url: '/content_manager/tryouts',
+      icon: Trophy,
+      subMenu: [],
+    },
+    {
+      name: 'News',
+      url: '/content_manager/news',
+      icon: Newspaper,
+      subMenu: [],
+    },
   ],
 };
 

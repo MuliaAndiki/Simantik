@@ -5,6 +5,7 @@ export const TryoutEndpoint = {
   tryoutDetail: (id: string) => `${mountEntry.tryouts}/${id}`,
   updateTryoutStatus: (id: string) => `${mountEntry.tryouts}/${id}/status`,
   addQuestions: (id: string) => `${mountEntry.tryouts}/${id}/questions`,
+  syncQuestions: (id: string) => `${mountEntry.tryouts}/${id}/questions/sync`,
   removeQuestion: (id: string, questionId: string) =>
     `${mountEntry.tryouts}/${id}/questions/${questionId}`,
   startAttempt: (id: string) => `${mountEntry.tryouts}/${id}/attempts`,

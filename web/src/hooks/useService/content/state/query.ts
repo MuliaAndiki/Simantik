@@ -2,14 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKey } from '@/configs/query-key';
 import Api from '@/services/props.service';
 import type {
-  DocumentationResponse,
   ListDocumentationFilter,
   ListNewsFilter,
   ListTestimonialFilter,
-  NewsResponse,
-  PaginatedDocumentationResponse,
-  PaginatedNewsResponse,
-  PaginatedTestimonialsResponse,
 } from '@/types/service';
 
 export function useCmsNewsList(query?: ListNewsFilter, options?: { enabled?: boolean }) {

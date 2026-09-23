@@ -268,9 +268,6 @@ func (s *evaluationService) GetAttemptReview(ctx context.Context, attemptID, use
 	}
 
 	totalQuestions := len(aqs)
-	if tryout != nil && tryout.TotalQuestions > 0 {
-		totalQuestions = tryout.TotalQuestions
-	}
 
 	scoreVal := 0.0
 	if attempt.Score != nil {

@@ -7,6 +7,7 @@ export * from './ComingSoonPage';
 export * from './legal/HelpPage';
 export * from './legal/PrivacyPage';
 export * from './legal/TermsPage';
+export * from './private/admin';
 export * from './private/content_manager/ContentManagerDashboardPage';
 export * from './private/content_manager/MaterialCreatePage';
 export * from './private/content_manager/MaterialListPage';
