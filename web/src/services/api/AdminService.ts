@@ -6,6 +6,8 @@ import type {
   AdminUserDetailResponse,
   ListAdminUserFilter,
   PaginatedAdminUsersResponse,
+  StudentActivityLogItem,
+  StudentProgressResponse,
   UpdateUserRoleRequest,
   UpdateUserStatusRequest,
 } from '@/types/service';
@@ -38,6 +40,26 @@ class AdminService {
     const res = await getHttp().GetResponse<AdminUserDetailResponse>(
       EndpointEntry.admin.userDetail(id)
     );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async GetUserActivitiesService(id: string): Promise<TResponse<StudentActivityLogItem[]>> {
+    const res = await getHttp().GetResponse<StudentActivityLogItem[]>(
+      EndpointEntry.admin.userActivities(id)
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async GetUserProgressService(
+    id: string,
+    timeframe = '3m'
+  ): Promise<TResponse<StudentProgressResponse>> {
+    const url = buildQueryString(EndpointEntry.admin.userProgress(id), { timeframe });
+    const res = await getHttp().GetResponse<StudentProgressResponse>(url);
     return toServiceResponse(res, {
       message: res.message,
     });

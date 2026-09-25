@@ -14,6 +14,8 @@ type AdminService interface {
 	GetDashboardStats(ctx context.Context) (*dto.AdminDashboardStatsResponse, error)
 	ListUsers(ctx context.Context, filter dto.ListAdminUserFilter) (*dto.PaginatedAdminUsersResponse, error)
 	GetUserDetail(ctx context.Context, userID uuid.UUID) (*dto.AdminUserDetailResponse, error)
+	GetUserActivities(ctx context.Context, userID uuid.UUID) ([]dto.StudentActivityLogItem, error)
+	GetUserProgress(ctx context.Context, userID uuid.UUID, timeframe string) (*dto.StudentProgressResponse, error)
 	UpdateUserStatus(ctx context.Context, targetUserID, actorUserID uuid.UUID, status string) error
 	UpdateUserRole(ctx context.Context, targetUserID, actorUserID uuid.UUID, role string) error
 }
@@ -61,6 +63,14 @@ func (s *adminService) GetUserDetail(ctx context.Context, userID uuid.UUID) (*dt
 	return detail, nil
 }
 
+func (s *adminService) GetUserActivities(ctx context.Context, userID uuid.UUID) ([]dto.StudentActivityLogItem, error) {
+	return s.adminRepo.GetUserActivities(ctx, userID)
+}
+
+func (s *adminService) GetUserProgress(ctx context.Context, userID uuid.UUID, timeframe string) (*dto.StudentProgressResponse, error) {
+	return s.adminRepo.GetUserProgress(ctx, userID, timeframe)
+}
+
 func (s *adminService) UpdateUserStatus(ctx context.Context, targetUserID, actorUserID uuid.UUID, status string) error {
 	if targetUserID == actorUserID && status != string(models.UserStatusActive) {
 		return ErrCannotSelfDeactivate
@@ -90,3 +100,4 @@ func (s *adminService) UpdateUserRole(ctx context.Context, targetUserID, actorUs
 
 	return s.adminRepo.UpdateUserRole(ctx, targetUserID, role)
 }
+

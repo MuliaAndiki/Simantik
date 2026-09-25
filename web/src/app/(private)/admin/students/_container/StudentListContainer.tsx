@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import { AdminStudentListPage } from '@/components/page/private/admin/AdminStudentListPage';
 import { useApi } from '@/hooks/useApi';
@@ -7,6 +8,7 @@ import useAppNameSpace from '@/hooks/useAppNameSpace';
 import type { AdminUserListItem, UserStatus } from '@/types/service';
 
 export function StudentListContainer() {
+  const router = useRouter();
   const api = useApi();
   const ns = useAppNameSpace();
 
@@ -118,7 +120,7 @@ export function StudentListContainer() {
       isSubmittingStatus={updateStatusMutation.isPending}
       onOpenStatusDialog={handleOpenStatusDialog}
       detailUserId={detailUserId}
-      onOpenDetailDialog={setDetailUserId}
+      onOpenDetailDialog={(userId: string) => router.push(`/admin/students/${userId}`)}
       onCloseDetailDialog={() => setDetailUserId(null)}
       userDetail={userDetail}
       isDetailLoading={isDetailLoading}

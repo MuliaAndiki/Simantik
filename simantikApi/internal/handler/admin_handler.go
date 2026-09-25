@@ -62,6 +62,37 @@ func (h *AdminHandler) GetUserDetail(c *fiber.Ctx) error {
 	return utils.OK(c, "user details retrieved successfully", detail)
 }
 
+// GetUserActivities handles GET /api/v1/admin/users/:id/activities.
+func (h *AdminHandler) GetUserActivities(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid user id", err)
+	}
+
+	activities, err := h.adminService.GetUserActivities(c.UserContext(), id)
+	if err != nil {
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to retrieve user activities", err)
+	}
+
+	return utils.OK(c, "user activities retrieved successfully", activities)
+}
+
+// GetUserProgress handles GET /api/v1/admin/users/:id/progress.
+func (h *AdminHandler) GetUserProgress(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid user id", err)
+	}
+
+	timeframe := c.Query("timeframe", "3m")
+	progress, err := h.adminService.GetUserProgress(c.UserContext(), id, timeframe)
+	if err != nil {
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to retrieve user progress", err)
+	}
+
+	return utils.OK(c, "user progress retrieved successfully", progress)
+}
+
 // UpdateUserStatus handles PATCH /api/v1/admin/users/:id/status.
 func (h *AdminHandler) UpdateUserStatus(c *fiber.Ctx) error {
 	targetID, err := uuid.Parse(c.Params("id"))

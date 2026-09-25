@@ -92,3 +92,44 @@ type PaginatedAdminUsersResponse struct {
 type UpdateUserRoleRequest struct {
 	Role string `json:"role" validate:"required,oneof=student content_manager admin"`
 }
+
+// StudentActivityLogItem represents an activity feed / audit log item for a specific student.
+type StudentActivityLogItem struct {
+	ID            string     `json:"id"`
+	Type          string     `json:"type"` // "practice", "tryout", "learning", "auth"
+	Title         string     `json:"title"`
+	Description   string     `json:"description"`
+	Timestamp     time.Time  `json:"timestamp"`
+	FormattedTime string     `json:"formatted_time"`
+	Score         *float64   `json:"score,omitempty"`
+}
+
+// StudentProgressChartPoint represents a data point on the score progress curve.
+type StudentProgressChartPoint struct {
+	Date  string  `json:"date"`
+	Score float64 `json:"score"`
+	Label string  `json:"label"`
+}
+
+// StudentAuditEvaluation represents the latest evaluation audit for a student.
+type StudentAuditEvaluation struct {
+	EvaluationTitle string   `json:"evaluation_title"`
+	EvaluationDate  string   `json:"evaluation_date"`
+	ResultStatus    string   `json:"result_status"` // "Hasil: Baik", "Hasil: Cukup", "Perlu Perbaikan"
+	TestDomain      string   `json:"test_domain"`
+	TestMode        string   `json:"test_mode"`
+	Score           *float64 `json:"score,omitempty"`
+	Accuracy        *float64 `json:"accuracy,omitempty"`
+}
+
+// StudentProgressResponse aggregates student performance metrics, progress curves, and evaluation audits.
+type StudentProgressResponse struct {
+	LatestScore         float64                     `json:"latest_score"`
+	PreviousScore       float64                     `json:"previous_score"`
+	ScoreDiff           float64                     `json:"score_diff"`
+	TrendText           string                      `json:"trend_text"`
+	LatestPracticeTitle string                      `json:"latest_practice_title"`
+	LatestPracticeDate  string                      `json:"latest_practice_date"`
+	ChartData           []StudentProgressChartPoint `json:"chart_data"`
+	Evaluation          *StudentAuditEvaluation     `json:"evaluation,omitempty"`
+}

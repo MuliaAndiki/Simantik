@@ -16,6 +16,8 @@ func RegisterAdminRoutes(api fiber.Router, cfg *config.Config, h *handler.AdminH
 	admin.Get("/dashboard", h.GetDashboard)
 	admin.Get("/users", h.ListUsers)
 	admin.Get("/users/:id", h.GetUserDetail)
+	admin.Get("/users/:id/activities", h.GetUserActivities)
+	admin.Get("/users/:id/progress", h.GetUserProgress)
 	admin.Patch("/users/:id/status", h.UpdateUserStatus)
 	admin.Patch("/users/:id/role", h.UpdateUserRole)
 }

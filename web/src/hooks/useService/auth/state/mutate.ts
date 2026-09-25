@@ -1,8 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
-import type { TResponse } from '@/api/types/response.types';
 import { getRoleDashboardPath } from '@/configs/app.config';
 import { queryKey } from '@/configs/query-key';
-import { useAppNameSpace } from '@/hooks/useAppNameSpace';
+import { useAppMutation } from '@/hooks/_shared/useAppMutation';
 import Api from '@/services/props.service';
 import type {
   AuthResponse,
@@ -20,7 +18,6 @@ import type {
   VerifyRegisterOTPRequest,
 } from '@/types/service';
 import { type AuthCacheContext, readAuthSnapshot } from '@/utils/cache/auth.cache';
-import { ResponseTitles } from '@/utils/response-titles';
 import { setSessionCookies } from '@/utils/session-cookie';
 
 const STUDENT_ROLE = 'student';
@@ -41,24 +38,10 @@ function routeAfterAuth(user: { role: string; hasSchool: boolean } | null | unde
 }
 
 export function useLogin() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<AuthResponse>, Error, LoginRequest, AuthCacheContext>({
+  return useAppMutation<AuthResponse, LoginRequest, AuthCacheContext>({
     mutationFn: (body: LoginRequest) => Api.auth.LoginService(body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.authRoot(),
-      });
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.userRoot(),
-      });
-    },
-    onMutate: async () => {
-      await ns.queryClient.cancelQueries({
-        queryKey: queryKey.authRoot(),
-      });
-      const previousData = readAuthSnapshot(ns);
-      return { previousData };
-    },
+    invalidateKeys: [queryKey.authRoot(), queryKey.userRoot()],
+    optimistic: (ns) => ({ previousData: readAuthSnapshot(ns) }),
     onSuccess: (res) => {
       if (res.data) {
         setSessionCookies({
@@ -67,61 +50,22 @@ export function useLogin() {
           role: res.data.user.role,
         });
       }
-      ns.alert.toast({
-        title: res.title || ResponseTitles.success,
-        message: res.message,
-        icon: 'success',
-      });
       routeAfterAuth(res.data?.user);
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
     },
   });
 }
 
 export function useRegister() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<RegisterResponse>, Error, RegisterRequest, AuthCacheContext>({
+  return useAppMutation<RegisterResponse, RegisterRequest, AuthCacheContext>({
     mutationFn: (body: RegisterRequest) => Api.auth.RegisterService(body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.authRoot(),
-      });
-    },
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title || ResponseTitles.success,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
+    invalidateKeys: [queryKey.authRoot()],
   });
 }
 
 export function useVerifyRegisterOTP() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<AuthResponse>, Error, VerifyRegisterOTPRequest, AuthCacheContext>({
+  return useAppMutation<AuthResponse, VerifyRegisterOTPRequest, AuthCacheContext>({
     mutationFn: (body: VerifyRegisterOTPRequest) => Api.auth.VerifyRegisterOTPService(body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.authRoot(),
-      });
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.userRoot(),
-      });
-    },
+    invalidateKeys: [queryKey.authRoot(), queryKey.userRoot()],
     onSuccess: (res) => {
       if (res.data) {
         setSessionCookies({
@@ -130,53 +74,22 @@ export function useVerifyRegisterOTP() {
           role: res.data.user.role,
         });
       }
-      ns.alert.toast({
-        title: res.title || ResponseTitles.success,
-        message: res.message,
-        icon: 'success',
-      });
       routeAfterAuth(res.data?.user);
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
     },
   });
 }
 
 export function useResendOTP() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<null>, Error, ResendOTPRequest, AuthCacheContext>({
+  return useAppMutation<null, ResendOTPRequest, AuthCacheContext>({
     mutationFn: (body: ResendOTPRequest) => Api.auth.ResendOTPService(body),
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title || ResponseTitles.success,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
   });
 }
 
 export function useRefreshToken() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<AuthResponse>, Error, RefreshRequest | undefined, AuthCacheContext>({
+  return useAppMutation<AuthResponse, RefreshRequest | undefined, AuthCacheContext>({
     mutationFn: (body?: RefreshRequest) => Api.auth.RefreshTokenService(body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.authRoot(),
-      });
-    },
+    invalidateKeys: [queryKey.authRoot()],
+    showSuccessToast: false,
     onSuccess: (res) => {
       if (res.data) {
         setSessionCookies({
@@ -185,121 +98,42 @@ export function useRefreshToken() {
           role: res.data.user.role,
         });
       }
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
     },
   });
 }
 
 export function useLogout() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<null>, Error, LogoutRequest | undefined, AuthCacheContext>({
+  return useAppMutation<null, LogoutRequest | undefined, AuthCacheContext>({
     mutationFn: (body?: LogoutRequest) => Api.auth.LogoutService(body),
-    onSettled: async () => {
+    onSettled: (_data, _error, _variables, _context, ns) => {
       ns.queryClient.clear();
-    },
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title || ResponseTitles.success,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
     },
   });
 }
 
 export function useForgotPassword() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<null>, Error, ForgotPasswordRequest, AuthCacheContext>({
+  return useAppMutation<null, ForgotPasswordRequest, AuthCacheContext>({
     mutationFn: (body: ForgotPasswordRequest) => Api.auth.ForgotPasswordService(body),
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title || ResponseTitles.success,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
   });
 }
 
 export function useVerifyOTP() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<VerifyOTPResponse>, Error, VerifyOTPRequest, AuthCacheContext>({
+  return useAppMutation<VerifyOTPResponse, VerifyOTPRequest, AuthCacheContext>({
     mutationFn: (body: VerifyOTPRequest) => Api.auth.VerifyOTPService(body),
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title || ResponseTitles.success,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
   });
 }
 
 export function useResetPassword() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<null>, Error, ResetPasswordRequest, AuthCacheContext>({
+  return useAppMutation<null, ResetPasswordRequest, AuthCacheContext>({
     mutationFn: (body: ResetPasswordRequest) => Api.auth.ResetPasswordService(body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.authRoot(),
-      });
-    },
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title || ResponseTitles.success,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
+    invalidateKeys: [queryKey.authRoot()],
   });
 }
 
 export function useGoogleLogin() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<AuthResponse>, Error, GoogleLoginRequest, AuthCacheContext>({
+  return useAppMutation<AuthResponse, GoogleLoginRequest, AuthCacheContext>({
     mutationFn: (body: GoogleLoginRequest) => Api.auth.GoogleLoginService(body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.authRoot(),
-      });
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.userRoot(),
-      });
-    },
+    invalidateKeys: [queryKey.authRoot(), queryKey.userRoot()],
     onSuccess: (res) => {
       if (res.data) {
         setSessionCookies({
@@ -308,19 +142,7 @@ export function useGoogleLogin() {
           role: res.data.user.role,
         });
       }
-      ns.alert.toast({
-        title: res.title || ResponseTitles.success,
-        message: res.message,
-        icon: 'success',
-      });
       routeAfterAuth(res.data?.user);
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
     },
   });
 }

@@ -40,3 +40,29 @@ export function useAdminUserDetail(id: string, options?: { enabled?: boolean }) 
     enabled: !!id && (options?.enabled ?? true),
   });
 }
+
+export function useAdminUserActivities(id: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.admin.activities(id),
+    queryFn: async () => {
+      const res = await Api.admin.GetUserActivitiesService(id);
+      return res.data;
+    },
+    enabled: !!id && (options?.enabled ?? true),
+  });
+}
+
+export function useAdminUserProgress(
+  id: string,
+  timeframe = '3m',
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: queryKey.admin.progress(id, timeframe),
+    queryFn: async () => {
+      const res = await Api.admin.GetUserProgressService(id, timeframe);
+      return res.data;
+    },
+    enabled: !!id && (options?.enabled ?? true),
+  });
+}
