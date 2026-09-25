@@ -1,88 +1,32 @@
-import { useMutation } from '@tanstack/react-query';
-import type { TResponse } from '@/api/types/response.types';
 import { queryKey } from '@/configs/query-key';
-import { useAppNameSpace } from '@/hooks/useAppNameSpace';
+import { useAppMutation } from '@/hooks/_shared/useAppMutation';
 import Api from '@/services/props.service';
 import type { BroadcastNotificationRequest } from '@/types/service';
-import {
-  type NotificationCacheContext,
-  readNotificationSnapshot,
-} from '@/utils/cache/notification.cache';
-import { ResponseTitles } from '@/utils/response-titles';
+import type { NotificationCacheContext } from '@/utils/cache/notification.cache';
 
 export function useMarkAllNotificationsAsRead() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<null>, Error, void, NotificationCacheContext>({
+  return useAppMutation<null, void, NotificationCacheContext>({
     mutationFn: () => Api.notification.MarkAllAsReadService(),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.notificationRoot(),
-      });
-    },
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
+    invalidateKeys: [queryKey.notificationRoot()],
   });
 }
 
 export function useMarkNotificationAsRead() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<null>, Error, string, NotificationCacheContext>({
+  return useAppMutation<null, string, NotificationCacheContext>({
     mutationFn: (id: string) => Api.notification.MarkAsReadService(id),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.notificationRoot(),
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
+    invalidateKeys: [queryKey.notificationRoot()],
+    showSuccessToast: false,
   });
 }
 
 export function useBroadcastNotification() {
-  const ns = useAppNameSpace();
-  return useMutation<
-    TResponse<{ recipients_count: number }>,
-    Error,
+  return useAppMutation<
+    { recipients_count: number },
     BroadcastNotificationRequest,
     NotificationCacheContext
   >({
     mutationFn: (body: BroadcastNotificationRequest) =>
       Api.notification.BroadcastNotificationService(body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.notificationRoot(),
-      });
-    },
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
+    invalidateKeys: [queryKey.notificationRoot()],
   });
 }

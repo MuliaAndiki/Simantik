@@ -8,7 +8,7 @@ export interface AdminSettingsTemplateProps extends AdminSettingsContentProps {
 
 export const AdminSettingsTemplate: React.FC<AdminSettingsTemplateProps> = (props) => {
   return (
-    <div className={cn('w-full max-w-5xl mx-auto space-y-6 pb-12', props.className)}>
+    <div className={cn('w-full max-w-full mx-auto space-y-6 pb-12', props.className)}>
       <AdminSettingsContent {...props} />
     </div>
   );

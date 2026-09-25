@@ -1,7 +1,5 @@
-import { useMutation } from '@tanstack/react-query';
-import type { TResponse } from '@/api/types/response.types';
 import { queryKey } from '@/configs/query-key';
-import { useAppNameSpace } from '@/hooks/useAppNameSpace';
+import { useAppMutation } from '@/hooks/_shared/useAppMutation';
 import Api from '@/services/props.service';
 import type {
   ChangePasswordRequest,
@@ -12,159 +10,45 @@ import type {
   UserResponse,
 } from '@/types/service';
 import { readUserSnapshot, type UserCacheContext } from '@/utils/cache/user.cache';
-import { ResponseTitles } from '@/utils/response-titles';
 
 export function useUpdateProfile() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<UserResponse>, Error, UpdateMeRequest, UserCacheContext>({
+  return useAppMutation<UserResponse, UpdateMeRequest, UserCacheContext>({
     mutationFn: (body: UpdateMeRequest) => Api.user.UpdateMeService(body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.userRoot(),
-      });
-    },
-    onMutate: async () => {
-      await ns.queryClient.cancelQueries({
-        queryKey: queryKey.userRoot(),
-      });
-      const previousUser = readUserSnapshot(ns);
-      return { previousUser };
-    },
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
+    invalidateKeys: [queryKey.userRoot()],
+    optimistic: (ns) => ({ previousUser: readUserSnapshot(ns) }),
   });
 }
 
 export function useUpdateMySchool() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<UserResponse>, Error, UpdateMySchoolRequest, UserCacheContext>({
+  return useAppMutation<UserResponse, UpdateMySchoolRequest, UserCacheContext>({
     mutationFn: (body: UpdateMySchoolRequest) => Api.user.UpdateMySchoolService(body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.userRoot(),
-      });
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.authRoot(),
-      });
-    },
-    onMutate: async () => {
-      await ns.queryClient.cancelQueries({
-        queryKey: queryKey.userRoot(),
-      });
-      const previousUser = readUserSnapshot(ns);
-      return { previousUser };
-    },
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
+    invalidateKeys: [queryKey.userRoot(), queryKey.authRoot()],
+    optimistic: (ns) => ({ previousUser: readUserSnapshot(ns) }),
   });
 }
 
 export function useChangePassword() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<null>, Error, ChangePasswordRequest, UserCacheContext>({
+  return useAppMutation<null, ChangePasswordRequest, UserCacheContext>({
     mutationFn: (body: ChangePasswordRequest) => Api.user.ChangePasswordService(body),
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
   });
 }
 
 export function useUpdateAvatar() {
-  const ns = useAppNameSpace();
-  return useMutation<TResponse<UserResponse>, Error, UpdateAvatarRequest, UserCacheContext>({
+  return useAppMutation<UserResponse, UpdateAvatarRequest, UserCacheContext>({
     mutationFn: (body: UpdateAvatarRequest) => Api.user.UpdateAvatarService(body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.userRoot(),
-      });
-    },
-    onMutate: async () => {
-      await ns.queryClient.cancelQueries({
-        queryKey: queryKey.userRoot(),
-      });
-      const previousUser = readUserSnapshot(ns);
-      return { previousUser };
-    },
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
+    invalidateKeys: [queryKey.userRoot()],
+    optimistic: (ns) => ({ previousUser: readUserSnapshot(ns) }),
   });
 }
 
 export function useUpdateUserStatus() {
-  const ns = useAppNameSpace();
-  return useMutation<
-    TResponse<UserResponse>,
-    Error,
+  return useAppMutation<
+    UserResponse,
     { id: string; body: UpdateUserStatusRequest },
     UserCacheContext
   >({
     mutationFn: ({ id, body }: { id: string; body: UpdateUserStatusRequest }) =>
       Api.user.UpdateUserStatusService(id, body),
-    onSettled: async () => {
-      await ns.queryClient.invalidateQueries({
-        queryKey: queryKey.userRoot(),
-      });
-    },
-    onSuccess: (res) => {
-      ns.alert.toast({
-        title: res.title,
-        message: res.message,
-        icon: 'success',
-      });
-    },
-    onError: (err) => {
-      ns.alert.toast({
-        title: ResponseTitles.error,
-        message: err.message,
-        icon: 'error',
-      });
-    },
+    invalidateKeys: [queryKey.userRoot()],
   });
 }

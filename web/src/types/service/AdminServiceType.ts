@@ -121,9 +121,68 @@ export interface UpdateUserRoleRequest {
 }
 
 // ============================================================================
+// Student Detailed Activity Log & Performance DTOs
+// ============================================================================
+
+/**
+ * Activity log item for a specific student
+ * Maps to backend: `dto.StudentActivityLogItem`
+ */
+export interface StudentActivityLogItem {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  formatted_time: string;
+  score?: number | null;
+}
+
+/**
+ * Data point for score progress curve
+ * Maps to backend: `dto.StudentProgressChartPoint`
+ */
+export interface StudentProgressChartPoint {
+  date: string;
+  score: number;
+  label: string;
+}
+
+/**
+ * Diagnostic evaluation audit summary
+ * Maps to backend: `dto.StudentAuditEvaluation`
+ */
+export interface StudentAuditEvaluation {
+  evaluation_title: string;
+  evaluation_date: string;
+  result_status: string;
+  test_domain: string;
+  test_mode: string;
+  score?: number | null;
+  accuracy?: number | null;
+}
+
+/**
+ * Aggregated student performance and progress curve
+ * Maps to backend: `dto.StudentProgressResponse`
+ */
+export interface StudentProgressResponse {
+  latest_score: number;
+  previous_score: number;
+  score_diff: number;
+  trend_text: string;
+  latest_practice_title: string;
+  latest_practice_date: string;
+  chart_data: StudentProgressChartPoint[];
+  evaluation?: StudentAuditEvaluation;
+}
+
+// ============================================================================
 // Standard Wrapped Responses
 // ============================================================================
 
 export type AdminDashboardStatsApiResponse = ApiResponse<AdminDashboardStatsResponse>;
 export type AdminUserDetailApiResponse = ApiResponse<AdminUserDetailResponse>;
 export type PaginatedAdminUsersApiResponse = ApiResponse<PaginatedAdminUsersResponse>;
+export type StudentActivitiesApiResponse = ApiResponse<StudentActivityLogItem[]>;
+export type StudentProgressApiResponse = ApiResponse<StudentProgressResponse>;
