@@ -38,25 +38,36 @@ export default function ProfileDropdown({
   const { user } = useApi();
   const { data: userData } = user.query.me();
 
-  const name = fullName ?? userData?.fullName ?? 'Anindya Humairah';
-  const userEmail = email ?? userData?.email ?? 'anindyahumairah@example.com';
+  const name = fullName ?? userData?.fullName ?? 'Pengguna SIMANTIK';
+  const userEmail = email ?? userData?.email ?? 'user@simantik.id';
   const userGrade =
     grade ??
     (userData?.role === 'student'
-      ? 'Kelas 12'
+      ? userData?.studentProfile?.grade
+        ? userData.studentProfile.grade.trim()
+        : 'Siswa SMA/SMK'
       : userData?.role === 'admin'
         ? 'Administrator'
         : userData?.role === 'content_manager'
           ? 'Content Manager'
-          : 'Kelas 12');
-  const userSchool = userData?.studentProfile?.school ?? 'SMA N MODAL BANGSA ARUN';
+          : 'Pengguna SIMANTIK');
+  const userSchool =
+    school ??
+    userData?.studentProfile?.school ??
+    (userData?.role === 'admin'
+      ? 'SIMANTIK Admin Workspace'
+      : userData?.role === 'content_manager'
+        ? 'SIMANTIK Content Workspace'
+        : 'SMA / SMK Sederajat');
   const targetProfileHref =
     profileHref ??
     (userData?.role === 'student'
       ? '/student/profile'
       : userData?.role === 'admin'
-        ? '/admin/dashboard'
-        : '/student/profile');
+        ? '/admin/profile'
+        : userData?.role === 'content_manager'
+          ? '/content_manager/profile'
+          : '/student/profile');
   const imageSrc = avatarSrc ?? userData?.avatarURL ?? '/avatars/1.png';
 
   const initials = useMemo(() => {

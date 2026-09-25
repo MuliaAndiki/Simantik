@@ -125,6 +125,49 @@ func (m *mockAdminRepo) UpdateUserRole(ctx context.Context, userID uuid.UUID, ro
 	return nil
 }
 
+func (m *mockAdminRepo) GetUserActivities(ctx context.Context, userID uuid.UUID) ([]dto.StudentActivityLogItem, error) {
+	_, ok := m.users[userID]
+	if !ok {
+		return nil, service.ErrUserNotFound
+	}
+	return []dto.StudentActivityLogItem{
+		{
+			ID:            "act-1",
+			Type:          "practice",
+			Title:         "Mengerjakan Latihan: Pemahaman Inferensial",
+			Description:   "Pencatatan evaluasi otomatis paket diagnostik berhasil disimpan.",
+			Timestamp:     time.Now(),
+			FormattedTime: "18 Sep 2026, 14:10 WIB",
+		},
+	}, nil
+}
+
+func (m *mockAdminRepo) GetUserProgress(ctx context.Context, userID uuid.UUID, timeframe string) (*dto.StudentProgressResponse, error) {
+	_, ok := m.users[userID]
+	if !ok {
+		return nil, service.ErrUserNotFound
+	}
+	return &dto.StudentProgressResponse{
+		LatestScore:         84,
+		PreviousScore:       78,
+		ScoreDiff:           6,
+		TrendText:           "Tren: Nilai latihan meningkat (+6 poin)",
+		LatestPracticeTitle: "Pemahaman Inferensial & Hubungan Gagasan",
+		LatestPracticeDate:  "22 September 2026",
+		ChartData: []dto.StudentProgressChartPoint{
+			{Date: "12 Sep", Score: 68, Label: "Kaidah Kebahasaan Dasar"},
+			{Date: "22 Sep", Score: 84, Label: "Pemahaman Inferensial"},
+		},
+		Evaluation: &dto.StudentAuditEvaluation{
+			EvaluationTitle: "Pemahaman Inferensial & Hubungan Gagasan",
+			EvaluationDate:  "18 September 2026",
+			ResultStatus:    "Hasil: Baik",
+			TestDomain:      "Bahasa Indonesia: Literasi Wacana",
+			TestMode:        "Mandiri Berwaktu (TKA Standar)",
+		},
+	}, nil
+}
+
 func TestAdminService_GetDashboardStats(t *testing.T) {
 	repo := newMockAdminRepo()
 	svc := service.NewAdminService(repo)
@@ -263,4 +306,23 @@ func TestAdminService_RoleAndStatusUpdate(t *testing.T) {
 	if err != service.ErrInvalidRole {
 		t.Errorf("expected ErrInvalidRole, got %v", err)
 	}
+
+	// Test GetUserActivities
+	acts, err := svc.GetUserActivities(context.Background(), targetID)
+	if err != nil {
+		t.Fatalf("expected no error getting activities, got %v", err)
+	}
+	if len(acts) == 0 {
+		t.Errorf("expected at least 1 activity, got 0")
+	}
+
+	// Test GetUserProgress
+	prog, err := svc.GetUserProgress(context.Background(), targetID, "3m")
+	if err != nil {
+		t.Fatalf("expected no error getting progress, got %v", err)
+	}
+	if prog.LatestScore != 84 {
+		t.Errorf("expected latest score 84, got %v", prog.LatestScore)
+	}
 }
+

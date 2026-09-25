@@ -150,9 +150,9 @@ export function AppSidebar() {
                         href={sub.url}
                         className={cn(
                           'flex h-8 items-center gap-2.5 rounded-md px-2.5 text-xs font-medium transition-colors',
-                          'hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800',
+                          'hover:text-primary hover:bg-slate-100 dark:hover:bg-primary',
                           isSubActive &&
-                            'bg-sky-100 text-sky-900 font-bold dark:bg-primary-foreground/30 dark:text-primary-foreground'
+                            'bg-sky-100 text-primary font-bold dark:bg-primary-foreground/30 dark:text-primary-foreground'
                         )}
                       >
                         <SubIcon className="size-3.5 shrink-0" />

@@ -27,6 +27,9 @@ export const queryKey = {
     dashboard: () => ['admin', 'dashboard'] as const,
     users: (query?: Record<string, any>) => ['admin', 'users', query] as const,
     detail: (userId: string) => ['admin', 'detail', userId] as const,
+    activities: (userId: string) => ['admin', 'activities', userId] as const,
+    progress: (userId: string, timeframe?: string) =>
+      ['admin', 'progress', userId, timeframe] as const,
   },
 
   questionRoot: () => ['question'] as const,
