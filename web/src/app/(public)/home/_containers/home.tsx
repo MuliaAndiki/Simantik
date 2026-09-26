@@ -47,7 +47,13 @@ export default function ContainerHome() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white p-8 border border-slate-100 shadow-sm rounded-3xl text-center">
               <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  aria-hidden="true"
+                  className="w-8 h-8"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -63,7 +69,13 @@ export default function ContainerHome() {
             </div>
             <div className="bg-white p-8 border border-slate-100 shadow-sm rounded-3xl text-center">
               <div className="w-16 h-16 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  aria-hidden="true"
+                  className="w-8 h-8"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -79,7 +91,13 @@ export default function ContainerHome() {
             </div>
             <div className="bg-white p-8 border border-slate-100 shadow-sm rounded-3xl text-center">
               <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  aria-hidden="true"
+                  className="w-8 h-8"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -107,7 +125,7 @@ export default function ContainerHome() {
                 <NewsUpdateCard
                   key={n.id}
                   title={n.title}
-                  excerpt={n.content.substring(0, 100) + '...'}
+                  excerpt={`${n.content.substring(0, 100)}...`}
                   category="Pengumuman"
                   date={new Date(n.createdAt).toLocaleDateString('id-ID')}
                   href={`/news/${n.slug}`}

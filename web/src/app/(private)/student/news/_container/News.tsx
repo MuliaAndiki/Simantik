@@ -94,7 +94,7 @@ export default function NewsContainer() {
               <NewsUpdateCard
                 key={n.id}
                 title={n.title}
-                excerpt={n.content.substring(0, 100) + '...'}
+                excerpt={`${n.content.substring(0, 100)}...`}
                 category="Pengumuman"
                 date={new Date(n.createdAt || new Date()).toLocaleDateString('id-ID')}
                 onReadMore={() => router.push(`/student/news/${n.slug || n.id}`)}

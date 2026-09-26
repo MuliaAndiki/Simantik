@@ -215,6 +215,7 @@ export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTempla
               {feedback.explanation && (
                 <div
                   className="text-sm text-slate-700 prose prose-sm max-w-none"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: by design
                   dangerouslySetInnerHTML={{ __html: feedback.explanation }}
                 />
               )}
