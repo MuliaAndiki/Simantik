@@ -265,18 +265,18 @@ func TestAttemptService_DuplicateAttempt(t *testing.T) {
 	userID := uuid.New()
 	ctx := context.Background()
 
-	_, err := svc.StartAttempt(ctx, tryoutID, userID)
+	res1, err := svc.StartAttempt(ctx, tryoutID, userID)
 	if err != nil {
 		t.Fatalf("first StartAttempt failed: %v", err)
 	}
 
-	// Second attempt must fail
-	_, err = svc.StartAttempt(ctx, tryoutID, userID)
-	if err == nil {
-		t.Fatal("expected error on duplicate attempt, got nil")
+	// Second attempt must resume without error
+	res2, err := svc.StartAttempt(ctx, tryoutID, userID)
+	if err != nil {
+		t.Fatalf("expected success on duplicate resume attempt, got %v", err)
 	}
-	if err != service.ErrAttemptAlreadyActive {
-		t.Errorf("expected ErrAttemptAlreadyActive, got %v", err)
+	if res1.AttemptID != res2.AttemptID {
+		t.Errorf("expected resumed AttemptID %v, got %v", res1.AttemptID, res2.AttemptID)
 	}
 }
 

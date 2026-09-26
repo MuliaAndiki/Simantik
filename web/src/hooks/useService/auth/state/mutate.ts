@@ -34,7 +34,7 @@ function routeAfterAuth(user: { role: string; hasSchool: boolean } | null | unde
     window.location.assign(SCHOOL_ONBOARDING_PATH);
     return;
   }
-  window.location.assign(getRoleDashboardPath(user.role));
+  window.location.assign('/dashboard');
 }
 
 export function useLogin() {

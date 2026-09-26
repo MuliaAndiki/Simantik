@@ -8,6 +8,7 @@ export interface EvaluationHeroBannerProps {
   subtitle?: string;
   illustrationSrc?: string;
   className?: string;
+  onPrint?: () => void;
 }
 
 export function EvaluationHeroBanner({
@@ -15,6 +16,7 @@ export function EvaluationHeroBanner({
   subtitle = 'Lihat gambaran kemampuanmu dan pahami bagian yang perlu ditingkatkan berdasarkan hasil simulasi terstandar Bahasa Indonesia.',
   illustrationSrc = '/illustrations/student-evaluation.jpg',
   className,
+  onPrint,
 }: EvaluationHeroBannerProps) {
   return (
     <Card
@@ -25,13 +27,33 @@ export function EvaluationHeroBanner({
     >
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
         {/* Left Column: Text Information */}
-        <div className="space-y-2.5 max-w-xl text-center md:text-left">
-          <h1 className="text-2xl sm:text-3xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
-            {title}
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-            {subtitle}
-          </p>
+        <div className="space-y-4 max-w-xl text-center md:text-left">
+          <div className="space-y-2.5">
+            <h1 className="text-2xl sm:text-3xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+              {title}
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+              {subtitle}
+            </p>
+          </div>
+
+          {onPrint && (
+            <button
+              type="button"
+              onClick={onPrint}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-teal-600 text-teal-800 text-sm font-bold rounded-full hover:bg-teal-50 transition print:hidden"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                />
+              </svg>
+              Unduh Rapor PDF
+            </button>
+          )}
         </div>
 
         {/* Right Column: Framed Cheerful Student Illustration */}

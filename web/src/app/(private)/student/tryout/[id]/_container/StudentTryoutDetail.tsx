@@ -153,8 +153,23 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
           setTotalQuestions(res.data.total_questions);
         }
         if (res.data.duration_seconds) {
-          setRemainingSeconds(res.data.duration_seconds);
+          // Rehydrate leftover timer based on StartedAt + duration - Date.now()
+          const startMs = res.data.started_at
+            ? new Date(res.data.started_at).getTime()
+            : Date.now();
+          const elapsed = Math.floor((Date.now() - startMs) / 1000);
+          const leftover = Math.max(0, res.data.duration_seconds - elapsed);
+          setRemainingSeconds(leftover);
           setTotalDurationMinutes(Math.round(res.data.duration_seconds / 60));
+        }
+        if (res.data.current_question_number) {
+          setCurrentQuestionNumber(res.data.current_question_number);
+          // Hydrate answered numbers
+          const answered = new Set<number>();
+          for (let i = 1; i < res.data.current_question_number; i++) {
+            answered.add(i);
+          }
+          setAnsweredNumbers(answered);
         }
       }
     } catch {

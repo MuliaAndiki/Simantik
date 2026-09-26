@@ -9,6 +9,7 @@ import { StudentTryoutTemplate } from '@/components/templates/student/StudentTry
 export interface StudentTryoutPageProps {
   onStartTryout?: () => void;
   heroProps?: Partial<TryoutHeroBannerProps>;
+  tryouts?: TryoutHeroBannerProps[];
   standardsProps?: Partial<TryoutStandardsCardProps>;
   tipsProps?: Partial<TryoutPrepTipsCardProps>;
 }
@@ -16,6 +17,7 @@ export interface StudentTryoutPageProps {
 export function StudentTryoutPage({
   onStartTryout,
   heroProps,
+  tryouts,
   standardsProps,
   tipsProps,
 }: StudentTryoutPageProps) {
@@ -25,6 +27,7 @@ export function StudentTryoutPage({
         onStartTryout,
         ...heroProps,
       }}
+      tryouts={tryouts}
       standardsProps={standardsProps}
       tipsProps={tipsProps}
     />

@@ -7,12 +7,13 @@ import (
 )
 
 type StartAttemptResponse struct {
-	AttemptID       uuid.UUID `json:"attempt_id"`
-	TryoutID        uuid.UUID `json:"tryout_id"`
-	TotalQuestions  int       `json:"total_questions"`
-	DurationSeconds int       `json:"duration_seconds"`
-	StartedAt       time.Time `json:"started_at"`
-	Status          string    `json:"status"`
+	AttemptID             uuid.UUID `json:"attempt_id"`
+	TryoutID              uuid.UUID `json:"tryout_id"`
+	TotalQuestions        int       `json:"total_questions"`
+	DurationSeconds       int       `json:"duration_seconds"`
+	StartedAt             time.Time `json:"started_at"`
+	Status                string    `json:"status"`
+	CurrentQuestionNumber int       `json:"current_question_number"`
 }
 
 type AttemptQuestionResponse struct {

@@ -19,7 +19,11 @@ const NEWS_CATEGORY_VARIANTS: Array<NewsItem['categoryVariant']> = ['cyan', 'amb
 function formatNewsDate(value: string | null): string {
   const date = new Date(value ?? '');
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 function buildNewsExcerpt(content: string): string {
@@ -30,12 +34,18 @@ function buildNewsExcerpt(content: string): string {
 function deriveAchievement(averageScore: number | undefined) {
   if (averageScore === undefined) return undefined;
   if (averageScore >= 75) {
-    return { status: 'Sangat Baik', subtext: 'Prestasi konsisten, pertahankan ritme belajarmu' };
+    return {
+      status: 'Sangat Baik',
+      subtext: 'Prestasi konsisten, pertahankan ritme belajarmu',
+    };
   }
   if (averageScore >= 60) {
     return { status: 'Baik', subtext: 'Siap ke tingkatan berikutnya' };
   }
-  return { status: 'Perlu Penguatan', subtext: 'Fokus latihan pada materi rekomendasi' };
+  return {
+    status: 'Perlu Penguatan',
+    subtext: 'Fokus latihan pada materi rekomendasi',
+  };
 }
 
 function toDashboardMaterials(
@@ -52,6 +62,7 @@ function toNewsList(
   news:
     | Array<{
         id: string;
+        slug: string;
         title: string;
         content: string;
         publishedAt: string | null;
@@ -60,7 +71,7 @@ function toNewsList(
     | undefined
 ): NewsItem[] | undefined {
   return news?.map((item, index) => ({
-    id: item.id,
+    id: item.slug || item.id,
     category: 'Informasi',
     categoryVariant: NEWS_CATEGORY_VARIANTS[index % NEWS_CATEGORY_VARIANTS.length],
     date: formatNewsDate(item.publishedAt ?? item.createdAt),
@@ -103,7 +114,13 @@ export default function DashboardStudentContainer() {
   const handleLearnMaterial = (materialId: string) =>
     router.push(`/student/learning/${materialId}`);
   const handleViewAllMaterials = () => router.push('/student/learning');
-  const handleReadNews = () => router.push('/student/dashboard');
+  const handleReadNews = (id?: string) => {
+    if (id) {
+      router.push(`/student/news/${id}`);
+    } else {
+      router.push('/student/news');
+    }
+  };
 
   return (
     <DashboardStudentPage
