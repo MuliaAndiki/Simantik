@@ -294,7 +294,7 @@ func (s *evaluationService) GetAttemptReview(ctx context.Context, attemptID, use
 		Accuracy:            accuracyVal,
 		TotalQuestions:      totalQuestions,
 		CorrectAnswers:      correctCount,
-		IncorrectAnswers:    totalQuestions - correctCount,
+		IncorrectAnswers:    len(answers) - correctCount,
 		Unanswered:          totalQuestions - len(answers),
 		TimeTakenSeconds:    timeTaken,
 		StartedAt:           attempt.StartedAt,

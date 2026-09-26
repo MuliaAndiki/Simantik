@@ -144,6 +144,7 @@ export interface StartAttemptResponse {
   duration_seconds: number;
   started_at: string;
   status: string;
+  current_question_number?: number;
 }
 
 /**

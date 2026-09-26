@@ -116,8 +116,11 @@ type SubmitPracticeAnswerRequest struct {
 
 // SubmitPracticeAnswerResponse returned after saving an answer.
 type SubmitPracticeAnswerResponse struct {
-	QuestionID uuid.UUID `json:"question_id"`
-	Saved      bool      `json:"saved"`
+	QuestionID     uuid.UUID `json:"question_id"`
+	Saved          bool      `json:"saved"`
+	IsCorrect      *bool     `json:"is_correct,omitempty"`
+	Explanation    *string   `json:"explanation,omitempty"`
+	AnsweringTips  *string   `json:"answering_tips,omitempty"`
 }
 
 // AutoSubmitPracticeRequest payload when an attempt is auto-submitted due to violations or session expiry.

@@ -54,6 +54,12 @@ export function StudentTryoutResult() {
     router.push('/student/dashboard');
   };
 
+  const handleReviewAnswers = () => {
+    if (attemptId) {
+      router.push(`/student/tryout/${params.id}/review?attemptId=${attemptId}`);
+    }
+  };
+
   return (
     <StudentTryoutResultPage
       tryoutTitle={tryoutTitle}
@@ -65,6 +71,7 @@ export function StudentTryoutResult() {
       submittedAtFormatted={submittedAtFormatted}
       isAutoSubmitted={Boolean(isAutoSubmitted)}
       onBackToDashboard={handleBackToDashboard}
+      onReviewAnswers={handleReviewAnswers}
     />
   );
 }

@@ -145,14 +145,26 @@ export function ProctoringProvider({
   useEffect(() => {
     if (!isActive) return;
 
+    let blurTimeout: NodeJS.Timeout;
+
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        reportViolation('TAB_SWITCH', { visibilityState: document.visibilityState });
+        blurTimeout = setTimeout(() => {
+          reportViolation('TAB_SWITCH', { visibilityState: document.visibilityState });
+        }, 3000);
+      } else {
+        clearTimeout(blurTimeout);
       }
     };
 
     const handleBlur = () => {
-      reportViolation('WINDOW_BLUR');
+      blurTimeout = setTimeout(() => {
+        reportViolation('WINDOW_BLUR');
+      }, 3000);
+    };
+
+    const handleFocus = () => {
+      clearTimeout(blurTimeout);
     };
 
     const handleFullscreenChange = () => {
@@ -197,6 +209,7 @@ export function ProctoringProvider({
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleFocus);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('copy', handleCopy);
     document.addEventListener('paste', handlePaste);
@@ -207,6 +220,7 @@ export function ProctoringProvider({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('focus', handleFocus);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('copy', handleCopy);
       document.removeEventListener('paste', handlePaste);

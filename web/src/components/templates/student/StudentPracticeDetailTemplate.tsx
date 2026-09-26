@@ -30,6 +30,7 @@ export interface StudentPracticeDetailTemplateProps {
 
   currentQuestion: PracticeQuestionItem;
   currentAnswer?: QuestionAnswerValue;
+  feedback?: { isCorrect?: boolean; explanation?: string; answeringTips?: string };
   onSelectSingleChoice: (optionId: string) => void;
   onToggleComplexChoice: (optionId: string) => void;
   onSelectMatrixChoice: (statementId: string, value: string) => void;
@@ -72,6 +73,7 @@ export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTempla
   onExit,
   currentQuestion,
   currentAnswer,
+  feedback,
   onSelectSingleChoice,
   onToggleComplexChoice,
   onSelectMatrixChoice,
@@ -198,6 +200,31 @@ export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTempla
               }
               onSelectMatrixAnswer={onSelectMatrixChoice}
             />
+          )}
+
+          {/* Immediate Feedback Box (Lazy implementation) */}
+          {feedback && feedback.isCorrect !== undefined && (
+            <div
+              className={`mt-6 p-5 rounded-2xl border ${feedback.isCorrect ? 'bg-teal-50 border-teal-200' : 'bg-red-50 border-red-200'}`}
+            >
+              <div
+                className={`font-black text-lg mb-2 flex items-center gap-2 ${feedback.isCorrect ? 'text-teal-800' : 'text-red-800'}`}
+              >
+                {feedback.isCorrect ? 'Benar!' : 'Salah!'}
+              </div>
+              {feedback.explanation && (
+                <div
+                  className="text-sm text-slate-700 prose prose-sm max-w-none"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: by design
+                  dangerouslySetInnerHTML={{ __html: feedback.explanation }}
+                />
+              )}
+              {feedback.answeringTips && (
+                <div className="text-sm text-slate-600 mt-3 font-medium bg-white/60 p-3 rounded-xl border border-white">
+                  <strong className="text-slate-800">Tips:</strong> {feedback.answeringTips}
+                </div>
+              )}
+            </div>
           )}
 
           {/* Bottom Navigation Buttons */}

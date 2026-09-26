@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import type {
   EvaluationNextStepItem,
   EvaluationPillarItem,
@@ -183,9 +184,11 @@ export default function StudentEvaluation() {
     ? (TREND_STATUS_LABEL[reportCard.trend_status] ?? undefined)
     : undefined;
 
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
   // 4. Competency Pillars
   const pillars: EvaluationPillarItem[] = useMemo(
-    () => buildPillars(reportCard, competencyDescriptions, handleOpenLearning),
+    () => buildPillars(reportCard, competencyDescriptions, () => setIsDetailModalOpen(true)),
     [reportCard, competencyDescriptions]
   );
 
@@ -196,28 +199,82 @@ export default function StudentEvaluation() {
   );
 
   return (
-    <StudentEvaluationPage
-      overallProps={{
-        score: Math.round(overallScore),
-        statusLabel: overallStatusLabel,
-      }}
-      latestProps={{
-        score: Math.round(latestScore),
-        accuracyRatioText,
-        accuracyPercentageText,
-        evaluationSessionName,
-        deltaPoints,
-        description: latestDescription,
-      }}
-      trendProps={{
-        data: trendChartData,
-        cumulativeGrowthText,
-        periodText,
-        trendStatusLabel,
-      }}
-      pillars={pillars}
-      onViewDetailCompetencies={handleOpenLearning}
-      steps={nextSteps}
-    />
+    <>
+      <StudentEvaluationPage
+        heroProps={{ onPrint: () => window.print() }}
+        overallProps={{
+          score: Math.round(overallScore),
+          statusLabel: overallStatusLabel,
+        }}
+        latestProps={{
+          score: Math.round(latestScore),
+          accuracyRatioText,
+          accuracyPercentageText,
+          evaluationSessionName,
+          deltaPoints,
+          description: latestDescription,
+        }}
+        trendProps={{
+          data: trendChartData,
+          cumulativeGrowthText,
+          periodText,
+          trendStatusLabel,
+        }}
+        pillars={pillars}
+        onViewDetailCompetencies={() => setIsDetailModalOpen(true)}
+        steps={nextSteps}
+      />
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detail Performa per Kompetensi</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4 relative">
+            {reportCard?.competency_breakdown?.map((item) => (
+              <div
+                key={item.competency_id}
+                className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col gap-2"
+              >
+                <div className="flex justify-between items-start">
+                  <h4 className="font-bold text-slate-800">{item.name}</h4>
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-bold ${item.performance_level === 'high' ? 'bg-teal-100 text-teal-800' : item.performance_level === 'medium' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}
+                  >
+                    {item.performance_level === 'high'
+                      ? 'KUAT'
+                      : item.performance_level === 'medium'
+                        ? 'CUKUP'
+                        : 'LEMAH'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-sm mt-1">
+                  <div className="bg-white p-2 rounded shadow-sm border border-slate-100 text-center">
+                    <div className="text-slate-500 text-xs">Total Soal</div>
+                    <div className="font-bold">{item.total_questions}</div>
+                  </div>
+                  <div className="bg-white p-2 rounded shadow-sm border border-slate-100 text-center">
+                    <div className="text-slate-500 text-xs">Benar</div>
+                    <div className="font-bold text-teal-600">{item.correct_answers}</div>
+                  </div>
+                  <div className="bg-white p-2 rounded shadow-sm border border-slate-100 text-center">
+                    <div className="text-slate-500 text-xs">Akurasi</div>
+                    <div className="font-bold">{Math.round(item.accuracy)}%</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="pt-4 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={handleOpenLearning}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-bold hover:bg-teal-700 transition"
+              >
+                Mulai Penguatan Materi
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

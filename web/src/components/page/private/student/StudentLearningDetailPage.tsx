@@ -1,4 +1,3 @@
-import type * as React from 'react';
 import type { LearningDetailBreadcrumbProps } from '@/components/molecules/student/LearningDetailBreadcrumb';
 import type { LearningDetailCtaBannerProps } from '@/components/molecules/student/LearningDetailCtaBanner';
 import type { LearningDetailContentCardProps } from '@/components/organisms/student/LearningDetailContentCard';

@@ -10,7 +10,6 @@ import { cn } from '@/utils/classname';
 export interface RecommendationBannerProps {
   topicTitle?: string;
   recommendationDescription?: string;
-  badgeText?: string;
   onStartPractice?: () => void;
   practiceHref?: string;
   className?: string;
@@ -19,7 +18,7 @@ export interface RecommendationBannerProps {
 export function RecommendationBanner({
   topicTitle = 'Perkuat Pemahaman Inferensial',
   recommendationDescription = 'Kamu dapat meningkatkan kemampuan dengan berlatih menemukan informasi tersirat dan hubungan antargagasan dalam teks. Berdasarkan evaluasi terakhir, latihan ini akan menaikkan skor TKA secara signifikan.',
-  badgeText = 'Rekomendasi Latihan Terarah',
+
   onStartPractice,
   practiceHref = '/student/practice',
   className,
@@ -37,7 +36,6 @@ export function RecommendationBanner({
           <div className="flex-1 space-y-4 md:space-y-5 text-left">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800 border border-amber-200/60">
               <Zap className="size-3.5 fill-amber-500 text-amber-500" />
-              <span>{badgeText}</span>
             </div>
 
             <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#111827] tracking-tight">

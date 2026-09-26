@@ -15,9 +15,7 @@ import {
 import type { PracticeQuestionType } from '@/types/ui/practice.types';
 import type {
   PracticePackageEditorForm,
-  QuestionChoiceOptionForm,
   QuestionEditorItemForm,
-  QuestionMatrixStatementForm,
   QuestionStimulusForm,
 } from '@/types/ui/practice-question-editor.types';
 

@@ -140,6 +140,7 @@ export const SIDEBAR_MENU: NavItem[] = [
     subMenu: [],
   },
   { name: 'Tryout', url: '/student/tryout', icon: Trophy, subMenu: [] },
+  { name: 'Berita', url: '/student/news', icon: User, subMenu: [] },
   {
     name: 'Evaluasi',
     url: '/student/evaluation',
