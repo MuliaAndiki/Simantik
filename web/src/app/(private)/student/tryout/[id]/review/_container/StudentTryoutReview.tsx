@@ -59,6 +59,7 @@ export default function StudentTryoutReview() {
 
             <div
               className="prose prose-sm max-w-none text-slate-800 mb-6"
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: by design
               dangerouslySetInnerHTML={{ __html: q.question_text }}
             />
 
@@ -78,7 +79,9 @@ export default function StudentTryoutReview() {
                 return (
                   <div key={opt.id} className={`flex p-4 rounded-xl border ${bgClass}`}>
                     <span className="w-8 shrink-0 font-bold">{String.fromCharCode(65 + idx)}.</span>
-                    <span dangerouslySetInnerHTML={{ __html: opt.option_text }} />
+                    <span // biome-ignore lint/security/noDangerouslySetInnerHtml: by design
+                      dangerouslySetInnerHTML={{ __html: opt.option_text }}
+                    />
                   </div>
                 );
               })}
@@ -95,6 +98,7 @@ export default function StudentTryoutReview() {
                 {q.explanation && (
                   <div
                     className="text-sm text-slate-700 prose prose-sm"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: by design
                     dangerouslySetInnerHTML={{ __html: q.explanation }}
                   />
                 )}

@@ -43,7 +43,13 @@ export function EvaluationHeroBanner({
               onClick={onPrint}
               className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-teal-600 text-teal-800 text-sm font-bold rounded-full hover:bg-teal-50 transition print:hidden"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                aria-hidden="true"
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

@@ -113,6 +113,7 @@ const NewsDetailContainer: React.FC<NewsDetailContainerProps> = ({ id }) => {
 
           <div
             className="prose prose-slate max-w-none prose-img:rounded-2xl prose-headings:font-bold prose-a:text-teal-600 hover:prose-a:text-teal-700"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: by design
             dangerouslySetInnerHTML={{ __html: newsItem.content }}
           />
         </article>

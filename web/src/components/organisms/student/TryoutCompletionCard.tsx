@@ -201,7 +201,13 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
             onClick={() => window.print()}
             className="w-full sm:w-auto h-12 px-6 rounded-full font-black text-slate-700 border-2 border-slate-300 bg-white hover:bg-slate-50 text-sm flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg
+              aria-hidden="true"
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

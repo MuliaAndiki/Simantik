@@ -39,6 +39,7 @@ export function StudentEvaluationTemplate({
         <div className="p-8 text-center bg-white border border-slate-200 rounded-2xl">
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
+              aria-hidden="true"
               className="w-8 h-8 text-slate-400"
               fill="none"
               viewBox="0 0 24 24"
