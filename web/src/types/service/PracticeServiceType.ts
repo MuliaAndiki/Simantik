@@ -104,6 +104,9 @@ export interface SubmitPracticeAnswerRequest {
 export interface SubmitPracticeAnswerResponse {
   question_id: string;
   saved: boolean;
+  is_correct?: boolean;
+  explanation?: string;
+  answering_tips?: string;
 }
 
 export interface AutoSubmitPracticeRequest {

@@ -22,7 +22,13 @@ function isUUID(value: string): boolean {
   return UUID_REGEX.test(value);
 }
 
-function mapApiQuestionType(_typeId: string): PracticeQuestionType {
+function mapApiQuestionType(typeIdStr: string): PracticeQuestionType {
+  const t = (typeIdStr || '').toLowerCase();
+  if (t.includes('kompleks') || t.includes('mcma') || t.includes('complex'))
+    return 'pilihan-ganda-kompleks';
+  if (t.includes('benar') || t.includes('salah')) return 'benar-salah';
+  if (t.includes('tepat') && t.includes('tidak')) return 'tepat-tidak-tepat';
+  if (t.includes('setuju') && t.includes('tidak')) return 'setuju-tidak-setuju';
   return 'pilihan-ganda';
 }
 
@@ -169,6 +175,10 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
   }, [safeIndex]);
 
   // Answer selection handlers + backend synchronization
+  const [feedback, setFeedback] = useState<
+    Record<string, { isCorrect?: boolean; explanation?: string; answeringTips?: string }>
+  >({});
+
   const handleSelectSingleChoice = useCallback(
     (optionId: string) => {
       if (!currentQuestion) return;
@@ -187,6 +197,18 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
               question_id: currentQuestion.id,
               selected_option_id: optionId,
             },
+          })
+          .then((res) => {
+            if (res?.data && res.data.is_correct !== undefined) {
+              setFeedback((prev) => ({
+                ...prev,
+                [currentQuestion.id]: {
+                  isCorrect: res.data!.is_correct,
+                  explanation: res.data!.explanation,
+                  answeringTips: res.data!.answering_tips,
+                },
+              }));
+            }
           })
           .catch(() => {});
       }
@@ -458,14 +480,15 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
   return (
     <StudentPracticeDetailPage
       competencyName={competencyName}
-      categoryLabel={categoryLabel}
       title={title}
+      categoryLabel={categoryLabel}
       subCategory="TKA Bahasa Indonesia"
       isFlagged={isCurrentFlagged}
       onToggleFlag={handleToggleFlag}
       onExit={handleExitClick}
       currentQuestion={currentQuestion}
       currentAnswer={currentAnswer}
+      feedback={currentQuestion ? feedback[currentQuestion.id] : undefined}
       onSelectSingleChoice={handleSelectSingleChoice}
       onToggleComplexChoice={handleToggleComplexChoice}
       onSelectMatrixChoice={handleSelectMatrixChoice}

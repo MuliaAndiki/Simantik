@@ -489,9 +489,27 @@ func (s *practiceService) SubmitAnswer(ctx context.Context, attemptID, userID uu
 		return nil, err
 	}
 
+	// Fetch explanation for immediate feedback
+	var q models.Question
+	var explanationStr *string
+	var tipsStr *string
+	if s.db != nil {
+		if err := s.db.WithContext(ctx).Preload("Explanation").First(&q, "id = ?", req.QuestionID).Error; err == nil {
+			if q.Explanation != nil {
+				explanationStr = &q.Explanation.Explanation
+				if q.Explanation.AnsweringTips != "" {
+					tipsStr = &q.Explanation.AnsweringTips
+				}
+			}
+		}
+	}
+
 	return &dto.SubmitPracticeAnswerResponse{
-		QuestionID: req.QuestionID,
-		Saved:      true,
+		QuestionID:    req.QuestionID,
+		Saved:         true,
+		IsCorrect:     isCorrectPtr,
+		Explanation:   explanationStr,
+		AnsweringTips: tipsStr,
 	}, nil
 }
 
@@ -579,7 +597,7 @@ func (s *practiceService) CompletePracticeAttempt(ctx context.Context, attemptID
 			SourceID:         attempt.ID,
 			TotalQuestions:   totalQuestions,
 			CorrectAnswers:   correctCount,
-			IncorrectAnswers: totalQuestions - correctCount,
+			IncorrectAnswers: len(answers) - correctCount,
 			Score:            score,
 			Accuracy:         accuracy,
 			CreatedAt:        now,

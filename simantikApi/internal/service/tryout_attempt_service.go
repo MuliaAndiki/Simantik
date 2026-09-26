@@ -65,7 +65,11 @@ func (s *tryoutAttemptService) totalQuestions(ctx context.Context, tryoutID uuid
 	if err != nil {
 		return 0
 	}
-	return int(n)
+	count := int(n)
+	if count >= 5 {
+		count = count / 5
+	}
+	return count
 }
 
 
@@ -191,10 +195,18 @@ func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userI
 		return nil, ErrTryoutNotAvailable
 	}
 
-	// Reject if there's already an active attempt
+	// Resume if there's already an active attempt
 	existing, err := s.attemptRepo.FindActiveAttempt(ctx, userID, tryoutID)
 	if err == nil && existing != nil {
-		return nil, ErrAttemptAlreadyActive
+		return &dto.StartAttemptResponse{
+			AttemptID:             existing.ID,
+			TryoutID:              tryoutID,
+			TotalQuestions:        s.totalQuestions(ctx, tryoutID),
+			DurationSeconds:       tryout.DurationSeconds,
+			StartedAt:             existing.StartedAt,
+			Status:                string(existing.Status),
+			CurrentQuestionNumber: existing.CurrentQuestionNumber,
+		}, nil
 	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
@@ -320,13 +332,19 @@ func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userI
 		}
 	}
 
+	effectiveTotal := len(poolQuestions)
+	if effectiveTotal >= 5 {
+		effectiveTotal = effectiveTotal / 5
+	}
+
 	return &dto.StartAttemptResponse{
-		AttemptID:       attempt.ID,
-		TryoutID:        tryout.ID,
-		TotalQuestions:  len(poolQuestions),
-		DurationSeconds: tryout.DurationSeconds,
-		StartedAt:       attempt.StartedAt,
-		Status:          string(attempt.Status),
+		AttemptID:             attempt.ID,
+		TryoutID:              tryout.ID,
+		TotalQuestions:        effectiveTotal,
+		DurationSeconds:       tryout.DurationSeconds,
+		StartedAt:             attempt.StartedAt,
+		Status:                string(attempt.Status),
+		CurrentQuestionNumber: attempt.CurrentQuestionNumber,
 	}, nil
 }
 
@@ -669,7 +687,7 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 		SourceID:         attempt.ID,
 		TotalQuestions:   totalQ,
 		CorrectAnswers:   correctCount,
-		IncorrectAnswers: totalQ - correctCount,
+		IncorrectAnswers: len(answers) - correctCount,
 		Score:            score,
 		Accuracy:         accuracy,
 	}

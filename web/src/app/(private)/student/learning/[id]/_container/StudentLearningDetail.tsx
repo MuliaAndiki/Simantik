@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { RelatedMaterialItem } from '@/components/organisms/student/LearningDetailRelatedMaterials';
 import { StudentLearningDetailPage } from '@/components/page/private/student/StudentLearningDetailPage';
 import { useApi } from '@/hooks/useApi';
@@ -109,6 +109,18 @@ export default function StudentLearningDetailContainer({
       router.push(`/student/learning/material/${targetId}`);
     }
   };
+
+  const markProgressMutation = learning.mutate.markProgress();
+  useEffect(() => {
+    if (materialId && material?.id) {
+      const timer = setTimeout(() => {
+        markProgressMutation
+          .mutateAsync({ id: materialId, body: { is_completed: true } })
+          .catch(() => {});
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [materialId, material?.id]);
 
   return (
     <StudentLearningDetailPage

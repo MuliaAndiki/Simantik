@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { ChevronDown, DoorOpen, Settings } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import { ChevronDown, DoorOpen, Settings } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Sidebar,
@@ -22,18 +22,18 @@ import {
   SidebarMenuSubItem,
   SidebarSeparator,
   useSidebar,
-} from '@/components/atoms';
+} from "@/components/atoms";
 import {
   isItemActive,
   isMenuActive,
   type NavItem,
   ROLE_SIDEBAR_MENU,
   SIDEBAR_MENU,
-} from '@/configs/app.config';
-import { useApi } from '@/hooks/useApi';
-import useAppNameSpace from '@/hooks/useAppNameSpace';
-import { cn } from '@/utils/classname';
-import { clearSessionCookies, getRefreshToken } from '@/utils/session-cookie';
+} from "@/configs/app.config";
+import { useApi } from "@/hooks/useApi";
+import useAppNameSpace from "@/hooks/useAppNameSpace";
+import { cn } from "@/utils/classname";
+import { clearSessionCookies, getRefreshToken } from "@/utils/session-cookie";
 
 export function AppSidebar() {
   const ns = useAppNameSpace();
@@ -42,21 +42,25 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const api = useApi();
 
-  const isCollapsed = state === 'collapsed';
+  const isCollapsed = state === "collapsed";
 
   const userRole = api.auth.query.me().data?.role?.toUpperCase();
   const isContentManager =
-    userRole === 'CONTENT_MANAGER' || pathname.startsWith('/content_manager');
-  const isAdmin = userRole === 'ADMIN' || pathname.startsWith('/admin');
-  const role = isContentManager ? 'CONTENT_MANAGER' : isAdmin ? 'ADMIN' : userRole;
+    userRole === "CONTENT_MANAGER" || pathname.startsWith("/content_manager");
+  const isAdmin = userRole === "ADMIN" || pathname.startsWith("/admin");
+  const role = isContentManager
+    ? "CONTENT_MANAGER"
+    : isAdmin
+      ? "ADMIN"
+      : userRole;
   const menus = role ? (ROLE_SIDEBAR_MENU[role] ?? SIDEBAR_MENU) : SIDEBAR_MENU;
 
   const mainMenus = isContentManager || isAdmin ? menus : menus.slice(0, 5);
   const footerMenus: NavItem[] = isContentManager
     ? [
         {
-          name: 'Pengaturan',
-          url: '/content_manager/settings',
+          name: "Pengaturan",
+          url: "/content_manager/settings",
           icon: Settings,
           subMenu: [],
         },
@@ -64,8 +68,8 @@ export function AppSidebar() {
     : isAdmin
       ? [
           {
-            name: 'Pengaturan',
-            url: '/admin/settings',
+            name: "Pengaturan",
+            url: "/admin/settings",
             icon: Settings,
             subMenu: [],
           },
@@ -78,7 +82,9 @@ export function AppSidebar() {
   useEffect(() => {
     for (const item of mainMenus) {
       if (item.subMenu && item.subMenu.length > 0) {
-        const isChildActive = item.subMenu.some((sub) => isMenuActive(sub.url, pathname));
+        const isChildActive = item.subMenu.some((sub) =>
+          isMenuActive(sub.url, pathname),
+        );
         if (isChildActive) {
           setOpenSubMenus((prev) => ({ ...prev, [item.name]: true }));
         }
@@ -100,7 +106,7 @@ export function AppSidebar() {
     logoutMutation.mutate(refreshToken ? { refreshToken } : undefined, {
       onSettled: () => {
         clearSessionCookies();
-        router.replace('/login');
+        router.replace("/login");
       },
     });
   };
@@ -118,10 +124,10 @@ export function AppSidebar() {
             onClick={() => toggleSubMenu(item.name)}
             tooltip={isCollapsed ? item.name : undefined}
             className={cn(
-              'flex h-10 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 cursor-pointer',
-              'transition-all hover:text-primary dark:text-foreground dark:hover:text-primary',
+              "flex h-10 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 cursor-pointer",
+              "transition-all hover:text-primary dark:text-foreground dark:hover:text-primary",
               isActive &&
-                'bg-sky-50/70 text-sky-900 font-semibold dark:bg-primary-foreground/20 dark:text-primary-foreground'
+                "bg-sky-50/70 text-sky-900 font-semibold dark:bg-primary-foreground/20 dark:text-primary-foreground",
             )}
           >
             <div className="flex items-center gap-3 min-w-0">
@@ -131,8 +137,8 @@ export function AppSidebar() {
             {!isCollapsed && (
               <ChevronDown
                 className={cn(
-                  'size-4 shrink-0 transition-transform duration-200 text-slate-400',
-                  isOpen && 'rotate-180 text-primary'
+                  "size-4 shrink-0 transition-transform duration-200 text-slate-400",
+                  isOpen && "rotate-180 text-primary",
                 )}
               />
             )}
@@ -149,10 +155,10 @@ export function AppSidebar() {
                       <Link
                         href={sub.url}
                         className={cn(
-                          'flex h-8 items-center gap-2.5 rounded-md px-2.5 text-xs font-medium transition-colors',
-                          'hover:text-primary hover:bg-slate-100 dark:hover:bg-primary',
+                          "flex h-8 items-center gap-2.5 rounded-md px-2.5 text-xs font-medium transition-colors",
+                          "hover:text-primary hover:bg-slate-100 dark:hover:bg-primary",
                           isSubActive &&
-                            'bg-sky-100 text-primary font-bold dark:bg-primary-foreground/30 dark:text-primary-foreground'
+                            "bg-sky-100 text-primary font-bold dark:bg-primary-foreground/30 dark:text-primary-foreground",
                         )}
                       >
                         <SubIcon className="size-3.5 shrink-0" />
@@ -170,16 +176,19 @@ export function AppSidebar() {
 
     return (
       <SidebarMenuItem key={item.name}>
-        <SidebarMenuButton asChild tooltip={isCollapsed ? item.name : undefined}>
+        <SidebarMenuButton
+          asChild
+          tooltip={isCollapsed ? item.name : undefined}
+        >
           <Link
             href={item.url}
             className={cn(
-              'flex h-10 items-center gap-3 rounded-lg px-3 py-2',
-              'transition-all',
-              'hover:text-primary',
-              'dark:text-foreground dark:hover:text-primary',
+              "flex h-10 items-center gap-3 rounded-lg px-3 py-2",
+              "transition-all",
+              "hover:text-primary",
+              "dark:text-foreground dark:hover:text-primary",
               isActive &&
-                'bg-sky-100 text-sky-900 font-semibold dark:bg-primary-foreground/30 dark:text-primary-foreground'
+                "bg-sky-100 text-sky-900 font-semibold dark:bg-primary-foreground/30 dark:text-primary-foreground",
             )}
           >
             <Icon className="size-5 shrink-0" />
@@ -209,10 +218,10 @@ export function AppSidebar() {
 
             <span className="truncate text-xs font-semibold text-primary-foreground/70 rounded-lg bg-primary-foreground/10 p-2 uppercase tracking-wider">
               {isAdmin
-                ? 'Admin Portal'
+                ? "Admin Portal"
                 : isContentManager
-                  ? 'Content Manager'
-                  : 'SMA / SMK TKA Portal'}
+                  ? "Content Manager"
+                  : "SMA / SMK TKA Portal"}
             </span>
           </div>
         </div>
@@ -222,7 +231,7 @@ export function AppSidebar() {
         {isContentManager || isAdmin ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-              {isAdmin ? 'ADMINISTRASI' : 'MAIN'}
+              {isAdmin ? "ADMINISTRASI" : "MAIN"}
             </SidebarGroupLabel>
 
             <SidebarGroupContent>
@@ -245,14 +254,14 @@ export function AppSidebar() {
 
         <SidebarMenu>{footerMenus.map(renderMenuItem)}</SidebarMenu>
         <Button
-          className={`flex ${isCollapsed ? 'justify-center' : 'justify-start'} items-center`}
-          variant={'quit'}
+          className={`flex ${isCollapsed ? "justify-center" : "justify-start"} items-center`}
+          variant={"quit"}
           onClick={() =>
             ns.alert.confirm({
-              title: 'Keluar Dari Akun?',
+              title: "Keluar Dari Akun?",
               deskripsi:
-                'Apakah kamu yakin keluar dari SIMANTIK? sesi belajarmu saat ini akan tersimpan dengan aman',
-              icon: 'question',
+                "Apakah kamu yakin keluar dari SIMANTIK? sesi belajarmu saat ini akan tersimpan dengan aman",
+              icon: "question",
               onConfirm: () => {
                 handleLogout();
               },
@@ -261,7 +270,9 @@ export function AppSidebar() {
         >
           <div className="flex justify-center items-center gap-2">
             <DoorOpen />
-            <span className={`sr-only sm:not-sr-only ${isCollapsed ? 'hidden' : 'block'}`}>
+            <span
+              className={`sr-only sm:not-sr-only ${isCollapsed ? "hidden" : "block"}`}
+            >
               Keluar
             </span>
           </div>

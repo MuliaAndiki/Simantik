@@ -11,7 +11,8 @@ import {
 import { cn } from '@/utils/classname';
 
 export interface StudentTryoutTemplateProps {
-  heroProps?: TryoutHeroBannerProps;
+  heroProps?: TryoutHeroBannerProps; // kept for fallback
+  tryouts?: TryoutHeroBannerProps[]; // new array support
   standardsProps?: TryoutStandardsCardProps;
   tipsProps?: TryoutPrepTipsCardProps;
   className?: string;
@@ -19,6 +20,7 @@ export interface StudentTryoutTemplateProps {
 
 export function StudentTryoutTemplate({
   heroProps,
+  tryouts,
   standardsProps,
   tipsProps,
   className,
@@ -33,8 +35,12 @@ export function StudentTryoutTemplate({
         </p>
       </div>
 
-      {/* 2. Top Promotional / Action Banner */}
-      <TryoutHeroBanner {...heroProps} />
+      {/* 2. Top Promotional / Action Banners */}
+      {tryouts && tryouts.length > 0 ? (
+        tryouts.map((t, i) => <TryoutHeroBanner key={i} {...t} />)
+      ) : (
+        <TryoutHeroBanner {...heroProps} />
+      )}
 
       {/* 3. Standards & Assessment Schedule Card */}
       <TryoutStandardsCard {...standardsProps} />
