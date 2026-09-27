@@ -43,8 +43,8 @@ func (p *Practice) BeforeCreate(tx *gorm.DB) error {
 // PracticeAnswer records a student's answer during a self-study practice session.
 type PracticeAnswer struct {
 	ID               uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
-	PracticeID       uuid.UUID  `gorm:"type:uuid;not null;index" json:"practiceId"`
-	QuestionID       uuid.UUID  `gorm:"type:uuid;not null;index" json:"questionId"`
+	PracticeID       uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_practice_answers_practice_question" json:"practiceId"`
+	QuestionID       uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_practice_answers_practice_question" json:"questionId"`
 	SelectedOptionID *uuid.UUID `gorm:"type:uuid" json:"selectedOptionId"`
 	AnswerData       string     `gorm:"type:jsonb" json:"answerData"`
 	IsCorrect        *bool      `json:"isCorrect"`

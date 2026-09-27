@@ -29,17 +29,68 @@ type StudentProfileResponse struct {
 	Bio              string  `json:"bio"`
 }
 
-// AdminDashboardStatsResponse aggregates high-level platform health metrics.
+// ContentStatusBreakdown details content items across publication stages.
+type ContentStatusBreakdown struct {
+	Total     int64 `json:"total"`
+	Published int64 `json:"published"`
+	Review    int64 `json:"review"`
+	Draft     int64 `json:"draft"`
+}
+
+// StudentGrowthPoint represents a single data point for student registration growth.
+type StudentGrowthPoint struct {
+	Period   string `json:"period"`
+	Students int64  `json:"students"`
+	Label    string `json:"label"`
+}
+
+// RecentStudentItem represents a student in the admin dashboard latest student table.
+type RecentStudentItem struct {
+	ID            uuid.UUID `json:"id"`
+	FullName      string    `json:"full_name"`
+	Email         string    `json:"email"`
+	School        string    `json:"school"`
+	RegisteredAt  time.Time `json:"registered_at"`
+	FormattedDate string    `json:"formatted_date"`
+	Status        string    `json:"status"`
+}
+
+// AdminAuditLogItem represents a high-level administrative audit log item.
+type AdminAuditLogItem struct {
+	ID            string    `json:"id"`
+	UserName      string    `json:"user_name"`
+	UserRole      string    `json:"user_role"`
+	Action        string    `json:"action"`
+	TargetTitle   string    `json:"target_title"`
+	FormattedTime string    `json:"formatted_time"`
+	RelativeTime  string    `json:"relative_time"`
+	Timestamp     time.Time `json:"timestamp"`
+}
+
+// AdminDashboardStatsResponse aggregates high-level platform health metrics and charts.
 type AdminDashboardStatsResponse struct {
-	TotalStudents      int64               `json:"total_students"`
-	TotalQuestions     int64               `json:"total_questions"`
-	TotalTryouts       int64               `json:"total_tryouts"`
-	TotalModules       int64               `json:"total_modules"`
-	TotalMaterials     int64               `json:"total_materials"`
-	TotalAttempts      int64               `json:"total_attempts"`
-	CompletedAttempts  int64               `json:"completed_attempts"`
-	AverageTryoutScore float64             `json:"average_tryout_score"`
-	RecentActivities   []RecentAttemptItem `json:"recent_activities"`
+	TotalStudents          int64                  `json:"total_students"`
+	ActiveStudents         int64                  `json:"active_students"`
+	ActiveStudentsPercent  float64                `json:"active_students_percent"`
+	StudentGrowthRate      string                 `json:"student_growth_rate"`
+	TotalQuestions         int64                  `json:"total_questions"`
+	TotalTryouts           int64                  `json:"total_tryouts"`
+	TotalModules           int64                  `json:"total_modules"`
+	TotalMaterials         int64                  `json:"total_materials"`
+	TotalPracticePackages  int64                  `json:"total_practice_packages"`
+	TotalAttempts          int64                  `json:"total_attempts"`
+	CompletedAttempts      int64                  `json:"completed_attempts"`
+	AverageTryoutScore     float64                `json:"average_tryout_score"`
+	MaterialStatus         ContentStatusBreakdown `json:"material_status"`
+	PracticeStatus         ContentStatusBreakdown `json:"practice_status"`
+	TryoutStatus           ContentStatusBreakdown `json:"tryout_status"`
+	CompletedTryouts       int64                  `json:"completed_tryouts"`
+	LiveTryouts            int64                  `json:"live_tryouts"`
+	StudentGrowthChart     []StudentGrowthPoint   `json:"student_growth_chart"`
+	AverageMonthlyGrowth   string                 `json:"average_monthly_growth"`
+	RecentStudents         []RecentStudentItem    `json:"recent_students"`
+	RecentAuditLogs        []AdminAuditLogItem    `json:"recent_audit_logs"`
+	RecentActivities       []RecentAttemptItem    `json:"recent_activities"`
 }
 
 // AdminUserListItem represents a user summary in the admin user table.

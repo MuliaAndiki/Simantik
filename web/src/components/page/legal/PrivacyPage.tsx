@@ -1,17 +1,18 @@
 import type * as React from 'react';
 import { LegalDocTemplate } from '@/components/templates/legal/LegalDocTemplate';
-import { PRIVACY_POLICY_DATA } from '@/data/legal-docs.data';
+import type { LegalDocData } from '@/types/ui';
 
 export interface PrivacyPageProps {
+  data: LegalDocData;
   activeSectionId?: string;
   onSelectSection?: (id: string) => void;
   onPrint?: () => void;
 }
 
-export function PrivacyPage({ activeSectionId, onSelectSection, onPrint }: PrivacyPageProps) {
+export function PrivacyPage({ data, activeSectionId, onSelectSection, onPrint }: PrivacyPageProps) {
   return (
     <LegalDocTemplate
-      data={PRIVACY_POLICY_DATA}
+      data={data}
       activeRoute="/privacy"
       activeSectionId={activeSectionId}
       onSelectSection={onSelectSection}

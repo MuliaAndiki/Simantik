@@ -1,4 +1,5 @@
 import React from 'react';
+import { RichHtml } from '@/components/atoms/rich-html';
 import type { MatrixStatement } from '@/types/ui';
 
 export type MatrixMode = 'BENAR_SALAH' | 'TEPAT_TIDAK_TEPAT' | 'SETUJU_TIDAK_SETUJU';
@@ -58,9 +59,9 @@ export const MatrixCategoryQuestion: React.FC<MatrixCategoryQuestionProps> = ({
             {promptCategory}
           </div>
         )}
-        <h4 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
-          {questionText}
-        </h4>
+        <div className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+          <RichHtml html={questionText} />
+        </div>
       </div>
 
       {/* Instruction Box */}
@@ -115,7 +116,7 @@ export const MatrixCategoryQuestion: React.FC<MatrixCategoryQuestionProps> = ({
 
                 {/* Statement text */}
                 <div className="text-xs sm:text-sm text-slate-800 leading-relaxed pr-2 sm:pr-4">
-                  {stmt.statement}
+                  <RichHtml html={stmt.statement} />
                 </div>
 
                 {/* Col 1 Radio (e.g. Benar / Tepat / Setuju) */}

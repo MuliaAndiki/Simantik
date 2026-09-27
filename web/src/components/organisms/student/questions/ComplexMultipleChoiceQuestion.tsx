@@ -1,4 +1,5 @@
 import React from 'react';
+import { RichHtml } from '@/components/atoms/rich-html';
 import type { ChoiceOption } from '@/types/ui';
 
 export interface ComplexMultipleChoiceQuestionProps {
@@ -52,9 +53,9 @@ export const ComplexMultipleChoiceQuestion: React.FC<ComplexMultipleChoiceQuesti
             {promptCategory}
           </div>
         )}
-        <h4 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
-          {questionText}
-        </h4>
+        <div className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+          <RichHtml html={questionText} />
+        </div>
       </div>
 
       {/* Checkbox Options List */}
@@ -105,11 +106,11 @@ export const ComplexMultipleChoiceQuestion: React.FC<ComplexMultipleChoiceQuesti
                     isChecked ? 'font-bold text-slate-900' : 'font-semibold text-slate-800'
                   }`}
                 >
-                  {option.title}
+                  <RichHtml html={option.title} />
                 </div>
                 {option.description && (
                   <div className="text-xs text-slate-600 mt-1 leading-relaxed">
-                    {option.description}
+                    <RichHtml html={option.description} />
                   </div>
                 )}
               </div>

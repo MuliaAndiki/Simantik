@@ -1,10 +1,10 @@
 'use client';
 
+import { FileQuestion } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { QuestionPaletteItem } from '@/components/organisms/student/PracticeQuestionPalette';
 import { StudentPracticeDetailPage } from '@/components/page/private/student/StudentPracticeDetailPage';
-import { DEFAULT_PRACTICE_QUESTIONS } from '@/data/practiceQuestions.data';
 import { useApi } from '@/hooks/useApi';
 import { ProctoringProvider, useProctoring } from '@/hooks/useProctoring';
 import type { QuestionAdminResponse, QuestionStudentResponse } from '@/types/service';
@@ -15,6 +15,7 @@ import type {
   QuestionAnswerValue,
   QuestionPaletteStatus,
 } from '@/types/ui';
+import { parseMatrixOptions, parseWacanaQuestion } from '@/utils/wacana';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -37,20 +38,43 @@ function transformApiQuestions(
   competencyName: string
 ): PracticeQuestionItem[] {
   if (!apiQuestions || apiQuestions.length === 0) {
-    return DEFAULT_PRACTICE_QUESTIONS;
+    return [];
   }
 
   return apiQuestions.map((q, idx) => {
+    const compBadge =
+      q.competencies && q.competencies.length > 0
+        ? q.competencies.map((c) => c.name.toUpperCase()).join(' • ')
+        : competencyName.toUpperCase();
+
+    // Soal dari admin/content_manager menyimpan stimulus + body HTML
+    // dalam satu `question_text` berformat `[WACANA: title]\n<html>\n\n<html>`.
+    const parsed = parseWacanaQuestion(q.question_text);
+    const stimulus = parsed.hasStimulus
+      ? { title: parsed.stimulusTitle, content: parsed.stimulusHtml }
+      : undefined;
+
+    // Opsi bertanda `[KUNCI: ...]` = soal matriks (benar-salah / tepat / setuju).
+    const matrix = parseMatrixOptions(q.options);
+    if (matrix) {
+      return {
+        id: q.id,
+        questionNumber: idx + 1,
+        competencyBadge: compBadge,
+        type: matrix.kind,
+        instruction:
+          'Petunjuk: Baca pertanyaan dengan teliti, lalu pilih opsi jawaban yang paling tepat.',
+        questionText: parsed.bodyHtml,
+        stimulus,
+        statements: matrix.statements,
+      };
+    }
+
     const options: ChoiceOption[] = (q.options ?? []).map((opt) => ({
       id: opt.id,
       label: opt.option_label,
       title: opt.option_text,
     }));
-
-    const compBadge =
-      q.competencies && q.competencies.length > 0
-        ? q.competencies.map((c) => c.name.toUpperCase()).join(' • ')
-        : competencyName.toUpperCase();
 
     return {
       id: q.id,
@@ -59,7 +83,8 @@ function transformApiQuestions(
       type: mapApiQuestionType(q.question_type_id),
       instruction:
         'Petunjuk: Baca pertanyaan dengan teliti, lalu pilih opsi jawaban yang paling tepat.',
-      questionText: q.question_text,
+      questionText: parsed.bodyHtml,
+      stimulus,
       options,
     };
   });
@@ -77,13 +102,12 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
   const isPackageUUID = isUUID(packageId);
 
   // 1. Fetch practice package detail from GET /api/v1/practices/:id
-  const { data: practicePackage } = practice.query.detail(packageId, {
+  const { data: practicePackage, isLoading: isPackageLoading } = practice.query.detail(packageId, {
     enabled: isPackageUUID,
   });
 
   // Mutations
   const startPracticeMutation = practice.mutate.start();
-  const submitAnswerMutation = practice.mutate.submitAnswer();
   const submitPracticeMutation = practice.mutate.submitPractice();
   const autoSubmitPracticeMutation = practice.mutate.autoSubmit();
 
@@ -93,7 +117,7 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
   });
 
   // 3. Fallback questions query by competency if package has no pre-bound questions
-  const { data: questionsPage } = question.query.list(
+  const { data: questionsPage, isLoading: isQuestionsLoading } = question.query.list(
     {
       competency_id: isPackageUUID ? packageId : undefined,
       limit: 20,
@@ -141,8 +165,34 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
     attemptIdRef.current = attemptId;
   }, [attemptId]);
 
-  // Pre-Start Rules Modal State
-  const [isPreStartModalOpen, setIsPreStartModalOpen] = useState(true);
+  const startPracticeMutationRef = useRef(startPracticeMutation);
+  startPracticeMutationRef.current = startPracticeMutation;
+  const proctoringRef = useRef(proctoring);
+  proctoringRef.current = proctoring;
+  const hasStartedPracticeRef = useRef(false);
+
+  // Start practice attempt & proctoring automatically on mount once
+  useEffect(() => {
+    if (hasStartedPracticeRef.current) return;
+    hasStartedPracticeRef.current = true;
+
+    if (isPackageUUID && !attemptIdRef.current) {
+      startPracticeMutationRef.current
+        .mutateAsync(packageId)
+        .then((startRes) => {
+          if (startRes?.data?.attempt_id) {
+            setAttemptId(startRes.data.attempt_id);
+            attemptIdRef.current = startRes.data.attempt_id;
+          }
+        })
+        .catch(() => {});
+    }
+
+    proctoringRef.current.startProctoring().catch(() => {});
+  }, [packageId, isPackageUUID]);
+
+  // Pre-Start Rules Modal State (default false as modal is confirmed before navigation)
+  const [isPreStartModalOpen, setIsPreStartModalOpen] = useState(false);
   const [isPreStartChecked, setIsPreStartChecked] = useState(false);
 
   // Proctoring Warning Modal State
@@ -174,8 +224,8 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
     });
   }, [safeIndex]);
 
-  // Answer selection handlers + backend synchronization
-  const [feedback, setFeedback] = useState<
+  // Answer selection handlers (pure local state, zero network request per choice)
+  const [feedback] = useState<
     Record<string, { isCorrect?: boolean; explanation?: string; answeringTips?: string }>
   >({});
 
@@ -186,34 +236,8 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
         ...prev,
         [currentQuestion.id]: optionId,
       }));
-
-      // Async sync answer to backend: POST /api/v1/practice-attempts/:attemptId/answer
-      const currentAttempt = attemptId || attemptIdRef.current;
-      if (currentAttempt && isUUID(currentAttempt)) {
-        submitAnswerMutation
-          .mutateAsync({
-            attemptId: currentAttempt,
-            body: {
-              question_id: currentQuestion.id,
-              selected_option_id: optionId,
-            },
-          })
-          .then((res) => {
-            if (res?.data && res.data.is_correct !== undefined) {
-              setFeedback((prev) => ({
-                ...prev,
-                [currentQuestion.id]: {
-                  isCorrect: res.data!.is_correct,
-                  explanation: res.data!.explanation,
-                  answeringTips: res.data!.answering_tips,
-                },
-              }));
-            }
-          })
-          .catch(() => {});
-      }
     },
-    [currentQuestion, attemptId, submitAnswerMutation]
+    [currentQuestion]
   );
 
   const handleToggleComplexChoice = useCallback(
@@ -225,26 +249,13 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
           ? currentList.filter((id) => id !== optionId)
           : [...currentList, optionId];
 
-        const currentAttempt = attemptId || attemptIdRef.current;
-        if (currentAttempt && isUUID(currentAttempt)) {
-          submitAnswerMutation
-            .mutateAsync({
-              attemptId: currentAttempt,
-              body: {
-                question_id: currentQuestion.id,
-                answer_data: JSON.stringify(nextList),
-              },
-            })
-            .catch(() => {});
-        }
-
         return {
           ...prev,
           [currentQuestion.id]: nextList,
         };
       });
     },
-    [currentQuestion, attemptId, submitAnswerMutation]
+    [currentQuestion]
   );
 
   const handleSelectMatrixChoice = useCallback(
@@ -252,31 +263,16 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
       if (!currentQuestion) return;
       setAnswers((prev) => {
         const currentMatrix = (prev[currentQuestion.id] as Record<string, string>) || {};
-        const nextMatrix = {
-          ...currentMatrix,
-          [statementId]: value,
-        };
-
-        const currentAttempt = attemptId || attemptIdRef.current;
-        if (currentAttempt && isUUID(currentAttempt)) {
-          submitAnswerMutation
-            .mutateAsync({
-              attemptId: currentAttempt,
-              body: {
-                question_id: currentQuestion.id,
-                answer_data: JSON.stringify(nextMatrix),
-              },
-            })
-            .catch(() => {});
-        }
-
         return {
           ...prev,
-          [currentQuestion.id]: nextMatrix,
+          [currentQuestion.id]: {
+            ...currentMatrix,
+            [statementId]: value,
+          },
         };
       });
     },
-    [currentQuestion, attemptId, submitAnswerMutation]
+    [currentQuestion]
   );
 
   // Pre-Start Rules confirmation + Start Practice on backend
@@ -316,7 +312,7 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
     setIsPreStartChecked(checked);
   }, []);
 
-  // Direct Submission execution
+  // Direct Submission execution (Sends final bulk answers payload to backend)
   const executeSubmission = useCallback(
     async (isAutoSubmit = false) => {
       if (isSubmittingRef.current) return;
@@ -326,25 +322,38 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
       setIsConfirmModalOpen(false);
       setIsWarningModalOpen(false);
 
-      const targetAttemptId = attemptId || attemptIdRef.current;
+      let targetAttemptId = attemptId || attemptIdRef.current;
+
+      if (!targetAttemptId && isPackageUUID) {
+        try {
+          const startRes = await startPracticeMutation.mutateAsync(packageId);
+          if (startRes?.data?.attempt_id) {
+            targetAttemptId = startRes.data.attempt_id;
+            setAttemptId(targetAttemptId);
+            attemptIdRef.current = targetAttemptId;
+          }
+        } catch {
+          // ignore
+        }
+      }
 
       if (targetAttemptId && isUUID(targetAttemptId)) {
         try {
-          if (isAutoSubmit) {
-            const answersPayload = Object.entries(answers).map(([qId, val]) => {
-              if (typeof val === 'string') {
-                return {
-                  question_id: qId,
-                  selected_option_id: isUUID(val) ? val : undefined,
-                  answer_data: val,
-                };
-              }
+          const answersPayload = Object.entries(answers).map(([qId, val]) => {
+            if (typeof val === 'string') {
               return {
                 question_id: qId,
-                answer_data: JSON.stringify(val),
+                selected_option_id: isUUID(val) ? val : undefined,
+                answer_data: val,
               };
-            });
+            }
+            return {
+              question_id: qId,
+              answer_data: JSON.stringify(val),
+            };
+          });
 
+          if (isAutoSubmit) {
             await autoSubmitPracticeMutation.mutateAsync({
               attemptId: targetAttemptId,
               body: {
@@ -355,7 +364,10 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
               },
             });
           } else {
-            await submitPracticeMutation.mutateAsync(targetAttemptId);
+            await submitPracticeMutation.mutateAsync({
+              attemptId: targetAttemptId,
+              body: answersPayload,
+            });
           }
         } catch {
           // ignore error to ensure student is redirected to result page
@@ -365,7 +377,17 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
       const queryParam = targetAttemptId ? `?attemptId=${targetAttemptId}` : '';
       router.push(`/student/practice/${packageId}/result${queryParam}`);
     },
-    [proctoring, router, packageId, attemptId, submitPracticeMutation, autoSubmitPracticeMutation]
+    [
+      proctoring,
+      router,
+      packageId,
+      attemptId,
+      answers,
+      isPackageUUID,
+      startPracticeMutation,
+      submitPracticeMutation,
+      autoSubmitPracticeMutation,
+    ]
   );
 
   // Proctoring tab-switch / cheat detection watcher
@@ -397,31 +419,30 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
   const paletteItems: QuestionPaletteItem[] = useMemo(() => {
     return questions.map((q, idx) => {
       const qNum = idx + 1;
+      const ans = answers[q.id];
+      let hasAnswer = false;
+      if (q.type === 'pilihan-ganda') {
+        hasAnswer = typeof ans === 'string' && ans !== '';
+      } else if (q.type === 'pilihan-ganda-kompleks') {
+        hasAnswer = Array.isArray(ans) && ans.length > 0;
+      } else if (
+        q.type === 'benar-salah' ||
+        q.type === 'tepat-tidak-tepat' ||
+        q.type === 'setuju-tidak-setuju'
+      ) {
+        hasAnswer = typeof ans === 'object' && ans !== null && Object.keys(ans).length > 0;
+      }
+
       let status: QuestionPaletteStatus = 'unanswered';
 
-      if (idx === safeIndex) {
+      // Soal aktif yang sudah dijawab tetap 'answered' agar kehitung di legend;
+      // styling kuning aktif tetap diprioritaskan via isCurrent di palette.
+      if (idx === safeIndex && !hasAnswer) {
         status = 'active';
       } else if (flaggedQuestions.has(qNum)) {
         status = 'flagged';
-      } else {
-        const ans = answers[q.id];
-        if (q.type === 'pilihan-ganda') {
-          if (typeof ans === 'string' && ans !== '') {
-            status = 'answered';
-          }
-        } else if (q.type === 'pilihan-ganda-kompleks') {
-          if (Array.isArray(ans) && ans.length > 0) {
-            status = 'answered';
-          }
-        } else if (
-          q.type === 'benar-salah' ||
-          q.type === 'tepat-tidak-tepat' ||
-          q.type === 'setuju-tidak-setuju'
-        ) {
-          if (typeof ans === 'object' && ans !== null && Object.keys(ans).length > 0) {
-            status = 'answered';
-          }
-        }
+      } else if (hasAnswer) {
+        status = 'answered';
       }
 
       return {
@@ -476,6 +497,37 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
       executeSubmission(false);
     }
   }, [confirmModalType, proctoring, router, executeSubmission]);
+
+  if (isPackageLoading || (isQuestionsLoading && !practicePackage?.questions?.length)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-semibold text-slate-600">Memuat paket latihan...</p>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center space-y-4">
+        <div className="p-4 bg-slate-100 text-slate-500 rounded-full">
+          <FileQuestion className="w-10 h-10" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-800">Belum Ada Soal Latihan</h2>
+        <p className="text-sm text-slate-500 max-w-md">
+          Paket latihan ini belum memiliki butir soal yang dipublikasikan. Silakan coba paket
+          latihan lainnya.
+        </p>
+        <button
+          type="button"
+          onClick={() => router.push('/student/practice')}
+          className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+        >
+          Kembali ke Daftar Latihan
+        </button>
+      </div>
+    );
+  }
 
   return (
     <StudentPracticeDetailPage

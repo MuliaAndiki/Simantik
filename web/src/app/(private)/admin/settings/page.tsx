@@ -10,6 +10,7 @@ export default function Page() {
   const api = useApi();
   const ns = useAppNameSpace();
   const { data: user } = api.auth.query.me();
+  const { data: dashboardData } = api.admin.query.dashboard();
 
   const [activeTab, setActiveTab] = useState<AdminSettingsTab>('profile');
   const [fullName, setFullName] = useState(user?.fullName || 'Administrator');
@@ -42,6 +43,7 @@ export default function Page() {
       onFullNameChange={setFullName}
       onSaveProfile={handleSaveProfile}
       onSavePassword={handleSavePassword}
+      auditLogs={dashboardData?.recent_audit_logs}
     />
   );
 }

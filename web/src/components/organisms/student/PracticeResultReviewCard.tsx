@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Info, Lightbulb, Maximize2, X } from 'lucide-react';
 import React from 'react';
+import { RichHtml } from '@/components/atoms/rich-html';
 import type { PracticeReviewItem } from '@/types/ui';
 import { cn } from '@/utils/classname';
 
@@ -28,15 +29,19 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
             <span
               className={cn(
                 'inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold border',
-                isCorrect
-                  ? 'bg-teal-50 text-teal-800 border-teal-200'
-                  : 'bg-rose-50 text-rose-700 border-rose-200'
+                item.status === 'correct' && 'bg-teal-50 text-teal-800 border-teal-200',
+                item.status === 'wrong' && 'bg-rose-50 text-rose-700 border-rose-200',
+                item.status === 'unanswered' && 'bg-slate-100 text-slate-700 border-slate-300'
               )}
             >
-              {isCorrect ? (
+              {item.status === 'correct' && (
                 <Check className="w-3 h-3 text-teal-700 stroke-[2.5]" aria-hidden="true" />
-              ) : (
+              )}
+              {item.status === 'wrong' && (
                 <X className="w-3 h-3 text-rose-600 stroke-[2.5]" aria-hidden="true" />
+              )}
+              {item.status === 'unanswered' && (
+                <Info className="w-3 h-3 text-slate-500 stroke-[2.5]" aria-hidden="true" />
               )}
               <span>{item.statusLabel}</span>
             </span>
@@ -74,7 +79,9 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
             <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
               {item.stimulus.label}
             </span>
-            <p className="font-serif sm:text-[13.5px] leading-relaxed">{item.stimulus.content}</p>
+            <div className="font-serif sm:text-[13.5px] leading-relaxed">
+              <RichHtml html={item.stimulus.content} />
+            </div>
           </div>
         )}
 
@@ -243,7 +250,9 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
         )}
 
         {/* Question Prompt */}
-        <p className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{item.prompt}</p>
+        <div className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+          <RichHtml html={item.prompt} />
+        </div>
 
         {/* Type 1: Single Choice Options */}
         {item.options && item.type !== 'mcma' && (
@@ -279,7 +288,9 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
                     >
                       {opt.id}
                     </span>
-                    <span className="leading-relaxed">{opt.text}</span>
+                    <span className="leading-relaxed">
+                      <RichHtml html={opt.text} />
+                    </span>
                   </div>
 
                   {/* Right status badge */}
@@ -336,7 +347,9 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
                       <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
                     )}
                   </span>
-                  <span className="leading-relaxed">{opt.text}</span>
+                  <span className="leading-relaxed">
+                    <RichHtml html={opt.text} />
+                  </span>
                 </div>
 
                 {opt.tagText && (
@@ -371,7 +384,9 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
               <tbody className="divide-y divide-slate-100">
                 {item.matrixRows.map((row) => (
                   <tr key={row.statement} className="hover:bg-slate-50/50">
-                    <td className="py-3 px-4 text-slate-800 leading-relaxed">{row.statement}</td>
+                    <td className="py-3 px-4 text-slate-800 leading-relaxed">
+                      <RichHtml html={row.statement} />
+                    </td>
                     <td className="py-3 px-4 text-center font-bold text-teal-800">
                       {row.userChoice}
                     </td>
@@ -379,8 +394,17 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
                       {row.validKey}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-teal-50 text-teal-700">
-                        <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
+                      <span
+                        className={cn(
+                          'inline-flex items-center justify-center w-5 h-5 rounded-full',
+                          row.isCorrect ? 'bg-teal-50 text-teal-700' : 'bg-rose-50 text-rose-600'
+                        )}
+                      >
+                        {row.isCorrect ? (
+                          <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
+                        ) : (
+                          <X className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
+                        )}
                       </span>
                     </td>
                   </tr>
@@ -427,7 +451,9 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
               </>
             )}
           </div>
-          <p className="leading-relaxed font-normal pt-1">{item.discussion.content}</p>
+          <div className="leading-relaxed font-normal pt-1">
+            <RichHtml html={item.discussion.content} />
+          </div>
         </div>
       </div>
     </details>

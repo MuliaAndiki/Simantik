@@ -8,6 +8,8 @@ import {
   type PracticeHeroBannerProps,
   PracticePackagesListGrid,
   type PracticePackagesListGridProps,
+  PracticePreStartModal,
+  type PracticePreStartModalProps,
   StudentDashboardFooter,
 } from '@/components/organisms/student';
 import { cn } from '@/utils/classname';
@@ -16,6 +18,7 @@ export interface StudentPracticeTemplateProps {
   heroProps?: PracticeHeroBannerProps;
   filterProps: PracticeFilterBarProps;
   packagesProps: PracticePackagesListGridProps;
+  preStartModalProps?: PracticePreStartModalProps;
   className?: string;
 }
 
@@ -23,6 +26,7 @@ export function StudentPracticeTemplate({
   heroProps,
   filterProps,
   packagesProps,
+  preStartModalProps,
   className,
 }: StudentPracticeTemplateProps) {
   return (
@@ -36,7 +40,10 @@ export function StudentPracticeTemplate({
       {/* 3. Grid of Practice Packages List */}
       <PracticePackagesListGrid {...packagesProps} />
 
-      {/* 4. Unified Footer */}
+      {/* 4. Pre-Start Confirmation Modal */}
+      {preStartModalProps && <PracticePreStartModal {...preStartModalProps} />}
+
+      {/* 5. Unified Footer */}
       <StudentDashboardFooter />
     </div>
   );

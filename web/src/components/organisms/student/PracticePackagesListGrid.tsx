@@ -11,7 +11,7 @@ export interface PracticePackagesListGridProps {
   packages: PracticePackageItem[];
   totalAllPackages?: number;
   onStartPractice?: (packageId: string) => void;
-  onViewResult?: (packageId: string) => void;
+  onViewResult?: (packageId: string, latestAttemptId?: string) => void;
   onRetryPractice?: (packageId: string) => void;
   onResetFilters?: () => void;
   isFiltered?: boolean;

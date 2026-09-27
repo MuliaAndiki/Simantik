@@ -1,6 +1,6 @@
 import { Check, CheckCircle, Globe, Mail } from 'lucide-react';
 import type * as React from 'react';
-import type { LegalSection } from '@/data/legal-docs.data';
+import type { LegalSection } from '@/types/ui';
 import { cn } from '@/utils/classname';
 
 export interface LegalSectionCardProps {

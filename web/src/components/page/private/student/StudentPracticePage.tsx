@@ -1,6 +1,7 @@
 import type * as React from 'react';
 import type { PracticeCompetencyOption } from '@/components/molecules/student/PracticeFilterBar';
 import type { PracticePackageItem } from '@/components/molecules/student/PracticePackageCard';
+import type { PracticePreStartModalProps } from '@/components/organisms/student';
 import { StudentPracticeTemplate } from '@/components/templates/student/StudentPracticeTemplate';
 
 export interface StudentPracticePageProps {
@@ -14,10 +15,11 @@ export interface StudentPracticePageProps {
   packages: PracticePackageItem[];
   totalAllPackages?: number;
   onStartPractice?: (packageId: string) => void;
-  onViewResult?: (packageId: string) => void;
+  onViewResult?: (packageId: string, latestAttemptId?: string) => void;
   onRetryPractice?: (packageId: string) => void;
   onResetFilters?: () => void;
   isFiltered?: boolean;
+  preStartModalProps?: PracticePreStartModalProps;
 }
 
 export function StudentPracticePage({
@@ -35,6 +37,7 @@ export function StudentPracticePage({
   onRetryPractice,
   onResetFilters,
   isFiltered = false,
+  preStartModalProps,
 }: StudentPracticePageProps) {
   return (
     <StudentPracticeTemplate
@@ -56,6 +59,7 @@ export function StudentPracticePage({
         onResetFilters,
         isFiltered,
       }}
+      preStartModalProps={preStartModalProps}
     />
   );
 }

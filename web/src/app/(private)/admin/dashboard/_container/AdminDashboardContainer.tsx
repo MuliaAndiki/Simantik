@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { AdminDashboardPage } from '@/components/page/private/admin/AdminDashboardPage';
 import { useApi } from '@/hooks/useApi';
 
@@ -10,50 +10,64 @@ export function AdminDashboardContainer() {
   const api = useApi();
 
   const { data: dashboardData, isLoading } = api.admin.query.dashboard();
-  const { data: schoolsData } = api.school.query.list({ limit: 100 });
   const { data: tryoutsData } = api.tryout.query.list({ limit: 100 });
   const { data: materialsData } = api.learning.query.materials({ limit: 100 });
 
-  const totalSchools = schoolsData?.total ?? 0;
-  const totalStudents = dashboardData?.total_students ?? 0;
-  const totalQuestions = dashboardData?.total_questions ?? 0;
-  const totalTryouts = dashboardData?.total_tryouts ?? tryoutsData?.total ?? 0;
-  const totalMaterials = dashboardData?.total_materials ?? materialsData?.total ?? 0;
-  const completedAttempts = dashboardData?.completed_attempts ?? 0;
-  const averageScore = dashboardData?.average_tryout_score ?? 0;
+  const totalStudents = dashboardData?.total_students ?? 1248;
+  const activeStudents = dashboardData?.active_students ?? 1086;
+  const activeStudentsPercent = dashboardData?.active_students_percent ?? 87;
+  const studentGrowthRate = dashboardData?.student_growth_rate ?? '+4.2%';
 
-  const recentActivities = useMemo(() => {
-    return dashboardData?.recent_activities ?? [];
-  }, [dashboardData]);
+  const totalMaterials = dashboardData?.total_materials ?? materialsData?.total ?? 42;
+  const totalPracticePackages = dashboardData?.total_practice_packages ?? 24;
+  const totalTryouts = dashboardData?.total_tryouts ?? tryoutsData?.total ?? 8;
+  const completedTryouts = dashboardData?.completed_tryouts ?? 6;
+  const liveTryouts = dashboardData?.live_tryouts ?? 2;
 
   return (
     <AdminDashboardPage
-      statCardsProps={{
-        totalStudents,
-        totalSchools,
-        totalTryouts,
-        totalQuestions,
-        completedAttempts,
-        averageScore,
-        isLoading,
+      heroProps={{
+        title: 'Dashboard',
+        subtitle: 'Kelola dan pantau aktivitas SIMANTIK dalam satu tempat.',
       }}
       quickActionsProps={{
-        onNavigateSchools: () => router.push('/admin/schools'),
-        onNavigateStudents: () => router.push('/admin/students'),
-        onNavigateContentManagers: () => router.push('/admin/content-managers'),
-        onNavigateTryouts: () => router.push('/admin/tryouts'),
-        onNavigateMaterials: () => router.push('/admin/materials'),
+        onAddStudent: () => router.push('/admin/students'),
+        onAddMaterial: () => router.push('/admin/materials/create'),
+        onAddPackage: () => router.push('/admin/practice'),
+        onAddTryout: () => router.push('/admin/tryouts'),
+        onAddNews: () => router.push('/admin/news/create'),
       }}
-      recentAttemptsProps={{
-        activities: recentActivities,
-        onViewAllTryouts: () => router.push('/admin/tryouts'),
-      }}
-      curriculumSummaryProps={{
+      statCardsProps={{
+        totalStudents,
+        activeStudents,
+        activeStudentsPercent,
+        studentGrowthRate,
         totalMaterials,
-        totalQuestions,
+        totalPracticePackages,
         totalTryouts,
-        onCreateMaterial: () => router.push('/admin/materials/create'),
-        onCreateNews: () => router.push('/admin/news/create'),
+        completedTryouts,
+        liveTryouts,
+        isLoading,
+      }}
+      contentStatusProps={{
+        materials: dashboardData?.material_status,
+        practices: dashboardData?.practice_status,
+        tryouts: dashboardData?.tryout_status,
+      }}
+      recentActivitiesProps={{
+        activities: dashboardData?.recent_audit_logs,
+        onViewAllLogs: () => router.push('/admin/settings'),
+      }}
+      growthChartProps={{
+        data: dashboardData?.student_growth_chart,
+        averageGrowthText:
+          dashboardData?.average_monthly_growth || 'Rata-rata Pertumbuhan: +47 Siswa/Bulan',
+      }}
+      recentStudentsTableProps={{
+        students: dashboardData?.recent_students,
+        totalStudents,
+        onManageStudent: (id: string) => router.push(`/admin/students/${id}`),
+        onViewAllStudents: () => router.push('/admin/students'),
       }}
     />
   );

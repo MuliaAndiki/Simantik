@@ -74,6 +74,10 @@ const NewsListContainer = () => {
     setSelectedNews(item);
   };
 
+  const handleOpenFull = (item: NewsResponse) => {
+    router.push(`${basePath}/news/${item.slug || item.id}`);
+  };
+
   const handleClosePreview = () => {
     setSelectedNews(null);
   };
@@ -95,6 +99,7 @@ const NewsListContainer = () => {
       onStatusChange={handleStatusChange}
       onSelectNews={handleSelectNews}
       onEditNews={handleEditNews}
+      onOpenFull={handleOpenFull}
       onClosePreview={handleClosePreview}
       onPageChange={handlePageChange}
     />

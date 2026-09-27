@@ -368,3 +368,110 @@ func TestPracticeService_AutoSubmitPractice_Violations(t *testing.T) {
 		t.Errorf("expected getResult.AutoSubmitReason 'VIOLATION_THRESHOLD_EXCEEDED', got '%s'", getResult.AutoSubmitReason)
 	}
 }
+
+func TestPracticeService_BulkSubmit_Idempotency(t *testing.T) {
+	repo := newMockPracticeRepo()
+	svc := service.NewPracticeService(nil, repo, nil, nil)
+	ctx := context.Background()
+
+	adminID := uuid.New()
+	studentID := uuid.New()
+
+	pkg, _ := svc.CreatePackage(ctx, dto.CreatePracticePackageRequest{
+		Title: "Paket Latihan Bulk Submit",
+	}, adminID)
+
+	q1 := uuid.New()
+	q2 := uuid.New()
+	q3 := uuid.New()
+	_, _ = svc.AddQuestionsToPackage(ctx, pkg.ID, dto.AddPracticeQuestionsRequest{QuestionIDs: []uuid.UUID{q1, q2, q3}})
+	_, _ = svc.UpdatePackageStatus(ctx, pkg.ID, string(models.ContentStatusPublished), adminID)
+
+	startRes, err := svc.StartPracticeAttempt(ctx, pkg.ID, studentID)
+	if err != nil {
+		t.Fatalf("start practice failed: %v", err)
+	}
+
+	// Bulk submit with 2 answered questions (q1, q2) and duplicate q1 to verify deduplication
+	opt1 := uuid.New()
+	opt2 := uuid.New()
+	res, err := svc.CompletePracticeAttempt(ctx, startRes.AttemptID, studentID, dto.SubmitPracticeRequest{
+		Answers: []dto.SubmitPracticeAnswerRequest{
+			{QuestionID: q1, AnswerData: opt1.String()},
+			{QuestionID: q1, AnswerData: opt1.String()}, // duplicate should be deduplicated
+			{QuestionID: q2, AnswerData: opt2.String()},
+		},
+	})
+	if err != nil {
+		t.Fatalf("bulk submit practice failed: %v", err)
+	}
+
+	if res.Status != string(models.AttemptStatusCompleted) {
+		t.Errorf("expected completed status, got %s", res.Status)
+	}
+	if res.TotalQuestions != 3 {
+		t.Errorf("expected 3 total questions, got %d", res.TotalQuestions)
+	}
+	if res.Unanswered != 1 {
+		t.Errorf("expected 1 unanswered question, got %d", res.Unanswered)
+	}
+
+	// Idempotency check: repeated submit should return existing completed result gracefully
+	secondRes, err := svc.CompletePracticeAttempt(ctx, startRes.AttemptID, studentID, dto.SubmitPracticeRequest{
+		Answers: []dto.SubmitPracticeAnswerRequest{
+			{QuestionID: q1, AnswerData: opt1.String()},
+		},
+	})
+	if err != nil {
+		t.Fatalf("subsequent submit failed: %v", err)
+	}
+	if secondRes.Status != string(models.AttemptStatusCompleted) {
+		t.Errorf("expected idempotent status completed, got %s", secondRes.Status)
+	}
+}
+
+func TestPracticeService_ZeroAnswerCorrection(t *testing.T) {
+	repo := newMockPracticeRepo()
+	svc := service.NewPracticeService(nil, repo, nil, nil)
+	ctx := context.Background()
+
+	adminID := uuid.New()
+	studentID := uuid.New()
+
+	pkg, _ := svc.CreatePackage(ctx, dto.CreatePracticePackageRequest{
+		Title: "Paket Latihan Zero Answer Recovery",
+	}, adminID)
+
+	q1 := uuid.New()
+	q2 := uuid.New()
+	_, _ = svc.AddQuestionsToPackage(ctx, pkg.ID, dto.AddPracticeQuestionsRequest{QuestionIDs: []uuid.UUID{q1, q2}})
+	_, _ = svc.UpdatePackageStatus(ctx, pkg.ID, string(models.ContentStatusPublished), adminID)
+
+	startRes, err := svc.StartPracticeAttempt(ctx, pkg.ID, studentID)
+	if err != nil {
+		t.Fatalf("start practice failed: %v", err)
+	}
+
+	// 1. Submit with 0 answers (mimicking earlier parser failure)
+	res1, err := svc.CompletePracticeAttempt(ctx, startRes.AttemptID, studentID, dto.SubmitPracticeRequest{})
+	if err != nil {
+		t.Fatalf("empty submit failed: %v", err)
+	}
+	if res1.Unanswered != 2 {
+		t.Errorf("expected 2 unanswered, got %d", res1.Unanswered)
+	}
+
+	// 2. Client re-submits with answers (array format / recovery)
+	opt1 := uuid.New()
+	res2, err := svc.CompletePracticeAttempt(ctx, startRes.AttemptID, studentID, dto.SubmitPracticeRequest{
+		Answers: []dto.SubmitPracticeAnswerRequest{
+			{QuestionID: q1, AnswerData: opt1.String()},
+		},
+	})
+	if err != nil {
+		t.Fatalf("recovery submit failed: %v", err)
+	}
+	if res2.Unanswered != 1 {
+		t.Errorf("expected 1 unanswered after recovery, got %d", res2.Unanswered)
+	}
+}
