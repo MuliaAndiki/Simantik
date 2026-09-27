@@ -8,12 +8,14 @@ interface NewsPreviewSidebarProps {
   news: NewsResponse | null;
   onClose: () => void;
   onEdit: (news: NewsResponse) => void;
+  onOpenFull: (news: NewsResponse) => void;
 }
 
 export const NewsPreviewSidebar: React.FC<NewsPreviewSidebarProps> = ({
   news,
   onClose,
   onEdit,
+  onOpenFull,
 }) => {
   if (!news) return null;
 
@@ -110,6 +112,7 @@ export const NewsPreviewSidebar: React.FC<NewsPreviewSidebarProps> = ({
         </button>
         <button
           type="button"
+          onClick={() => onOpenFull(news)}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-[#334155] hover:bg-[#1E293B] transition shadow-sm"
         >
           <ExternalLink className="w-4 h-4" />

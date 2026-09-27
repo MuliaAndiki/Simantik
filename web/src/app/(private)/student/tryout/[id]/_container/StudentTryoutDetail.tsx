@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import StudentTryoutDetailPage from '@/components/page/private/student/StudentTryoutDetailPage';
 import { ProctoringProvider } from '@/core/providers/proctoring';
-import { DEFAULT_TRYOUT_QUESTIONS } from '@/data/tryoutQuestions.data';
 import { useApi } from '@/hooks/useApi';
 import { useProctoring } from '@/hooks/useProctoring';
 import type { QuestionStudentResponse, SubmitAnswerRequest } from '@/types/service';
@@ -118,17 +117,19 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
     { enabled: isAttemptUUID }
   );
 
-  // Fallback question dataset for resilience & offline presentation
+  // Active question derived strictly from API
   const activeQuestion: TryoutQuestionItem = useMemo(() => {
     if (questionData?.question) {
       return mapApiToTryoutQuestion(questionData.question, currentQuestionNumber);
     }
-    const idx = Math.min(
-      Math.max(0, currentQuestionNumber - 1),
-      DEFAULT_TRYOUT_QUESTIONS.length - 1
-    );
-    return DEFAULT_TRYOUT_QUESTIONS[idx];
-  }, [questionData?.question, currentQuestionNumber]);
+    return {
+      id: `q-placeholder-${currentQuestionNumber}`,
+      questionNumber: currentQuestionNumber,
+      type: 'pilihan-ganda',
+      questionText: isQuestionLoading ? 'Memuat butir soal...' : 'Butir soal tidak ditemukan.',
+      options: [],
+    };
+  }, [questionData?.question, currentQuestionNumber, isQuestionLoading]);
 
   const currentAnswer = answers[activeQuestion.id];
   const isCurrentFlagged = flaggedQuestions.has(currentQuestionNumber);

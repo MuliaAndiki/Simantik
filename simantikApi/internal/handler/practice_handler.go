@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 
 	"github.com/gofiber/fiber/v2"
@@ -369,7 +371,23 @@ func (h *PracticeHandler) SubmitPractice(c *fiber.Ctx) error {
 		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
 	}
 
-	res, err := h.practiceService.CompletePracticeAttempt(c.UserContext(), attemptID, userID)
+	var req dto.SubmitPracticeRequest
+	body := bytes.TrimSpace(c.Body())
+	if len(body) > 0 {
+		if body[0] == '[' {
+			var answers []dto.SubmitPracticeAnswerRequest
+			if err := json.Unmarshal(body, &answers); err != nil {
+				return utils.Error(c, fiber.StatusBadRequest, "invalid request body", err)
+			}
+			req.Answers = answers
+		} else {
+			if err := c.BodyParser(&req); err != nil {
+				return utils.Error(c, fiber.StatusBadRequest, "invalid request body", err)
+			}
+		}
+	}
+
+	res, err := h.practiceService.CompletePracticeAttempt(c.UserContext(), attemptID, userID, req)
 	if err != nil {
 		if errors.Is(err, service.ErrPracticeNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
@@ -400,7 +418,20 @@ func (h *PracticeHandler) AutoSubmitPractice(c *fiber.Ctx) error {
 	}
 
 	var req dto.AutoSubmitPracticeRequest
-	_ = c.BodyParser(&req)
+	body := bytes.TrimSpace(c.Body())
+	if len(body) > 0 {
+		if body[0] == '[' {
+			var answers []dto.SubmitPracticeAnswerRequest
+			if err := json.Unmarshal(body, &answers); err != nil {
+				return utils.Error(c, fiber.StatusBadRequest, "invalid request body", err)
+			}
+			req.Answers = answers
+		} else {
+			if err := c.BodyParser(&req); err != nil {
+				return utils.Error(c, fiber.StatusBadRequest, "invalid request body", err)
+			}
+		}
+	}
 	if req.Reason == "" {
 		req.Reason = "VIOLATION_THRESHOLD_EXCEEDED"
 	}

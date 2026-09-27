@@ -22,6 +22,7 @@ export interface NewsTemplateProps {
   onSelectNews: (news: NewsResponse) => void;
   onEditNews: (news: NewsResponse) => void;
   onClosePreview: () => void;
+  onOpenFull: (news: NewsResponse) => void;
   onPageChange: (page: number) => void;
 }
 
@@ -38,6 +39,7 @@ const NewsTemplate: React.FC<NewsTemplateProps> = ({
   onSelectNews,
   onEditNews,
   onClosePreview,
+  onOpenFull,
   onPageChange,
 }) => {
   return (
@@ -95,7 +97,12 @@ const NewsTemplate: React.FC<NewsTemplateProps> = ({
         </div>
 
         {selectedNews && (
-          <NewsPreviewSidebar news={selectedNews} onClose={onClosePreview} onEdit={onEditNews} />
+          <NewsPreviewSidebar
+            news={selectedNews}
+            onClose={onClosePreview}
+            onEdit={onEditNews}
+            onOpenFull={onOpenFull}
+          />
         )}
       </div>
     </div>

@@ -1,9 +1,9 @@
 import { ChevronDown, RotateCw, Search } from 'lucide-react';
 import React from 'react';
-import { MATERIAL_STATUSES } from '@/data/materialManager.data';
 import type { MaterialFilterState } from '@/types/ui/material-manager.types';
 
 const JENJANG_FILTER_OPTIONS = ['Semua Jenjang', 'SD', 'SMP', 'SMA', 'SMK'];
+const MATERIAL_STATUSES = ['Semua Status', 'Published', 'In Review', 'Draft'];
 
 interface MaterialFilterBarProps {
   filters: MaterialFilterState;

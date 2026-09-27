@@ -56,8 +56,9 @@ type PracticePackageResponse struct {
 	UpdatedAt      time.Time  `json:"updated_at"`
 
 	// Student-specific completion status (when queried by student)
-	IsCompleted *bool    `json:"is_completed,omitempty"`
-	LatestScore *float64 `json:"latest_score,omitempty"`
+	IsCompleted     *bool      `json:"is_completed,omitempty"`
+	LatestScore     *float64   `json:"latest_score,omitempty"`
+	LatestAttemptID *uuid.UUID `json:"latest_attempt_id,omitempty"`
 }
 
 // PracticePackageDetailResponse represents full practice package details including student-safe questions.
@@ -123,12 +124,15 @@ type SubmitPracticeAnswerResponse struct {
 	AnsweringTips  *string   `json:"answering_tips,omitempty"`
 }
 
-// AutoSubmitPracticeRequest payload when an attempt is auto-submitted due to violations or session expiry.
-type AutoSubmitPracticeRequest struct {
+// SubmitPracticeRequest payload for final submission of a practice attempt with bulk answers.
+type SubmitPracticeRequest struct {
+	Answers        []SubmitPracticeAnswerRequest `json:"answers" validate:"omitempty,dive"`
 	Reason         string                        `json:"reason" validate:"omitempty"`
 	ViolationCount int                           `json:"violation_count" validate:"omitempty"`
-	Answers        []SubmitPracticeAnswerRequest `json:"answers" validate:"omitempty,dive"`
 }
+
+// AutoSubmitPracticeRequest payload when an attempt is auto-submitted due to violations or session expiry.
+type AutoSubmitPracticeRequest = SubmitPracticeRequest
 
 // CompletePracticeResponse returned after submitting and grading a practice attempt.
 type CompletePracticeResponse struct {

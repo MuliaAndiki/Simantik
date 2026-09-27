@@ -75,11 +75,7 @@ export const PracticeQuestionContainer: React.FC = () => {
     jenjang: 'sma',
     description: '',
     status: 'DRAFT',
-    questions: [
-      createDefaultQuestion(1, 'pilihan-ganda'),
-      createDefaultQuestion(2, 'pilihan-ganda-kompleks'),
-      createDefaultQuestion(3, 'benar-salah'),
-    ],
+    questions: [createDefaultQuestion(1, 'pilihan-ganda')],
     activeQuestionIndex: 0,
   });
 
@@ -140,11 +136,7 @@ export const PracticeQuestionContainer: React.FC = () => {
                 answeringTips: '',
               };
             })
-          : [
-              createDefaultQuestion(1, 'pilihan-ganda'),
-              createDefaultQuestion(2, 'pilihan-ganda-kompleks'),
-              createDefaultQuestion(3, 'benar-salah'),
-            ];
+          : [createDefaultQuestion(1, 'pilihan-ganda')];
 
       setPackageForm((prev) => ({
         ...prev,

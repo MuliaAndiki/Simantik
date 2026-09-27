@@ -1,12 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { HelpPage } from '@/components/page/legal/HelpPage';
-import { HELP_CENTER_DATA } from '@/data/legal-docs.data';
+import { useApi } from '@/hooks/useApi';
+import { mapDocumentationToLegalDoc } from '@/utils/legal-doc.mapper';
 
 export default function HelpContainer() {
+  const { content } = useApi();
+  const { data: docData, isLoading } = content.query.documentationBySlug('bantuan');
+
+  const legalDoc = useMemo(
+    () =>
+      mapDocumentationToLegalDoc(docData, {
+        title: 'Pusat Bantuan',
+        badge: 'PANDUAN & BANTUAN',
+        greeting: 'Pusat Bantuan & Panduan SIMANTIK',
+        defaultContent:
+          'Selamat datang di Pusat Bantuan SIMANTIK. Temukan jawaban atas pertanyaan umum seputar akun, pelaksanaan tryout, materi pembelajaran, dan kendala teknis lainnya.',
+        route: '/help',
+      }),
+    [docData]
+  );
+
   const [activeSectionId, setActiveSectionId] = useState<string>(
-    HELP_CENTER_DATA.sections[0]?.id || 'section-01'
+    legalDoc.sections[0]?.id || 'section-01'
   );
 
   useEffect(() => {
@@ -57,8 +74,18 @@ export default function HelpContainer() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-semibold text-slate-600">Memuat pusat bantuan...</p>
+      </div>
+    );
+  }
+
   return (
     <HelpPage
+      data={legalDoc}
       activeSectionId={activeSectionId}
       onSelectSection={handleSelectSection}
       onPrint={handlePrint}

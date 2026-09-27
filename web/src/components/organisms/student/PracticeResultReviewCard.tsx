@@ -28,15 +28,19 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
             <span
               className={cn(
                 'inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold border',
-                isCorrect
-                  ? 'bg-teal-50 text-teal-800 border-teal-200'
-                  : 'bg-rose-50 text-rose-700 border-rose-200'
+                item.status === 'correct' && 'bg-teal-50 text-teal-800 border-teal-200',
+                item.status === 'wrong' && 'bg-rose-50 text-rose-700 border-rose-200',
+                item.status === 'unanswered' && 'bg-slate-100 text-slate-700 border-slate-300'
               )}
             >
-              {isCorrect ? (
+              {item.status === 'correct' && (
                 <Check className="w-3 h-3 text-teal-700 stroke-[2.5]" aria-hidden="true" />
-              ) : (
+              )}
+              {item.status === 'wrong' && (
                 <X className="w-3 h-3 text-rose-600 stroke-[2.5]" aria-hidden="true" />
+              )}
+              {item.status === 'unanswered' && (
+                <Info className="w-3 h-3 text-slate-500 stroke-[2.5]" aria-hidden="true" />
               )}
               <span>{item.statusLabel}</span>
             </span>

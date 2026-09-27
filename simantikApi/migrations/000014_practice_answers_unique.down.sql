@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS idx_practice_answers_practice_question;

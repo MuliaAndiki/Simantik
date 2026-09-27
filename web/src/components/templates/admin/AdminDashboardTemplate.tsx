@@ -1,13 +1,17 @@
 import React from 'react';
 import {
-  AdminDashboardCurriculumSummary,
-  type AdminDashboardCurriculumSummaryProps,
+  AdminDashboardContentStatus,
+  type AdminDashboardContentStatusProps,
+  AdminDashboardGrowthChart,
+  type AdminDashboardGrowthChartProps,
   AdminDashboardHero,
   type AdminDashboardHeroProps,
   AdminDashboardQuickActions,
   type AdminDashboardQuickActionsProps,
-  AdminDashboardRecentAttempts,
-  type AdminDashboardRecentAttemptsProps,
+  AdminDashboardRecentActivities,
+  type AdminDashboardRecentActivitiesProps,
+  AdminDashboardRecentStudentsTable,
+  type AdminDashboardRecentStudentsTableProps,
   AdminDashboardStatCards,
   type AdminDashboardStatCardsProps,
 } from '@/components/organisms/admin';
@@ -15,41 +19,51 @@ import { cn } from '@/utils/classname';
 
 export interface AdminDashboardTemplateProps {
   heroProps?: AdminDashboardHeroProps;
-  statCardsProps: AdminDashboardStatCardsProps;
   quickActionsProps: AdminDashboardQuickActionsProps;
-  recentAttemptsProps: AdminDashboardRecentAttemptsProps;
-  curriculumSummaryProps: AdminDashboardCurriculumSummaryProps;
+  statCardsProps: AdminDashboardStatCardsProps;
+  contentStatusProps?: AdminDashboardContentStatusProps;
+  recentActivitiesProps?: AdminDashboardRecentActivitiesProps;
+  growthChartProps?: AdminDashboardGrowthChartProps;
+  recentStudentsTableProps?: AdminDashboardRecentStudentsTableProps;
   className?: string;
 }
 
 export const AdminDashboardTemplate: React.FC<AdminDashboardTemplateProps> = ({
   heroProps,
-  statCardsProps,
   quickActionsProps,
-  recentAttemptsProps,
-  curriculumSummaryProps,
+  statCardsProps,
+  contentStatusProps,
+  recentActivitiesProps,
+  growthChartProps,
+  recentStudentsTableProps,
   className,
 }) => {
   return (
-    <div className={cn('w-full max-w-full mx-auto space-y-6 md:space-y-7 pb-10', className)}>
-      {/* 1. Header Hero Banner */}
+    <div className={cn('w-full max-w-full mx-auto space-y-6 md:space-y-6 pb-12', className)}>
+      {/* 1. Header Hero / Page Title */}
       <AdminDashboardHero {...heroProps} />
 
-      {/* 2. Platform Overview KPI Cards */}
-      <AdminDashboardStatCards {...statCardsProps} />
-
-      {/* 3. Management & Quick Actions */}
+      {/* 2. Quick Actions */}
       <AdminDashboardQuickActions {...quickActionsProps} />
 
-      {/* 4. Bottom Row: Recent Exam Attempts Feed & Curriculum Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-7 items-stretch">
-        <div className="lg:col-span-7 xl:col-span-8 flex">
-          <AdminDashboardRecentAttempts {...recentAttemptsProps} className="h-full" />
+      {/* 3. Primary KPI Stat Cards (5 cards) */}
+      <AdminDashboardStatCards {...statCardsProps} />
+
+      {/* 4. Middle Row: Content Status & Recent Activities Audit Log */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="lg:col-span-6 flex">
+          <AdminDashboardContentStatus {...contentStatusProps} className="h-full" />
         </div>
-        <div className="lg:col-span-5 xl:col-span-4 flex">
-          <AdminDashboardCurriculumSummary {...curriculumSummaryProps} className="h-full" />
+        <div className="lg:col-span-6 flex">
+          <AdminDashboardRecentActivities {...recentActivitiesProps} className="h-full" />
         </div>
       </div>
+
+      {/* 5. Student Growth Chart */}
+      <AdminDashboardGrowthChart {...growthChartProps} />
+
+      {/* 6. Recent Registered Students Table */}
+      <AdminDashboardRecentStudentsTable {...recentStudentsTableProps} />
     </div>
   );
 };

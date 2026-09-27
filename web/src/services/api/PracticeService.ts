@@ -17,6 +17,7 @@ import type {
   StartPracticeResponse,
   SubmitPracticeAnswerRequest,
   SubmitPracticeAnswerResponse,
+  SubmitPracticeRequest,
   UpdatePracticePackageRequest,
 } from '@/types/service';
 import { buildQueryString } from '@/utils/query-string.util';
@@ -86,10 +87,12 @@ class PracticeService {
   }
 
   public async SubmitPracticeService(
-    attemptId: string
+    attemptId: string,
+    payload?: SubmitPracticeRequest
   ): Promise<TResponse<CompletePracticeResponse>> {
     const res = await getHttp().PostResponse<CompletePracticeResponse>(
-      EndpointEntry.practice.submitPractice(attemptId)
+      EndpointEntry.practice.submitPractice(attemptId),
+      payload
     );
     return toServiceResponse(res, {
       message: res.message,

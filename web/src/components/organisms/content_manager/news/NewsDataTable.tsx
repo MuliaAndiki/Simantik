@@ -53,13 +53,6 @@ export const NewsDataTable: React.FC<NewsDataTableProps> = ({
     }
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return 'U';
-    const parts = name.split(' ');
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  };
-
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col justify-between overflow-hidden">
       <div className="overflow-x-auto">
@@ -67,7 +60,7 @@ export const NewsDataTable: React.FC<NewsDataTableProps> = ({
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] uppercase tracking-wider font-bold text-slate-500">
               <th className="py-3 px-4">Artikel</th>
-              <th className="py-3 px-4">Author</th>
+
               <th className="py-3 px-4 text-center">Status</th>
               <th className="py-3 px-4 text-center">Statistik</th>
               <th className="py-3 px-4">Tanggal Rilis</th>
@@ -121,21 +114,7 @@ export const NewsDataTable: React.FC<NewsDataTableProps> = ({
                           >
                             {item.title}
                           </p>
-                          <p className="text-[11px] text-slate-400 font-medium">
-                            Oleh: {item.createdBy}
-                          </p>
                         </div>
-                      </div>
-                    </td>
-
-                    <td className="py-3.5 px-4 align-top whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-[10px] font-bold">
-                          {getInitials(item.createdBy)}
-                        </div>
-                        <span className="text-xs font-semibold text-slate-700">
-                          {item.createdBy}
-                        </span>
                       </div>
                     </td>
 
@@ -158,7 +137,9 @@ export const NewsDataTable: React.FC<NewsDataTableProps> = ({
 
                     <td className="py-3.5 px-4 align-top whitespace-nowrap text-xs text-slate-500 font-medium">
                       {item.publishedAt
-                        ? format(new Date(item.publishedAt), 'dd MMM yyyy', { locale: id })
+                        ? format(new Date(item.publishedAt), 'dd MMM yyyy', {
+                            locale: id,
+                          })
                         : '-'}
                     </td>
 

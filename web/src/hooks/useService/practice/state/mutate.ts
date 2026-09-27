@@ -11,6 +11,7 @@ import type {
   StartPracticeResponse,
   SubmitPracticeAnswerRequest,
   SubmitPracticeAnswerResponse,
+  SubmitPracticeRequest,
   UpdatePracticePackageRequest,
 } from '@/types/service';
 import { type PracticeCacheContext, readPracticeSnapshot } from '@/utils/cache/practice.cache';
@@ -37,13 +38,24 @@ export function useSubmitPracticeAnswer() {
 }
 
 export function useSubmitPractice() {
-  return useAppMutation<CompletePracticeResponse, string, PracticeCacheContext>({
-    mutationFn: (attemptId: string) => Api.practice.SubmitPracticeService(attemptId),
-    invalidateKeys: (_data, attemptId) => [
-      queryKey.practiceRoot(),
-      queryKey.practice.result(attemptId),
-      queryKey.evaluationRoot(),
-    ],
+  return useAppMutation<
+    CompletePracticeResponse,
+    string | { attemptId: string; body?: SubmitPracticeRequest },
+    PracticeCacheContext
+  >({
+    mutationFn: (variables) => {
+      const attemptId = typeof variables === 'string' ? variables : variables.attemptId;
+      const body = typeof variables === 'string' ? undefined : variables.body;
+      return Api.practice.SubmitPracticeService(attemptId, body);
+    },
+    invalidateKeys: (_data, variables) => {
+      const attemptId = typeof variables === 'string' ? variables : variables.attemptId;
+      return [
+        queryKey.practiceRoot(),
+        queryKey.practice.result(attemptId),
+        queryKey.evaluationRoot(),
+      ];
+    },
   });
 }
 

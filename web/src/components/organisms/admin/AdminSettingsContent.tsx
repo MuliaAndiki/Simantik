@@ -1,9 +1,11 @@
-import { Lock, Server, ShieldCheck, User } from 'lucide-react';
+import { FileText, Lock, Server, ShieldCheck, User } from 'lucide-react';
 import type React from 'react';
 import { Button, Input } from '@/components/atoms';
+import type { AdminAuditLogItem } from '@/types/service';
 import { cn } from '@/utils/classname';
+import { AdminDashboardRecentActivities } from './AdminDashboardRecentActivities';
 
-export type AdminSettingsTab = 'profile' | 'security' | 'system';
+export type AdminSettingsTab = 'profile' | 'security' | 'system' | 'logs';
 
 export interface AdminSettingsContentProps {
   activeTab: AdminSettingsTab;
@@ -14,6 +16,7 @@ export interface AdminSettingsContentProps {
   onSaveProfile: (e: React.FormEvent) => void;
   onSavePassword: (e: React.FormEvent) => void;
   className?: string;
+  auditLogs?: AdminAuditLogItem[];
 }
 
 export const AdminSettingsContent: React.FC<AdminSettingsContentProps> = ({
@@ -25,6 +28,7 @@ export const AdminSettingsContent: React.FC<AdminSettingsContentProps> = ({
   onSaveProfile,
   onSavePassword,
   className,
+  auditLogs,
 }) => {
   return (
     <div className={cn('w-full space-y-6', className)}>
@@ -91,6 +95,18 @@ export const AdminSettingsContent: React.FC<AdminSettingsContentProps> = ({
           >
             <Server className="size-4" />
             Status Layanan & API
+          </button>
+          <button
+            type="button"
+            onClick={() => onActiveTabChange('logs')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+              activeTab === 'logs'
+                ? 'bg-[#EAF6F8] text-teal-800 border border-cyan-200'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <FileText className="size-4" />
+            Sistem Log Web
           </button>
         </div>
       </div>
@@ -224,6 +240,16 @@ export const AdminSettingsContent: React.FC<AdminSettingsContentProps> = ({
               <p className="text-xs text-slate-500 mt-1 font-medium">Status: S3 Bucket Active</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Tab 4: Audit Logs */}
+      {activeTab === 'logs' && (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs p-6 md:p-8 space-y-6">
+          <AdminDashboardRecentActivities
+            activities={auditLogs}
+            className="border-0 shadow-none p-0"
+          />
         </div>
       )}
     </div>

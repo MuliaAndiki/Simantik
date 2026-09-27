@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -80,6 +81,17 @@ func (r *tryoutAttemptRepository) UpsertAnswer(ctx context.Context, ans *models.
 	if ans.ID == uuid.Nil {
 		ans.ID = uuid.New()
 	}
+	var answerDataParam interface{} = nil
+	if ans.AnswerData != "" {
+		var js json.RawMessage
+		if json.Unmarshal([]byte(ans.AnswerData), &js) == nil {
+			answerDataParam = ans.AnswerData
+		} else {
+			if b, err := json.Marshal(ans.AnswerData); err == nil {
+				answerDataParam = string(b)
+			}
+		}
+	}
 	result := r.db.WithContext(ctx).Exec(
 		`INSERT INTO student_answers (id, attempt_id, question_id, attempt_question_id, selected_option_id, answer_data, is_correct, score, response_time_seconds, answered_at, created_at, updated_at)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
@@ -87,7 +99,7 @@ func (r *tryoutAttemptRepository) UpsertAnswer(ctx context.Context, ans *models.
 		 DO UPDATE SET selected_option_id=EXCLUDED.selected_option_id, answer_data=EXCLUDED.answer_data,
 		 is_correct=EXCLUDED.is_correct, score=EXCLUDED.score, response_time_seconds=EXCLUDED.response_time_seconds, answered_at=EXCLUDED.answered_at, updated_at=NOW()`,
 		ans.ID, ans.AttemptID, ans.QuestionID, ans.AttemptQuestionID, ans.SelectedOptionID,
-		ans.AnswerData, ans.IsCorrect, ans.Score, ans.ResponseTimeSeconds, ans.AnsweredAt,
+		answerDataParam, ans.IsCorrect, ans.Score, ans.ResponseTimeSeconds, ans.AnsweredAt,
 	)
 	return result.Error
 }

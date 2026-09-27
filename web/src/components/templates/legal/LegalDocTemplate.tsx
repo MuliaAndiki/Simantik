@@ -8,7 +8,7 @@ import { LegalDocFooter } from '@/components/organisms/legal/LegalDocFooter';
 import { LegalDocNavbar } from '@/components/organisms/legal/LegalDocNavbar';
 import { LegalHeroHeader } from '@/components/organisms/legal/LegalHeroHeader';
 import { LegalSectionCard } from '@/components/organisms/legal/LegalSectionCard';
-import type { LegalDocData } from '@/data/legal-docs.data';
+import type { LegalDocData } from '@/types/ui';
 import { cn } from '@/utils/classname';
 
 export interface LegalDocTemplateProps {

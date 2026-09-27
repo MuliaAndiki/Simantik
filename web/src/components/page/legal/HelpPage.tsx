@@ -1,17 +1,18 @@
 import type * as React from 'react';
 import { LegalDocTemplate } from '@/components/templates/legal/LegalDocTemplate';
-import { HELP_CENTER_DATA } from '@/data/legal-docs.data';
+import type { LegalDocData } from '@/types/ui';
 
 export interface HelpPageProps {
+  data: LegalDocData;
   activeSectionId?: string;
   onSelectSection?: (id: string) => void;
   onPrint?: () => void;
 }
 
-export function HelpPage({ activeSectionId, onSelectSection, onPrint }: HelpPageProps) {
+export function HelpPage({ data, activeSectionId, onSelectSection, onPrint }: HelpPageProps) {
   return (
     <LegalDocTemplate
-      data={HELP_CENTER_DATA}
+      data={data}
       activeRoute="/help"
       activeSectionId={activeSectionId}
       onSelectSection={onSelectSection}

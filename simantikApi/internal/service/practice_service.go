@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -286,6 +288,7 @@ func (s *practiceService) ListPublishedPackages(ctx context.Context, filter dto.
 			isCompleted := true
 			res.Packages[i].IsCompleted = &isCompleted
 			res.Packages[i].LatestScore = latest.Score
+			res.Packages[i].LatestAttemptID = &latest.ID
 		} else {
 			isCompleted := false
 			res.Packages[i].IsCompleted = &isCompleted
@@ -438,24 +441,33 @@ func (s *practiceService) SubmitAnswer(ctx context.Context, attemptID, userID uu
 	if attempt.UserID != userID {
 		return nil, ErrPracticeNotOwner
 	}
-	if attempt.Status != models.AttemptStatusInProgress {
+	if attempt.Status != models.AttemptStatusInProgress && attempt.Status != models.AttemptStatusCompleted {
 		return nil, ErrPracticeNotActive
 	}
 
-	// Verify question belongs to this practice package
-	pkgQIDs, err := s.practiceRepo.GetPackageQuestionIDs(ctx, *attempt.PackageID)
-	if err != nil {
-		return nil, err
-	}
-	found := false
-	for _, id := range pkgQIDs {
-		if id == req.QuestionID {
-			found = true
-			break
+	// Verify question belongs to this practice package if package has pre-bound questions
+	if attempt.PackageID != nil {
+		pkgQIDs, err := s.practiceRepo.GetPackageQuestionIDs(ctx, *attempt.PackageID)
+		if err == nil && len(pkgQIDs) > 0 {
+			found := false
+			for _, id := range pkgQIDs {
+				if id == req.QuestionID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, ErrPracticeQuestionNotFound
+			}
 		}
 	}
-	if !found {
-		return nil, ErrPracticeQuestionNotFound
+
+	// Fallback to parse AnswerData as option UUID if SelectedOptionID was omitted
+	if req.SelectedOptionID == nil && req.AnswerData != "" {
+		clean := strings.Trim(strings.TrimSpace(req.AnswerData), "\"")
+		if parsedOptID, err := uuid.Parse(clean); err == nil {
+			req.SelectedOptionID = &parsedOptID
+		}
 	}
 
 	// Evaluate correctness server-side based on option
@@ -525,23 +537,68 @@ func (s *practiceService) CompletePracticeAttempt(ctx context.Context, attemptID
 	if attempt.UserID != userID {
 		return nil, ErrPracticeNotOwner
 	}
-	if attempt.Status != models.AttemptStatusInProgress {
+	if attempt.Status == models.AttemptStatusCompleted {
+		hasNewAnswers := len(autoSubmitReq) > 0 && len(autoSubmitReq[0].Answers) > 0
+
+		// If no new answers are provided, return current completed result idempotently
+		if !hasNewAnswers {
+			ansCount, _ := s.practiceRepo.CountAnswers(ctx, attemptID)
+			score := 0.0
+			if attempt.Score != nil {
+				score = *attempt.Score
+			}
+			completedAt := time.Now()
+			if attempt.CompletedAt != nil {
+				completedAt = *attempt.CompletedAt
+			}
+			unanswered := attempt.TotalQuestions - attempt.CorrectAnswers
+			if attempt.TotalQuestions > 0 {
+				unanswered = attempt.TotalQuestions - int(ansCount)
+				if unanswered < 0 {
+					unanswered = 0
+				}
+			}
+			incorrect := attempt.TotalQuestions - attempt.CorrectAnswers - unanswered
+			if incorrect < 0 {
+				incorrect = 0
+			}
+			return &dto.CompletePracticeResponse{
+				AttemptID:        attempt.ID,
+				Status:           string(attempt.Status),
+				Score:            score,
+				TotalQuestions:   attempt.TotalQuestions,
+				CorrectAnswers:   attempt.CorrectAnswers,
+				IncorrectAnswers: incorrect,
+				Unanswered:       unanswered,
+				CompletedAt:      completedAt,
+				IsAutoSubmitted:  attempt.IsAutoSubmitted,
+				AutoSubmitReason: attempt.AutoSubmitReason,
+			}, nil
+		}
+	} else if attempt.Status != models.AttemptStatusInProgress {
 		return nil, ErrPracticeNotActive
 	}
 
 	isAutoSubmit := false
 	autoSubmitReason := ""
 	if len(autoSubmitReq) > 0 {
-		isAutoSubmit = true
-		autoSubmitReason = autoSubmitReq[0].Reason
-		if autoSubmitReason == "" {
-			autoSubmitReason = "VIOLATION_THRESHOLD_EXCEEDED"
+		req := autoSubmitReq[0]
+		if req.Reason != "" {
+			isAutoSubmit = true
+			autoSubmitReason = req.Reason
 		}
 
-		// Flush any pending answers sent along with auto-submit payload
-		for _, ansReq := range autoSubmitReq[0].Answers {
+		// Deduplicate answers by question ID (preserve last answer) and persist
+		uniqueAnswers := make(map[uuid.UUID]dto.SubmitPracticeAnswerRequest)
+		for _, ansReq := range req.Answers {
 			if ansReq.QuestionID != uuid.Nil {
-				_, _ = s.SubmitAnswer(ctx, attemptID, userID, ansReq)
+				uniqueAnswers[ansReq.QuestionID] = ansReq
+			}
+		}
+
+		for _, ansReq := range uniqueAnswers {
+			if _, err := s.SubmitAnswer(ctx, attemptID, userID, ansReq); err != nil {
+				return nil, fmt.Errorf("failed to submit answer for question %s: %w", ansReq.QuestionID, err)
 			}
 		}
 	}
@@ -551,12 +608,18 @@ func (s *practiceService) CompletePracticeAttempt(ctx context.Context, attemptID
 		return nil, err
 	}
 
-	qIDs, err := s.practiceRepo.GetPackageQuestionIDs(ctx, *attempt.PackageID)
-	if err != nil {
-		return nil, err
+	var qIDs []uuid.UUID
+	if attempt.PackageID != nil {
+		qIDs, _ = s.practiceRepo.GetPackageQuestionIDs(ctx, *attempt.PackageID)
 	}
 
 	totalQuestions := len(qIDs)
+	if totalQuestions == 0 {
+		totalQuestions = attempt.TotalQuestions
+	}
+	if totalQuestions == 0 {
+		totalQuestions = len(answers)
+	}
 	correctCount := 0
 	for _, a := range answers {
 		if a.IsCorrect != nil && *a.IsCorrect {
@@ -719,6 +782,9 @@ func (s *practiceService) GetPracticeResult(ctx context.Context, attemptID, user
 	pkgTitle := ""
 	if attempt.Package != nil {
 		pkgTitle = attempt.Package.Title
+	}
+
+	if attempt.Package != nil && len(attempt.Package.Questions) > 0 {
 		reviews = make([]dto.PracticeAnswerReviewItem, len(attempt.Package.Questions))
 		for i, q := range attempt.Package.Questions {
 			ans, hasAns := ansMap[q.ID]
@@ -784,6 +850,58 @@ func (s *practiceService) GetPracticeResult(ctx context.Context, attemptID, user
 				AnsweringTips:    answeringTips,
 			}
 		}
+	} else if len(answers) > 0 {
+		reviews = make([]dto.PracticeAnswerReviewItem, len(answers))
+		for i, ans := range answers {
+			isCorrect := false
+			score := 0.0
+			if ans.IsCorrect != nil {
+				isCorrect = *ans.IsCorrect
+			}
+			if ans.Score != nil {
+				score = *ans.Score
+			}
+
+			qText := ""
+			opts := []dto.OptionReviewResponse{}
+			comps := []dto.CompetencyResponse{}
+			explanation := ""
+			answeringTips := ""
+
+			if ans.Question != nil {
+				qText = ans.Question.QuestionText
+				opts = make([]dto.OptionReviewResponse, len(ans.Question.Options))
+				for j, opt := range ans.Question.Options {
+					isSelected := ans.SelectedOptionID != nil && *ans.SelectedOptionID == opt.ID
+					opts[j] = dto.OptionReviewResponse{
+						ID:           opt.ID,
+						OptionLabel:  opt.OptionLabel,
+						OptionText:   opt.OptionText,
+						IsCorrect:    opt.IsCorrect,
+						IsSelected:   isSelected,
+						DisplayOrder: opt.DisplayOrder,
+					}
+				}
+				if ans.Question.Explanation != nil {
+					explanation = ans.Question.Explanation.Explanation
+					answeringTips = ans.Question.Explanation.AnsweringTips
+				}
+			}
+
+			reviews[i] = dto.PracticeAnswerReviewItem{
+				QuestionNumber:   i + 1,
+				QuestionID:       ans.QuestionID,
+				QuestionText:     qText,
+				Competencies:     comps,
+				Options:          opts,
+				SelectedOptionID: ans.SelectedOptionID,
+				AnswerData:       ans.AnswerData,
+				IsCorrect:        isCorrect,
+				Score:            score,
+				Explanation:      explanation,
+				AnsweringTips:    answeringTips,
+			}
+		}
 	}
 
 	scoreVal := 0.0
@@ -799,16 +917,30 @@ func (s *practiceService) GetPracticeResult(ctx context.Context, attemptID, user
 		}
 	}
 
+	var pkgID uuid.UUID
+	if attempt.PackageID != nil {
+		pkgID = *attempt.PackageID
+	}
+
+	incorrectCount := len(answers) - attempt.CorrectAnswers
+	if incorrectCount < 0 {
+		incorrectCount = 0
+	}
+	unansweredCount := attempt.TotalQuestions - len(answers)
+	if unansweredCount < 0 {
+		unansweredCount = 0
+	}
+
 	return &dto.PracticeResultResponse{
 		AttemptID:        attempt.ID,
-		PackageID:        *attempt.PackageID,
+		PackageID:        pkgID,
 		PackageTitle:     pkgTitle,
 		Status:           string(attempt.Status),
 		Score:            scoreVal,
 		TotalQuestions:   attempt.TotalQuestions,
 		CorrectAnswers:   attempt.CorrectAnswers,
-		IncorrectAnswers: len(answers) - attempt.CorrectAnswers,
-		Unanswered:       attempt.TotalQuestions - len(answers),
+		IncorrectAnswers: incorrectCount,
+		Unanswered:       unansweredCount,
 		StartedAt:        attempt.StartedAt,
 		CompletedAt:      attempt.CompletedAt,
 		EvaluationID:     evalIDPtr,
