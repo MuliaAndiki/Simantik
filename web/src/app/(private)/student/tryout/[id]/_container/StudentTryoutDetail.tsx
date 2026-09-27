@@ -15,6 +15,7 @@ import type {
   TryoutQuestionItem,
   TryoutQuestionType,
 } from '@/types/ui';
+import { parseMatrixOptions, parseWacanaQuestion } from '@/utils/wacana';
 
 function isUUID(str?: string | null): boolean {
   if (!str) return false;
@@ -51,11 +52,31 @@ function mapApiToTryoutQuestion(apiQ: QuestionStudentResponse, qNum: number): Tr
     description: undefined,
   }));
 
+  const parsed = parseWacanaQuestion(apiQ.question_text);
+  const stimulus = parsed.hasStimulus
+    ? { title: parsed.stimulusTitle, content: parsed.stimulusHtml }
+    : undefined;
+
+  // Opsi bertanda `[KUNCI: ...]` = soal matriks, bukan pilihan ganda.
+  const matrix = parseMatrixOptions(apiQ.options);
+  if (matrix) {
+    return {
+      id: apiQ.id,
+      questionNumber: qNum,
+      type: matrix.kind,
+      questionText: parsed.bodyHtml,
+      stimulus,
+      statements: matrix.statements,
+      difficultyLevel: apiQ.difficulty_level,
+    };
+  }
+
   return {
     id: apiQ.id,
     questionNumber: qNum,
     type: qType,
-    questionText: apiQ.question_text,
+    questionText: parsed.bodyHtml,
+    stimulus,
     options,
     difficultyLevel: apiQ.difficulty_level,
   };

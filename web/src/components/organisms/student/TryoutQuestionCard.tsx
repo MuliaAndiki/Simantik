@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, Bookmark, Check, Lock } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/atoms/button';
+import { RichHtml } from '@/components/atoms/rich-html';
 import type {
   TryoutAnswerValue,
   TryoutChoiceOption,
@@ -61,18 +62,22 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
                 {question.stimulus.title}
               </div>
             )}
-            {question.stimulus.content?.map((par, i) => (
-              <p key={`stimulus-par-${i}-${par.slice(0, 15)}`} className="mb-2 last:mb-0">
-                {par}
-              </p>
-            ))}
+            {Array.isArray(question.stimulus.content) ? (
+              question.stimulus.content?.map((par, i) => (
+                <p key={`stimulus-par-${i}`} className="mb-2 last:mb-0">
+                  <RichHtml html={par} />
+                </p>
+              ))
+            ) : (
+              <RichHtml html={question.stimulus.content} />
+            )}
           </div>
         )}
 
         {/* Primary Question Prompt */}
-        <h2 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 leading-snug">
-          {question.questionText}
-        </h2>
+        <div className="text-base sm:text-lg md:text-xl font-bold text-slate-900 leading-snug">
+          <RichHtml html={question.questionText} />
+        </div>
 
         {/* 2. Interactive Answer Options */}
         <div className="space-y-3 pt-1">
@@ -108,11 +113,11 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
                   {/* Option Title & Description Subtitle */}
                   <div className="flex-1">
                     <p className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
-                      {option.title}
+                      <RichHtml html={option.title} />
                     </p>
                     {option.description && (
                       <p className="text-xs sm:text-sm text-slate-500 font-normal leading-relaxed mt-1">
-                        {option.description}
+                        <RichHtml html={option.description} />
                       </p>
                     )}
                   </div>
@@ -153,10 +158,10 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
 
                   {/* Option Text */}
                   <div className="flex-1 text-xs sm:text-sm md:text-base font-medium text-slate-900 leading-snug">
-                    {option.title}
+                    <RichHtml html={option.title} />
                     {option.description && (
                       <p className="text-xs text-slate-500 font-normal mt-0.5">
-                        {option.description}
+                        <RichHtml html={option.description} />
                       </p>
                     )}
                   </div>
@@ -202,7 +207,7 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
                   className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <p className="text-xs sm:text-sm font-medium text-slate-900 flex-1 leading-snug">
-                    {stmt.statement}
+                    <RichHtml html={stmt.statement} />
                   </p>
                   <div className="flex items-center gap-2 shrink-0">
                     <button

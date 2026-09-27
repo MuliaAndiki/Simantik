@@ -11,6 +11,39 @@ import type {
   PracticeReviewFilter,
   PracticeReviewItem,
 } from '@/types/ui';
+import { parseMatrixOptions, parseWacanaQuestion } from '@/utils/wacana';
+
+const MATRIX_TYPE_LABELS: Record<string, string> = {
+  'benar-salah': 'Benar-Salah',
+  'tepat-tidak-tepat': 'Tepat-Tidak Tepat',
+  'setuju-tidak-setuju': 'Setuju-Tidak Setuju',
+};
+
+function humanizeKey(key: string): string {
+  if (!key) return '-';
+  return key
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function normalizeKey(value: string): string {
+  return value.toUpperCase().replace(/\s+/g, '_');
+}
+
+// answer_data matriks tersimpan sebagai JSON {"optionId": "SETUJU", ...}
+function parseAnswerMap(raw?: string | null): Record<string, string> {
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, string>;
+    }
+  } catch {
+    // bukan JSON (jawaban tunggal), bukan map matriks
+  }
+  return {};
+}
 
 export function StudentPracticeResult() {
   const router = useRouter();
@@ -84,6 +117,70 @@ export function StudentPracticeResult() {
     return attemptResult.reviews.map((rev, idx) => {
       const qNum = rev.question_number || idx + 1;
       const isCorrect = rev.is_correct;
+      const parsed = parseWacanaQuestion(rev.question_text);
+      const stimulus = parsed.hasStimulus
+        ? {
+            label: parsed.stimulusTitle || 'Wacana',
+            content: parsed.stimulusHtml || '',
+          }
+        : undefined;
+
+      const competencyName =
+        rev.competencies && rev.competencies.length > 0
+          ? rev.competencies[0].name
+          : 'Pemahaman Wacana';
+
+      // Soal matriks: render tabel pernyataan, bukan daftar opsi.
+      const matrix = parseMatrixOptions(rev.options);
+      if (matrix) {
+        const answerMap = parseAnswerMap(rev.answer_data);
+        const matrixRows = matrix.statements.map((stmt) => {
+          const rawChoice =
+            answerMap[stmt.id] ??
+            Object.entries(answerMap).find(
+              ([k]) => k.toLowerCase() === stmt.id.toLowerCase()
+            )?.[1] ??
+            '';
+          const userChoice = rawChoice ? humanizeKey(normalizeKey(String(rawChoice))) : '-';
+          const validKey = humanizeKey(stmt.key);
+          return {
+            statement: stmt.statement,
+            userChoice,
+            validKey,
+            isCorrect:
+              rawChoice !== '' && normalizeKey(String(rawChoice)) === normalizeKey(stmt.key),
+          };
+        });
+
+        const hasUserAnswer = matrixRows.some((r) => r.userChoice !== '-');
+        const status = isCorrect ? 'correct' : hasUserAnswer ? 'wrong' : 'unanswered';
+        const statusLabel = isCorrect ? 'BENAR' : hasUserAnswer ? 'SALAH' : 'TIDAK DIJAWAB';
+
+        return {
+          number: qNum,
+          formattedNumber: String(qNum).padStart(2, '0'),
+          status,
+          statusLabel,
+          type: 'matriks-tabel',
+          typeLabel: MATRIX_TYPE_LABELS[matrix.kind] ?? 'Matriks',
+          subtest: `Subtes: ${competencyName}`,
+          title: `Butir Soal Nomor ${qNum}`,
+          prompt: parsed.bodyHtml,
+          stimulus,
+          matrixRows,
+          discussion: {
+            type: isCorrect ? 'analitis' : 'kekeliruan',
+            title: isCorrect ? 'Pembahasan Analitis' : 'Analisis Kekeliruan',
+            content:
+              rev.explanation ||
+              (isCorrect
+                ? 'Jawaban kamu tepat sesuai dengan analisis wacana dan opsi kunci.'
+                : hasUserAnswer
+                  ? 'Pilihan jawaban belum tepat. Pelajari kembali premis wacana dan kunci jawaban yang sahih.'
+                  : 'Soal ini tidak dijawab. Pelajari kunci jawaban dan penjelasan untuk butir soal ini.'),
+          },
+        };
+      }
 
       const options = (rev.options || []).map((opt, optIdx) => {
         const isUserChoice = Boolean(
@@ -112,25 +209,24 @@ export function StudentPracticeResult() {
         };
       });
 
-      const competencyName =
-        rev.competencies && rev.competencies.length > 0
-          ? rev.competencies[0].name
-          : 'Pemahaman Wacana';
-
       const hasUserAnswer = options.some((o) => o.isUserChoice);
       const status = isCorrect ? 'correct' : hasUserAnswer ? 'wrong' : 'unanswered';
       const statusLabel = isCorrect ? 'BENAR' : hasUserAnswer ? 'SALAH' : 'TIDAK DIJAWAB';
+
+      // >1 kunci benar = pilihan ganda kompleks (MCMA).
+      const isMcma = (rev.options || []).filter((o) => o.is_correct).length > 1;
 
       return {
         number: qNum,
         formattedNumber: String(qNum).padStart(2, '0'),
         status,
         statusLabel,
-        type: 'pilihan-ganda',
-        typeLabel: 'Pilihan Ganda',
+        type: isMcma ? 'mcma' : 'pilihan-ganda',
+        typeLabel: isMcma ? 'Pilihan Ganda Kompleks' : 'Pilihan Ganda',
         subtest: `Subtes: ${competencyName}`,
         title: `Butir Soal Nomor ${qNum}`,
-        prompt: rev.question_text,
+        prompt: parsed.bodyHtml,
+        stimulus,
         options,
         discussion: {
           type: isCorrect ? 'analitis' : 'kekeliruan',

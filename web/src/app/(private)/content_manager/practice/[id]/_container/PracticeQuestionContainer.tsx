@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PracticeCreatePage } from '@/components/page/private/content_manager/PracticeCreatePage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
@@ -66,6 +66,12 @@ export const PracticeQuestionContainer: React.FC = () => {
   const updatePackageMutation = api.practice.mutate.updatePackage();
   const createQuestionMutation = api.question.mutate.create();
   const addQuestionsMutation = api.practice.mutate.addQuestions();
+  const removeQuestionMutation = api.practice.mutate.removeQuestion();
+
+  // Id soal yang sudah menempel di paket saat halaman dimuat.
+  // Save hanya create soal baru + detach soal yang dihapus editor,
+  // agar soal lama tidak terduplikasi setiap kali menyimpan.
+  const initialQuestionIdsRef = useRef<string[]>([]);
 
   // State: Package Form
   const [packageForm, setPackageForm] = useState<PracticePackageEditorForm>({
@@ -148,6 +154,7 @@ export const PracticeQuestionContainer: React.FC = () => {
         status: (pkg.status || 'DRAFT').toUpperCase() as typeof prev.status,
         questions: loadedQuestions,
       }));
+      initialQuestionIdsRef.current = (pkg.questions ?? []).map((q) => q.id).filter(Boolean);
     }
   }, [packageDetailQuery.data]);
 
@@ -498,14 +505,19 @@ export const PracticeQuestionContainer: React.FC = () => {
         });
       }
 
-      // 2. Persist filled questions to question bank
+      // 2. Sinkronisasi soal: hanya soal baru yang di-create,
+      // soal lama yang dipertahankan dilewati, soal yang dihapus editor di-detach.
+      const initialIds = initialQuestionIdsRef.current;
       const validQuestions = packageForm.questions.filter((q) => q.questionText.trim().length > 0);
+      const validIds = new Set(validQuestions.map((q) => q.id));
+      const newQuestions = validQuestions.filter((q) => !initialIds.includes(q.id));
+      const removedIds = initialIds.filter((id) => !validIds.has(id));
 
       const createdQuestionIds: string[] = [];
       const questionTypes = questionTypesQuery.data ?? [];
       const defaultTypeId = questionTypes[0]?.id || '1';
 
-      for (const q of validQuestions) {
+      for (const q of newQuestions) {
         const mappedOptions =
           q.questionType === 'benar-salah' ||
           q.questionType === 'tepat-tidak-tepat' ||
@@ -564,6 +576,22 @@ export const PracticeQuestionContainer: React.FC = () => {
           // Handled
         }
       }
+
+      // 4. Detach questions deleted in editor
+      if (packageId && removedIds.length > 0) {
+        for (const questionId of removedIds) {
+          try {
+            await removeQuestionMutation.mutateAsync({ id: packageId, questionId });
+          } catch {
+            // Continue detaching remaining questions
+          }
+        }
+      }
+
+      initialQuestionIdsRef.current = [
+        ...initialIds.filter((id) => validIds.has(id)),
+        ...createdQuestionIds,
+      ];
 
       ns.alert.toast({
         title: 'Berhasil Menyimpan',

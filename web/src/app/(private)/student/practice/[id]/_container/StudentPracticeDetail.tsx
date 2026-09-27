@@ -15,6 +15,7 @@ import type {
   QuestionAnswerValue,
   QuestionPaletteStatus,
 } from '@/types/ui';
+import { parseMatrixOptions, parseWacanaQuestion } from '@/utils/wacana';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -41,16 +42,39 @@ function transformApiQuestions(
   }
 
   return apiQuestions.map((q, idx) => {
+    const compBadge =
+      q.competencies && q.competencies.length > 0
+        ? q.competencies.map((c) => c.name.toUpperCase()).join(' • ')
+        : competencyName.toUpperCase();
+
+    // Soal dari admin/content_manager menyimpan stimulus + body HTML
+    // dalam satu `question_text` berformat `[WACANA: title]\n<html>\n\n<html>`.
+    const parsed = parseWacanaQuestion(q.question_text);
+    const stimulus = parsed.hasStimulus
+      ? { title: parsed.stimulusTitle, content: parsed.stimulusHtml }
+      : undefined;
+
+    // Opsi bertanda `[KUNCI: ...]` = soal matriks (benar-salah / tepat / setuju).
+    const matrix = parseMatrixOptions(q.options);
+    if (matrix) {
+      return {
+        id: q.id,
+        questionNumber: idx + 1,
+        competencyBadge: compBadge,
+        type: matrix.kind,
+        instruction:
+          'Petunjuk: Baca pertanyaan dengan teliti, lalu pilih opsi jawaban yang paling tepat.',
+        questionText: parsed.bodyHtml,
+        stimulus,
+        statements: matrix.statements,
+      };
+    }
+
     const options: ChoiceOption[] = (q.options ?? []).map((opt) => ({
       id: opt.id,
       label: opt.option_label,
       title: opt.option_text,
     }));
-
-    const compBadge =
-      q.competencies && q.competencies.length > 0
-        ? q.competencies.map((c) => c.name.toUpperCase()).join(' • ')
-        : competencyName.toUpperCase();
 
     return {
       id: q.id,
@@ -59,7 +83,8 @@ function transformApiQuestions(
       type: mapApiQuestionType(q.question_type_id),
       instruction:
         'Petunjuk: Baca pertanyaan dengan teliti, lalu pilih opsi jawaban yang paling tepat.',
-      questionText: q.question_text,
+      questionText: parsed.bodyHtml,
+      stimulus,
       options,
     };
   });
@@ -394,31 +419,30 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
   const paletteItems: QuestionPaletteItem[] = useMemo(() => {
     return questions.map((q, idx) => {
       const qNum = idx + 1;
+      const ans = answers[q.id];
+      let hasAnswer = false;
+      if (q.type === 'pilihan-ganda') {
+        hasAnswer = typeof ans === 'string' && ans !== '';
+      } else if (q.type === 'pilihan-ganda-kompleks') {
+        hasAnswer = Array.isArray(ans) && ans.length > 0;
+      } else if (
+        q.type === 'benar-salah' ||
+        q.type === 'tepat-tidak-tepat' ||
+        q.type === 'setuju-tidak-setuju'
+      ) {
+        hasAnswer = typeof ans === 'object' && ans !== null && Object.keys(ans).length > 0;
+      }
+
       let status: QuestionPaletteStatus = 'unanswered';
 
-      if (idx === safeIndex) {
+      // Soal aktif yang sudah dijawab tetap 'answered' agar kehitung di legend;
+      // styling kuning aktif tetap diprioritaskan via isCurrent di palette.
+      if (idx === safeIndex && !hasAnswer) {
         status = 'active';
       } else if (flaggedQuestions.has(qNum)) {
         status = 'flagged';
-      } else {
-        const ans = answers[q.id];
-        if (q.type === 'pilihan-ganda') {
-          if (typeof ans === 'string' && ans !== '') {
-            status = 'answered';
-          }
-        } else if (q.type === 'pilihan-ganda-kompleks') {
-          if (Array.isArray(ans) && ans.length > 0) {
-            status = 'answered';
-          }
-        } else if (
-          q.type === 'benar-salah' ||
-          q.type === 'tepat-tidak-tepat' ||
-          q.type === 'setuju-tidak-setuju'
-        ) {
-          if (typeof ans === 'object' && ans !== null && Object.keys(ans).length > 0) {
-            status = 'answered';
-          }
-        }
+      } else if (hasAnswer) {
+        status = 'answered';
       }
 
       return {

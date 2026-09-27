@@ -16,6 +16,7 @@ export * from './dropdown-menu';
 export * from './input';
 export * from './navigation-menu';
 export * from './popover';
+export * from './rich-html';
 export * from './select';
 export * from './separator';
 export * from './sheet';

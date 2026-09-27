@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -429,6 +431,75 @@ func (s *practiceService) GetAttemptState(ctx context.Context, attemptID, userID
 	}, nil
 }
 
+var kunciMarkerRegex = regexp.MustCompile(`(?i)\[KUNCI:\s*([^\]]+)\]`)
+
+// normalizeAnswerKey menyamakan format kunci ("TIDAK SETUJU" vs "TIDAK_SETUJU", case).
+func normalizeAnswerKey(s string) string {
+	return strings.ToUpper(strings.ReplaceAll(strings.TrimSpace(s), " ", "_"))
+}
+
+// gradeStructuredAnswer menilai jawaban terstruktur tanpa SelectedOptionID:
+// - objek JSON {"optionID": "SETUJU"} = matriks/true-false, dinilai per pernyataan
+// lawan marker [KUNCI: ...] di option_text
+// - array JSON ["id1", "id2"] = pilihan ganda kompleks, dinilai kesamaan himpunan
+// dengan opsi bertanda IsCorrect
+func (s *practiceService) gradeStructuredAnswer(ctx context.Context, questionID uuid.UUID, answerData string) bool {
+	if s.db == nil || strings.TrimSpace(answerData) == "" {
+		return false
+	}
+	var opts []models.QuestionOption
+	if err := s.db.WithContext(ctx).Where("question_id = ?", questionID).Find(&opts).Error; err != nil || len(opts) == 0 {
+		return false
+	}
+
+	trimmed := strings.TrimSpace(answerData)
+
+	// 1. Matrix / true-false: JSON object
+	var matrixAns map[string]string
+	if err := json.Unmarshal([]byte(trimmed), &matrixAns); err == nil && len(matrixAns) > 0 {
+		lowered := make(map[string]string, len(matrixAns))
+		for k, v := range matrixAns {
+			lowered[strings.ToLower(k)] = v
+		}
+		graded := 0
+		for _, opt := range opts {
+			m := kunciMarkerRegex.FindStringSubmatch(opt.OptionText)
+			if len(m) < 2 {
+				continue
+			}
+			graded++
+			ans, ok := lowered[strings.ToLower(opt.ID.String())]
+			if !ok || normalizeAnswerKey(ans) != normalizeAnswerKey(m[1]) {
+				return false
+			}
+		}
+		return graded > 0
+	}
+
+	// 2. MCMA: JSON array of option IDs
+	var mcmaAns []string
+	if err := json.Unmarshal([]byte(trimmed), &mcmaAns); err == nil {
+		correct := make(map[string]bool)
+		for _, opt := range opts {
+			if opt.IsCorrect {
+				correct[opt.ID.String()] = true
+			}
+		}
+		if len(mcmaAns) != len(correct) {
+			return false
+		}
+		for _, id := range mcmaAns {
+			parsed, err := uuid.Parse(strings.Trim(strings.TrimSpace(id), "\""))
+			if err != nil || !correct[parsed.String()] {
+				return false
+			}
+		}
+		return len(correct) > 0
+	}
+
+	return false
+}
+
 func (s *practiceService) SubmitAnswer(ctx context.Context, attemptID, userID uuid.UUID, req dto.SubmitPracticeAnswerRequest) (*dto.SubmitPracticeAnswerResponse, error) {
 	attempt, err := s.practiceRepo.FindAttemptByID(ctx, attemptID)
 	if err != nil {
@@ -477,6 +548,9 @@ func (s *practiceService) SubmitAnswer(ctx context.Context, attemptID, userID uu
 		if err := s.db.WithContext(ctx).First(&opt, "id = ?", req.SelectedOptionID).Error; err == nil {
 			isCorrect = opt.IsCorrect
 		}
+	} else if req.AnswerData != "" {
+		// Matrix / MCMA answers carry no SelectedOptionID (JSON in AnswerData)
+		isCorrect = s.gradeStructuredAnswer(ctx, req.QuestionID, req.AnswerData)
 	}
 
 	scoreVal := 0.0

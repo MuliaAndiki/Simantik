@@ -8,7 +8,8 @@ export type PracticeQuestionType =
 export interface StimulusData {
   title?: string;
   quote?: string;
-  content?: string[];
+  // string[] = legacy teks polos per paragraf, string = HTML dari RichTextEditor
+  content?: string[] | string;
   source?: string;
 }
 
