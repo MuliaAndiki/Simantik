@@ -7,6 +7,56 @@ export type { UserRole, UserStatus } from '../model';
 // ============================================================================
 
 /**
+ * Publication status breakdown
+ * Maps to backend: `dto.ContentStatusBreakdown`
+ */
+export interface ContentStatusBreakdown {
+  total: number;
+  published: number;
+  review: number;
+  draft: number;
+}
+
+/**
+ * Student registration growth data point
+ * Maps to backend: `dto.StudentGrowthPoint`
+ */
+export interface StudentGrowthPoint {
+  period: string;
+  students: number;
+  label: string;
+}
+
+/**
+ * Recent student in admin dashboard table
+ * Maps to backend: `dto.RecentStudentItem`
+ */
+export interface RecentStudentItem {
+  id: string;
+  full_name: string;
+  email: string;
+  school: string;
+  registered_at: string;
+  formatted_date: string;
+  status: string;
+}
+
+/**
+ * Administrative audit log item
+ * Maps to backend: `dto.AdminAuditLogItem`
+ */
+export interface AdminAuditLogItem {
+  id: string;
+  user_name: string;
+  user_role: string;
+  action: string;
+  target_title: string;
+  formatted_time: string;
+  relative_time: string;
+  timestamp: string;
+}
+
+/**
  * Activity feed item on the admin dashboard
  * Maps to backend: `dto.RecentAttemptItem`
  */
@@ -40,13 +90,26 @@ export interface StudentProfileResponse {
  */
 export interface AdminDashboardStatsResponse {
   total_students: number;
+  active_students?: number;
+  active_students_percent?: number;
+  student_growth_rate?: string;
   total_questions: number;
   total_tryouts: number;
   total_modules: number;
   total_materials: number;
+  total_practice_packages?: number;
   total_attempts: number;
   completed_attempts: number;
   average_tryout_score: number;
+  material_status?: ContentStatusBreakdown;
+  practice_status?: ContentStatusBreakdown;
+  tryout_status?: ContentStatusBreakdown;
+  completed_tryouts?: number;
+  live_tryouts?: number;
+  student_growth_chart?: StudentGrowthPoint[];
+  average_monthly_growth?: string;
+  recent_students?: RecentStudentItem[];
+  recent_audit_logs?: AdminAuditLogItem[];
   recent_activities: RecentAttemptItem[];
 }
 

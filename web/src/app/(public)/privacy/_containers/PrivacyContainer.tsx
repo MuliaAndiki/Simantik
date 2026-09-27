@@ -1,12 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PrivacyPage } from '@/components/page/legal/PrivacyPage';
-import { PRIVACY_POLICY_DATA } from '@/data/legal-docs.data';
+import { useApi } from '@/hooks/useApi';
+import { mapDocumentationToLegalDoc } from '@/utils/legal-doc.mapper';
 
 export default function PrivacyContainer() {
+  const { content } = useApi();
+  const { data: docData, isLoading } = content.query.documentationBySlug('kebijakan-privasi');
+
+  const legalDoc = useMemo(
+    () =>
+      mapDocumentationToLegalDoc(docData, {
+        title: 'Kebijakan Privasi',
+        badge: 'KEBIJAKAN RESMI',
+        greeting: 'Kebijakan Privasi SIMANTIK',
+        defaultContent:
+          'SIMANTIK berkomitmen untuk melindungi dan menghormati privasi seluruh pengguna. Kebijakan ini menjelaskan bagaimana data pribadi dikumpulkan, digunakan, dan dilindungi selama penggunaan platform.',
+        route: '/privacy',
+      }),
+    [docData]
+  );
+
   const [activeSectionId, setActiveSectionId] = useState<string>(
-    PRIVACY_POLICY_DATA.sections[0]?.id || 'section-01'
+    legalDoc.sections[0]?.id || 'section-01'
   );
 
   useEffect(() => {
@@ -58,8 +75,18 @@ export default function PrivacyContainer() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-semibold text-slate-600">Memuat kebijakan privasi...</p>
+      </div>
+    );
+  }
+
   return (
     <PrivacyPage
+      data={legalDoc}
       activeSectionId={activeSectionId}
       onSelectSection={handleSelectSection}
       onPrint={handlePrint}

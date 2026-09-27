@@ -21,12 +21,13 @@ export interface PracticePackageItem {
   status: PracticeStatus;
   totalQuestions: number;
   score?: number;
+  latestAttemptId?: string;
 }
 
 export interface PracticePackageCardProps {
   packageItem: PracticePackageItem;
   onStartPractice?: (packageId: string) => void;
-  onViewResult?: (packageId: string) => void;
+  onViewResult?: (packageId: string, latestAttemptId?: string) => void;
   onRetryPractice?: (packageId: string) => void;
   className?: string;
 }
@@ -121,7 +122,7 @@ export function PracticePackageCard({
           <div className="grid grid-cols-2 gap-2.5">
             <Button
               type="button"
-              onClick={() => onViewResult?.(packageItem.id)}
+              onClick={() => onViewResult?.(packageItem.id, packageItem.latestAttemptId)}
               className="h-10 rounded-xl bg-[#1A4D5C] hover:bg-[#123945] text-white font-semibold text-xs sm:text-sm gap-1.5 border-none shadow-xs transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
             >
               <Eye className="size-4" />

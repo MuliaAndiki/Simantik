@@ -82,6 +82,7 @@ function mapBackendPackages(
         pkg.latest_score !== undefined && pkg.latest_score !== null
           ? Math.round(pkg.latest_score)
           : undefined,
+      latestAttemptId: pkg.latest_attempt_id ?? undefined,
     };
   });
 }
@@ -187,16 +188,36 @@ export default function StudentPractice() {
     setSelectedStatus(status);
   };
 
+  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
+  const [isPreStartModalOpen, setIsPreStartModalOpen] = useState(false);
+  const [isPreStartChecked, setIsPreStartChecked] = useState(false);
+
   const handleStartPractice = (packageId: string) => {
-    router.push(`/student/practice/${packageId}`);
+    setSelectedPackageId(packageId);
+    setIsPreStartChecked(false);
+    setIsPreStartModalOpen(true);
   };
 
-  const handleViewResult = (packageId: string) => {
-    router.push(`/student/practice/${packageId}/result`);
+  const handleViewResult = (packageId: string, latestAttemptId?: string) => {
+    const query = latestAttemptId ? `?attemptId=${latestAttemptId}` : '';
+    router.push(`/student/practice/${packageId}/result${query}`);
   };
 
   const handleRetryPractice = (packageId: string) => {
-    router.push(`/student/practice/${packageId}`);
+    setSelectedPackageId(packageId);
+    setIsPreStartChecked(false);
+    setIsPreStartModalOpen(true);
+  };
+
+  const handlePreStartConfirm = () => {
+    if (!selectedPackageId) return;
+    setIsPreStartModalOpen(false);
+    router.push(`/student/practice/${selectedPackageId}`);
+  };
+
+  const handlePreStartClose = () => {
+    setIsPreStartModalOpen(false);
+    setSelectedPackageId(null);
   };
 
   return (
@@ -215,6 +236,13 @@ export default function StudentPractice() {
       onRetryPractice={handleRetryPractice}
       onResetFilters={handleResetFilters}
       isFiltered={isFiltered}
+      preStartModalProps={{
+        isOpen: isPreStartModalOpen,
+        onClose: handlePreStartClose,
+        onConfirm: handlePreStartConfirm,
+        isChecked: isPreStartChecked,
+        onCheckChange: setIsPreStartChecked,
+      }}
     />
   );
 }

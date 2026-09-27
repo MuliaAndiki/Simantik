@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import StudentTryoutDetailPage from '@/components/page/private/student/StudentTryoutDetailPage';
 import { ProctoringProvider } from '@/core/providers/proctoring';
-import { DEFAULT_TRYOUT_QUESTIONS } from '@/data/tryoutQuestions.data';
 import { useApi } from '@/hooks/useApi';
 import { useProctoring } from '@/hooks/useProctoring';
 import type { QuestionStudentResponse, SubmitAnswerRequest } from '@/types/service';
@@ -16,6 +15,7 @@ import type {
   TryoutQuestionItem,
   TryoutQuestionType,
 } from '@/types/ui';
+import { parseMatrixOptions, parseWacanaQuestion } from '@/utils/wacana';
 
 function isUUID(str?: string | null): boolean {
   if (!str) return false;
@@ -52,11 +52,31 @@ function mapApiToTryoutQuestion(apiQ: QuestionStudentResponse, qNum: number): Tr
     description: undefined,
   }));
 
+  const parsed = parseWacanaQuestion(apiQ.question_text);
+  const stimulus = parsed.hasStimulus
+    ? { title: parsed.stimulusTitle, content: parsed.stimulusHtml }
+    : undefined;
+
+  // Opsi bertanda `[KUNCI: ...]` = soal matriks, bukan pilihan ganda.
+  const matrix = parseMatrixOptions(apiQ.options);
+  if (matrix) {
+    return {
+      id: apiQ.id,
+      questionNumber: qNum,
+      type: matrix.kind,
+      questionText: parsed.bodyHtml,
+      stimulus,
+      statements: matrix.statements,
+      difficultyLevel: apiQ.difficulty_level,
+    };
+  }
+
   return {
     id: apiQ.id,
     questionNumber: qNum,
     type: qType,
-    questionText: apiQ.question_text,
+    questionText: parsed.bodyHtml,
+    stimulus,
     options,
     difficultyLevel: apiQ.difficulty_level,
   };
@@ -118,17 +138,19 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
     { enabled: isAttemptUUID }
   );
 
-  // Fallback question dataset for resilience & offline presentation
+  // Active question derived strictly from API
   const activeQuestion: TryoutQuestionItem = useMemo(() => {
     if (questionData?.question) {
       return mapApiToTryoutQuestion(questionData.question, currentQuestionNumber);
     }
-    const idx = Math.min(
-      Math.max(0, currentQuestionNumber - 1),
-      DEFAULT_TRYOUT_QUESTIONS.length - 1
-    );
-    return DEFAULT_TRYOUT_QUESTIONS[idx];
-  }, [questionData?.question, currentQuestionNumber]);
+    return {
+      id: `q-placeholder-${currentQuestionNumber}`,
+      questionNumber: currentQuestionNumber,
+      type: 'pilihan-ganda',
+      questionText: isQuestionLoading ? 'Memuat butir soal...' : 'Butir soal tidak ditemukan.',
+      options: [],
+    };
+  }, [questionData?.question, currentQuestionNumber, isQuestionLoading]);
 
   const currentAnswer = answers[activeQuestion.id];
   const isCurrentFlagged = flaggedQuestions.has(currentQuestionNumber);

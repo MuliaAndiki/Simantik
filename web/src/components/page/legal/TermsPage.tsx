@@ -1,17 +1,18 @@
 import type * as React from 'react';
 import { LegalDocTemplate } from '@/components/templates/legal/LegalDocTemplate';
-import { TERMS_OF_SERVICE_DATA } from '@/data/legal-docs.data';
+import type { LegalDocData } from '@/types/ui';
 
 export interface TermsPageProps {
+  data: LegalDocData;
   activeSectionId?: string;
   onSelectSection?: (id: string) => void;
   onPrint?: () => void;
 }
 
-export function TermsPage({ activeSectionId, onSelectSection, onPrint }: TermsPageProps) {
+export function TermsPage({ data, activeSectionId, onSelectSection, onPrint }: TermsPageProps) {
   return (
     <LegalDocTemplate
-      data={TERMS_OF_SERVICE_DATA}
+      data={data}
       activeRoute="/terms"
       activeSectionId={activeSectionId}
       onSelectSection={onSelectSection}

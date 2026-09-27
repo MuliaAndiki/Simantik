@@ -34,7 +34,7 @@ const NewsCreateTemplate: React.FC<NewsCreateTemplateProps> = ({
   onPublish,
 }) => {
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 md:space-y-7 pb-12">
+    <div className="w-full max-w-full mx-auto space-y-6 md:space-y-7 pb-12">
       <div>
         <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
           {isEditMode ? 'Edit News' : 'Buat News Baru'}

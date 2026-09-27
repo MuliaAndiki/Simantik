@@ -23,6 +23,7 @@ export interface AlertContexType {
 }
 
 export * from './content-manager-dashboard.types';
+export * from './legal.types';
 export * from './material-editor.types';
 export * from './material-manager.types';
 export * from './practice.types';

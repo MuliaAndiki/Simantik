@@ -30,7 +30,11 @@ export interface StudentPracticeDetailTemplateProps {
 
   currentQuestion: PracticeQuestionItem;
   currentAnswer?: QuestionAnswerValue;
-  feedback?: { isCorrect?: boolean; explanation?: string; answeringTips?: string };
+  feedback?: {
+    isCorrect?: boolean;
+    explanation?: string;
+    answeringTips?: string;
+  };
   onSelectSingleChoice: (optionId: string) => void;
   onToggleComplexChoice: (optionId: string) => void;
   onSelectMatrixChoice: (statementId: string, value: string) => void;
@@ -304,7 +308,7 @@ export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTempla
                   onClick={onSubmit}
                   className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 text-xs sm:text-sm font-bold transition cursor-pointer shadow-sm"
                 >
-                  <span>Selesai & Kumpulkan</span>
+                  <span> Kumpulkan</span>
                   <svg
                     className="w-4 h-4"
                     fill="none"

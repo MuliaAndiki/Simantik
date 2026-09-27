@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -295,18 +297,44 @@ func (r *practiceRepository) FindLatestCompletedAttempt(ctx context.Context, use
 // ─── Answer Persistence ──────────────────────────────────────────────────────
 
 func (r *practiceRepository) UpsertAnswer(ctx context.Context, ans *models.PracticeAnswer) error {
+	var answerDataParam interface{} = nil
+	if ans.AnswerData != "" {
+		var js json.RawMessage
+		if json.Unmarshal([]byte(ans.AnswerData), &js) == nil {
+			answerDataParam = ans.AnswerData
+		} else {
+			if b, err := json.Marshal(ans.AnswerData); err == nil {
+				answerDataParam = string(b)
+			}
+		}
+	}
+
+	var existing models.PracticeAnswer
+	findErr := r.db.WithContext(ctx).
+		Where("practice_id = ? AND question_id = ?", ans.PracticeID, ans.QuestionID).
+		First(&existing).Error
+
+	if findErr == nil {
+		return r.db.WithContext(ctx).Exec(
+			`UPDATE practice_answers
+			 SET selected_option_id = ?, answer_data = ?, is_correct = ?, score = ?, answered_at = ?
+			 WHERE practice_id = ? AND question_id = ?`,
+			ans.SelectedOptionID, answerDataParam, ans.IsCorrect, ans.Score, ans.AnsweredAt,
+			ans.PracticeID, ans.QuestionID,
+		).Error
+	}
+	if !errors.Is(findErr, gorm.ErrRecordNotFound) {
+		return findErr
+	}
+
 	if ans.ID == uuid.Nil {
 		ans.ID = uuid.New()
 	}
-	result := r.db.WithContext(ctx).Exec(
+	return r.db.WithContext(ctx).Exec(
 		`INSERT INTO practice_answers (id, practice_id, question_id, selected_option_id, answer_data, is_correct, score, answered_at, created_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-		 ON CONFLICT (practice_id, question_id)
-		 DO UPDATE SET selected_option_id=EXCLUDED.selected_option_id, answer_data=EXCLUDED.answer_data,
-		 is_correct=EXCLUDED.is_correct, score=EXCLUDED.score, answered_at=EXCLUDED.answered_at`,
-		ans.ID, ans.PracticeID, ans.QuestionID, ans.SelectedOptionID, ans.AnswerData, ans.IsCorrect, ans.Score, ans.AnsweredAt,
-	)
-	return result.Error
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+		ans.ID, ans.PracticeID, ans.QuestionID, ans.SelectedOptionID, answerDataParam, ans.IsCorrect, ans.Score, ans.AnsweredAt,
+	).Error
 }
 
 func (r *practiceRepository) FindAnswer(ctx context.Context, practiceID, questionID uuid.UUID) (*models.PracticeAnswer, error) {

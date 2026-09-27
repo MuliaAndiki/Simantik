@@ -50,6 +50,7 @@ export interface PracticePackageResponse {
   updated_at: string;
   is_completed?: boolean;
   latest_score?: number | null;
+  latest_attempt_id?: string | null;
 }
 
 export interface PracticePackageDetailResponse extends PracticePackageResponse {
@@ -108,6 +109,14 @@ export interface SubmitPracticeAnswerResponse {
   explanation?: string;
   answering_tips?: string;
 }
+
+export type SubmitPracticeRequest =
+  | {
+      answers?: SubmitPracticeAnswerRequest[];
+      reason?: string;
+      violation_count?: number;
+    }
+  | SubmitPracticeAnswerRequest[];
 
 export interface AutoSubmitPracticeRequest {
   reason?: string;

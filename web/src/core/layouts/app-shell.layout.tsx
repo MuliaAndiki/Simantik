@@ -1,12 +1,16 @@
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
-import type * as React from 'react';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/atoms';
-import { AppSidebar } from '@/core/components/app-sidebar';
-import { BottomNav } from '@/core/components/button-nav';
-import NotificationDropdown from '../components/notification.dropdown';
-import ProfileDropdown from '../components/profile.dropdown';
+import { usePathname } from "next/navigation";
+import type * as React from "react";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/atoms";
+import { AppSidebar } from "@/core/components/app-sidebar";
+import { BottomNav } from "@/core/components/button-nav";
+import NotificationDropdown from "../components/notification.dropdown";
+import ProfileDropdown from "../components/profile.dropdown";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -29,16 +33,16 @@ export function AppShell({ children }: AppShellProps) {
               <div className="flex items-center justify-between max-w-full mx-auto w-full">
                 <div className="flex items-center gap-3">
                   <SidebarTrigger />
-                  {pathname.startsWith('/content_manager/materials/create') ? (
+                  {pathname.startsWith("/content_manager/materials/create") ? (
                     <span className="font-bold text-slate-900 text-lg sm:text-xl tracking-tight hidden sm:inline-block">
                       Tambah Materi
                     </span>
-                  ) : pathname.startsWith('/content_manager/materials') ? (
+                  ) : pathname.startsWith("/content_manager/materials") ? (
                     <span className="font-bold text-slate-900 text-lg sm:text-xl tracking-tight hidden sm:inline-block">
                       Daftar Materi
                     </span>
                   ) : (
-                    pathname.startsWith('/content_manager') && (
+                    pathname.startsWith("/content_manager") && (
                       <span className="font-bold text-slate-900 text-lg sm:text-xl tracking-tight hidden sm:inline-block">
                         Management Dashboard
                       </span>
@@ -52,7 +56,9 @@ export function AppShell({ children }: AppShellProps) {
               </div>
             </div>
             <div className="flex-1 overflow-auto w-full pb-16 md:pb-0">
-              <div className="container h-full max-w-full w-full mx-auto p-[1rem]">{children}</div>
+              <div className="container h-full max-w-full w-full mx-auto p-[1rem]">
+                {children}
+              </div>
             </div>
           </div>
         </SidebarInset>
