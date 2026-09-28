@@ -2,6 +2,7 @@ import { ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 import type * as React from 'react';
 import { Card } from '@/components/atoms/card';
+import { competencyBadgeTone } from '@/components/molecules/content-card';
 import { cn } from '@/utils/classname';
 
 export interface LearningDetailHeroBannerProps {
@@ -25,18 +26,7 @@ export function LearningDetailHeroBanner({
   illustrationSrc = '/illustrations/student-learning.jpg',
   className,
 }: LearningDetailHeroBannerProps) {
-  const getBadgeStyle = (code?: string) => {
-    switch (code) {
-      case 'pemahaman-inferensial':
-      case 'INFERENSIAL':
-        return 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]';
-      case 'evaluasi-apresiasi':
-      case 'EVALUASI':
-        return 'bg-[#E6F4EA] text-[#0D9488] border-[#A7F3D0]';
-      default:
-        return 'bg-[#E0F7FA] text-[#0284C7] border-[#BDEAF0]';
-    }
-  };
+  const getBadgeStyle = (code?: string) => competencyBadgeTone(code);
 
   return (
     <Card

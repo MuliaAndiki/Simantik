@@ -6,7 +6,6 @@ export * from './AdminContentManagerStatusDialog';
 export * from './AdminDashboardContentStatus';
 export * from './AdminDashboardCurriculumSummary';
 export * from './AdminDashboardGrowthChart';
-export * from './AdminDashboardHero';
 export * from './AdminDashboardQuickActions';
 export * from './AdminDashboardRecentActivities';
 export * from './AdminDashboardRecentAttempts';

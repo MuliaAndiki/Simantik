@@ -1,11 +1,10 @@
 import React from 'react';
+import { PageHeading, type PageHeadingProps } from '@/components/molecules/hero';
 import {
   AdminDashboardContentStatus,
   type AdminDashboardContentStatusProps,
   AdminDashboardGrowthChart,
   type AdminDashboardGrowthChartProps,
-  AdminDashboardHero,
-  type AdminDashboardHeroProps,
   AdminDashboardQuickActions,
   type AdminDashboardQuickActionsProps,
   AdminDashboardRecentActivities,
@@ -18,7 +17,7 @@ import {
 import { cn } from '@/utils/classname';
 
 export interface AdminDashboardTemplateProps {
-  heroProps?: AdminDashboardHeroProps;
+  heroProps?: PageHeadingProps;
   quickActionsProps: AdminDashboardQuickActionsProps;
   statCardsProps: AdminDashboardStatCardsProps;
   contentStatusProps?: AdminDashboardContentStatusProps;
@@ -41,7 +40,7 @@ export const AdminDashboardTemplate: React.FC<AdminDashboardTemplateProps> = ({
   return (
     <div className={cn('w-full max-w-full mx-auto space-y-6 md:space-y-6 pb-12', className)}>
       {/* 1. Header Hero / Page Title */}
-      <AdminDashboardHero {...heroProps} />
+      <PageHeading title={heroProps?.title ?? 'Dashboard'} subtitle={heroProps?.subtitle} />
 
       {/* 2. Quick Actions */}
       <AdminDashboardQuickActions {...quickActionsProps} />

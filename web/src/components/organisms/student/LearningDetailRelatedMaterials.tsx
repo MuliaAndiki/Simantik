@@ -2,6 +2,7 @@ import { ArrowRight, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import type * as React from 'react';
 import { Card } from '@/components/atoms/card';
+import { competencyBadgeTone } from '@/components/molecules/content-card';
 import { cn } from '@/utils/classname';
 
 export interface RelatedMaterialItem {
@@ -30,18 +31,7 @@ export function LearningDetailRelatedMaterials({
   if (!materials || materials.length === 0) return null;
   const displayMaterials = materials;
 
-  const getBadgeStyle = (code?: string) => {
-    switch (code) {
-      case 'pemahaman-inferensial':
-      case 'INFERENSIAL':
-        return 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]';
-      case 'evaluasi-apresiasi':
-      case 'EVALUASI':
-        return 'bg-[#E6F4EA] text-[#0D9488] border-[#A7F3D0]';
-      default:
-        return 'bg-[#E0F7FA] text-[#0284C7] border-[#BDEAF0]';
-    }
-  };
+  const getBadgeStyle = (code?: string) => competencyBadgeTone(code);
 
   return (
     <div className={cn('space-y-4 pt-2', className)}>
