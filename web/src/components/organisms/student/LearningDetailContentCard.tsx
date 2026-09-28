@@ -1,6 +1,7 @@
 import { Info, Zap } from 'lucide-react';
 import type * as React from 'react';
 import { Card } from '@/components/atoms/card';
+import { RichHtml } from '@/components/atoms/rich-html';
 import { cn } from '@/utils/classname';
 
 export interface LearningDetailContentCardProps {
@@ -34,8 +35,8 @@ export function LearningDetailContentCard({ content, className }: LearningDetail
 
       {/* Content Body */}
       {hasCustomContent ? (
-        <div className="prose max-w-none text-[#374151] leading-relaxed space-y-4 whitespace-pre-wrap text-sm sm:text-base">
-          {content}
+        <div className="text-[#374151] leading-relaxed text-sm sm:text-base">
+          <RichHtml html={content} />
         </div>
       ) : (
         <div className="space-y-6 text-[#374151]">
