@@ -52,7 +52,7 @@ export function StudentPracticeResult() {
   const attemptIdParam = searchParams.get('attemptId');
   const packageId = params?.id;
 
-  const { practice } = useApi();
+  const { practice, recommendation } = useApi();
   const [activeFilter, setActiveFilter] = useState<PracticeReviewFilter>('all');
 
   // If attemptId is not in searchParams, fetch the latest completed attempt for this package
@@ -68,6 +68,9 @@ export function StudentPracticeResult() {
     resolvedAttemptId,
     { enabled: Boolean(resolvedAttemptId) }
   );
+
+  // Rekomendasi materi untuk soal yang salah (dicocokkan per competency).
+  const { data: recommendationsPage } = recommendation.query.list({ limit: 50 });
 
   const isLoading = isResultLoading || (Boolean(!attemptIdParam && packageId) && isAttemptsLoading);
 
@@ -216,6 +219,19 @@ export function StudentPracticeResult() {
       // >1 kunci benar = pilihan ganda kompleks (MCMA).
       const isMcma = (rev.options || []).filter((o) => o.is_correct).length > 1;
 
+      // Materi disarankan untuk soal yang salah (maks 2 per soal).
+      const competencyId = rev.competencies?.[0]?.id;
+      const suggestedMaterials =
+        !isCorrect && competencyId
+          ? (recommendationsPage?.recommendations ?? [])
+              .filter((rec) => rec.competency_id === competencyId && rec.material_id)
+              .slice(0, 2)
+              .map((rec) => ({
+                id: rec.material_id as string,
+                title: rec.material_title || rec.competency_name,
+              }))
+          : [];
+
       return {
         number: qNum,
         formattedNumber: String(qNum).padStart(2, '0'),
@@ -228,6 +244,7 @@ export function StudentPracticeResult() {
         prompt: parsed.bodyHtml,
         stimulus,
         options,
+        suggestedMaterials,
         discussion: {
           type: isCorrect ? 'analitis' : 'kekeliruan',
           title: isCorrect ? 'Pembahasan Analitis' : 'Analisis Kekeliruan',
@@ -241,7 +258,7 @@ export function StudentPracticeResult() {
         },
       };
     });
-  }, [attemptResult?.reviews]);
+  }, [attemptResult?.reviews, recommendationsPage?.recommendations]);
 
   const paletteItems: PracticeResultPaletteItem[] = useMemo(() => {
     if (attemptResult?.reviews && attemptResult.reviews.length > 0) {

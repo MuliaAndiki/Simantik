@@ -51,9 +51,22 @@ export default function StudentLearningRecommendation() {
                     {isMaterial ? <BookOpen className="size-6" /> : <PenTool className="size-6" />}
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-lg mb-1">
-                      {r.material_title || r.competency_name}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-bold text-slate-900 text-lg">
+                        {r.material_title || r.competency_name}
+                      </h3>
+                      {(r.priority === 'high' || r.priority === 'medium') && (
+                        <span
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                            r.priority === 'high'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}
+                        >
+                          {r.priority === 'high' ? 'Prioritas' : 'Disarankan'}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-slate-600 line-clamp-2 mb-4">
                       {r.recommendation_text}
                     </p>
@@ -62,8 +75,10 @@ export default function StudentLearningRecommendation() {
                         if (isMaterial) {
                           router.push(`/student/learning/material/${r.material_id}`);
                         } else {
-                          // if practice, jump to practice catalog
-                          router.push('/student/practice');
+                          // latihan untuk kompetensi ini (filter katalog via query param)
+                          router.push(
+                            `/student/practice?competency=${encodeURIComponent(r.competency_code || r.competency_id)}`
+                          );
                         }
                       }}
                       className={`text-sm font-bold px-4 py-2 rounded-full cursor-pointer transition ${isMaterial ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}

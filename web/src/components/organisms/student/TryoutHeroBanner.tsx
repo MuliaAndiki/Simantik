@@ -1,7 +1,6 @@
-import { Play } from 'lucide-react';
-import type * as React from 'react';
-import { Button } from '@/components/atoms/button';
-import { SplitHero } from '@/components/molecules/hero';
+import { Play } from "lucide-react";
+import { Button } from "@/components/atoms/button";
+import { SplitHero } from "@/components/molecules/hero";
 
 export interface TryoutHeroBannerProps {
   title?: string;
@@ -11,8 +10,8 @@ export interface TryoutHeroBannerProps {
 }
 
 export function TryoutHeroBanner({
-  title = 'Siap menghadapi TKA?',
-  description = 'Kerjakan tryout untuk mengukur kemampuanmu dalam Bahasa Indonesia dengan suasana seperti ujian sebenarnya.',
+  title = "Siap menghadapi TKA?",
+  description = "Kerjakan tryout untuk mengukur kemampuanmu dalam Bahasa Indonesia dengan suasana seperti ujian sebenarnya.",
   onStartTryout,
   className,
 }: TryoutHeroBannerProps) {
@@ -29,7 +28,7 @@ export function TryoutHeroBanner({
         <div className="pt-2">
           <Button
             type="button"
-            variant={'google'}
+            variant={"google"}
             onClick={onStartTryout}
             className="h-12 px-6 rounded-xl bg-[#1A4D5C] hover:bg-[#123945] text-white font-bold text-sm sm:text-base shadow-sm gap-2.5 border-none transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >

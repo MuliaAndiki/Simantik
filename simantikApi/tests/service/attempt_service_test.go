@@ -185,7 +185,7 @@ func TestAttemptService_StartAndComplete(t *testing.T) {
 	tryoutRepo.tryouts[tryoutID] = tryout
 	tryoutRepo.poolIDs[tryoutID] = []uuid.UUID{q1, q2, q3}
 
-	svc := service.NewTryoutAttemptService(nil, attemptRepo, tryoutRepo, nil, nil)
+	svc := service.NewTryoutAttemptService(nil, attemptRepo, tryoutRepo, nil, nil, nil)
 	userID := uuid.New()
 	ctx := context.Background()
 
@@ -261,7 +261,7 @@ func TestAttemptService_DuplicateAttempt(t *testing.T) {
 	tryoutRepo.tryouts[tryoutID] = tryout
 	tryoutRepo.poolIDs[tryoutID] = []uuid.UUID{uuid.New(), uuid.New()}
 
-	svc := service.NewTryoutAttemptService(nil, attemptRepo, tryoutRepo, nil, nil)
+	svc := service.NewTryoutAttemptService(nil, attemptRepo, tryoutRepo, nil, nil, nil)
 	userID := uuid.New()
 	ctx := context.Background()
 
@@ -294,7 +294,7 @@ func TestAttemptService_AnswerIdempotency(t *testing.T) {
 	qID := uuid.New()
 	tryoutRepo.poolIDs[tryoutID] = []uuid.UUID{qID}
 
-	svc := service.NewTryoutAttemptService(nil, attemptRepo, tryoutRepo, nil, nil)
+	svc := service.NewTryoutAttemptService(nil, attemptRepo, tryoutRepo, nil, nil, nil)
 	userID := uuid.New()
 	ctx := context.Background()
 
