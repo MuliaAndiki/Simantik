@@ -63,6 +63,7 @@ type TryoutResultEmailData struct {
 	TimeTakenMin    int
 	Questions       []TryoutQuestionEmailItem
 	Materials       []TryoutMaterialEmailItem
+	Practices       []string
 	FeedbackSummary string
 }
 
@@ -426,6 +427,7 @@ func renderEmailQuestionCard(q TryoutQuestionEmailItem) string {
 			%s
 		</div>
 		%s
+		%s
 	</div>`,
 		q.QuestionNumber,
 		q.Difficulty,
@@ -434,11 +436,15 @@ func renderEmailQuestionCard(q TryoutQuestionEmailItem) string {
 		stimulusHTML,
 		body,
 		answerBox,
+		renderEmailExplanationInline(q),
 	)
 }
 
-// renderEmailExplanation me-render blok pembahasan satu soal.
-func renderEmailExplanation(q TryoutQuestionEmailItem) string {
+// renderEmailExplanationInline me-render pembahasan + tips di dalam kartu soal.
+func renderEmailExplanationInline(q TryoutQuestionEmailItem) string {
+	if q.Explanation == "" && q.AnsweringTips == "" {
+		return ""
+	}
 	tipsContent := ""
 	if q.AnsweringTips != "" {
 		tipsContent = fmt.Sprintf(`
@@ -447,27 +453,28 @@ func renderEmailExplanation(q TryoutQuestionEmailItem) string {
 		</div>`, html.EscapeString(q.AnsweringTips))
 	}
 
-	return fmt.Sprintf(`
-	<div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;">
-		<div style="font-size: 13px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
-			<span style="display: inline-block; width: 22px; height: 22px; background-color: #E0F2FE; color: #0284C7; border-radius: 50%%; text-align: center; line-height: 22px; font-size: 11px; margin-right: 6px;">%d</span>
-			Pembahasan Soal %02d
-		</div>
-		<div style="font-size: 12px; color: #334155; line-height: 1.6;">
+	explanation := ""
+	if q.Explanation != "" {
+		explanation = fmt.Sprintf(`
+		<div style="font-size: 12px; color: #334155; line-height: 1.6; margin-bottom: 4px;">
 			<strong>Pembahasan:</strong> %s
-		</div>
+		</div>`, emailHTMLOrEscaped(q.Explanation))
+	}
+
+	return fmt.Sprintf(`
+	<div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; margin-top: 12px;">
+		%s
 		%s
 	</div>`,
-		q.QuestionNumber,
-		q.QuestionNumber,
-		emailHTMLOrEscaped(q.Explanation),
+		explanation,
 		tipsContent,
 	)
 }
 
-// renderEmailMaterials me-render seksi materi A..N hasil feedback engine.
-func renderEmailMaterials(materials []TryoutMaterialEmailItem, summary string) string {
-	if len(materials) == 0 {
+// renderEmailFeedback me-render seksi umpan balik engine:
+// materi A..N yang harus dipelajari + latihan yang harus dikerjakan.
+func renderEmailFeedback(materials []TryoutMaterialEmailItem, practices []string, summary string) string {
+	if len(materials) == 0 && len(practices) == 0 {
 		return ""
 	}
 	var items strings.Builder
@@ -490,6 +497,20 @@ func renderEmailMaterials(materials []TryoutMaterialEmailItem, summary string) s
 		))
 	}
 
+	practiceHTML := ""
+	if len(practices) > 0 {
+		var rows strings.Builder
+		for _, name := range practices {
+			rows.WriteString(fmt.Sprintf(`
+			<div style="background-color: #ffffff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: #0F766E;">
+				&#10004; Kerjakan latihan: %s
+			</div>`, html.EscapeString(name)))
+		}
+		practiceHTML = fmt.Sprintf(`
+		<div style="font-size: 13px; font-weight: 800; color: #0F172A; margin: 18px 0 10px 0;">Latihan yang perlu dikerjakan</div>
+		%s`, rows.String())
+	}
+
 	summaryHTML := ""
 	if strings.TrimSpace(summary) != "" {
 		summaryHTML = fmt.Sprintf(`<p style="color: #334155; font-size: 13px; line-height: 1.6; margin: 0 0 14px 0;">%s</p>`, html.EscapeString(summary))
@@ -498,15 +519,17 @@ func renderEmailMaterials(materials []TryoutMaterialEmailItem, summary string) s
 	return fmt.Sprintf(`
 	<div style="margin-top: 36px; padding-top: 24px; border-top: 1px dashed #CBD5E1;">
 		<div style="font-size: 11px; font-weight: 900; color: #0F766E; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-			&#128218; RENCANA BELAJAR
+			&#128218; UMPAN BALIK BELAJAR
 		</div>
-		<h2 style="color: #0F172A; font-size: 18px; font-weight: 900; margin: 0 0 4px 0;">Materi yang Perlu Kamu Pelajari</h2>
+		<h2 style="color: #0F172A; font-size: 18px; font-weight: 900; margin: 0 0 4px 0;">Materi & Latihan Untukmu</h2>
 		<p style="color: #64748B; font-size: 12px; margin: 0 0 14px 0;">Berdasarkan analisis jawabanmu, pelajari kembali materi berikut lalu kerjakan latihannya.</p>
+		%s
 		%s
 		%s
 	</div>`,
 		summaryHTML,
 		items.String(),
+		practiceHTML,
 	)
 }
 
@@ -542,16 +565,12 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 	}
 
 	var questionsHTML strings.Builder
-	var explanationsHTML strings.Builder
 
 	for _, q := range data.Questions {
 		questionsHTML.WriteString(renderEmailQuestionCard(q))
-		if q.Explanation != "" || q.AnsweringTips != "" {
-			explanationsHTML.WriteString(renderEmailExplanation(q))
-		}
 	}
 
-	materialsHTML := renderEmailMaterials(data.Materials, data.FeedbackSummary)
+	feedbackHTML := renderEmailFeedback(data.Materials, data.Practices, data.FeedbackSummary)
 
 	htmlBody := fmt.Sprintf(`
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px 16px; background-color: #f1f5f9;">
@@ -652,20 +671,10 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 			</table>
 		</div>
 
-		<!-- Detail Jawaban Section -->
+		<!-- Detail Jawaban + Pembahasan Section -->
 		<div style="margin-top: 28px;">
-			<h2 style="color: #0F172A; font-size: 18px; font-weight: 900; margin: 0 0 4px 0;">Detail Jawaban</h2>
-			<p style="color: #64748B; font-size: 12px; margin: 0 0 18px 0;">%d dari %d soal terjawab (benar maupun salah). Periksa pilihan yang kamu ambil dibandingkan dengan kunci jawaban resmi.</p>
-			%s
-		</div>
-
-		<!-- Ulasan Akademik & Pembahasan Section -->
-		<div style="margin-top: 36px; padding-top: 24px; border-top: 1px dashed #CBD5E1;">
-			<div style="font-size: 11px; font-weight: 900; color: #0F766E; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-				&#128161; ULASAN AKADEMIK
-			</div>
-			<h2 style="color: #0F172A; font-size: 18px; font-weight: 900; margin: 0 0 4px 0;">Pembahasan Soal</h2>
-			<p style="color: #64748B; font-size: 12px; margin: 0 0 18px 0;">Berikut pembahasan mendalam untuk setiap butir soal guna memperkuat pemahaman konsep literasi kamu.</p>
+			<h2 style="color: #0F172A; font-size: 18px; font-weight: 900; margin: 0 0 4px 0;">Detail Jawaban & Pembahasan</h2>
+			<p style="color: #64748B; font-size: 12px; margin: 0 0 18px 0;">%d dari %d soal terjawab (benar maupun salah). Setiap soal dilengkapi pembahasan dan tips menjawab.</p>
 			%s
 		</div>
 
@@ -696,8 +705,7 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 		answeredCount,
 		totalQuestions,
 		questionsHTML.String(),
-		explanationsHTML.String(),
-		materialsHTML,
+		feedbackHTML,
 	)
 
 	return r.send(ctx, data.StudentEmail, subject, htmlBody)

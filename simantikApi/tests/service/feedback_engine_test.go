@@ -1,9 +1,11 @@
-package service
+package service_test
 
 import (
 	"testing"
 
 	"github.com/google/uuid"
+
+	"simantikApi/internal/service"
 )
 
 func testFeedbackCompIDs(n int) []uuid.UUID {
@@ -18,7 +20,7 @@ func TestBuildAttemptFeedback_GapOrdering(t *testing.T) {
 	ids := testFeedbackCompIDs(2)
 	compA, compB := ids[0], ids[1]
 
-	evidences := []AnswerEvidence{
+	evidences := []service.AnswerEvidence{
 		// Kompetensi A: 1 benar dari 4, salah di tingkat sulit
 		{QuestionID: uuid.New(), CompetencyIDs: []uuid.UUID{compA}, Difficulty: 2, Answered: true, IsCorrect: true},
 		{QuestionID: uuid.New(), CompetencyIDs: []uuid.UUID{compA}, Difficulty: 4, Answered: true, ResponseTimeSec: 90, SelectedWrongText: "generalisasi berlebihan"},
@@ -29,10 +31,10 @@ func TestBuildAttemptFeedback_GapOrdering(t *testing.T) {
 		{QuestionID: uuid.New(), CompetencyIDs: []uuid.UUID{compB}, Difficulty: 3, Answered: true, IsCorrect: true},
 	}
 
-	fb := BuildAttemptFeedback(evidences,
+	fb := service.BuildAttemptFeedback(evidences,
 		map[uuid.UUID]string{compA: "Inferensial", compB: "Tekstual"},
 		nil,
-		map[uuid.UUID][]MaterialSuggestion{
+		map[uuid.UUID][]service.MaterialSuggestion{
 			compA: {{MaterialID: uuid.New(), Title: "Materi A"}},
 		},
 		6,
@@ -72,19 +74,19 @@ func TestBuildAttemptFeedback_GapOrdering(t *testing.T) {
 
 func TestBuildAttemptFeedback_Trend(t *testing.T) {
 	comp := uuid.New()
-	ev := []AnswerEvidence{
+	ev := []service.AnswerEvidence{
 		{QuestionID: uuid.New(), CompetencyIDs: []uuid.UUID{comp}, Difficulty: 3, Answered: true, IsCorrect: true},
 		{QuestionID: uuid.New(), CompetencyIDs: []uuid.UUID{comp}, Difficulty: 3, Answered: true, IsCorrect: true},
 		{QuestionID: uuid.New(), CompetencyIDs: []uuid.UUID{comp}, Difficulty: 3, Answered: true},
 		{QuestionID: uuid.New(), CompetencyIDs: []uuid.UUID{comp}, Difficulty: 3, Answered: true},
 	}
 	// akurasi kini 50 vs histori mean 90 -> declining
-	fb := BuildAttemptFeedback(ev, map[uuid.UUID]string{comp: "C"}, map[uuid.UUID][]float64{comp: {90, 90}}, nil, 0)
+	fb := service.BuildAttemptFeedback(ev, map[uuid.UUID]string{comp: "C"}, map[uuid.UUID][]float64{comp: {90, 90}}, nil, 0)
 	if fb.Gaps[0].Trend != "declining" {
 		t.Errorf("trend = %s, want declining", fb.Gaps[0].Trend)
 	}
 	// akurasi kini 50 vs histori mean 45 -> stable
-	fb = BuildAttemptFeedback(ev, map[uuid.UUID]string{comp: "C"}, map[uuid.UUID][]float64{comp: {45, 45}}, nil, 0)
+	fb = service.BuildAttemptFeedback(ev, map[uuid.UUID]string{comp: "C"}, map[uuid.UUID][]float64{comp: {45, 45}}, nil, 0)
 	if fb.Gaps[0].Trend != "stable" {
 		t.Errorf("trend = %s, want stable", fb.Gaps[0].Trend)
 	}
@@ -92,11 +94,11 @@ func TestBuildAttemptFeedback_Trend(t *testing.T) {
 
 func TestBuildAttemptFeedback_SkipsUnanswered(t *testing.T) {
 	comp := uuid.New()
-	ev := []AnswerEvidence{
+	ev := []service.AnswerEvidence{
 		{QuestionID: uuid.New(), CompetencyIDs: []uuid.UUID{comp}, Difficulty: 3, Answered: false},
 		{QuestionID: uuid.New(), CompetencyIDs: []uuid.UUID{comp}, Difficulty: 3, Answered: true, IsCorrect: true},
 	}
-	fb := BuildAttemptFeedback(ev, nil, nil, nil, 0)
+	fb := service.BuildAttemptFeedback(ev, nil, nil, nil, 0)
 	if len(fb.Gaps) != 1 || fb.Gaps[0].Total != 1 {
 		t.Errorf("gaps = %+v, want 1 gap with total 1", fb.Gaps)
 	}
