@@ -20,37 +20,15 @@ export interface LearningDetailRelatedMaterialsProps {
   className?: string;
 }
 
-const DEFAULT_SAMPLE_MATERIALS: RelatedMaterialItem[] = [
-  {
-    id: 'mat-1',
-    title: 'Contoh Materi 1',
-    description: 'Ringkasan pengantar materi pendukung dari kurikulum sekolah.',
-    competencyCode: 'pemahaman-tekstual',
-    competencyName: 'Pemahaman Tekstual',
-  },
-  {
-    id: 'mat-2',
-    title: 'Contoh Materi 2',
-    description: 'Ringkasan pengantar materi pendukung dari kurikulum sekolah.',
-    competencyCode: 'pemahaman-inferensial',
-    competencyName: 'Pemahaman Inferensial',
-  },
-  {
-    id: 'mat-3',
-    title: 'Contoh Materi 3',
-    description: 'Ringkasan pengantar materi pendukung dari kurikulum sekolah.',
-    competencyCode: 'pemahaman-inferensial',
-    competencyName: 'Pemahaman Inferensial',
-  },
-];
-
 export function LearningDetailRelatedMaterials({
   materials,
   viewAllHref = '/student/learning',
   onOpenMaterial,
   className,
 }: LearningDetailRelatedMaterialsProps) {
-  const displayMaterials = materials && materials.length > 0 ? materials : DEFAULT_SAMPLE_MATERIALS;
+  // Tanpa data API = tidak tampil. Tidak ada lagi fallback hardcode.
+  if (!materials || materials.length === 0) return null;
+  const displayMaterials = materials;
 
   const getBadgeStyle = (code?: string) => {
     switch (code) {

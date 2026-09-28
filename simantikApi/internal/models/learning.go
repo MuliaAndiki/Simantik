@@ -102,8 +102,8 @@ func (ma *MaterialAttachment) BeforeCreate(tx *gorm.DB) error {
 // LearningProgress tracks a student's completion of individual materials and overall modules.
 type LearningProgress struct {
 	ID          uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID      uuid.UUID  `gorm:"type:uuid;not null;index" json:"userId"`
-	MaterialID  uuid.UUID  `gorm:"type:uuid;not null;index" json:"materialId"`
+	UserID      uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_learning_progress_user_material" json:"userId"`
+	MaterialID  uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_learning_progress_user_material" json:"materialId"`
 	IsCompleted bool       `gorm:"not null;default:false" json:"isCompleted"`
 	CompletedAt *time.Time `json:"completedAt"`
 	CreatedAt   time.Time  `json:"createdAt"`
