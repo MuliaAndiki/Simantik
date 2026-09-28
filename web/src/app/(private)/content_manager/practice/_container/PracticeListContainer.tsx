@@ -334,6 +334,7 @@ export const PracticeListContainer: React.FC = () => {
       filters={filters}
       totalItems={totalItems}
       isRefreshing={isRefreshing}
+      isPending={packagesQuery.isPending}
       onSearchChange={handleSearchChange}
       onJenjangChange={handleJenjangChange}
       onStatusChange={handleStatusChange}

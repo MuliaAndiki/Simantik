@@ -14,6 +14,7 @@ export * from './countdown-digit';
 export * from './dialog';
 export * from './dropdown-menu';
 export * from './input';
+export * from './loading';
 export * from './navigation-menu';
 export * from './popover';
 export * from './rich-html';

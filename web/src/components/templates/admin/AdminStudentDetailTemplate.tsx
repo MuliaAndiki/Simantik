@@ -32,6 +32,10 @@ export interface AdminStudentDetailTemplateProps {
   timeframe: TimeframePeriod;
   onTimeframeChange: (tf: TimeframePeriod) => void;
   chartData?: ChartDataPoint[];
+  latestScore?: number;
+  previousScore?: number;
+  scoreDiff?: number;
+  trendText?: string;
   latestPracticeTitle?: string;
   latestPracticeDate?: string;
   onViewLatestPracticeDetail?: () => void;
@@ -78,6 +82,10 @@ export const AdminStudentDetailTemplate: React.FC<AdminStudentDetailTemplateProp
   timeframe,
   onTimeframeChange,
   chartData,
+  latestScore,
+  previousScore,
+  scoreDiff,
+  trendText,
   latestPracticeTitle,
   latestPracticeDate,
   onViewLatestPracticeDetail,
@@ -253,10 +261,10 @@ export const AdminStudentDetailTemplate: React.FC<AdminStudentDetailTemplateProp
           <AdminStudentProgressChartCard
             timeframe={timeframe}
             onTimeframeChange={onTimeframeChange}
-            latestScore={userDetail.average_score > 0 ? Math.round(userDetail.average_score) : 84}
-            previousScore={78}
-            scoreDiff={6}
-            trendText="Tren: Nilai latihan meningkat"
+            latestScore={latestScore}
+            previousScore={previousScore}
+            scoreDiff={scoreDiff}
+            trendText={trendText}
             latestPracticeTitle={latestPracticeTitle}
             latestPracticeDate={latestPracticeDate}
             onViewLatestPracticeDetail={onViewLatestPracticeDetail}
@@ -268,12 +276,8 @@ export const AdminStudentDetailTemplate: React.FC<AdminStudentDetailTemplateProp
         <div className="lg:col-span-5 space-y-6">
           {/* Ringkasan Aktivitas */}
           <AdminStudentActivitySummaryCard
-            practiceCount={
-              userDetail.completed_materials_count > 0
-                ? Number(userDetail.completed_materials_count)
-                : 24
-            }
-            tryoutCount={userDetail.attempt_count > 0 ? Number(userDetail.attempt_count) : 3}
+            practiceCount={Number(userDetail.completed_materials_count ?? 0)}
+            tryoutCount={Number(userDetail.attempt_count ?? 0)}
           />
 
           {/* Aktivitas Terbaru */}

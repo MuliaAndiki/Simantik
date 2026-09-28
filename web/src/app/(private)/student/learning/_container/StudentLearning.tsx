@@ -52,13 +52,15 @@ export default function StudentLearningContainer() {
   const [selectedCompetency, setSelectedCompetency] = useState('all');
 
   // 1. Fetch modules: mod.Get("/", lh.ListModules) with label query support
-  const { data: modulesPage } = learning.query.modules({
+  const { data: modulesPage, isLoading: isModulesLoading } = learning.query.modules({
     limit: MODULES_LIMIT,
     label: selectedCompetency !== 'all' ? selectedCompetency : undefined,
   });
 
   // 2. Fetch distinct labels: mod.Get("/labels", lh.ListModuleLabels) for dropdown
-  const { data: moduleLabels } = learning.query.moduleLabels();
+  const { data: moduleLabels, isLoading: isLabelsLoading } = learning.query.moduleLabels();
+
+  const isLoading = isModulesLoading || isLabelsLoading;
 
   const modules = useMemo(() => toLearningModules(modulesPage), [modulesPage]);
 
@@ -128,6 +130,7 @@ export default function StudentLearningContainer() {
       onCompetencyChange={handleCompetencyChange}
       competencyOptions={labelOptions}
       materials={filteredModules}
+      isLoading={isLoading && filteredModules.length === 0}
       onLearnMaterial={handleLearnModule}
       onResetFilters={handleResetFilters}
       isFiltered={isFiltered}

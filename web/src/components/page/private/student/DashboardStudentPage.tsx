@@ -4,6 +4,7 @@ import type { DashboardMaterialItem } from '@/components/organisms/student/Learn
 import { StudentDashboardTemplate } from '@/components/templates/student/StudentDashboardTemplate';
 
 export interface DashboardStudentPageProps {
+  isLoading?: boolean;
   studentName?: string;
   lastTopic?: string;
   lastPackageName?: string;
@@ -27,7 +28,8 @@ export interface DashboardStudentPageProps {
 }
 
 export function DashboardStudentPage({
-  studentName = 'Anindya',
+  isLoading,
+  studentName,
   lastTopic,
   lastPackageName,
   lastScore,
@@ -52,6 +54,7 @@ export function DashboardStudentPage({
     <StudentDashboardTemplate
       heroProps={{
         studentName,
+        isLoading,
         onStartPractice,
         onStartTryout,
       }}
@@ -69,20 +72,24 @@ export function DashboardStudentPage({
         averageCorrectPerSession,
         achievementStatus,
         achievementSubtext,
+        isLoading,
         onViewHistory,
       }}
       materialsProps={{
         materials,
+        isLoading,
         onLearnMaterial,
         onViewAllMaterials,
       }}
       recommendationProps={{
         topicTitle: recommendationTopicTitle,
         recommendationDescription,
+        isLoading,
         onStartPractice,
       }}
       updatesProps={{
         newsList,
+        isLoading,
         onReadNews,
       }}
     />

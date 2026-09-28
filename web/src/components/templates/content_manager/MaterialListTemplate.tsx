@@ -1,5 +1,6 @@
 import { Download, Plus } from 'lucide-react';
 import React from 'react';
+import { TableLoader } from '@/components/atoms/loading';
 import {
   MaterialDataTable,
   MaterialFilterBar,
@@ -28,6 +29,7 @@ export interface MaterialListTemplateProps {
   filters: MaterialFilterState;
   totalItems: number;
   isRefreshing?: boolean;
+  isPending: boolean;
   onSearchChange: (val: string) => void;
   onJenjangChange: (val: string) => void;
   isModuleDialogOpen: boolean;
@@ -66,6 +68,7 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
   filters,
   totalItems,
   isRefreshing = false,
+  isPending,
   onSearchChange,
   onJenjangChange,
   onStatusChange,
@@ -159,18 +162,24 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
             isInspectorOpen ? 'xl:flex-1 xl:min-w-0' : 'xl:w-full'
           }`}
         >
-          <MaterialDataTable
-            modules={modules}
-            selectedId={selectedModuleId}
-            onSelectModule={onSelectModule}
-            onEditModule={onEditModule}
-            onDeleteModule={onDeleteModule}
-            currentPage={filters.page}
-            totalItems={totalItems}
-            rowsPerPage={filters.perPage}
-            onPageChange={onPageChange}
-            onRowsPerPageChange={onRowsPerPageChange}
-          />
+          {isPending ? (
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+              <TableLoader label="Memuat data modul..." />
+            </div>
+          ) : (
+            <MaterialDataTable
+              modules={modules}
+              selectedId={selectedModuleId}
+              onSelectModule={onSelectModule}
+              onEditModule={onEditModule}
+              onDeleteModule={onDeleteModule}
+              currentPage={filters.page}
+              totalItems={totalItems}
+              rowsPerPage={filters.perPage}
+              onPageChange={onPageChange}
+              onRowsPerPageChange={onRowsPerPageChange}
+            />
+          )}
         </div>
 
         {/* Right Inspector Panel (Collapsible) */}

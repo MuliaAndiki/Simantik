@@ -1,5 +1,6 @@
 import { ChevronsRight } from 'lucide-react';
 import type * as React from 'react';
+import { CardSkeleton } from '@/components/atoms/loading';
 import {
   EvaluationNextStepCard,
   type EvaluationNextStepItem,
@@ -10,45 +11,31 @@ export interface EvaluationNextStepsSectionProps {
   steps?: EvaluationNextStepItem[];
   title?: string;
   subtitle?: string;
+  isLoading?: boolean;
   className?: string;
 }
 
-export const DEFAULT_NEXT_STEPS: EvaluationNextStepItem[] = [
-  {
-    id: 'step-01',
-    stepNumber: '01',
-    title: 'Perkuat Pemahaman Inferensial',
-    description:
-      'Latih kemampuan menyimpulkan informasi tersirat dan menyingkirkan jawaban pengecoh dari wacana panjang.',
-    actionText: 'Lihat Kompetensi',
-    actionVariant: 'outline',
-  },
-  {
-    id: 'step-02',
-    stepNumber: '02',
-    title: 'Kerjakan Latihan',
-    description:
-      'Latih kemampuan membaca dan penalaran kritis melalui paket latihan 15 soal adaptif Bahasa Indonesia.',
-    actionText: 'Mulai Latihan',
-    actionVariant: 'solid',
-  },
-  {
-    id: 'step-03',
-    stepNumber: '03',
-    title: 'Pelajari Materi',
-    description:
-      'Perdalam materi kaidah sintaksis, kohesi wacana, serta teknik dekonstruksi teks argumentatif formal.',
-    actionText: 'Belajar',
-    actionVariant: 'outline',
-  },
-];
-
 export function EvaluationNextStepsSection({
-  steps = DEFAULT_NEXT_STEPS,
+  steps,
   title = 'Langkah Selanjutnya',
   subtitle = 'Berdasarkan hasil evaluasimu, ini rekomendasi langkah terarah yang bisa kamu lakukan.',
+  isLoading,
   className,
 }: EvaluationNextStepsSectionProps) {
+  if (isLoading) {
+    return (
+      <section aria-label={title} className={cn('w-full space-y-4', className)}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 pt-1">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <CardSkeleton key={`step-skeleton-${i}`} lines={3} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (!steps || steps.length === 0) return null;
+
   return (
     <section aria-label={title} className={cn('w-full space-y-4', className)}>
       {/* Section Header */}

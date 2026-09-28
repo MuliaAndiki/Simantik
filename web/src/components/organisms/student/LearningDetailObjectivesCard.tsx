@@ -11,19 +11,15 @@ export interface LearningDetailObjectivesCardProps {
   className?: string;
 }
 
-const DEFAULT_OBJECTIVES = [
-  'Memahami konsep yang dijelaskan dalam materi.',
-  'Mengidentifikasi informasi penting dalam teks.',
-  'Menerapkan pemahaman melalui latihan.',
-];
-
 export function LearningDetailObjectivesCard({
   title = 'TUJUAN PEMBELAJARAN',
   introText = 'Setelah mempelajari materi ini, siswa diharapkan mampu:',
-  objectives = DEFAULT_OBJECTIVES,
-  note = 'Catatan: Poin capaian pembelajaran di atas merupakan contoh template dan akan disesuaikan dengan materi yang dimasukkan oleh pihak sekolah.',
+  objectives,
+  note,
   className,
 }: LearningDetailObjectivesCardProps) {
+  if (!objectives || objectives.length === 0) return null;
+
   return (
     <Card
       className={cn(

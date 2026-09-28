@@ -9,20 +9,26 @@ export function AdminDashboardContainer() {
   const router = useRouter();
   const api = useApi();
 
-  const { data: dashboardData, isLoading } = api.admin.query.dashboard();
-  const { data: tryoutsData } = api.tryout.query.list({ limit: 100 });
-  const { data: materialsData } = api.learning.query.materials({ limit: 100 });
+  const { data: dashboardData, isLoading: isDashboardLoading } = api.admin.query.dashboard();
+  const { data: tryoutsData, isLoading: isTryoutsLoading } = api.tryout.query.list({
+    limit: 100,
+  });
+  const { data: materialsData, isLoading: isMaterialsLoading } = api.learning.query.materials({
+    limit: 100,
+  });
 
-  const totalStudents = dashboardData?.total_students ?? 1248;
-  const activeStudents = dashboardData?.active_students ?? 1086;
-  const activeStudentsPercent = dashboardData?.active_students_percent ?? 87;
-  const studentGrowthRate = dashboardData?.student_growth_rate ?? '+4.2%';
+  const isLoading = isDashboardLoading || isTryoutsLoading || isMaterialsLoading;
 
-  const totalMaterials = dashboardData?.total_materials ?? materialsData?.total ?? 42;
-  const totalPracticePackages = dashboardData?.total_practice_packages ?? 24;
-  const totalTryouts = dashboardData?.total_tryouts ?? tryoutsData?.total ?? 8;
-  const completedTryouts = dashboardData?.completed_tryouts ?? 6;
-  const liveTryouts = dashboardData?.live_tryouts ?? 2;
+  const totalStudents = dashboardData?.total_students;
+  const activeStudents = dashboardData?.active_students;
+  const activeStudentsPercent = dashboardData?.active_students_percent;
+  const studentGrowthRate = dashboardData?.student_growth_rate;
+
+  const totalMaterials = dashboardData?.total_materials ?? materialsData?.total;
+  const totalPracticePackages = dashboardData?.total_practice_packages;
+  const totalTryouts = dashboardData?.total_tryouts ?? tryoutsData?.total;
+  const completedTryouts = dashboardData?.completed_tryouts;
+  const liveTryouts = dashboardData?.live_tryouts;
 
   return (
     <AdminDashboardPage
@@ -53,19 +59,24 @@ export function AdminDashboardContainer() {
         materials: dashboardData?.material_status,
         practices: dashboardData?.practice_status,
         tryouts: dashboardData?.tryout_status,
+        isLoading,
       }}
       recentActivitiesProps={{
         activities: dashboardData?.recent_audit_logs,
+        isLoading,
         onViewAllLogs: () => router.push('/admin/settings'),
       }}
       growthChartProps={{
         data: dashboardData?.student_growth_chart,
-        averageGrowthText:
-          dashboardData?.average_monthly_growth || 'Rata-rata Pertumbuhan: +47 Siswa/Bulan',
+        averageGrowthText: dashboardData?.average_monthly_growth
+          ? `Rata-rata Pertumbuhan: ${dashboardData.average_monthly_growth}`
+          : undefined,
+        isLoading,
       }}
       recentStudentsTableProps={{
         students: dashboardData?.recent_students,
         totalStudents,
+        isLoading,
         onManageStudent: (id: string) => router.push(`/admin/students/${id}`),
         onViewAllStudents: () => router.push('/admin/students'),
       }}

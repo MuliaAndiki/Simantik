@@ -1,45 +1,14 @@
 import React from 'react';
+import { CardSkeleton } from '@/components/atoms/loading';
 import { CuratorActivityItem } from '@/types/ui/content-manager-dashboard.types';
 import { cn } from '@/utils/classname';
 
 export interface ContentManagerCuratorActivitiesProps {
   activities?: CuratorActivityItem[];
+  isLoading?: boolean;
   onOpenAuditTrail?: () => void;
   className?: string;
 }
-
-const DEFAULT_ACTIVITIES: CuratorActivityItem[] = [
-  {
-    id: '1',
-    title: 'Materi baru ditambahkan (Teks Eksplanasi)',
-    timeAgo: '10 menit yang lalu',
-    dotColor: 'yellow',
-  },
-  {
-    id: '2',
-    title: '15 Soal baru ditambahkan ke Bank Soal oleh SMAN 1',
-    timeAgo: '30 menit yang lalu',
-    dotColor: 'blue',
-  },
-  {
-    id: '3',
-    title: 'Kumpulan soal Tryout Paket 1 diperbarui (Pool 150 butir)',
-    timeAgo: '1 jam yang lalu',
-    dotColor: 'teal',
-  },
-  {
-    id: '4',
-    title: 'Tryout TKA Paket 1 dipublikasikan',
-    timeAgo: '2 jam yang lalu',
-    dotColor: 'teal',
-  },
-  {
-    id: '5',
-    title: "News 'Panduan TKA 2026' dipublikasikan",
-    timeAgo: '3 jam yang lalu',
-    dotColor: 'navy',
-  },
-];
 
 const DOT_COLOR_MAP: Record<CuratorActivityItem['dotColor'], string> = {
   yellow: 'bg-amber-400 ring-4 ring-amber-50',
@@ -49,11 +18,28 @@ const DOT_COLOR_MAP: Record<CuratorActivityItem['dotColor'], string> = {
 };
 
 export const ContentManagerCuratorActivities: React.FC<ContentManagerCuratorActivitiesProps> = ({
-  activities = DEFAULT_ACTIVITIES,
+  activities,
+  isLoading,
   onOpenAuditTrail,
   className,
 }) => {
-  const displayActivities = activities.length > 0 ? activities : DEFAULT_ACTIVITIES;
+  if (isLoading) {
+    return (
+      <div
+        className={cn(
+          'w-full bg-white rounded-2xl border border-slate-100/90 shadow-2xs p-6 md:p-7 space-y-3',
+          className
+        )}
+      >
+        {Array.from({ length: 4 }).map((_, i) => (
+          <CardSkeleton key={`activity-skeleton-${i}`} lines={1} />
+        ))}
+      </div>
+    );
+  }
+
+  if (!activities || activities.length === 0) return null;
+  const displayActivities = activities;
 
   return (
     <div

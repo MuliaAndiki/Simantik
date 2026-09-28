@@ -1,5 +1,6 @@
 import { Download, PlusCircle } from 'lucide-react';
 import type React from 'react';
+import { TableLoader } from '@/components/atoms/loading';
 import {
   PracticeCreateDialog,
   PracticeDataTable,
@@ -22,6 +23,7 @@ export interface PracticeListTemplateProps {
   filters: PracticeFilterState;
   totalItems: number;
   isRefreshing?: boolean;
+  isPending: boolean;
   onSearchChange: (val: string) => void;
   onJenjangChange: (val: string) => void;
   onStatusChange: (val: string) => void;
@@ -56,6 +58,7 @@ export const PracticeListTemplate: React.FC<PracticeListTemplateProps> = ({
   filters,
   totalItems,
   isRefreshing = false,
+  isPending,
   onSearchChange,
   onJenjangChange,
   onStatusChange,
@@ -144,18 +147,24 @@ export const PracticeListTemplate: React.FC<PracticeListTemplateProps> = ({
       />
 
       {/* Data Table */}
-      <PracticeDataTable
-        packages={packages}
-        currentPage={filters.page}
-        totalItems={totalItems}
-        rowsPerPage={filters.perPage}
-        onPageChange={onPageChange}
-        onRowsPerPageChange={onRowsPerPageChange}
-        onEdit={onEdit}
-        onToggleStatus={onToggleStatus}
-        onDelete={onDelete}
-        onManageQuestions={onManageQuestions}
-      />
+      {isPending ? (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+          <TableLoader label="Memuat data paket latihan..." />
+        </div>
+      ) : (
+        <PracticeDataTable
+          packages={packages}
+          currentPage={filters.page}
+          totalItems={totalItems}
+          rowsPerPage={filters.perPage}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+          onEdit={onEdit}
+          onToggleStatus={onToggleStatus}
+          onDelete={onDelete}
+          onManageQuestions={onManageQuestions}
+        />
+      )}
     </div>
   );
 };

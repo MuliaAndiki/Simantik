@@ -2,6 +2,7 @@ import { Award } from 'lucide-react';
 import type * as React from 'react';
 import { Badge } from '@/components/atoms/badge';
 import { Card } from '@/components/atoms/card';
+import { CardSkeleton } from '@/components/atoms/loading';
 import { cn } from '@/utils/classname';
 
 export interface EvaluationOverallScoreCardProps {
@@ -12,20 +13,24 @@ export interface EvaluationOverallScoreCardProps {
   categoryDescription?: string;
   passingStandardText?: string;
   passingStatusBadge?: string;
+  isLoading?: boolean;
   className?: string;
 }
 
 export function EvaluationOverallScoreCard({
-  score = 82,
+  score,
   maxScore = 100,
-  statusLabel = 'Baik',
+  statusLabel,
   categoryTitle = 'Kategori Standar Literasi Bahasa Indonesia',
-  categoryDescription = 'Performa kamu berada pada kategori baik. Di atas batas kompetensi nasional (75).',
+  categoryDescription,
   passingStandardText = 'Standar kelulusan ambang TKA 2026: 70',
-  passingStatusBadge = 'Lolos Ambang',
+  passingStatusBadge,
+  isLoading,
   className,
 }: EvaluationOverallScoreCardProps) {
-  const percentage = Math.min(100, Math.max(0, (score / maxScore) * 100));
+  if (isLoading) return <CardSkeleton lines={4} className={cn('h-full', className)} />;
+
+  const percentage = Math.min(100, Math.max(0, ((score ?? 0) / maxScore) * 100));
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
@@ -50,7 +55,7 @@ export function EvaluationOverallScoreCard({
             variant="outline"
             className="bg-emerald-50 text-emerald-700 border-emerald-200/80 text-xs font-semibold px-2.5 py-0.5 rounded-full"
           >
-            {statusLabel}
+            {statusLabel ?? '—'}
           </Badge>
         </div>
 
@@ -62,7 +67,7 @@ export function EvaluationOverallScoreCard({
               className="size-full -rotate-90"
               viewBox="0 0 96 96"
               role="img"
-              aria-label={`Skor performa keseluruhan: ${score} dari ${maxScore}`}
+              aria-label={`Skor performa keseluruhan: ${score ?? '—'} dari ${maxScore}`}
             >
               <title>Grafik Skor Performa Keseluruhan</title>
               {/* Background Track */}
@@ -89,7 +94,7 @@ export function EvaluationOverallScoreCard({
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
-                {score}
+                {score ?? '—'}
               </span>
               <span className="text-[10px] font-semibold text-slate-400 leading-tight">
                 /{maxScore}

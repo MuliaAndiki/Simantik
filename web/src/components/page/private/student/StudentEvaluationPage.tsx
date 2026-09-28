@@ -10,6 +10,7 @@ import type {
 import { StudentEvaluationTemplate } from '@/components/templates/student/StudentEvaluationTemplate';
 
 export interface StudentEvaluationPageProps {
+  isLoading?: boolean;
   heroProps?: EvaluationHeroBannerProps;
   overallProps?: Partial<EvaluationOverallScoreCardProps>;
   latestProps?: Partial<EvaluationLatestScoreCardProps>;
@@ -21,6 +22,7 @@ export interface StudentEvaluationPageProps {
 }
 
 export function StudentEvaluationPage({
+  isLoading,
   heroProps,
   overallProps,
   latestProps,
@@ -34,16 +36,18 @@ export function StudentEvaluationPage({
     <StudentEvaluationTemplate
       heroProps={heroProps}
       overviewProps={{
-        overallProps,
-        latestProps,
-        trendProps,
+        overallProps: { ...overallProps, isLoading },
+        latestProps: { ...latestProps, isLoading },
+        trendProps: { ...trendProps, isLoading },
       }}
       pillarsProps={{
         pillars,
+        isLoading,
         onViewDetail: onViewDetailCompetencies,
       }}
       nextStepsProps={{
         steps,
+        isLoading,
       }}
       className={className}
     />

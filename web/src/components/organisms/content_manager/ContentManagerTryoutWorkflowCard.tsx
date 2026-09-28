@@ -8,28 +8,26 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/atoms';
+import { CardSkeleton } from '@/components/atoms/loading';
 import type { TryoutWorkflowAutomation } from '@/types/ui';
 import { cn } from '@/utils/classname';
 
-const DEFAULT_WORKFLOW: TryoutWorkflowAutomation = {
-  modulUjian: 'Tryout TKA Bahasa Indonesia',
-  kumpulanSoalTotal: 150,
-  alokasiSiswa: 30,
-  durasiMenit: 75,
-  statusDistribusi: 'Published',
-};
-
 export interface ContentManagerTryoutWorkflowCardProps {
   workflow?: TryoutWorkflowAutomation;
+  isLoading?: boolean;
   onManageQuestions?: () => void;
   className?: string;
 }
 
 export const ContentManagerTryoutWorkflowCard: React.FC<ContentManagerTryoutWorkflowCardProps> = ({
-  workflow = DEFAULT_WORKFLOW,
+  workflow,
+  isLoading,
   onManageQuestions,
   className,
 }) => {
+  if (isLoading) return <CardSkeleton lines={5} className={className} />;
+  if (!workflow) return null;
+
   return (
     <div
       className={cn(

@@ -85,9 +85,15 @@ export default function StudentEvaluation() {
   const router = useRouter();
   const { evaluation, question, reporting } = useApi();
 
-  const { data: reportCard } = reporting.query.studentReportCard();
-  const { data: evaluationsPage } = evaluation.query.list({ limit: 1 });
-  const { data: competenciesPage } = question.query.competencies({ limit: 100 });
+  const { data: reportCard, isLoading: isReportLoading } = reporting.query.studentReportCard();
+  const { data: evaluationsPage, isLoading: isEvaluationsLoading } = evaluation.query.list({
+    limit: 1,
+  });
+  const { data: competenciesPage, isLoading: isCompetenciesLoading } = question.query.competencies({
+    limit: 100,
+  });
+
+  const isLoading = isReportLoading || isEvaluationsLoading || isCompetenciesLoading;
 
   const lastEvaluation = evaluationsPage?.evaluations?.[0];
   const performanceTrend = reportCard?.performance_trend;
@@ -104,8 +110,9 @@ export default function StudentEvaluation() {
   const handleOpenPractice = () => router.push('/student/practice');
 
   // 1. Overall Score metrics
-  const overallScore = reportCard?.summary.average_score ?? 82;
+  const overallScore = reportCard?.summary.average_score;
   const overallStatusLabel = useMemo(() => {
+    if (overallScore === undefined) return undefined;
     if (overallScore >= 85) return 'Sangat Baik';
     if (overallScore >= 75) return 'Baik';
     if (overallScore >= 60) return 'Cukup';
@@ -117,17 +124,17 @@ export default function StudentEvaluation() {
     lastEvaluation?.score ??
     (performanceTrend && performanceTrend.length > 0
       ? performanceTrend[performanceTrend.length - 1].score
-      : 82);
+      : undefined);
 
   const accuracyRatioText = lastEvaluation
     ? `Rasio Akurasi: ${lastEvaluation.correct_answers} / ${lastEvaluation.total_questions} Benar`
-    : 'Rasio Akurasi: 25 / 30 Benar';
+    : undefined;
 
   const accuracyPercentageText = lastEvaluation
     ? `${lastEvaluation.accuracy.toFixed(1)}%`
-    : reportCard?.summary.overall_accuracy
+    : reportCard?.summary.overall_accuracy !== undefined
       ? `${reportCard.summary.overall_accuracy.toFixed(1)}%`
-      : '83.3%';
+      : undefined;
 
   const lastTrend =
     performanceTrend && performanceTrend.length > 0
@@ -160,12 +167,7 @@ export default function StudentEvaluation() {
         score: Math.round(item.score),
       }));
     }
-    return [
-      { session: 'Eval 1', score: 68 },
-      { session: 'Eval 2', score: 74 },
-      { session: 'Eval 3', score: 78 },
-      { session: 'Eval 4', score: 82 },
-    ];
+    return [];
   }, [performanceTrend]);
 
   const cumulativeGrowthText = useMemo(() => {
@@ -174,7 +176,7 @@ export default function StudentEvaluation() {
       const sign = diff >= 0 ? '+' : '';
       return `${sign}${diff} Poin Kumulatif`;
     }
-    return '+14 Poin Kumulatif';
+    return undefined;
   }, [trendChartData]);
 
   const periodText =
@@ -201,13 +203,14 @@ export default function StudentEvaluation() {
   return (
     <>
       <StudentEvaluationPage
+        isLoading={isLoading}
         heroProps={{ onPrint: () => window.print() }}
         overallProps={{
-          score: Math.round(overallScore),
+          score: overallScore !== undefined ? Math.round(overallScore) : undefined,
           statusLabel: overallStatusLabel,
         }}
         latestProps={{
-          score: Math.round(latestScore),
+          score: latestScore !== undefined ? Math.round(latestScore) : undefined,
           accuracyRatioText,
           accuracyPercentageText,
           evaluationSessionName,

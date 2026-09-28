@@ -1,4 +1,5 @@
 import type * as React from 'react';
+import { CardSkeleton } from '@/components/atoms/loading';
 import { DashboardSectionHeader } from '@/components/molecules/student/DashboardSectionHeader';
 import { MaterialCard } from '@/components/molecules/student/MaterialCard';
 import { cn } from '@/utils/classname';
@@ -11,6 +12,7 @@ export interface DashboardMaterialItem {
 
 export interface LearningMaterialsGridProps {
   materials?: DashboardMaterialItem[];
+  isLoading?: boolean;
   onLearnMaterial?: (materialId: string) => void;
   onViewAllMaterials?: () => void;
   allMaterialsHref?: string;
@@ -19,6 +21,7 @@ export interface LearningMaterialsGridProps {
 
 export function LearningMaterialsGrid({
   materials,
+  isLoading,
   onLearnMaterial,
   onViewAllMaterials,
   allMaterialsHref = '/student/learning',
@@ -309,8 +312,9 @@ export function LearningMaterialsGrid({
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-        {materials && materials.length > 0
-          ? materials.map((material, index) => (
+        {isLoading
+          ? Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={`material-skeleton-${i}`} />)
+          : (materials ?? []).map((material, index) => (
               <MaterialCard
                 key={material.id}
                 title={material.title}
@@ -322,36 +326,7 @@ export function LearningMaterialsGrid({
                 href="/student/learning"
                 onLearn={() => onLearnMaterial?.(material.id)}
               />
-            ))
-          : [
-              <MaterialCard
-                key="ide-pokok"
-                title="Ide Pokok & Gagasan Pendukung"
-                description="Memahami inti pembahasan dan informasi pendukung dalam sebuah teks."
-                illustration={BookIllustration}
-                actionText="Pelajari Materi"
-                href="/student/learning"
-                onLearn={() => onLearnMaterial?.('ide-pokok')}
-              />,
-              <MaterialCard
-                key="informasi-tersurat"
-                title="Informasi Tersurat"
-                description="Menemukan informasi yang disampaikan secara langsung dalam teks."
-                illustration={DocumentIllustration}
-                actionText="Pelajari Materi"
-                href="/student/learning"
-                onLearn={() => onLearnMaterial?.('informasi-tersurat')}
-              />,
-              <MaterialCard
-                key="makna-tersirat"
-                title="Makna Tersirat & Kesimpulan"
-                description="Memahami informasi yang tidak disampaikan secara langsung dan menarik kesimpulan dari teks."
-                illustration={MagnifierIllustration}
-                actionText="Pelajari Materi"
-                href="/student/learning"
-                onLearn={() => onLearnMaterial?.('makna-tersirat')}
-              />,
-            ]}
+            ))}
       </div>
     </section>
   );

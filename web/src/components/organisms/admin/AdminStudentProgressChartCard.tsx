@@ -26,26 +26,17 @@ export interface AdminStudentProgressChartCardProps {
   className?: string;
 }
 
-const DEFAULT_CHART_DATA: ChartDataPoint[] = [
-  { date: '12 Sep', score: 68, label: 'Kaidah Kebahasaan Dasar' },
-  { date: '14 Sep', score: 72, label: 'Analisis Struktur Paragraf' },
-  { date: '16 Sep', score: 70, label: 'Kosakata & Makna Kontekstual' },
-  { date: '18 Sep', score: 78, label: 'Ide Pokok & Kalimat Utama' },
-  { date: '20 Sep', score: 76, label: 'Sintesis Argumen Kritis' },
-  { date: '22 Sep', score: 84, label: 'Pemahaman Inferensial' },
-];
-
 export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCardProps> = ({
   timeframe = '3m',
   onTimeframeChange,
-  latestScore = 84,
-  previousScore = 78,
-  scoreDiff = 6,
-  trendText = 'Tren: Nilai latihan meningkat',
-  latestPracticeTitle = 'Pemahaman Inferensial & Hubungan Gagasan',
-  latestPracticeDate = '22 September 2026',
+  latestScore,
+  previousScore,
+  scoreDiff,
+  trendText,
+  latestPracticeTitle,
+  latestPracticeDate,
   onViewLatestPracticeDetail,
-  chartData = DEFAULT_CHART_DATA,
+  chartData = [],
   className,
 }) => {
   const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(chartData.length - 1);
@@ -67,11 +58,14 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
   const graphHeight = height - paddingTop - paddingBottom;
 
   // Calculate coordinates for points
-  const points = chartData.map((d, index) => {
-    const x = paddingX + (index / (chartData.length - 1)) * graphWidth;
-    const y = paddingTop + (1 - d.score / 100) * graphHeight;
-    return { x, y, ...d };
-  });
+  const points =
+    chartData.length > 1
+      ? chartData.map((d, index) => {
+          const x = paddingX + (index / (chartData.length - 1)) * graphWidth;
+          const y = paddingTop + (1 - d.score / 100) * graphHeight;
+          return { x, y, ...d };
+        })
+      : [];
 
   // Create SVG path string
   const linePath = points.reduce((acc, curr, index) => {
@@ -147,7 +141,7 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
             Nilai Terakhir
           </span>
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-black text-slate-900">{latestScore}</span>
+            <span className="text-2xl font-black text-slate-900">{latestScore ?? '—'}</span>
             <span className="text-xs text-slate-400 font-semibold">/ 100</span>
           </div>
           <p className="text-[11px] text-slate-500 font-medium">Latihan terakhir</p>
@@ -159,7 +153,7 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
             Nilai Sebelumnya
           </span>
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-black text-slate-900">{previousScore}</span>
+            <span className="text-2xl font-black text-slate-900">{previousScore ?? '—'}</span>
             <span className="text-xs text-slate-400 font-semibold">/ 100</span>
           </div>
           <p className="text-[11px] text-slate-500 font-medium">Latihan sebelumnya</p>
@@ -172,7 +166,7 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
           </span>
           <div className="flex items-center gap-2">
             <span className="text-2xl font-black text-slate-900">
-              {scoreDiff >= 0 ? `+${scoreDiff}` : scoreDiff}
+              {scoreDiff !== undefined ? (scoreDiff >= 0 ? `+${scoreDiff}` : scoreDiff) : '—'}
             </span>
             <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
               <TrendingUp className="w-3 h-3" />
@@ -194,138 +188,144 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
         </div>
 
         {/* SVG Curve Canvas */}
-        <div className="w-full relative h-[180px]">
-          <svg
-            viewBox={`0 0 ${width} ${height}`}
-            className="w-full h-full overflow-visible"
-            preserveAspectRatio="none"
-            aria-label="Grafik Perkembangan Nilai Latihan"
-          >
-            <title>Grafik Perkembangan Nilai Latihan</title>
-            <defs>
-              <linearGradient id="chartAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#134653" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#134653" stopOpacity="0.0" />
-              </linearGradient>
-            </defs>
+        {points.length > 0 ? (
+          <div className="w-full relative h-[180px]">
+            <svg
+              viewBox={`0 0 ${width} ${height}`}
+              className="w-full h-full overflow-visible"
+              preserveAspectRatio="none"
+              aria-label="Grafik Perkembangan Nilai Latihan"
+            >
+              <title>Grafik Perkembangan Nilai Latihan</title>
+              <defs>
+                <linearGradient id="chartAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#134653" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#134653" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
 
-            {/* Gridlines */}
-            {[0, 20, 40, 60, 80, 100].map((val) => {
-              const y = paddingTop + (1 - val / 100) * graphHeight;
-              return (
-                <g key={val}>
-                  <line
-                    x1={paddingX}
-                    y1={y}
-                    x2={width - paddingX}
-                    y2={y}
-                    stroke="#e2e8f0"
-                    strokeDasharray="3 3"
-                    strokeWidth="1"
-                  />
-                  <text
-                    x={paddingX - 10}
-                    y={y + 3}
-                    fill="#94a3b8"
-                    fontSize="9"
-                    fontWeight="500"
-                    textAnchor="end"
+              {/* Gridlines */}
+              {[0, 20, 40, 60, 80, 100].map((val) => {
+                const y = paddingTop + (1 - val / 100) * graphHeight;
+                return (
+                  <g key={val}>
+                    <line
+                      x1={paddingX}
+                      y1={y}
+                      x2={width - paddingX}
+                      y2={y}
+                      stroke="#e2e8f0"
+                      strokeDasharray="3 3"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={paddingX - 10}
+                      y={y + 3}
+                      fill="#94a3b8"
+                      fontSize="9"
+                      fontWeight="500"
+                      textAnchor="end"
+                    >
+                      {val}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* Area gradient */}
+              <path d={areaPath} fill="url(#chartAreaGradient)" />
+
+              {/* Line Path */}
+              <path
+                d={linePath}
+                fill="none"
+                stroke="#134653"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* Data Points */}
+              {points.map((p, idx) => {
+                const isSelected = activeTooltipIndex === idx;
+                return (
+                  <g
+                    key={idx}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Nilai ${p.date}: ${p.score}`}
+                    className="cursor-pointer focus:outline-none"
+                    onClick={() => setActiveTooltipIndex(idx)}
+                    onMouseEnter={() => setActiveTooltipIndex(idx)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        setActiveTooltipIndex(idx);
+                      }
+                    }}
                   >
-                    {val}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* Area gradient */}
-            <path d={areaPath} fill="url(#chartAreaGradient)" />
-
-            {/* Line Path */}
-            <path
-              d={linePath}
-              fill="none"
-              stroke="#134653"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-
-            {/* Data Points */}
-            {points.map((p, idx) => {
-              const isSelected = activeTooltipIndex === idx;
-              return (
-                <g
-                  key={idx}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Nilai ${p.date}: ${p.score}`}
-                  className="cursor-pointer focus:outline-none"
-                  onClick={() => setActiveTooltipIndex(idx)}
-                  onMouseEnter={() => setActiveTooltipIndex(idx)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      setActiveTooltipIndex(idx);
-                    }
-                  }}
-                >
-                  {isSelected && (
+                    {isSelected && (
+                      <circle
+                        cx={p.x}
+                        cy={p.y}
+                        r="9"
+                        fill="#F5B731"
+                        fillOpacity="0.3"
+                        className="animate-pulse"
+                      />
+                    )}
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r="9"
-                      fill="#F5B731"
-                      fillOpacity="0.3"
-                      className="animate-pulse"
+                      r={isSelected ? '5' : '3.5'}
+                      fill={isSelected ? '#F5B731' : '#134653'}
+                      stroke="#ffffff"
+                      strokeWidth="2"
                     />
-                  )}
-                  <circle
-                    cx={p.x}
-                    cy={p.y}
-                    r={isSelected ? '5' : '3.5'}
-                    fill={isSelected ? '#F5B731' : '#134653'}
-                    stroke="#ffffff"
-                    strokeWidth="2"
-                  />
-                </g>
-              );
-            })}
+                  </g>
+                );
+              })}
 
-            {/* X Axis Labels */}
-            {points.map((p, idx) => (
-              <text
-                key={idx}
-                x={p.x}
-                y={height - 8}
-                fill="#64748b"
-                fontSize="10"
-                fontWeight="600"
-                textAnchor="middle"
+              {/* X Axis Labels */}
+              {points.map((p, idx) => (
+                <text
+                  key={idx}
+                  x={p.x}
+                  y={height - 8}
+                  fill="#64748b"
+                  fontSize="10"
+                  fontWeight="600"
+                  textAnchor="middle"
+                >
+                  {p.date}
+                </text>
+              ))}
+            </svg>
+
+            {/* Floating Tooltip if active */}
+            {activePoint && (
+              <div
+                className="absolute pointer-events-none transition-all duration-200"
+                style={{
+                  left: `${(activePoint.x / width) * 100}%`,
+                  top: `${(activePoint.y / height) * 100}%`,
+                  transform: 'translate(-50%, -130%)',
+                }}
               >
-                {p.date}
-              </text>
-            ))}
-          </svg>
-
-          {/* Floating Tooltip if active */}
-          {activePoint && (
-            <div
-              className="absolute pointer-events-none transition-all duration-200"
-              style={{
-                left: `${(activePoint.x / width) * 100}%`,
-                top: `${(activePoint.y / height) * 100}%`,
-                transform: 'translate(-50%, -130%)',
-              }}
-            >
-              <div className="bg-slate-900/90 backdrop-blur-xs text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg shadow-lg border border-slate-700 whitespace-nowrap">
-                <span>{activePoint.label || 'Sesi Latihan'}</span>
-                <span className="text-slate-400 mx-1">•</span>
-                <span className="text-[#F5B731] font-bold">{activePoint.date}</span>
-                <span className="text-slate-400 mx-1">|</span>
-                <span className="text-emerald-400 font-bold">Nilai: {activePoint.score}</span>
+                <div className="bg-slate-900/90 backdrop-blur-xs text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg shadow-lg border border-slate-700 whitespace-nowrap">
+                  <span>{activePoint.label || 'Sesi Latihan'}</span>
+                  <span className="text-slate-400 mx-1">•</span>
+                  <span className="text-[#F5B731] font-bold">{activePoint.date}</span>
+                  <span className="text-slate-400 mx-1">|</span>
+                  <span className="text-emerald-400 font-bold">Nilai: {activePoint.score}</span>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="h-[180px] flex items-center justify-center text-sm text-slate-400 font-medium">
+            Belum ada data performa.
+          </div>
+        )}
       </div>
 
       {/* Summary Highlight Pills */}
@@ -333,14 +333,16 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           <span>
-            Perkembangan terakhir: {scoreDiff >= 0 ? `+${scoreDiff}` : scoreDiff} poin dibandingkan
-            latihan sebelumnya
+            Perkembangan terakhir:{' '}
+            {scoreDiff !== undefined
+              ? `${scoreDiff >= 0 ? `+${scoreDiff}` : scoreDiff} poin dibandingkan latihan sebelumnya`
+              : '—'}
           </span>
         </div>
 
         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-cyan-50 text-teal-800 border border-cyan-100">
           <TrendingUp className="w-3.5 h-3.5 text-teal-600" />
-          <span>{trendText}</span>
+          <span>{trendText ?? '—'}</span>
         </div>
       </div>
 
@@ -352,8 +354,8 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
           </div>
           <span className="line-clamp-1">
             <span className="font-bold text-slate-900">Latihan terakhir:</span>{' '}
-            {latestPracticeTitle} • {latestPracticeDate} •{' '}
-            <span className="font-bold text-teal-700">Nilai {latestScore}</span>
+            {latestPracticeTitle ?? '—'} • {latestPracticeDate ?? '—'} •{' '}
+            <span className="font-bold text-teal-700">Nilai {latestScore ?? '—'}</span>
           </span>
         </div>
 

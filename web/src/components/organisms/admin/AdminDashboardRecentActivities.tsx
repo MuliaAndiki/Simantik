@@ -1,18 +1,23 @@
 import React from 'react';
+import { CardSkeleton } from '@/components/atoms/loading';
 import type { AdminAuditLogItem } from '@/types/service';
 import { cn } from '@/utils/classname';
 
 export interface AdminDashboardRecentActivitiesProps {
   activities?: AdminAuditLogItem[];
+  isLoading?: boolean;
   onViewAllLogs?: () => void;
   className?: string;
 }
 
 export const AdminDashboardRecentActivities: React.FC<AdminDashboardRecentActivitiesProps> = ({
   activities,
+  isLoading,
   onViewAllLogs,
   className,
 }) => {
+  if (isLoading) return <CardSkeleton lines={4} className={className} />;
+
   const displayActivities = activities || [];
 
   const getAvatarColors = (name: string, index: number) => {

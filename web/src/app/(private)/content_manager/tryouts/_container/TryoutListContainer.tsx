@@ -294,6 +294,7 @@ export const TryoutListContainer: React.FC = () => {
       filters={filters}
       totalItems={totalItems}
       isRefreshing={isRefreshing}
+      isPending={tryoutsQuery.isPending}
       onSearchChange={handleSearchChange}
       onJenjangChange={handleJenjangChange}
       onStatusChange={handleStatusChange}

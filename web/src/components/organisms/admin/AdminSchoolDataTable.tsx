@@ -1,6 +1,7 @@
 import { Edit2, Trash2 } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/atoms';
+import { TableLoader } from '@/components/atoms/loading';
 import type { SchoolResponse } from '@/types/service';
 import { cn } from '@/utils/classname';
 
@@ -46,8 +47,8 @@ export const AdminSchoolDataTable: React.FC<AdminSchoolDataTableProps> = ({
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-5 py-12 text-center text-slate-400 font-medium">
-                  Memuat data sekolah...
+                <td colSpan={6}>
+                  <TableLoader label="Memuat data sekolah..." />
                 </td>
               </tr>
             ) : schools.length === 0 ? (

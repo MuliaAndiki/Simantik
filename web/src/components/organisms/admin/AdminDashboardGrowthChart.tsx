@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { CardSkeleton } from '@/components/atoms/loading';
 import type { StudentGrowthPoint } from '@/types/service';
 import { cn } from '@/utils/classname';
 
@@ -21,19 +22,23 @@ export interface AdminDashboardGrowthChartProps {
   data?: StudentGrowthPoint[];
   averageGrowthText?: string;
   timeframe?: GrowthTimeframe;
+  isLoading?: boolean;
   onTimeframeChange?: (tf: GrowthTimeframe) => void;
   className?: string;
 }
 
 export const AdminDashboardGrowthChart: React.FC<AdminDashboardGrowthChartProps> = ({
   data = [],
-  averageGrowthText = 'Rata-rata Pertumbuhan: +47 Siswa/Bulan',
+  averageGrowthText,
   timeframe = '6m',
+  isLoading,
   onTimeframeChange,
   className,
 }) => {
   const [activeTab, setActiveTab] = useState<GrowthTimeframe>(timeframe);
   const [activePoint, setActivePoint] = useState<string | null>(null);
+
+  if (isLoading) return <CardSkeleton lines={5} className={className} />;
 
   const timeframes: { id: GrowthTimeframe; label: string }[] = [
     { id: '7d', label: '7 Hari' },
@@ -70,10 +75,12 @@ export const AdminDashboardGrowthChart: React.FC<AdminDashboardGrowthChartProps>
         </div>
 
         {/* Growth Rate Pill */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/60 text-xs font-bold self-start md:self-auto">
-          <TrendingUp className="size-3.5 text-emerald-600" />
-          <span>{averageGrowthText}</span>
-        </div>
+        {averageGrowthText && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/60 text-xs font-bold self-start md:self-auto">
+            <TrendingUp className="size-3.5 text-emerald-600" />
+            <span>{averageGrowthText}</span>
+          </div>
+        )}
 
         {/* Timeframe Filter Tabs */}
         <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl self-start md:self-auto">

@@ -1,22 +1,13 @@
 import { BookOpen, FileCheck, FileEdit, FileQuestion, Globe, Plus } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/atoms';
+import { CardSkeleton } from '@/components/atoms/loading';
 import type { ContentManagerKpiStats } from '@/types/ui';
 import { cn } from '@/utils/classname';
 
-const DEFAULT_STATS: ContentManagerKpiStats = {
-  totalMateri: 36,
-  materiSubtitle: 'Materi dari sekolah terdaftar',
-  paketBankSoal: 30,
-  bankSoalSubtitle: 'Soal yang tersedia aktif',
-  totalPaketTryout: 12,
-  tryoutSubtitle: 'Tryout yang siap dikerjakan',
-  kontenPublik: 24,
-  kontenPublikSubtitle: 'News, docs, review & video',
-};
-
 export interface ContentManagerStatCardsProps {
   stats?: ContentManagerKpiStats;
+  isLoading?: boolean;
   onAddMaterial?: () => void;
   onAddQuestion?: () => void;
   onCreateTryout?: () => void;
@@ -25,13 +16,26 @@ export interface ContentManagerStatCardsProps {
 }
 
 export const ContentManagerStatCards: React.FC<ContentManagerStatCardsProps> = ({
-  stats = DEFAULT_STATS,
+  stats,
+  isLoading,
   onAddMaterial,
   onAddQuestion,
   onCreateTryout,
   onAddNews,
   className,
 }) => {
+  if (isLoading) {
+    return (
+      <section className={cn('w-full space-y-3.5 select-none', className)}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <CardSkeleton key={`cm-stat-skeleton-${i}`} lines={2} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className={cn('w-full space-y-3.5 select-none', className)}>
       {/* Section Header with Teal Bar */}
@@ -57,10 +61,10 @@ export const ContentManagerStatCards: React.FC<ContentManagerStatCardsProps> = (
 
           <div>
             <div className="text-3xl font-black text-slate-900 tracking-tight">
-              {stats.totalMateri}
+              {stats?.totalMateri ?? 0}
             </div>
             <p className="text-xs text-slate-500 font-medium mt-1">
-              {stats.materiSubtitle || 'Materi dari sekolah terdaftar'}
+              {stats?.materiSubtitle || 'Materi dari sekolah terdaftar'}
             </p>
           </div>
 
@@ -87,11 +91,11 @@ export const ContentManagerStatCards: React.FC<ContentManagerStatCardsProps> = (
 
           <div>
             <div className="text-3xl font-black text-slate-900 tracking-tight">
-              {stats.paketBankSoal}{' '}
+              {stats?.paketBankSoal ?? 0}{' '}
               <span className="text-sm font-semibold text-slate-500">paket</span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-1">
-              {stats.bankSoalSubtitle || 'Soal yang tersedia aktif'}
+              {stats?.bankSoalSubtitle || 'Soal yang tersedia aktif'}
             </p>
           </div>
 
@@ -119,11 +123,11 @@ export const ContentManagerStatCards: React.FC<ContentManagerStatCardsProps> = (
 
           <div>
             <div className="text-3xl font-black text-slate-900 tracking-tight">
-              {stats.totalPaketTryout}{' '}
+              {stats?.totalPaketTryout ?? 0}{' '}
               <span className="text-sm font-semibold text-slate-500">paket</span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-1">
-              {stats.tryoutSubtitle || 'Tryout yang siap dikerjakan'}
+              {stats?.tryoutSubtitle || 'Tryout yang siap dikerjakan'}
             </p>
           </div>
 
@@ -151,10 +155,10 @@ export const ContentManagerStatCards: React.FC<ContentManagerStatCardsProps> = (
 
           <div>
             <div className="text-3xl font-black text-slate-900 tracking-tight">
-              {stats.kontenPublik}
+              {stats?.kontenPublik ?? 0}
             </div>
             <p className="text-xs text-slate-500 font-medium mt-1">
-              {stats.kontenPublikSubtitle || 'News, docs, review & video'}
+              {stats?.kontenPublikSubtitle || 'News, docs, review & video'}
             </p>
           </div>
 
