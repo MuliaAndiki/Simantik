@@ -875,7 +875,7 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 			ansCopy := ans
 			ansPtr = &ansCopy
 		}
-		item, answered := buildEmailQuestionItem(aq.QuestionNumber, aq.DifficultyLevel, aq.Question, ansPtr)
+		item, answered := BuildEmailQuestionItem(aq.QuestionNumber, aq.DifficultyLevel, aq.Question, ansPtr)
 		if !answered {
 			continue
 		}
@@ -887,6 +887,7 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 
 	// 5. Feedback engine untuk seksi materi A..N (tanpa simpan ulang rekomendasi)
 	var emailMaterials []utils.TryoutMaterialEmailItem
+	var emailPractices []string
 	var feedbackSummary string
 	if evidences, compNames := StudentAnswerEvidences(answers, qMap); len(evidences) > 0 {
 		compSet := make(map[uuid.UUID]bool)
@@ -912,6 +913,11 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 				Reason: m.Reason,
 			})
 		}
+		for _, cid := range fb.PracticeCompetencyIDs {
+			if name := compNames[cid]; name != "" {
+				emailPractices = append(emailPractices, name)
+			}
+		}
 	}
 
 	timeTakenMin := int(timeTakenSec / 60)
@@ -931,6 +937,7 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 		TimeTakenMin:    timeTakenMin,
 		Questions:       items,
 		Materials:       emailMaterials,
+		Practices:       emailPractices,
 		FeedbackSummary: feedbackSummary,
 	}
 

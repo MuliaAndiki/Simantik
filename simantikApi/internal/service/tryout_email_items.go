@@ -13,19 +13,16 @@ import (
 
 // Varian soal untuk render email & review.
 const (
-	emailVariantSingle = "single"
-	emailVariantMCMA   = "mcma"
-	emailVariantMatrix = "matrix"
+	EmailVariantSingle = "single"
+	EmailVariantMCMA   = "mcma"
+	EmailVariantMatrix = "matrix"
 )
 
-var (
-	wacanaPrefixRegex = regexp.MustCompile(`(?s)^\[WACANA:\s*(.*?)\]\n(.*)$`)
-	htmlTagRegex      = regexp.MustCompile(`(?i)</?[a-z][\s\S]*>`)
-)
+var wacanaPrefixRegex = regexp.MustCompile(`(?s)^\[WACANA:\s*(.*?)\]\n(.*)$`)
 
-// parseEmailWacana memecah "[WACANA: judul]\n<stimulus>\n\n<soal>".
+// ParseEmailWacana memecah "[WACANA: judul]\n<stimulus>\n\n<soal>".
 // Mereturn judul, stimulus, dan tubuh soal (tanpa prefix).
-func parseEmailWacana(raw string) (title, stimulus, body string) {
+func ParseEmailWacana(raw string) (title, stimulus, body string) {
 	m := wacanaPrefixRegex.FindStringSubmatch(raw)
 	if len(m) < 3 {
 		return "", "", strings.TrimSpace(raw)
@@ -41,16 +38,12 @@ func parseEmailWacana(raw string) (title, stimulus, body string) {
 	return title, stimulus, body
 }
 
-func isEmailHTML(s string) bool {
-	return htmlTagRegex.MatchString(s)
-}
-
-// detectEmailVariant menentukan varian dari opsi soal.
-func detectEmailVariant(options []models.QuestionOption) string {
+// DetectEmailVariant menentukan varian dari opsi soal.
+func DetectEmailVariant(options []models.QuestionOption) string {
 	hasMarker := false
 	correctCount := 0
 	for _, opt := range options {
-		if kunciMarkerRegex.MatchString(opt.OptionText) {
+		if KunciMarkerRegex.MatchString(opt.OptionText) {
 			hasMarker = true
 		}
 		if opt.IsCorrect {
@@ -58,17 +51,17 @@ func detectEmailVariant(options []models.QuestionOption) string {
 		}
 	}
 	if hasMarker {
-		return emailVariantMatrix
+		return EmailVariantMatrix
 	}
 	if correctCount > 1 {
-		return emailVariantMCMA
+		return EmailVariantMCMA
 	}
-	return emailVariantSingle
+	return EmailVariantSingle
 }
 
 // humanizeEmailKey mengubah "TIDAK_SETUJU" menjadi "Tidak Setuju".
 func humanizeEmailKey(key string) string {
-	parts := strings.Split(normalizeAnswerKey(key), "_")
+	parts := strings.Split(NormalizeAnswerKey(key), "_")
 	for i, w := range parts {
 		if len(w) > 0 {
 			parts[i] = strings.ToUpper(w[:1]) + strings.ToLower(w[1:])
@@ -83,7 +76,7 @@ func humanizeEmailKey(key string) string {
 
 // stripKunciMarker membuang "[KUNCI: ...]" dari teks opsi.
 func stripKunciMarker(text string) string {
-	m := kunciMarkerRegex.FindStringSubmatch(text)
+	m := KunciMarkerRegex.FindStringSubmatch(text)
 	if len(m) >= 2 {
 		// potong marker di akhir
 		if idx := strings.LastIndex(text, "[KUNCI:"); idx >= 0 {
@@ -95,11 +88,11 @@ func stripKunciMarker(text string) string {
 
 // matrixKeyOf mengambil kunci ternormalisasi dari teks opsi.
 func matrixKeyOf(text string) string {
-	m := kunciMarkerRegex.FindStringSubmatch(text)
+	m := KunciMarkerRegex.FindStringSubmatch(text)
 	if len(m) < 2 {
 		return ""
 	}
-	return normalizeAnswerKey(m[1])
+	return NormalizeAnswerKey(m[1])
 }
 
 // matrixAnswerMap mem-parse answer_data JSON {"optionID": "SETUJU"}.
@@ -119,9 +112,9 @@ func matrixAnswerMap(raw string) map[string]string {
 	return out
 }
 
-// buildEmailQuestionItem membangun satu item email dari soal + jawaban.
+// BuildEmailQuestionItem membangun satu item email dari soal + jawaban.
 // Mengembalikan (item, answered): answered=false untuk soal tak terjawab (dibuang).
-func buildEmailQuestionItem(
+func BuildEmailQuestionItem(
 	questionNumber int,
 	difficulty int,
 	q *models.Question,
@@ -134,13 +127,13 @@ func buildEmailQuestionItem(
 		return item, false
 	}
 
-	title, stimulus, body := parseEmailWacana(q.QuestionText)
+	title, stimulus, body := ParseEmailWacana(q.QuestionText)
 	item.StimulusTitle = title
 	item.StimulusHTML = stimulus
 	item.BodyHTML = body
 	item.QuestionText = body
 
-	variant := detectEmailVariant(q.Options)
+	variant := DetectEmailVariant(q.Options)
 	item.QuestionType = variant
 
 	hasAns := ans != nil
@@ -173,7 +166,7 @@ func buildEmailQuestionItem(
 	}
 
 	switch variant {
-	case emailVariantMatrix:
+	case EmailVariantMatrix:
 		answerMap := map[string]string{}
 		if hasAns {
 			answerMap = matrixAnswerMap(ans.AnswerData)
@@ -185,7 +178,7 @@ func buildEmailQuestionItem(
 			rowCorrect := false
 			if ok && strings.TrimSpace(rawChoice) != "" {
 				userChoice = humanizeEmailKey(rawChoice)
-				rowCorrect = normalizeAnswerKey(rawChoice) == key
+				rowCorrect = NormalizeAnswerKey(rawChoice) == key
 			}
 			item.MatrixRows = append(item.MatrixRows, utils.TryoutMatrixRowEmailItem{
 				Statement:  stripKunciMarker(opt.OptionText),
@@ -228,7 +221,7 @@ func buildEmailQuestionItem(
 				item.StudentAnswer = strings.TrimSpace(ans.AnswerData)
 			}
 		}
-		if variant == emailVariantMCMA && len(correctTexts) > 1 {
+		if variant == EmailVariantMCMA && len(correctTexts) > 1 {
 			item.CorrectAnswer = strings.Join(correctTexts, "; ")
 		}
 	}
