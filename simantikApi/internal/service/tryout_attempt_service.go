@@ -833,6 +833,12 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 		return
 	}
 
+	// 1b. Fetch attempt for real duration source + auto-submit status
+	var attempt models.TryoutAttempt
+	if err := s.db.WithContext(ctx).First(&attempt, "id = ?", attemptID).Error; err != nil {
+		return
+	}
+
 	// 2. Fetch all AttemptQuestion records for this attempt in bulk with preloads
 	var aqs []models.AttemptQuestion
 	err := s.db.WithContext(ctx).
@@ -925,6 +931,16 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 		timeTakenMin = 1
 	}
 
+	// Durasi & status asli untuk kartu metrik email (tanpa fallback fiktif).
+	durationMin := 0
+	statusText := "Selesai"
+	if t, terr := s.tryoutRepo.FindByID(ctx, attempt.TryoutID); terr == nil && t != nil {
+		durationMin = t.DurationSeconds / 60
+	}
+	if attempt.IsAutoSubmitted {
+		statusText = "Dikumpulkan Otomatis"
+	}
+
 	emailData := utils.TryoutResultEmailData{
 		StudentEmail:    user.Email,
 		StudentName:     user.FullName,
@@ -935,6 +951,8 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 		AnsweredCount:   len(items),
 		CorrectCount:    correctCount,
 		TimeTakenMin:    timeTakenMin,
+		DurationMin:     durationMin,
+		StatusText:      statusText,
 		Questions:       items,
 		Materials:       emailMaterials,
 		Practices:       emailPractices,
