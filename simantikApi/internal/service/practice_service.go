@@ -430,10 +430,10 @@ func (s *practiceService) GetAttemptState(ctx context.Context, attemptID, userID
 	}, nil
 }
 
-var kunciMarkerRegex = regexp.MustCompile(`(?i)\[KUNCI:\s*([^\]]+)\]`)
+var KunciMarkerRegex = regexp.MustCompile(`(?i)\[KUNCI:\s*([^\]]+)\]`)
 
-// normalizeAnswerKey menyamakan format kunci ("TIDAK SETUJU" vs "TIDAK_SETUJU", case).
-func normalizeAnswerKey(s string) string {
+// NormalizeAnswerKey menyamakan format kunci ("TIDAK SETUJU" vs "TIDAK_SETUJU", case).
+func NormalizeAnswerKey(s string) string {
 	return strings.ToUpper(strings.ReplaceAll(strings.TrimSpace(s), " ", "_"))
 }
 
@@ -462,13 +462,13 @@ func (s *practiceService) gradeStructuredAnswer(ctx context.Context, questionID 
 		}
 		graded := 0
 		for _, opt := range opts {
-			m := kunciMarkerRegex.FindStringSubmatch(opt.OptionText)
+			m := KunciMarkerRegex.FindStringSubmatch(opt.OptionText)
 			if len(m) < 2 {
 				continue
 			}
 			graded++
 			ans, ok := lowered[strings.ToLower(opt.ID.String())]
-			if !ok || normalizeAnswerKey(ans) != normalizeAnswerKey(m[1]) {
+			if !ok || NormalizeAnswerKey(ans) != NormalizeAnswerKey(m[1]) {
 				return false
 			}
 		}
