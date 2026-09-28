@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { TryoutPreStartModal } from "@/components/organisms/student/TryoutPreStartModal";
-import { StudentTryoutPage } from "@/components/page/private/student/StudentTryoutPage";
-import { useApi } from "@/hooks/useApi";
-import useAppNameSpace from "@/hooks/useAppNameSpace";
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { TryoutPreStartModal } from '@/components/organisms/student/TryoutPreStartModal';
+import { StudentTryoutPage } from '@/components/page/private/student/StudentTryoutPage';
+import { useApi } from '@/hooks/useApi';
+import useAppNameSpace from '@/hooks/useAppNameSpace';
 
 // Minimal latihan yang harus diselesaikan siswa sebelum mengerjakan tryout.
 const MIN_COMPLETED_PRACTICES = 1;
@@ -20,7 +20,7 @@ export default function StudentTryout() {
 
   // Jumlah latihan berstatus completed milik siswa (cukup baca total).
   const { data: completedPractices } = practice.query.attempts({
-    status: "completed",
+    status: 'completed',
     limit: 1,
   });
   const completedCount = completedPractices?.total ?? 0;
@@ -32,25 +32,23 @@ export default function StudentTryout() {
     if (completedCount < MIN_COMPLETED_PRACTICES) {
       hasWarnedRef.current = true;
       ns.alert.toast({
-        title: "Latihan Belum Cukup",
+        title: 'Latihan Belum Cukup',
         message: `Kamu baru menyelesaikan ${completedCount} latihan (minimum ${MIN_COMPLETED_PRACTICES}). Selesaikan latihan dulu agar hasil tryout lebih maksimal.`,
-        icon: "warning",
+        icon: 'warning',
       });
     }
   }, [completedPractices, completedCount, ns.alert]);
 
   const tryouts =
     data?.tryouts
-      ?.filter((t) => t.status === "PUBLISHED")
+      ?.filter((t) => t.status === 'PUBLISHED')
       ?.map((t) => ({
         id: t.id,
         title: t.title,
         description:
           t.description ||
-          `Jenjang: ${t.jenjang}, Kedaluwarsa: ${t.end_at ? new Date(t.end_at).toLocaleDateString() : "Tanpa Batas"}`,
-        durationMinutes: t.duration_seconds
-          ? Math.round(t.duration_seconds / 60)
-          : undefined,
+          `Jenjang: ${t.jenjang}, Kedaluwarsa: ${t.end_at ? new Date(t.end_at).toLocaleDateString() : 'Tanpa Batas'}`,
+        durationMinutes: t.duration_seconds ? Math.round(t.duration_seconds / 60) : undefined,
         totalQuestions: t.total_questions || undefined,
         onStartTryout: () => handleStartClick(t.id),
       })) ?? [];
@@ -73,7 +71,7 @@ export default function StudentTryout() {
             durationMinutes: target.durationMinutes,
             totalQuestions: target.totalQuestions,
           }
-        : { id: tryoutId },
+        : { id: tryoutId }
     );
     setIsPreStartChecked(false);
     setIsPreStartOpen(true);

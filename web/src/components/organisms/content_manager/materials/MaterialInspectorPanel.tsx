@@ -8,6 +8,7 @@ import {
   Pencil,
   Plus,
   Target,
+  Users,
   X,
 } from 'lucide-react';
 import React from 'react';
@@ -28,6 +29,7 @@ interface MaterialInspectorPanelProps {
   onBackToMaterialsList: () => void;
   onEdit: (material: MaterialItem) => void;
   onDownload: (material: MaterialItem) => void;
+  onViewActivities?: (material: MaterialItem) => void;
   onCreateMaterialInModule?: (moduleId: string) => void;
 }
 
@@ -41,6 +43,7 @@ export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
   onBackToMaterialsList,
   onEdit,
   onDownload,
+  onViewActivities,
   onCreateMaterialInModule,
 }) => {
   const renderStatusBadge = (status: MaterialStatusType) => {
@@ -239,14 +242,28 @@ export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
               {renderStatusBadge(material.status)}
             </div>
 
-            <button
-              type="button"
-              onClick={() => onEdit(material)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#134653] hover:bg-[#0B2D38] text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-              <span>Edit Materi</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {onViewActivities && (
+                <button
+                  type="button"
+                  onClick={() => onViewActivities(material)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-50 hover:bg-cyan-100 text-[#0E7490] border border-cyan-200/80 text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                  title="Lihat Laporan Siswa"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Aktivitas Siswa</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => onEdit(material)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#134653] hover:bg-[#0B2D38] text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Edit Materi</span>
+              </button>
+            </div>
           </div>
 
           <h2 className="text-base sm:text-lg font-black text-slate-900 leading-snug">

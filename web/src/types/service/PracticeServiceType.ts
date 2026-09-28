@@ -168,6 +168,11 @@ export interface PracticeResultResponse {
   is_auto_submitted?: boolean;
   auto_submit_reason?: string;
   reviews: PracticeAnswerReviewItem[];
+  student_name?: string;
+  student_email?: string;
+  student_nis?: string;
+  student_school?: string;
+  student_grade?: string;
 }
 
 export interface MyPracticesFilter {
@@ -197,6 +202,69 @@ export interface PaginatedPracticesResponse {
 }
 
 // ============================================================================
+// Practice Results & Inspection DTOs (Admin / Content Manager)
+// ============================================================================
+
+export interface PracticeStudentResultItem {
+  user_id: string;
+  nis: string;
+  student_name: string;
+  student_email: string;
+  school: string;
+  grade: string;
+  score: number;
+  correct_answers: number;
+  total_questions: number;
+  incorrect_answers: number;
+  duration_minutes: number;
+  formatted_duration: string;
+  status: 'completed' | 'in_progress' | 'not_started' | string;
+  completed_at?: string | null;
+  formatted_completed_at: string;
+  attempt_id?: string | null;
+  device_browser: string;
+  logs: {
+    session_number: number;
+    title: string;
+    timestamp: string;
+    formatted_time: string;
+  }[];
+}
+
+export interface PracticePackageResultsResponse {
+  package_id: string;
+  package_title: string;
+  description: string;
+  competency_name: string;
+  competency_code: string;
+  jenjang: string;
+  total_questions: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  formatted_created_at: string;
+  formatted_updated_at: string;
+  total_students_completed: number;
+  average_score: number;
+  highest_score: number;
+  highest_score_student_name: string;
+  lowest_score: number;
+  lowest_score_student_name: string;
+  students: PracticeStudentResultItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ListPracticeResultFilter {
+  search?: string;
+  status?: 'all' | 'completed' | 'in_progress' | 'not_started' | string;
+  sort?: 'highest_score' | 'lowest_score' | 'newest' | 'name_asc' | string;
+  limit?: number;
+  offset?: number;
+}
+
+// ============================================================================
 // Standard Wrapped Responses
 // ============================================================================
 
@@ -209,3 +277,4 @@ export type SubmitPracticeAnswerApiResponse = ApiResponse<SubmitPracticeAnswerRe
 export type CompletePracticeApiResponse = ApiResponse<CompletePracticeResponse>;
 export type PracticeResultApiResponse = ApiResponse<PracticeResultResponse>;
 export type PaginatedPracticesApiResponse = ApiResponse<PaginatedPracticesResponse>;
+export type PracticePackageResultsApiResponse = ApiResponse<PracticePackageResultsResponse>;

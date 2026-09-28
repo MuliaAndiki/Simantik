@@ -12,6 +12,7 @@ import {
 } from './state/mutate';
 import {
   useManagementPracticePackageDetail,
+  useManagementPracticePackageResults,
   useManagementPracticePackages,
   useMyPracticeAttempts,
   usePracticeAttemptState,
@@ -30,6 +31,7 @@ export const usePractice = () => {
       attempts: useMyPracticeAttempts,
       packages: useManagementPracticePackages,
       packageDetail: useManagementPracticePackageDetail,
+      packageResults: useManagementPracticePackageResults,
     },
     mutate: {
       start: useStartPractice,

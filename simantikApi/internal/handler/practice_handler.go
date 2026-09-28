@@ -10,6 +10,7 @@ import (
 
 	"simantikApi/internal/dto"
 	"simantikApi/internal/middleware"
+	"simantikApi/internal/models"
 	"simantikApi/internal/service"
 	"simantikApi/pkg/utils"
 )
@@ -68,6 +69,29 @@ func (h *PracticeHandler) GetPackage(c *fiber.Ctx) error {
 	}
 
 	return utils.Success(c, "practice package retrieved successfully", res)
+}
+
+// GetPackageResults handles GET /api/v1/practice-packages/:id/results.
+func (h *PracticeHandler) GetPackageResults(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid practice package id", err)
+	}
+
+	var filter dto.ListPracticeResultFilter
+	if err := c.QueryParser(&filter); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid query parameters", err)
+	}
+
+	res, err := h.practiceService.GetPracticePackageResults(c.UserContext(), id, filter)
+	if err != nil {
+		if errors.Is(err, service.ErrPracticePackageNotFound) {
+			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to get practice package results", err)
+	}
+
+	return utils.Success(c, "practice package results retrieved successfully", res)
 }
 
 // UpdatePackage handles PATCH /api/v1/practice-packages/:id and PUT /api/v1/practice-packages/:id.
@@ -464,8 +488,10 @@ func (h *PracticeHandler) GetPracticeResult(c *fiber.Ctx) error {
 	if !ok {
 		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
 	}
+	role, _ := c.Locals(middleware.LocalsRole).(string)
+	isAdmin := role == string(models.UserRoleAdmin) || role == string(models.UserRoleContentManager)
 
-	res, err := h.practiceService.GetPracticeResult(c.UserContext(), attemptID, userID)
+	res, err := h.practiceService.GetPracticeResult(c.UserContext(), attemptID, userID, isAdmin)
 	if err != nil {
 		if errors.Is(err, service.ErrPracticeNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)

@@ -49,6 +49,7 @@ export interface PracticeListTemplateProps {
   onExportSummary: () => void;
   onCreatePractice?: () => void;
   onManageQuestions?: (item: PracticePackageItem) => void;
+  onViewResults?: (item: PracticePackageItem) => void;
 }
 
 export const PracticeListTemplate: React.FC<PracticeListTemplateProps> = ({
@@ -81,6 +82,7 @@ export const PracticeListTemplate: React.FC<PracticeListTemplateProps> = ({
   onExportSummary,
   onCreatePractice,
   onManageQuestions,
+  onViewResults,
 }) => {
   return (
     <div className="w-full max-w-full mx-auto space-y-6">
@@ -163,6 +165,7 @@ export const PracticeListTemplate: React.FC<PracticeListTemplateProps> = ({
           onToggleStatus={onToggleStatus}
           onDelete={onDelete}
           onManageQuestions={onManageQuestions}
+          onViewResults={onViewResults}
         />
       )}
     </div>

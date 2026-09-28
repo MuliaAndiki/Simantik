@@ -18,6 +18,7 @@ export const PracticeEndpoint = {
   packages: `${mountEntry.practicePackages}`,
   packageDetail: (id: string) => `${mountEntry.practicePackages}/${id}`,
   packageStatus: (id: string) => `${mountEntry.practicePackages}/${id}/status`,
+  packageResults: (id: string) => `${mountEntry.practicePackages}/${id}/results`,
   packageQuestions: (id: string) => `${mountEntry.practicePackages}/${id}/questions`,
   removePackageQuestion: (id: string, questionId: string) =>
     `${mountEntry.practicePackages}/${id}/questions/${questionId}`,

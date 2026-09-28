@@ -144,3 +144,53 @@ type ModuleProgressSummaryResponse struct {
 	CompletedMaterials int       `json:"completed_materials"`
 	ProgressPercentage float64   `json:"progress_percentage"`
 }
+
+// ─── Material Student Activity DTOs ──────────────────────────────────────────
+
+type MaterialAccessLogItem struct {
+	SessionNumber int       `json:"session_number"`
+	Title         string    `json:"title"`
+	Timestamp     time.Time `json:"timestamp"`
+	FormattedTime string    `json:"formatted_time"`
+}
+
+type MaterialStudentActivityItem struct {
+	UserID                uuid.UUID               `json:"user_id"`
+	NIS                   string                  `json:"nis"`
+	StudentName           string                  `json:"student_name"`
+	StudentEmail          string                  `json:"student_email"`
+	School                string                  `json:"school"`
+	Grade                 string                  `json:"grade"`
+	IsAccessed            bool                    `json:"is_accessed"`
+	LastAccessedAt        *time.Time              `json:"last_accessed_at,omitempty"`
+	FormattedLastAccessed string                  `json:"formatted_last_accessed"`
+	AccessCount           int                     `json:"access_count"`
+	DeviceBrowser         string                  `json:"device_browser"`
+	Logs                  []MaterialAccessLogItem `json:"logs"`
+}
+
+type MaterialStudentActivitiesResponse struct {
+	MaterialID         uuid.UUID                     `json:"material_id"`
+	MaterialTitle      string                        `json:"material_title"`
+	ModuleID           uuid.UUID                     `json:"module_id"`
+	ModuleName         string                        `json:"module_name"`
+	CompetencyName     string                        `json:"competency_name"`
+	Status             string                        `json:"status"`
+	TotalStudents      int64                         `json:"total_students"`
+	AccessedStudents   int64                         `json:"accessed_students"`
+	UnaccessedStudents int64                         `json:"unaccessed_students"`
+	ParticipationRate  float64                       `json:"participation_rate"`
+	LastUpdatedAt      string                        `json:"last_updated_at"`
+	Students           []MaterialStudentActivityItem `json:"students"`
+	Total              int64                         `json:"total"`
+	Limit              int                           `json:"limit"`
+	Offset             int                           `json:"offset"`
+}
+
+type ListMaterialActivityFilter struct {
+	Search string `query:"search"`
+	Status string `query:"status"` // "all", "accessed", "unaccessed"
+	Sort   string `query:"sort"`   // "newest", "oldest", "name_asc", "name_desc"
+	Limit  int    `query:"limit"`
+	Offset int    `query:"offset"`
+}

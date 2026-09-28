@@ -31,6 +31,7 @@ type LearningService interface {
 	UpdateMaterialStatus(ctx context.Context, id uuid.UUID, status string, updatedByID uuid.UUID) (*dto.MaterialResponse, error)
 	DeleteMaterial(ctx context.Context, id uuid.UUID) error
 	ListMaterials(ctx context.Context, filter dto.ListMaterialFilter, userID uuid.UUID, isAdmin bool) (*dto.PaginatedMaterialsResponse, error)
+	GetMaterialStudentActivities(ctx context.Context, materialID uuid.UUID, filter dto.ListMaterialActivityFilter) (*dto.MaterialStudentActivitiesResponse, error)
 
 	// Progress
 	MarkMaterialCompleted(ctx context.Context, materialID, userID uuid.UUID, isCompleted bool) (*dto.LearningProgressResponse, error)
@@ -436,6 +437,18 @@ func (s *learningService) ListMaterials(ctx context.Context, filter dto.ListMate
 		Limit:     filter.Limit,
 		Offset:    filter.Offset,
 	}, nil
+}
+
+func (s *learningService) GetMaterialStudentActivities(ctx context.Context, materialID uuid.UUID, filter dto.ListMaterialActivityFilter) (*dto.MaterialStudentActivitiesResponse, error) {
+	_, err := s.materialRepo.FindByID(ctx, materialID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrMaterialNotFound
+		}
+		return nil, err
+	}
+
+	return s.materialRepo.GetMaterialStudentActivities(ctx, materialID, filter)
 }
 
 // ─── Progress Tracking ───────────────────────────────────────────────────────

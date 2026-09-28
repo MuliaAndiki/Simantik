@@ -181,6 +181,11 @@ type PracticeResultResponse struct {
 	IsAutoSubmitted  bool                       `json:"is_auto_submitted"`
 	AutoSubmitReason string                     `json:"auto_submit_reason,omitempty"`
 	Reviews          []PracticeAnswerReviewItem `json:"reviews"`
+	StudentName      string                     `json:"student_name,omitempty"`
+	StudentEmail     string                     `json:"student_email,omitempty"`
+	StudentNIS       string                     `json:"student_nis,omitempty"`
+	StudentSchool    string                     `json:"student_school,omitempty"`
+	StudentGrade     string                     `json:"student_grade,omitempty"`
 }
 
 // MyPracticesFilter filter for listing student's practice attempts.
@@ -211,3 +216,63 @@ type PaginatedPracticesResponse struct {
 	Limit     int                              `json:"limit"`
 	Offset    int                              `json:"offset"`
 }
+
+// ─── Practice Results & Inspection DTOs (Admin / Content Manager) ────────────
+
+// PracticeStudentResultItem represents student performance row in a practice package.
+type PracticeStudentResultItem struct {
+	UserID               uuid.UUID               `json:"user_id"`
+	NIS                  string                  `json:"nis"`
+	StudentName          string                  `json:"student_name"`
+	StudentEmail         string                  `json:"student_email"`
+	School               string                  `json:"school"`
+	Grade                string                  `json:"grade"`
+	Score                float64                 `json:"score"`
+	CorrectAnswers       int                     `json:"correct_answers"`
+	TotalQuestions       int                     `json:"total_questions"`
+	IncorrectAnswers     int                     `json:"incorrect_answers"`
+	DurationMinutes      int                     `json:"duration_minutes"`
+	FormattedDuration    string                  `json:"formatted_duration"`
+	Status               string                  `json:"status"` // "completed", "in_progress", "not_started"
+	CompletedAt          *time.Time              `json:"completed_at,omitempty"`
+	FormattedCompletedAt string                  `json:"formatted_completed_at"`
+	AttemptID            *uuid.UUID              `json:"attempt_id,omitempty"`
+	DeviceBrowser        string                  `json:"device_browser"`
+	Logs                 []MaterialAccessLogItem `json:"logs"`
+}
+
+// PracticePackageResultsResponse represents package analytics and student attempt list.
+type PracticePackageResultsResponse struct {
+	PackageID               uuid.UUID                   `json:"package_id"`
+	PackageTitle            string                      `json:"package_title"`
+	Description             string                      `json:"description"`
+	CompetencyName          string                      `json:"competency_name"`
+	CompetencyCode          string                      `json:"competency_code"`
+	Jenjang                 string                      `json:"jenjang"`
+	TotalQuestions          int                         `json:"total_questions"`
+	Status                  string                      `json:"status"`
+	CreatedAt               time.Time                   `json:"created_at"`
+	UpdatedAt               time.Time                   `json:"updated_at"`
+	FormattedCreatedAt      string                      `json:"formatted_created_at"`
+	FormattedUpdatedAt      string                      `json:"formatted_updated_at"`
+	TotalStudentsCompleted  int                         `json:"total_students_completed"`
+	AverageScore            float64                     `json:"average_score"`
+	HighestScore            float64                     `json:"highest_score"`
+	HighestScoreStudentName string                      `json:"highest_score_student_name"`
+	LowestScore             float64                     `json:"lowest_score"`
+	LowestScoreStudentName  string                      `json:"lowest_score_student_name"`
+	Students                []PracticeStudentResultItem `json:"students"`
+	Total                   int64                       `json:"total"`
+	Limit                   int                         `json:"limit"`
+	Offset                  int                         `json:"offset"`
+}
+
+// ListPracticeResultFilter filter query params for practice results.
+type ListPracticeResultFilter struct {
+	Search string `query:"search"`
+	Status string `query:"status"` // "all", "completed", "in_progress", "not_started"
+	Sort   string `query:"sort"`   // "highest_score", "lowest_score", "newest", "name_asc"
+	Limit  int    `query:"limit"`
+	Offset int    `query:"offset"`
+}
+
