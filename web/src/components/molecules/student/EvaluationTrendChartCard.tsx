@@ -5,6 +5,7 @@ import type * as React from 'react';
 import { Area, AreaChart, LabelList, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { Card } from '@/components/atoms/card';
 import { type ChartConfig, ChartContainer } from '@/components/atoms/chart';
+import { CardSkeleton } from '@/components/atoms/loading';
 import { cn } from '@/utils/classname';
 
 export interface EvaluationTrendPoint {
@@ -17,15 +18,9 @@ export interface EvaluationTrendChartCardProps {
   data?: EvaluationTrendPoint[];
   periodText?: string;
   cumulativeGrowthText?: string;
+  isLoading?: boolean;
   className?: string;
 }
-
-const DEFAULT_TREND_DATA: EvaluationTrendPoint[] = [
-  { session: 'Eval 1', score: 68 },
-  { session: 'Eval 2', score: 74 },
-  { session: 'Eval 3', score: 78 },
-  { session: 'Eval 4', score: 82 },
-];
 
 const chartConfig = {
   score: {
@@ -35,12 +30,16 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function EvaluationTrendChartCard({
-  trendStatusLabel = 'Positif Berkelanjutan',
-  data = DEFAULT_TREND_DATA,
-  periodText = 'Evaluasi 1 s.d. 4',
-  cumulativeGrowthText = '+14 Poin Kumulatif',
+  trendStatusLabel,
+  data,
+  periodText,
+  cumulativeGrowthText,
+  isLoading,
   className,
 }: EvaluationTrendChartCardProps) {
+  if (isLoading) return <CardSkeleton lines={4} className={cn('h-full', className)} />;
+  if (!data || data.length === 0) return null;
+
   return (
     <Card
       className={cn(

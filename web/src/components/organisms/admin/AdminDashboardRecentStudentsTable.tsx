@@ -1,5 +1,6 @@
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import React from 'react';
+import { TableLoader } from '@/components/atoms/loading';
 import type { RecentStudentItem } from '@/types/service';
 import { cn } from '@/utils/classname';
 
@@ -7,6 +8,7 @@ export interface AdminDashboardRecentStudentsTableProps {
   students?: RecentStudentItem[];
   totalStudents?: number;
   sortOrder?: 'newest' | 'oldest';
+  isLoading?: boolean;
   onSortChange?: () => void;
   onManageStudent?: (id: string) => void;
   onViewAllStudents?: () => void;
@@ -17,8 +19,9 @@ export const AdminDashboardRecentStudentsTable: React.FC<
   AdminDashboardRecentStudentsTableProps
 > = ({
   students = [],
-  totalStudents = 1248,
+  totalStudents = 0,
   sortOrder = 'newest',
+  isLoading,
   onSortChange,
   onManageStudent,
   onViewAllStudents,
@@ -77,7 +80,13 @@ export const AdminDashboardRecentStudentsTable: React.FC<
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
-            {displayStudents.length === 0 ? (
+            {isLoading ? (
+              <tr>
+                <td colSpan={5}>
+                  <TableLoader label="Memuat data siswa..." />
+                </td>
+              </tr>
+            ) : displayStudents.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-8 text-center text-slate-400 font-medium">
                   Belum ada siswa terdaftar.

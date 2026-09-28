@@ -1,6 +1,7 @@
 import { Eye, Mail } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/atoms';
+import { TableLoader } from '@/components/atoms/loading';
 import type { AdminUserListItem } from '@/types/service';
 import { cn } from '@/utils/classname';
 
@@ -46,8 +47,8 @@ export const AdminStudentDataTable: React.FC<AdminStudentDataTableProps> = ({
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-5 py-12 text-center text-slate-400 font-medium">
-                  Memuat data siswa...
+                <td colSpan={6}>
+                  <TableLoader label="Memuat data siswa..." />
                 </td>
               </tr>
             ) : users.length === 0 ? (

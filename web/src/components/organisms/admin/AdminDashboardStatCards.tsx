@@ -1,15 +1,16 @@
 import { BookOpen, CheckSquare, ClipboardCheck, UserCheck, Users } from 'lucide-react';
 import React from 'react';
+import { CardSkeleton } from '@/components/atoms/loading';
 import { cn } from '@/utils/classname';
 
 export interface AdminDashboardStatCardsProps {
-  totalStudents: number;
+  totalStudents?: number;
   activeStudents?: number;
   activeStudentsPercent?: number;
   studentGrowthRate?: string;
-  totalMaterials: number;
+  totalMaterials?: number;
   totalPracticePackages?: number;
-  totalTryouts: number;
+  totalTryouts?: number;
   completedTryouts?: number;
   liveTryouts?: number;
   isLoading?: boolean;
@@ -20,7 +21,7 @@ export const AdminDashboardStatCards: React.FC<AdminDashboardStatCardsProps> = (
   totalStudents,
   activeStudents,
   activeStudentsPercent,
-  studentGrowthRate = '+4.2%',
+  studentGrowthRate,
   totalMaterials,
   totalPracticePackages,
   totalTryouts,
@@ -29,22 +30,28 @@ export const AdminDashboardStatCards: React.FC<AdminDashboardStatCardsProps> = (
   isLoading = false,
   className,
 }) => {
-  const displayTotalStudents = totalStudents > 0 ? totalStudents : 1248;
-  const displayActiveStudents =
-    activeStudents !== undefined && activeStudents > 0
-      ? activeStudents
-      : Math.round(displayTotalStudents * 0.87);
-  const activePercentText =
-    activeStudentsPercent !== undefined && activeStudentsPercent > 0
-      ? `${Math.round(activeStudentsPercent)}% Aktif`
-      : '87% Aktif';
+  if (isLoading) {
+    return (
+      <section className={cn('w-full select-none', className)}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <CardSkeleton key={`admin-stat-skeleton-${i}`} lines={2} />
+          ))}
+        </div>
+      </section>
+    );
+  }
 
-  const displayTotalMaterials = totalMaterials > 0 ? totalMaterials : 42;
-  const displayTotalPackages =
-    totalPracticePackages !== undefined && totalPracticePackages > 0 ? totalPracticePackages : 24;
-  const displayTotalTryouts = totalTryouts > 0 ? totalTryouts : 8;
-  const displayCompletedTryouts = completedTryouts !== undefined ? completedTryouts : 6;
-  const displayLiveTryouts = liveTryouts !== undefined ? liveTryouts : 2;
+  const displayTotalStudents = totalStudents ?? 0;
+  const displayActiveStudents = activeStudents ?? 0;
+  const activePercentText =
+    activeStudentsPercent !== undefined ? `${Math.round(activeStudentsPercent)}% Aktif` : '—';
+
+  const displayTotalMaterials = totalMaterials ?? 0;
+  const displayTotalPackages = totalPracticePackages ?? 0;
+  const displayTotalTryouts = totalTryouts ?? 0;
+  const displayCompletedTryouts = completedTryouts ?? 0;
+  const displayLiveTryouts = liveTryouts ?? 0;
 
   const stats = [
     {
@@ -53,7 +60,7 @@ export const AdminDashboardStatCards: React.FC<AdminDashboardStatCardsProps> = (
       value: displayTotalStudents.toLocaleString('id-ID'),
       icon: Users,
       iconBg: 'bg-teal-50 text-teal-600 border-teal-100',
-      badgeText: studentGrowthRate,
+      badgeText: studentGrowthRate ?? '—',
       badgeBg: 'bg-emerald-50 text-emerald-700',
       footerLeft: 'Terdaftar di sistem',
       footerRight: '100%',

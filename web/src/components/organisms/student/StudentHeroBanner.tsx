@@ -4,8 +4,13 @@ import type * as React from 'react';
 import { Button } from '@/components/atoms/button';
 import { cn } from '@/utils/classname';
 
+if (typeof window !== 'undefined') {
+  import('@aejkatappaja/phantom-ui');
+}
+
 export interface StudentHeroBannerProps {
   studentName?: string;
+  isLoading?: boolean;
   onStartPractice?: () => void;
   onStartTryout?: () => void;
   practiceHref?: string;
@@ -14,7 +19,8 @@ export interface StudentHeroBannerProps {
 }
 
 export function StudentHeroBanner({
-  studentName = 'Anindya',
+  studentName,
+  isLoading,
   onStartPractice,
   onStartTryout,
   practiceHref = '/student/practice',
@@ -41,7 +47,23 @@ export function StudentHeroBanner({
 
         {/* Greeting Title */}
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
-          Selamat datang, {studentName}!
+          Selamat datang,{' '}
+          {isLoading ? (
+            <phantom-ui
+              loading="true"
+              animation="shimmer"
+              count="1"
+              style={{
+                display: 'inline-block',
+                height: '32px',
+                width: '180px',
+                verticalAlign: 'middle',
+              }}
+            ></phantom-ui>
+          ) : (
+            studentName || 'Siswa'
+          )}
+          !
         </h1>
 
         {/* Subtitle Motivation */}

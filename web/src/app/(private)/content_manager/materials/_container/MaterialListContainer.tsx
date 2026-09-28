@@ -430,6 +430,7 @@ export const MaterialListContainer: React.FC = () => {
       filters={filters}
       totalItems={totalItems}
       isRefreshing={isRefreshing}
+      isPending={modulesQuery.isPending}
       onSearchChange={handleSearchChange}
       onJenjangChange={handleJenjangChange}
       onStatusChange={handleStatusChange}

@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react';
 import React from 'react';
+import { TableLoader } from '@/components/atoms/loading';
 import {
   NewsDataTable,
   NewsFilterBar,
@@ -78,9 +79,8 @@ const NewsTemplate: React.FC<NewsTemplateProps> = ({
           />
 
           {isPending ? (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-12 flex flex-col items-center justify-center gap-4 text-slate-400">
-              <div className="w-8 h-8 border-4 border-slate-200 border-t-cyan-500 rounded-full animate-spin"></div>
-              <p className="text-sm font-medium">Memuat data berita...</p>
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+              <TableLoader label="Memuat data berita..." />
             </div>
           ) : (
             <NewsDataTable

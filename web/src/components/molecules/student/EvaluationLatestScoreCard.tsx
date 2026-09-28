@@ -2,6 +2,7 @@ import { ArrowUp, Star } from 'lucide-react';
 import type * as React from 'react';
 import { Badge } from '@/components/atoms/badge';
 import { Card } from '@/components/atoms/card';
+import { CardSkeleton } from '@/components/atoms/loading';
 import { cn } from '@/utils/classname';
 
 export interface EvaluationLatestScoreCardProps {
@@ -12,19 +13,23 @@ export interface EvaluationLatestScoreCardProps {
   description?: string;
   accuracyRatioText?: string;
   accuracyPercentageText?: string;
+  isLoading?: boolean;
   className?: string;
 }
 
 export function EvaluationLatestScoreCard({
-  score = 82,
+  score,
   maxScore = 100,
-  evaluationSessionName = 'Evaluasi ke-4',
-  deltaPoints = 4,
-  description = 'Diperoleh dari sesi evaluasi komprehensif simulasi TKA Paket 2. Menunjukkan penguasaan penalaran wacana membaik.',
-  accuracyRatioText = 'Rasio Akurasi: 25 / 30 Benar',
-  accuracyPercentageText = '83.3%',
+  evaluationSessionName,
+  deltaPoints,
+  description,
+  accuracyRatioText,
+  accuracyPercentageText,
+  isLoading,
   className,
 }: EvaluationLatestScoreCardProps) {
+  if (isLoading) return <CardSkeleton lines={4} className={cn('h-full', className)} />;
+
   return (
     <Card
       className={cn(
@@ -45,7 +50,7 @@ export function EvaluationLatestScoreCard({
             variant="outline"
             className="bg-slate-50 text-slate-700 border-slate-200 text-xs font-medium px-2.5 py-0.5 rounded-full"
           >
-            {evaluationSessionName}
+            {evaluationSessionName ?? '—'}
           </Badge>
         </div>
 
@@ -53,7 +58,7 @@ export function EvaluationLatestScoreCard({
         <div className="flex items-baseline gap-2.5 pt-1 pb-2">
           <div className="flex items-baseline gap-1">
             <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-none">
-              {score}
+              {score ?? '—'}
             </span>
             <span className="text-sm sm:text-base font-semibold text-slate-400">/ {maxScore}</span>
           </div>
@@ -67,14 +72,16 @@ export function EvaluationLatestScoreCard({
         </div>
 
         {/* Description */}
-        <p className="text-xs text-slate-500 leading-relaxed mt-1">{description}</p>
+        {description && (
+          <p className="text-xs text-slate-500 leading-relaxed mt-1">{description}</p>
+        )}
       </div>
 
       {/* Bottom Footer */}
       <div className="border-t border-slate-100 pt-3.5 mt-4 flex items-center justify-between text-xs">
-        <span className="text-slate-500 font-normal truncate mr-2">{accuracyRatioText}</span>
+        <span className="text-slate-500 font-normal truncate mr-2">{accuracyRatioText ?? '—'}</span>
         <span className="font-bold text-slate-900 text-xs sm:text-sm shrink-0">
-          {accuracyPercentageText}
+          {accuracyPercentageText ?? '—'}
         </span>
       </div>
     </Card>

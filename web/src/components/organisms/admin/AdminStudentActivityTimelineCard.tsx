@@ -15,38 +15,30 @@ export interface AdminStudentActivityTimelineCardProps {
   className?: string;
 }
 
-const DEFAULT_ACTIVITIES: TimelineActivityItem[] = [
-  {
-    id: '1',
-    timestamp: '18 Sep 2026, 14:10 WIB',
-    title: 'Mengerjakan Latihan: Pemahaman Inferensial',
-    description: 'Pencatatan evaluasi otomatis paket diagnostik berhasil disimpan.',
-  },
-  {
-    id: '2',
-    timestamp: '16 Sep 2026, 09:30 WIB',
-    title: 'Mengikuti Tryout TKA Bahasa Indonesia Periode 1',
-    description: 'Sesi pengerjaan terjadwal selesai dan terverifikasi di server.',
-  },
-  {
-    id: '3',
-    timestamp: '14 Sep 2026, 16:45 WIB',
-    title: 'Mengerjakan Paket Latihan TKA Bahasa Indonesia',
-    description: 'Siswa membuka 1 modul pengantar dan menyelesaikan 1 kuis mandiri.',
-  },
-  {
-    id: '4',
-    timestamp: '12 Sep 2026, 09:15 WIB',
-    title: 'Pendaftaran Akun SIMANTIK Berhasil',
-    description: 'Verifikasi OTP nomor ponsel & alamat surel tuntas.',
-  },
-];
-
 export const AdminStudentActivityTimelineCard: React.FC<AdminStudentActivityTimelineCardProps> = ({
-  activities = DEFAULT_ACTIVITIES,
+  activities,
   onViewSystemLog,
   className,
 }) => {
+  if (!activities || activities.length === 0) {
+    return (
+      <div
+        className={cn(
+          'w-full bg-white rounded-2xl border border-slate-100 shadow-2xs p-6 space-y-5',
+          className
+        )}
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+            <History className="w-4 h-4" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900">Aktivitas Terbaru</h3>
+        </div>
+        <p className="text-sm text-slate-400 font-medium">Belum ada aktivitas.</p>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(

@@ -4,25 +4,41 @@ import Link from 'next/link';
 import type * as React from 'react';
 import { Button } from '@/components/atoms/button';
 import { Card } from '@/components/atoms/card';
+import { CardSkeleton } from '@/components/atoms/loading';
 import { DashboardSectionHeader } from '@/components/molecules/student/DashboardSectionHeader';
 import { cn } from '@/utils/classname';
 
 export interface RecommendationBannerProps {
   topicTitle?: string;
   recommendationDescription?: string;
+  isLoading?: boolean;
   onStartPractice?: () => void;
   practiceHref?: string;
   className?: string;
 }
 
 export function RecommendationBanner({
-  topicTitle = 'Perkuat Pemahaman Inferensial',
-  recommendationDescription = 'Kamu dapat meningkatkan kemampuan dengan berlatih menemukan informasi tersirat dan hubungan antargagasan dalam teks. Berdasarkan evaluasi terakhir, latihan ini akan menaikkan skor TKA secara signifikan.',
-
+  topicTitle,
+  recommendationDescription,
+  isLoading,
   onStartPractice,
   practiceHref = '/student/practice',
   className,
 }: RecommendationBannerProps) {
+  if (isLoading) {
+    return (
+      <section className={cn('space-y-4', className)}>
+        <DashboardSectionHeader
+          title="Rekomendasi Untukmu"
+          subtitle="Rekomendasi tindakan berbasis analisis kelemahan kompetensi"
+        />
+        <CardSkeleton lines={4} />
+      </section>
+    );
+  }
+
+  if (!topicTitle && !recommendationDescription) return null;
+
   return (
     <section className={cn('space-y-4', className)}>
       <DashboardSectionHeader

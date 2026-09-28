@@ -20,8 +20,8 @@ export function LearningDetailHeroBanner({
   description,
   competencyName = 'Pemahaman Tekstual',
   competencyCode,
-  sourceBadge = 'Template Wadah CMS Sekolah',
-  syncStatusText = 'Disinkronkan dari Modul Sekolah',
+  sourceBadge,
+  syncStatusText,
   illustrationSrc = '/illustrations/student-learning.jpg',
   className,
 }: LearningDetailHeroBannerProps) {

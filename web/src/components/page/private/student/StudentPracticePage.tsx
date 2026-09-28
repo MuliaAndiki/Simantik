@@ -14,6 +14,7 @@ export interface StudentPracticePageProps {
   competencyOptions?: PracticeCompetencyOption[];
   packages: PracticePackageItem[];
   totalAllPackages?: number;
+  isLoading?: boolean;
   onStartPractice?: (packageId: string) => void;
   onViewResult?: (packageId: string, latestAttemptId?: string) => void;
   onRetryPractice?: (packageId: string) => void;
@@ -32,6 +33,7 @@ export function StudentPracticePage({
   competencyOptions,
   packages,
   totalAllPackages,
+  isLoading,
   onStartPractice,
   onViewResult,
   onRetryPractice,
@@ -53,6 +55,7 @@ export function StudentPracticePage({
       packagesProps={{
         packages,
         totalAllPackages,
+        isLoading,
         onStartPractice,
         onViewResult,
         onRetryPractice,
