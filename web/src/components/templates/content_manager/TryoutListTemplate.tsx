@@ -1,5 +1,6 @@
 import { Download, PlusCircle } from 'lucide-react';
 import type React from 'react';
+import { TableLoader } from '@/components/atoms/loading';
 import {
   TryoutCreateDialog,
   TryoutDataTable,
@@ -19,6 +20,7 @@ export interface TryoutListTemplateProps {
   filters: TryoutFilterState;
   totalItems: number;
   isRefreshing?: boolean;
+  isPending: boolean;
   onSearchChange: (val: string) => void;
   onJenjangChange: (val: string) => void;
   onStatusChange: (val: string) => void;
@@ -49,6 +51,7 @@ export const TryoutListTemplate: React.FC<TryoutListTemplateProps> = ({
   filters,
   totalItems,
   isRefreshing = false,
+  isPending,
   onSearchChange,
   onJenjangChange,
   onStatusChange,
@@ -132,18 +135,24 @@ export const TryoutListTemplate: React.FC<TryoutListTemplateProps> = ({
       />
 
       {/* Data Table */}
-      <TryoutDataTable
-        tryouts={tryouts}
-        currentPage={filters.page}
-        totalItems={totalItems}
-        rowsPerPage={filters.perPage}
-        onPageChange={onPageChange}
-        onRowsPerPageChange={onRowsPerPageChange}
-        onEdit={onEdit}
-        onManageQuestions={onManageQuestions}
-        onToggleStatus={onToggleStatus}
-        onDelete={onDelete}
-      />
+      {isPending ? (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+          <TableLoader label="Memuat data tryout..." />
+        </div>
+      ) : (
+        <TryoutDataTable
+          tryouts={tryouts}
+          currentPage={filters.page}
+          totalItems={totalItems}
+          rowsPerPage={filters.perPage}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+          onEdit={onEdit}
+          onManageQuestions={onManageQuestions}
+          onToggleStatus={onToggleStatus}
+          onDelete={onDelete}
+        />
+      )}
     </div>
   );
 };

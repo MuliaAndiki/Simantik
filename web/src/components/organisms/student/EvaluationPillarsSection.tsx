@@ -1,5 +1,6 @@
 import { ArrowRight, FileText } from 'lucide-react';
 import type * as React from 'react';
+import { CardSkeleton } from '@/components/atoms/loading';
 import { EvaluationPillarCard, type EvaluationPillarItem } from '@/components/molecules/student';
 import { cn } from '@/utils/classname';
 
@@ -8,70 +9,34 @@ export interface EvaluationPillarsSectionProps {
   title?: string;
   subtitle?: string;
   detailActionText?: string;
+  isLoading?: boolean;
   onViewDetail?: () => void;
   className?: string;
 }
 
-export const DEFAULT_PILLARS: EvaluationPillarItem[] = [
-  {
-    id: 'pilar-01',
-    pillarNumber: 'PILAR 01',
-    title: 'Pemahaman Tekstual',
-    description:
-      'Kemampuan melacak fakta tersurat, ide pokok paragraf, dan struktur gramatikal secara eksplisit.',
-    score: 84,
-    maxScore: 100,
-    accuracyOrStatusText: 'Akurasi 92%',
-    accuracyOrStatusColor: 'emerald',
-    levelBadgeText: 'Taraf Baik',
-    levelBadgeVariant: 'emerald',
-    isFocusPillar: false,
-    footerLeftText: 'Skor Ambang Minimal: 75',
-    footerRightText: 'Melampaui Target',
-  },
-  {
-    id: 'pilar-02',
-    pillarNumber: 'PILAR 02',
-    title: 'Pemahaman Inferensial',
-    description:
-      'Mendeduksi makna implisit, membaca intonasi tersembunyi, dan mengonstruksi premis wacana.',
-    score: 76,
-    maxScore: 100,
-    accuracyOrStatusText: 'Perlu Latihan',
-    accuracyOrStatusColor: 'amber',
-    levelBadgeText: 'Taraf Cukup',
-    levelBadgeVariant: 'amber',
-    isFocusPillar: true,
-    focusBadgeText: 'FOKUS PENGUATAN',
-    footerLeftText: 'Rekomendasi Modul: 04',
-    footerRightText: 'Pelajari Topik',
-  },
-  {
-    id: 'pilar-03',
-    pillarNumber: 'PILAR 03',
-    title: 'Evaluasi dan Apresiasi',
-    description:
-      'Menilai keabsahan argumen, mendeteksi bias penulis, serta mengukur relevansi bukti logis.',
-    score: 82,
-    maxScore: 100,
-    accuracyOrStatusText: 'Konsisten',
-    accuracyOrStatusColor: 'teal',
-    levelBadgeText: 'Taraf Baik',
-    levelBadgeVariant: 'emerald',
-    isFocusPillar: false,
-    footerLeftText: 'Daya Kritis Logis: Kuat',
-    footerRightText: 'Stabil',
-  },
-];
-
 export function EvaluationPillarsSection({
-  pillars = DEFAULT_PILLARS,
+  pillars,
   title = 'Ringkasan Kompetensi',
   subtitle = 'Berikut gambaran performamu pada tiga pilar kompetensi TKA Bahasa Indonesia.',
   detailActionText = 'Lihat Detail Kompetensi',
+  isLoading,
   onViewDetail,
   className,
 }: EvaluationPillarsSectionProps) {
+  if (isLoading) {
+    return (
+      <section aria-label={title} className={cn('w-full space-y-4', className)}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 pt-1">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <CardSkeleton key={`pillar-skeleton-${i}`} lines={3} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (!pillars || pillars.length === 0) return null;
+
   return (
     <section aria-label={title} className={cn('w-full space-y-4', className)}>
       {/* Section Header */}

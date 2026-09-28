@@ -13,143 +13,64 @@ import type {
   TryoutWorkflowAutomation,
 } from '@/types/ui/content-manager-dashboard.types';
 
-const FALLBACK_KPI_STATS: ContentManagerKpiStats = {
-  totalMateri: 36,
-  materiSubtitle: 'Materi dari sekolah terdaftar',
-  paketBankSoal: 30,
-  bankSoalSubtitle: 'Soal yang tersedia aktif',
-  totalPaketTryout: 12,
-  tryoutSubtitle: 'Tryout yang siap dikerjakan',
-  kontenPublik: 24,
-  kontenPublikSubtitle: 'News, docs, review & video',
-};
-
-const FALLBACK_WORKFLOW: TryoutWorkflowAutomation = {
-  modulUjian: 'Tryout TKA Bahasa Indonesia',
-  kumpulanSoalTotal: 150,
-  alokasiSiswa: 30,
-  durasiMenit: 75,
-  statusDistribusi: 'Published',
-};
-
-const FALLBACK_MATERI_PIPELINE: PipelineMateriData = {
-  total: 36,
-  siapDigunakanPercentage: 85.7,
-  draftCount: 6,
-  publishedCount: 24,
-  archivedCount: 2,
-};
-
-const FALLBACK_BANK_SOAL_DISTRIBUSI: DistribusiBankSoalData = {
-  total: 30,
-  aktifPercentage: 83.3,
-  draftCount: 7,
-  publishedCount: 20,
-  unpublishedCount: 3,
-};
-
-const FALLBACK_MANAGED_TRYOUTS: ManagedTryoutItem[] = [
-  {
-    id: '1',
-    title: 'Tryout TKA Bahasa Indonesia Paket 1',
-    status: 'PUBLISHED',
-    totalSoalTersedia: 150,
-    soalPerSiswa: 30,
-    durasiMenit: 75,
-    diperbaruiTanggal: '18 Mei 2026',
-  },
-  {
-    id: '2',
-    title: 'Tryout TKA Bahasa Indonesia Paket 2',
-    status: 'PUBLISHED',
-    totalSoalTersedia: 150,
-    soalPerSiswa: 30,
-    durasiMenit: 75,
-    diperbaruiTanggal: '17 Mei 2026',
-  },
-  {
-    id: '3',
-    title: 'Tryout TKA Bahasa Indonesia Paket 3',
-    status: 'DRAFT',
-    totalSoalTersedia: 150,
-    soalPerSiswa: 30,
-    durasiMenit: 75,
-    diperbaruiTanggal: '15 Mei 2026',
-  },
-];
-
-const FALLBACK_CURATOR_ACTIVITIES: CuratorActivityItem[] = [
-  {
-    id: '1',
-    title: 'Materi baru ditambahkan (Teks Eksplanasi)',
-    timeAgo: '10 menit yang lalu',
-    dotColor: 'yellow',
-  },
-  {
-    id: '2',
-    title: '15 Soal baru ditambahkan ke Bank Soal oleh SMAN 1',
-    timeAgo: '30 menit yang lalu',
-    dotColor: 'blue',
-  },
-  {
-    id: '3',
-    title: 'Kumpulan soal Tryout Paket 1 diperbarui (Pool 150 butir)',
-    timeAgo: '1 jam yang lalu',
-    dotColor: 'teal',
-  },
-  {
-    id: '4',
-    title: 'Tryout TKA Paket 1 dipublikasikan',
-    timeAgo: '2 jam yang lalu',
-    dotColor: 'teal',
-  },
-  {
-    id: '5',
-    title: "News 'Panduan TKA 2026' dipublikasikan",
-    timeAgo: '3 jam yang lalu',
-    dotColor: 'navy',
-  },
-];
-
 export function ContentManagerDashboard() {
   const router = useRouter();
   const api = useApi();
 
   // Queries
-  const { data: adminDashboardData } = api.admin.query.dashboard();
-  const { data: materialsData } = api.learning.query.materials({ limit: 100 });
-  const { data: questionsData } = api.question.query.list({ limit: 100 });
-  const { data: tryoutsData } = api.tryout.query.list({ limit: 100 });
-  const { data: newsData } = api.content.query.cmsNews();
-  const { data: docData } = api.content.query.cmsDocumentation();
-  const { data: testimonialsData } = api.content.query.cmsTestimonials();
+  const { data: adminDashboardData, isLoading: isAdminLoading } = api.admin.query.dashboard();
+  const { data: materialsData, isLoading: isMaterialsLoading } = api.learning.query.materials({
+    limit: 100,
+  });
+  const { data: questionsData, isLoading: isQuestionsLoading } = api.question.query.list({
+    limit: 100,
+  });
+  const { data: tryoutsData, isLoading: isTryoutsLoading } = api.tryout.query.list({
+    limit: 100,
+  });
+  const { data: newsData, isLoading: isNewsLoading } = api.content.query.cmsNews();
+  const { data: docData, isLoading: isDocLoading } = api.content.query.cmsDocumentation();
+  const { data: testimonialsData, isLoading: isTestimonialsLoading } =
+    api.content.query.cmsTestimonials();
+
+  const isLoading =
+    isAdminLoading ||
+    isMaterialsLoading ||
+    isQuestionsLoading ||
+    isTryoutsLoading ||
+    isNewsLoading ||
+    isDocLoading ||
+    isTestimonialsLoading;
 
   // 1. KPI Stats
-  const kpiStats = useMemo<ContentManagerKpiStats>(() => {
-    const totalMateri =
-      materialsData?.total ?? adminDashboardData?.total_materials ?? FALLBACK_KPI_STATS.totalMateri;
-    const paketBankSoal =
-      questionsData?.total ??
-      adminDashboardData?.total_questions ??
-      FALLBACK_KPI_STATS.paketBankSoal;
-    const totalPaketTryout =
-      tryoutsData?.total ??
-      adminDashboardData?.total_tryouts ??
-      FALLBACK_KPI_STATS.totalPaketTryout;
+  const kpiStats = useMemo<ContentManagerKpiStats | undefined>(() => {
+    if (
+      !materialsData &&
+      !adminDashboardData &&
+      !questionsData &&
+      !tryoutsData &&
+      !newsData &&
+      !docData &&
+      !testimonialsData
+    ) {
+      return undefined;
+    }
+    const totalMateri = materialsData?.total ?? adminDashboardData?.total_materials ?? 0;
+    const paketBankSoal = questionsData?.total ?? adminDashboardData?.total_questions ?? 0;
+    const totalPaketTryout = tryoutsData?.total ?? adminDashboardData?.total_tryouts ?? 0;
 
-    const cmsContentTotal =
+    const kontenPublik =
       (newsData?.total ?? 0) + (docData?.total ?? 0) + (testimonialsData?.total ?? 0);
-    const kontenPublik = cmsContentTotal > 0 ? cmsContentTotal : FALLBACK_KPI_STATS.kontenPublik;
 
     return {
       totalMateri,
-      materiSubtitle: FALLBACK_KPI_STATS.materiSubtitle,
+      materiSubtitle: 'Materi dari sekolah terdaftar',
       paketBankSoal,
-      bankSoalSubtitle: FALLBACK_KPI_STATS.bankSoalSubtitle,
+      bankSoalSubtitle: 'Soal yang tersedia aktif',
       totalPaketTryout,
-      tryoutSubtitle: FALLBACK_KPI_STATS.tryoutSubtitle,
+      tryoutSubtitle: 'Tryout yang siap dikerjakan',
       kontenPublik,
-      kontenPublikSubtitle: FALLBACK_KPI_STATS.kontenPublikSubtitle,
+      kontenPublikSubtitle: 'News, docs, review & video',
     };
   }, [
     materialsData,
@@ -162,16 +83,14 @@ export function ContentManagerDashboard() {
   ]);
 
   // 2. Tryout Workflow Automation
-  const tryoutWorkflow = useMemo<TryoutWorkflowAutomation>(() => {
+  const tryoutWorkflow = useMemo<TryoutWorkflowAutomation | undefined>(() => {
     if (tryoutsData?.tryouts && tryoutsData.tryouts.length > 0) {
       const first = tryoutsData.tryouts[0];
-      const durasiMenit = first.duration_seconds
-        ? Math.round(first.duration_seconds / 60)
-        : FALLBACK_WORKFLOW.durasiMenit;
+      const durasiMenit = first.duration_seconds ? Math.round(first.duration_seconds / 60) : 0;
 
       return {
-        modulUjian: first.title ?? FALLBACK_WORKFLOW.modulUjian,
-        kumpulanSoalTotal: first.total_questions || FALLBACK_WORKFLOW.kumpulanSoalTotal,
+        modulUjian: first.title ?? '—',
+        kumpulanSoalTotal: first.total_questions || 0,
         alokasiSiswa: 30,
         durasiMenit,
         statusDistribusi:
@@ -182,11 +101,11 @@ export function ContentManagerDashboard() {
               : 'Draft',
       };
     }
-    return FALLBACK_WORKFLOW;
+    return undefined;
   }, [tryoutsData]);
 
   // 3. Pipeline Materi Data
-  const materiPipeline = useMemo<PipelineMateriData>(() => {
+  const materiPipeline = useMemo<PipelineMateriData | undefined>(() => {
     if (materialsData?.materials && materialsData.materials.length > 0) {
       let draft = 0;
       let published = 0;
@@ -207,11 +126,11 @@ export function ContentManagerDashboard() {
         archivedCount: archived,
       };
     }
-    return FALLBACK_MATERI_PIPELINE;
+    return undefined;
   }, [materialsData]);
 
   // 4. Distribusi Bank Soal Data
-  const bankSoalDistribusi = useMemo<DistribusiBankSoalData>(() => {
+  const bankSoalDistribusi = useMemo<DistribusiBankSoalData | undefined>(() => {
     if (questionsData?.questions && questionsData.questions.length > 0) {
       let draft = 0;
       let published = 0;
@@ -232,11 +151,11 @@ export function ContentManagerDashboard() {
         unpublishedCount: unpublished,
       };
     }
-    return FALLBACK_BANK_SOAL_DISTRIBUSI;
+    return undefined;
   }, [questionsData]);
 
   // 5. Managed Tryouts
-  const managedTryouts = useMemo<ManagedTryoutItem[]>(() => {
+  const managedTryouts = useMemo<ManagedTryoutItem[] | undefined>(() => {
     if (tryoutsData?.tryouts && tryoutsData.tryouts.length > 0) {
       return tryoutsData.tryouts.slice(0, 3).map((item, idx) => {
         const isPublished = item.status?.toUpperCase() === 'PUBLISHED';
@@ -246,26 +165,26 @@ export function ContentManagerDashboard() {
               month: 'short',
               year: 'numeric',
             })
-          : `1${8 - idx} Mei 2026`;
+          : '—';
 
-        const durasiMenit = item.duration_seconds ? Math.round(item.duration_seconds / 60) : 75;
+        const durasiMenit = item.duration_seconds ? Math.round(item.duration_seconds / 60) : 0;
 
         return {
           id: item.id || String(idx + 1),
           title: item.title || `Tryout TKA Paket ${idx + 1}`,
           status: isPublished ? 'PUBLISHED' : 'DRAFT',
-          totalSoalTersedia: item.total_questions || 150,
+          totalSoalTersedia: item.total_questions || 0,
           soalPerSiswa: 30,
           durasiMenit,
           diperbaruiTanggal: formattedDate,
         };
       });
     }
-    return FALLBACK_MANAGED_TRYOUTS;
+    return undefined;
   }, [tryoutsData]);
 
   // 6. Curator Activities
-  const curatorActivities = useMemo<CuratorActivityItem[]>(() => {
+  const curatorActivities = useMemo<CuratorActivityItem[] | undefined>(() => {
     if (adminDashboardData?.recent_activities && adminDashboardData.recent_activities.length > 0) {
       const colors: Array<CuratorActivityItem['dotColor']> = ['yellow', 'blue', 'teal', 'navy'];
       return adminDashboardData.recent_activities.slice(0, 5).map((act, idx) => ({
@@ -276,11 +195,11 @@ export function ContentManagerDashboard() {
               hour: '2-digit',
               minute: '2-digit',
             })
-          : `${(idx + 1) * 15} menit yang lalu`,
+          : '—',
         dotColor: colors[idx % colors.length],
       }));
     }
-    return FALLBACK_CURATOR_ACTIVITIES;
+    return undefined;
   }, [adminDashboardData]);
 
   // Handlers
@@ -295,6 +214,7 @@ export function ContentManagerDashboard() {
 
   return (
     <ContentManagerDashboardPage
+      isLoading={isLoading}
       kpiStats={kpiStats}
       tryoutWorkflow={tryoutWorkflow}
       materiPipeline={materiPipeline}

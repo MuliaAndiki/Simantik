@@ -17,67 +17,6 @@ interface DetailStudentDetailContainerProps {
   id: string;
 }
 
-// Chart dataset presets based on timeframe
-const TIMEFRAME_CHART_DATA: Record<TimeframePeriod, ChartDataPoint[]> = {
-  '7d': [
-    { date: '16 Sep', score: 70, label: 'Kosakata & Makna Kontekstual' },
-    { date: '18 Sep', score: 78, label: 'Ide Pokok & Kalimat Utama' },
-    { date: '20 Sep', score: 76, label: 'Sintesis Argumen Kritis' },
-    { date: '22 Sep', score: 84, label: 'Pemahaman Inferensial' },
-  ],
-  '30d': [
-    { date: '28 Agu', score: 62, label: 'Diagnostik Literasi Awal' },
-    { date: '04 Sep', score: 65, label: 'Analisis Struktur Teks' },
-    { date: '12 Sep', score: 68, label: 'Kaidah Kebahasaan Dasar' },
-    { date: '16 Sep', score: 70, label: 'Kosakata & Makna Kontekstual' },
-    { date: '18 Sep', score: 78, label: 'Ide Pokok & Kalimat Utama' },
-    { date: '22 Sep', score: 84, label: 'Pemahaman Inferensial' },
-  ],
-  '3m': [
-    { date: '12 Sep', score: 68, label: 'Kaidah Kebahasaan Dasar' },
-    { date: '14 Sep', score: 72, label: 'Analisis Struktur Paragraf' },
-    { date: '16 Sep', score: 70, label: 'Kosakata & Makna Kontekstual' },
-    { date: '18 Sep', score: 78, label: 'Ide Pokok & Kalimat Utama' },
-    { date: '20 Sep', score: 76, label: 'Sintesis Argumen Kritis' },
-    { date: '22 Sep', score: 84, label: 'Pemahaman Inferensial' },
-  ],
-  '6m': [
-    { date: '01 Mei', score: 58, label: 'Pre-Test Kemampuan Bahasa' },
-    { date: '15 Jun', score: 64, label: 'Pemahaman Gagasan Pokok' },
-    { date: '02 Agu', score: 66, label: 'Struktur Logika Paragraf' },
-    { date: '28 Agu', score: 70, label: 'Kosakata & Kalimat Efektif' },
-    { date: '12 Sep', score: 78, label: 'Analisis Kritis Teks' },
-    { date: '22 Sep', score: 84, label: 'Pemahaman Inferensial' },
-  ],
-};
-
-const TIMELINE_ACTIVITIES: TimelineActivityItem[] = [
-  {
-    id: '1',
-    timestamp: '18 Sep 2026, 14:10 WIB',
-    title: 'Mengerjakan Latihan: Pemahaman Inferensial',
-    description: 'Pencatatan evaluasi otomatis paket diagnostik berhasil disimpan.',
-  },
-  {
-    id: '2',
-    timestamp: '16 Sep 2026, 09:30 WIB',
-    title: 'Mengikuti Tryout TKA Bahasa Indonesia Periode 1',
-    description: 'Sesi pengerjaan terjadwal selesai dan terverifikasi di server.',
-  },
-  {
-    id: '3',
-    timestamp: '14 Sep 2026, 16:45 WIB',
-    title: 'Mengerjakan Paket Latihan TKA Bahasa Indonesia',
-    description: 'Siswa membuka 1 modul pengantar dan menyelesaikan 1 kuis mandiri.',
-  },
-  {
-    id: '4',
-    timestamp: '12 Sep 2026, 09:15 WIB',
-    title: 'Pendaftaran Akun SIMANTIK Berhasil',
-    description: 'Verifikasi OTP nomor ponsel & alamat surel tuntas.',
-  },
-];
-
 const DetailStudentDetailContainer: React.FC<DetailStudentDetailContainerProps> = ({ id }) => {
   const router = useRouter();
   const api = useApi();
@@ -216,43 +155,32 @@ const DetailStudentDetailContainer: React.FC<DetailStudentDetailContainerProps> 
   };
 
   // Map backend activity feed data
-  const activities: TimelineActivityItem[] =
-    userActivitiesData && userActivitiesData.length > 0
-      ? userActivitiesData.map((act) => ({
-          id: act.id,
-          timestamp: act.formatted_time,
-          title: act.title,
-          description: act.description,
-        }))
-      : TIMELINE_ACTIVITIES;
+  const activities: TimelineActivityItem[] = (userActivitiesData ?? []).map((act) => ({
+    id: act.id,
+    timestamp: act.formatted_time,
+    title: act.title,
+    description: act.description,
+  }));
 
   // Map backend progress chart data
-  const chartData: ChartDataPoint[] =
-    userProgressData?.chart_data && userProgressData.chart_data.length > 0
-      ? userProgressData.chart_data.map((c) => ({
-          date: c.date,
-          score: c.score,
-          label: c.label,
-        }))
-      : TIMEFRAME_CHART_DATA[timeframe];
+  const chartData: ChartDataPoint[] = (userProgressData?.chart_data ?? []).map((c) => ({
+    date: c.date,
+    score: c.score,
+    label: c.label,
+  }));
 
-  const latestScore =
-    userProgressData?.latest_score ??
-    (userDetail?.average_score ? Math.round(userDetail.average_score) : 84);
-  const previousScore = userProgressData?.previous_score ?? 78;
-  const scoreDiff = userProgressData?.score_diff ?? 6;
-  const trendText = userProgressData?.trend_text ?? 'Tren: Nilai latihan meningkat';
-  const latestPracticeTitle =
-    userProgressData?.latest_practice_title ?? 'Pemahaman Inferensial & Hubungan Gagasan';
-  const latestPracticeDate = userProgressData?.latest_practice_date ?? '22 September 2026';
+  const latestScore = userProgressData?.latest_score;
+  const previousScore = userProgressData?.previous_score;
+  const scoreDiff = userProgressData?.score_diff;
+  const trendText = userProgressData?.trend_text;
+  const latestPracticeTitle = userProgressData?.latest_practice_title;
+  const latestPracticeDate = userProgressData?.latest_practice_date;
 
-  const evaluationTitle =
-    userProgressData?.evaluation?.evaluation_title ?? 'Pemahaman Inferensial & Hubungan Gagasan';
-  const evaluationDate = userProgressData?.evaluation?.evaluation_date ?? '18 September 2026';
-  const resultStatus = userProgressData?.evaluation?.result_status ?? 'Hasil: Baik';
-  const testDomain =
-    userProgressData?.evaluation?.test_domain ?? 'Bahasa Indonesia: Literasi Wacana';
-  const testMode = userProgressData?.evaluation?.test_mode ?? 'Mandiri Berwaktu (TKA Standar)';
+  const evaluationTitle = userProgressData?.evaluation?.evaluation_title;
+  const evaluationDate = userProgressData?.evaluation?.evaluation_date;
+  const resultStatus = userProgressData?.evaluation?.result_status;
+  const testDomain = userProgressData?.evaluation?.test_domain;
+  const testMode = userProgressData?.evaluation?.test_mode;
 
   return (
     <AdminStudentDetailPage
@@ -267,6 +195,10 @@ const DetailStudentDetailContainer: React.FC<DetailStudentDetailContainerProps> 
       timeframe={timeframe}
       onTimeframeChange={setTimeframe}
       chartData={chartData}
+      latestScore={latestScore}
+      previousScore={previousScore}
+      scoreDiff={scoreDiff}
+      trendText={trendText}
       latestPracticeTitle={latestPracticeTitle}
       latestPracticeDate={latestPracticeDate}
       onViewLatestPracticeDetail={handleViewLatestPracticeDetail}

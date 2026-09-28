@@ -12,6 +12,7 @@ import type {
 export interface ContentManagerDashboardPageProps {
   heroTitle?: string;
   heroSubtitle?: string;
+  isLoading?: boolean;
   kpiStats?: ContentManagerKpiStats;
   tryoutWorkflow?: TryoutWorkflowAutomation;
   materiPipeline?: PipelineMateriData;
@@ -32,6 +33,7 @@ export interface ContentManagerDashboardPageProps {
 export const ContentManagerDashboardPage: React.FC<ContentManagerDashboardPageProps> = ({
   heroTitle,
   heroSubtitle,
+  isLoading,
   kpiStats,
   tryoutWorkflow,
   materiPipeline,
@@ -57,6 +59,7 @@ export const ContentManagerDashboardPage: React.FC<ContentManagerDashboardPagePr
       }}
       statCardsProps={{
         stats: kpiStats,
+        isLoading,
         onAddMaterial,
         onAddQuestion,
         onCreateTryout,
@@ -64,20 +67,24 @@ export const ContentManagerDashboardPage: React.FC<ContentManagerDashboardPagePr
       }}
       workflowCardProps={{
         workflow: tryoutWorkflow,
+        isLoading,
         onManageQuestions: onManageQuestionsWorkflow,
       }}
       pipelineCardsProps={{
         materi: materiPipeline,
         bankSoal: bankSoalDistribusi,
+        isLoading,
       }}
       managedTryoutsProps={{
         tryouts: managedTryouts,
-        totalCount: kpiStats?.totalPaketTryout ?? 12,
+        totalCount: kpiStats?.totalPaketTryout ?? 0,
+        isLoading,
         onManageTryout,
         onViewAll: onViewAllTryouts,
       }}
       curatorActivitiesProps={{
         activities: curatorActivities,
+        isLoading,
         onOpenAuditTrail,
       }}
     />

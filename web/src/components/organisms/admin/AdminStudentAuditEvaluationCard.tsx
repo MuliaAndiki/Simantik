@@ -12,13 +12,17 @@ export interface AdminStudentAuditEvaluationCardProps {
 }
 
 export const AdminStudentAuditEvaluationCard: React.FC<AdminStudentAuditEvaluationCardProps> = ({
-  evaluationTitle = 'Pemahaman Inferensial & Hubungan Gagasan',
-  evaluationDate = '18 September 2026',
-  resultStatus = 'Hasil: Baik',
-  testDomain = 'Bahasa Indonesia: Literasi Wacana',
-  testMode = 'Mandiri Berwaktu (TKA Standar)',
+  evaluationTitle,
+  evaluationDate,
+  resultStatus,
+  testDomain,
+  testMode,
   className,
 }) => {
+  if (!evaluationTitle && !evaluationDate && !resultStatus && !testDomain && !testMode) {
+    return null;
+  }
+
   return (
     <div
       className={cn(

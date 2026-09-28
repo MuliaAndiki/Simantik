@@ -1,54 +1,44 @@
 import { ChevronRight, ClipboardList, Clock, FileSpreadsheet, User } from 'lucide-react';
 import React from 'react';
+import { CardSkeleton } from '@/components/atoms/loading';
 import { ManagedTryoutItem } from '@/types/ui/content-manager-dashboard.types';
 import { cn } from '@/utils/classname';
 
 export interface ContentManagerManagedTryoutsProps {
   tryouts?: ManagedTryoutItem[];
   totalCount?: number;
+  isLoading?: boolean;
   onManageTryout?: (id: string) => void;
   onViewAll?: () => void;
   className?: string;
 }
 
-const DEFAULT_TRYOUTS: ManagedTryoutItem[] = [
-  {
-    id: '1',
-    title: 'Tryout TKA Bahasa Indonesia Paket 1',
-    status: 'PUBLISHED',
-    totalSoalTersedia: 150,
-    soalPerSiswa: 30,
-    durasiMenit: 75,
-    diperbaruiTanggal: '18 Mei 2026',
-  },
-  {
-    id: '2',
-    title: 'Tryout TKA Bahasa Indonesia Paket 2',
-    status: 'PUBLISHED',
-    totalSoalTersedia: 150,
-    soalPerSiswa: 30,
-    durasiMenit: 75,
-    diperbaruiTanggal: '17 Mei 2026',
-  },
-  {
-    id: '3',
-    title: 'Tryout TKA Bahasa Indonesia Paket 3',
-    status: 'DRAFT',
-    totalSoalTersedia: 150,
-    soalPerSiswa: 30,
-    durasiMenit: 75,
-    diperbaruiTanggal: '15 Mei 2026',
-  },
-];
-
 export const ContentManagerManagedTryouts: React.FC<ContentManagerManagedTryoutsProps> = ({
-  tryouts = DEFAULT_TRYOUTS,
-  totalCount = 12,
+  tryouts,
+  totalCount = 0,
+  isLoading,
   onManageTryout,
   onViewAll,
   className,
 }) => {
-  const displayItems = tryouts.length > 0 ? tryouts : DEFAULT_TRYOUTS;
+  if (isLoading) {
+    return (
+      <div
+        className={cn(
+          'w-full bg-white rounded-2xl border border-slate-100/90 shadow-2xs p-6 md:p-7 space-y-3',
+          className
+        )}
+      >
+        {Array.from({ length: 3 }).map((_, i) => (
+          <CardSkeleton key={`tryout-skeleton-${i}`} lines={2} />
+        ))}
+      </div>
+    );
+  }
+
+  if (!tryouts || tryouts.length === 0) return null;
+
+  const displayItems = tryouts;
 
   return (
     <div

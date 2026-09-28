@@ -12,7 +12,7 @@ export interface ProfileHeroCardProps {
 }
 
 export function ProfileHeroCard({
-  fullName = 'Anindya Humairah',
+  fullName = 'Siswa',
   roleName = 'Siswa',
   avatarSrc = '/avatars/1.png',
   onOpenChangeAvatar,

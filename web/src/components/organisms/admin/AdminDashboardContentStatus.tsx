@@ -1,5 +1,6 @@
 import { BookOpen, Edit3, FileText, HelpCircle } from 'lucide-react';
 import React from 'react';
+import { CardSkeleton } from '@/components/atoms/loading';
 import type { ContentStatusBreakdown } from '@/types/service';
 import { cn } from '@/utils/classname';
 
@@ -7,6 +8,7 @@ export interface AdminDashboardContentStatusProps {
   materials?: ContentStatusBreakdown;
   practices?: ContentStatusBreakdown;
   tryouts?: ContentStatusBreakdown;
+  isLoading?: boolean;
   className?: string;
 }
 
@@ -14,8 +16,10 @@ export const AdminDashboardContentStatus: React.FC<AdminDashboardContentStatusPr
   materials,
   practices,
   tryouts,
+  isLoading,
   className,
 }) => {
+  if (isLoading) return <CardSkeleton lines={4} className={className} />;
   const materialData = materials ?? {
     total: 0,
     published: 0,

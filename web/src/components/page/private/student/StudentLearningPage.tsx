@@ -10,6 +10,7 @@ export interface StudentLearningPageProps {
   onCompetencyChange: (competency: string) => void;
   competencyOptions?: CompetencyOption[];
   materials: LearningMaterialItem[];
+  isLoading?: boolean;
   onLearnMaterial?: (materialId: string) => void;
   onResetFilters?: () => void;
   isFiltered?: boolean;
@@ -22,6 +23,7 @@ export function StudentLearningPage({
   onCompetencyChange,
   competencyOptions,
   materials,
+  isLoading,
   onLearnMaterial,
   onResetFilters,
   isFiltered = false,
@@ -37,6 +39,7 @@ export function StudentLearningPage({
       }}
       materialsProps={{
         materials,
+        isLoading,
         onLearnMaterial,
         onResetFilters,
         isFiltered,

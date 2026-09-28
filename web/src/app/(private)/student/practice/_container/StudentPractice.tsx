@@ -100,15 +100,17 @@ export default function StudentPractice() {
   });
 
   // 2. Fetch competencies for filters and fallback
-  const { data: competenciesPage } = question.query.competencies({
+  const { data: competenciesPage, isLoading: isCompetenciesLoading } = question.query.competencies({
     limit: COMPETENCIES_LIMIT,
   });
 
   // 3. Fallback evaluation query in case no practice packages are created yet
-  const { data: evaluationsPage } = evaluation.query.list({
+  const { data: evaluationsPage, isLoading: isEvaluationsLoading } = evaluation.query.list({
     source_type: 'practice',
     limit: PRACTICE_EVALUATIONS_LIMIT,
   });
+
+  const isLoading = isPracticeLoading || isCompetenciesLoading || isEvaluationsLoading;
 
   const practiceResults = useMemo(() => buildPracticeResultMap(evaluationsPage), [evaluationsPage]);
 
@@ -231,6 +233,7 @@ export default function StudentPractice() {
       competencyOptions={competencyOptions}
       packages={filteredPackages}
       totalAllPackages={packages.length}
+      isLoading={isLoading && packages.length === 0}
       onStartPractice={handleStartPractice}
       onViewResult={handleViewResult}
       onRetryPractice={handleRetryPractice}

@@ -134,24 +134,11 @@ export default function StudentLearningDetailContainer({
         backHref: activeModuleId ? `/student/learning/${activeModuleId}` : '/student/learning',
       }}
       heroProps={{
-        title: material?.title || 'Contoh Materi Bahasa Indonesia',
-        description:
-          material?.description || 'Deskripsi singkat materi akan ditampilkan di bagian ini.',
+        title: material?.title ?? '',
+        description: material?.description ?? '',
         competencyName: currentCompetency.name,
         competencyCode: currentCompetency.code,
-        sourceBadge: 'Template Wadah CMS Sekolah',
-        syncStatusText: 'Disinkronkan dari Modul Sekolah',
         illustrationSrc: '/illustrations/student-learning.jpg',
-      }}
-      objectivesProps={{
-        title: 'TUJUAN PEMBELAJARAN',
-        introText: 'Setelah mempelajari materi ini, siswa diharapkan mampu:',
-        objectives: [
-          'Memahami konsep yang dijelaskan dalam materi.',
-          'Mengidentifikasi informasi penting dalam teks.',
-          'Menerapkan pemahaman melalui latihan.',
-        ],
-        note: 'Catatan: Poin capaian pembelajaran di atas merupakan contoh template dan akan disesuaikan dengan materi yang dimasukkan oleh pihak sekolah.',
       }}
       contentProps={{
         content: material?.content,

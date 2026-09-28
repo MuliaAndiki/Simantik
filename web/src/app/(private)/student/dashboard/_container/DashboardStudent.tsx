@@ -89,12 +89,25 @@ export default function DashboardStudentContainer() {
   const router = useRouter();
   const { content, evaluation, learning, recommendation, reporting, user } = useApi();
 
-  const { data: userData } = user.query.me();
-  const { data: reportCard } = reporting.query.studentReportCard();
-  const { data: evaluationsPage } = evaluation.query.list({ limit: 1 });
-  const { data: recommendationsPage } = recommendation.query.list({ limit: 1 });
-  const { data: materialsPage } = learning.query.materials({ limit: 3 });
-  const { data: newsPage } = content.query.news({ limit: 3 });
+  const { data: userData, isLoading: isUserLoading } = user.query.me();
+  const { data: reportCard, isLoading: isReportLoading } = reporting.query.studentReportCard();
+  const { data: evaluationsPage, isLoading: isEvaluationsLoading } = evaluation.query.list({
+    limit: 1,
+  });
+  const { data: recommendationsPage, isLoading: isRecommendationsLoading } =
+    recommendation.query.list({ limit: 1 });
+  const { data: materialsPage, isLoading: isMaterialsLoading } = learning.query.materials({
+    limit: 3,
+  });
+  const { data: newsPage, isLoading: isNewsLoading } = content.query.news({ limit: 3 });
+
+  const isLoading =
+    isUserLoading ||
+    isReportLoading ||
+    isEvaluationsLoading ||
+    isRecommendationsLoading ||
+    isMaterialsLoading ||
+    isNewsLoading;
 
   const lastEvaluation = evaluationsPage?.evaluations?.[0];
   const lastTrend = latestTrend(reportCard);
@@ -124,6 +137,7 @@ export default function DashboardStudentContainer() {
 
   return (
     <DashboardStudentPage
+      isLoading={isLoading}
       studentName={userData?.fullName?.split(' ')[0]}
       lastTopic={lastEvaluation?.competency_evaluations?.[0]?.competency_name}
       lastPackageName={lastTrend?.tryout_title}

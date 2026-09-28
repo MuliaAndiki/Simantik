@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { TableLoader } from '@/components/atoms/loading';
 import type { ChangePasswordForm } from '@/components/organisms/student/ChangePasswordModal';
 import type { ProfileSchoolOption } from '@/components/organisms/student/ProfilePersonalInfoCard';
 import { StudentProfilePage } from '@/components/page/private/student/StudentProfilePage';
@@ -8,9 +9,6 @@ import { useApi } from '@/hooks/useApi';
 import { useAlert } from '@/hooks/useService/useAlert/costum-alert';
 import { uploadAvatar } from '@/utils/r2-utils';
 
-const DEFAULT_NAME = 'Anindya Humairah';
-const DEFAULT_EMAIL = 'anindya@example.com';
-const DEFAULT_SCHOOL = 'SMA N Modal Bangsa Arun';
 const DEFAULT_AVATAR = '/avatars/1.png';
 
 const EMPTY_CHANGE_PASSWORD_FORM: ChangePasswordForm = {
@@ -24,7 +22,7 @@ export default function StudentProfile() {
   const { toast } = useAlert();
 
   // 1. Data queries
-  const { data: userProfile } = user.query.me();
+  const { data: userProfile, isLoading: isProfileLoading } = user.query.me();
   const { data: schoolsResponse } = school.query.listPublic({ limit: 100 });
 
   // 2. Mutations
@@ -34,8 +32,8 @@ export default function StudentProfile() {
   const updateAvatarMutation = user.mutate.updateAvatar();
 
   // 3. Form state
-  const [fullName, setFullName] = useState(DEFAULT_NAME);
-  const [schoolName, setSchoolName] = useState(DEFAULT_SCHOOL);
+  const [fullName, setFullName] = useState('');
+  const [schoolName, setSchoolName] = useState('');
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
   const [isDirty, setIsDirty] = useState(false);
 
@@ -86,8 +84,8 @@ export default function StudentProfile() {
   };
 
   const handleResetPersonalInfo = () => {
-    setFullName(userProfile?.fullName ?? DEFAULT_NAME);
-    setSchoolName(DEFAULT_SCHOOL);
+    setFullName(userProfile?.fullName ?? '');
+    setSchoolName('');
     setSelectedSchoolId('');
     setIsDirty(false);
   };
@@ -226,7 +224,7 @@ export default function StudentProfile() {
     }
   };
 
-  const email = userProfile?.email ?? DEFAULT_EMAIL;
+  const email = userProfile?.email ?? '';
   const avatarSrc = userProfile?.avatarURL ?? DEFAULT_AVATAR;
   const roleName = userProfile?.role === 'student' ? 'Siswa' : (userProfile?.role ?? 'Siswa');
   const statusText = userProfile?.status === 'active' ? 'Aktif' : 'Aktif';
@@ -235,6 +233,10 @@ export default function StudentProfile() {
     updateProfileMutation.isPending || updateMySchoolMutation.isPending;
   const isSubmittingPassword = changePasswordMutation.isPending;
   const isSubmittingAvatar = updateAvatarMutation.isPending || isUploadingAvatar;
+
+  if (isProfileLoading && !userProfile) {
+    return <TableLoader label="Memuat profil..." />;
+  }
 
   return (
     <StudentProfilePage
