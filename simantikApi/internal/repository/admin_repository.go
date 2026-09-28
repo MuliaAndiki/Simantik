@@ -38,8 +38,6 @@ func (r *adminRepository) GetDashboardStats(ctx context.Context) (*dto.AdminDash
 		StudentGrowthChart: make([]dto.StudentGrowthPoint, 0),
 		RecentStudents:     make([]dto.RecentStudentItem, 0),
 		RecentAuditLogs:    make([]dto.AdminAuditLogItem, 0),
-		StudentGrowthRate:  "+4.2%",
-		AverageMonthlyGrowth: "+47 Siswa/Bulan",
 	}
 
 	if r.db == nil {
@@ -75,12 +73,6 @@ func (r *adminRepository) GetDashboardStats(ctx context.Context) (*dto.AdminDash
 	now := time.Now()
 	_ = r.db.WithContext(ctx).Model(&models.Tryout{}).Where("deleted_at IS NULL AND start_at IS NOT NULL AND end_at IS NOT NULL AND start_at <= ? AND end_at >= ?", now, now).Count(&stats.LiveTryouts)
 	_ = r.db.WithContext(ctx).Model(&models.Tryout{}).Where("deleted_at IS NULL AND end_at IS NOT NULL AND end_at < ?", now).Count(&stats.CompletedTryouts)
-	if stats.LiveTryouts == 0 && stats.TryoutStatus.Published > 0 {
-		stats.LiveTryouts = 2
-	}
-	if stats.CompletedTryouts == 0 && stats.TotalTryouts > stats.LiveTryouts {
-		stats.CompletedTryouts = stats.TotalTryouts - stats.LiveTryouts
-	}
 
 	// 4. Total modules
 	if err := r.db.WithContext(ctx).Model(&models.LearningModule{}).Where("deleted_at IS NULL").Count(&stats.TotalModules).Error; err != nil {
@@ -188,65 +180,138 @@ func (r *adminRepository) GetDashboardStats(ctx context.Context) (*dto.AdminDash
 		})
 	}
 
-	// 11. Student growth monthly chart data (past 6 months)
-	months := []string{"Mei", "Juni", "Juli", "Agustus", "September", "Oktober"}
-	baseCounts := []int64{1000, 1050, 1100, 1170, 1200, 1248}
-	if stats.TotalStudents > 0 {
-		baseCounts[5] = stats.TotalStudents
+	// 11. Student growth monthly chart data (past 6 months, real counts)
+	stats.StudentGrowthChart = r.studentGrowthLast6Months(ctx, now)
+
+	// 11b. Growth rate vs previous month & average per month (real counts)
+	stats.StudentGrowthRate, stats.AverageMonthlyGrowth = r.studentGrowthRates(ctx, now, stats.TotalStudents)
+
+	// 12. Recent audit logs (real rows; empty when nothing is logged yet)
+	stats.RecentAuditLogs = r.recentAuditLogs(ctx)
+	return stats, nil
+}
+
+// studentGrowthLast6Months menghitung pendaftar per bulan 6 bulan terakhir.
+func (r *adminRepository) studentGrowthLast6Months(ctx context.Context, now time.Time) []dto.StudentGrowthPoint {
+	monthsID := []string{"Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"}
+	type monthRow struct {
+		Month time.Time
+		Count int64
 	}
-	for i, m := range months {
-		stats.StudentGrowthChart = append(stats.StudentGrowthChart, dto.StudentGrowthPoint{
-			Period:   m,
-			Students: baseCounts[i],
-			Label:    fmt.Sprintf("%s — %d siswa terdaftar", m, baseCounts[i]),
+	var rows []monthRow
+	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).AddDate(0, -5, 0)
+	err := r.db.WithContext(ctx).Table("users").
+		Select("date_trunc('month', created_at) AS month, COUNT(*) AS count").
+		Where("role = ? AND deleted_at IS NULL AND created_at >= ?", models.UserRoleStudent, start).
+		Group("1").Scan(&rows).Error
+	if err != nil {
+		return []dto.StudentGrowthPoint{}
+	}
+	byMonth := make(map[string]int64, len(rows))
+	for _, row := range rows {
+		byMonth[row.Month.Format("2006-01")] = row.Count
+	}
+	points := make([]dto.StudentGrowthPoint, 0, 6)
+	for i := 5; i >= 0; i-- {
+		m := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).AddDate(0, -i, 0)
+		count := byMonth[m.Format("2006-01")]
+		label := monthsID[int(m.Month())-1]
+		points = append(points, dto.StudentGrowthPoint{
+			Period:   label,
+			Students: count,
+			Label:    fmt.Sprintf("%s — %d siswa terdaftar", label, count),
 		})
 	}
+	return points
+}
 
-	// 12. Recent audit logs / actions
-	stats.RecentAuditLogs = []dto.AdminAuditLogItem{
-		{
-			ID:            "log-1",
-			UserName:      "Rian Pratama",
-			UserRole:      "Content Manager",
-			Action:        "menambahkan materi",
-			TargetTitle:   "Pemahaman Tekstual",
-			FormattedTime: "10 mnt lalu",
-			RelativeTime:  "10 mnt lalu",
-			Timestamp:     time.Now().Add(-10 * time.Minute),
-		},
-		{
-			ID:            "log-2",
-			UserName:      "Admin Staff",
-			UserRole:      "Admin",
-			Action:        "memperbarui paket latihan",
-			TargetTitle:   "Paket 02: Logika Paragraf",
-			FormattedTime: "25 mnt lalu",
-			RelativeTime:  "25 mnt lalu",
-			Timestamp:     time.Now().Add(-25 * time.Minute),
-		},
-		{
-			ID:            "log-3",
-			UserName:      "Dewi Sartika",
-			UserRole:      "Content Manager",
-			Action:        "mempublikasikan",
-			TargetTitle:   "Tryout Nasional TKA Periode 2",
-			FormattedTime: "1 jam lalu",
-			RelativeTime:  "1 jam lalu",
-			Timestamp:     time.Now().Add(-1 * time.Hour),
-		},
-		{
-			ID:            "log-4",
-			UserName:      "Ahmad Fauzi",
-			UserRole:      "Content Manager",
-			Action:        "memverifikasi 15 butir bank soal kaidah bahasa",
-			TargetTitle:   "",
-			FormattedTime: "3 jam lalu",
-			RelativeTime:  "3 jam lalu",
-			Timestamp:     time.Now().Add(-3 * time.Hour),
-		},
+// studentGrowthRates menghitung laju vs bulan lalu dan rata-rata per bulan.
+// String kosong bila belum ada data.
+func (r *adminRepository) studentGrowthRates(ctx context.Context, now time.Time, total int64) (rate, avg string) {
+	if total == 0 {
+		return "", ""
 	}
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	var prevTotal int64
+	_ = r.db.WithContext(ctx).Model(&models.User{}).
+		Where("role = ? AND deleted_at IS NULL AND created_at < ?", models.UserRoleStudent, startOfMonth).
+		Count(&prevTotal).Error
+	if prevTotal > 0 {
+		rate = fmt.Sprintf("%+.1f%%", float64(total-prevTotal)/float64(prevTotal)*100)
+	}
+	var earliest time.Time
+	_ = r.db.WithContext(ctx).Model(&models.User{}).
+		Where("role = ? AND deleted_at IS NULL", models.UserRoleStudent).
+		Select("COALESCE(MIN(created_at), NOW())").Scan(&earliest).Error
+	months := 1
+	if !earliest.IsZero() {
+		months = (now.Year()-earliest.Year())*12 + int(now.Month()-earliest.Month()) + 1
+		if months < 1 {
+			months = 1
+		}
+	}
+	avg = fmt.Sprintf("+%d Siswa/Bulan", int64(float64(total)/float64(months)+0.5))
+	return rate, avg
+}
 
-	return stats, nil
+// recentAuditLogs membaca audit_logs asli (kosong bila belum ada yang tercatat).
+func (r *adminRepository) recentAuditLogs(ctx context.Context) []dto.AdminAuditLogItem {
+	type auditRow struct {
+		ID        uuid.UUID
+		UserID    *uuid.UUID
+		UserName  string
+		UserRole  string
+		Action    string
+		CreatedAt time.Time
+	}
+	var rows []auditRow
+	err := r.db.WithContext(ctx).Table("audit_logs").
+		Select("audit_logs.id, audit_logs.user_id, COALESCE(users.full_name, '') AS user_name, COALESCE(users.role, '') AS user_role, audit_logs.action, audit_logs.created_at").
+		Joins("LEFT JOIN users ON users.id = audit_logs.user_id").
+		Order("audit_logs.created_at DESC").
+		Limit(5).
+		Scan(&rows).Error
+	if err != nil {
+		return []dto.AdminAuditLogItem{}
+	}
+	items := make([]dto.AdminAuditLogItem, 0, len(rows))
+	for _, row := range rows {
+		name := row.UserName
+		if name == "" {
+			name = "Sistem"
+		}
+		items = append(items, dto.AdminAuditLogItem{
+			ID:            row.ID.String(),
+			UserName:      name,
+			UserRole:      row.UserRole,
+			Action:        row.Action,
+			TargetTitle:   "",
+			FormattedTime: formatRelativeID(row.CreatedAt),
+			RelativeTime:  formatRelativeID(row.CreatedAt),
+			Timestamp:     row.CreatedAt,
+		})
+	}
+	return items
+}
+
+// formatRelativeID memformat selisih waktu ("10 mnt lalu", "3 jam lalu", ...).
+func formatRelativeID(t time.Time) string {
+	d := time.Since(t)
+	if d < 0 {
+		d = 0
+	}
+	switch {
+	case d < time.Hour:
+		m := int(d.Minutes())
+		if m < 1 {
+			m = 1
+		}
+		return fmt.Sprintf("%d mnt lalu", m)
+	case d < 24*time.Hour:
+		return fmt.Sprintf("%d jam lalu", int(d.Hours()))
+	default:
+		return fmt.Sprintf("%d hari lalu", int(d.Hours()/24))
+	}
 }
 
 func (r *adminRepository) ListUsers(ctx context.Context, filter dto.ListAdminUserFilter) ([]dto.AdminUserListItem, int64, error) {
@@ -393,7 +458,7 @@ func (r *adminRepository) GetUserActivities(ctx context.Context, userID uuid.UUI
 
 	// 1. Tryout attempts
 	var tryoutAttempts []models.TryoutAttempt
-	if err := r.db.WithContext(ctx).
+		if err := r.db.WithContext(ctx).
 		Preload("Tryout").
 		Where("user_id = ?", userID).
 		Order("created_at DESC").
@@ -404,9 +469,11 @@ func (r *adminRepository) GetUserActivities(ctx context.Context, userID uuid.UUI
 			if ta.Tryout != nil && ta.Tryout.Title != "" {
 				title = fmt.Sprintf("Mengikuti Tryout %s", ta.Tryout.Title)
 			}
-			desc := "Sesi pengerjaan terjadwal selesai dan terverifikasi di server."
+			desc := "Sesi pengerjaan tryout tercatat."
 			if ta.Status == models.AttemptStatusInProgress {
 				desc = "Sesi pengerjaan tryout sedang berlangsung."
+			} else if ta.Score != nil {
+				desc = fmt.Sprintf("Sesi selesai dengan skor %.0f.", *ta.Score)
 			}
 			activities = append(activities, dto.StudentActivityLogItem{
 				ID:            ta.ID.String(),
@@ -436,7 +503,10 @@ func (r *adminRepository) GetUserActivities(ctx context.Context, userID uuid.UUI
 			} else if p.Competency != nil && p.Competency.Name != "" {
 				title = fmt.Sprintf("Mengerjakan Latihan: %s", p.Competency.Name)
 			}
-			desc := "Pencatatan evaluasi otomatis paket diagnostik berhasil disimpan."
+			desc := "Latihan tercatat."
+			if p.Score != nil {
+				desc = fmt.Sprintf("Latihan selesai dengan skor %.0f.", *p.Score)
+			}
 			activities = append(activities, dto.StudentActivityLogItem{
 				ID:            p.ID.String(),
 				Type:          "practice",
@@ -462,7 +532,10 @@ func (r *adminRepository) GetUserActivities(ctx context.Context, userID uuid.UUI
 			if lp.Material != nil && lp.Material.Title != "" {
 				title = fmt.Sprintf("Mempelajari Materi: %s", lp.Material.Title)
 			}
-			desc := "Siswa membuka 1 modul pengantar dan menyelesaikan bahan bacaan."
+			desc := "Materi mulai dipelajari."
+			if lp.IsCompleted {
+				desc = "Materi selesai dipelajari."
+			}
 			activities = append(activities, dto.StudentActivityLogItem{
 				ID:            lp.ID.String(),
 				Type:          "learning",
@@ -481,7 +554,7 @@ func (r *adminRepository) GetUserActivities(ctx context.Context, userID uuid.UUI
 			ID:            "reg-" + user.ID.String(),
 			Type:          "auth",
 			Title:         "Pendaftaran Akun SIMANTIK Berhasil",
-			Description:   "Verifikasi OTP nomor ponsel & alamat surel tuntas.",
+			Description:   fmt.Sprintf("Akun terdaftar pada %s.", formatIndoDate(user.CreatedAt)),
 			Timestamp:     user.CreatedAt,
 			FormattedTime: formatIndoDateTime(user.CreatedAt),
 		})
@@ -501,10 +574,7 @@ func (r *adminRepository) GetUserActivities(ctx context.Context, userID uuid.UUI
 
 func (r *adminRepository) GetUserProgress(ctx context.Context, userID uuid.UUID, timeframe string) (*dto.StudentProgressResponse, error) {
 	resp := &dto.StudentProgressResponse{
-		ChartData:           make([]dto.StudentProgressChartPoint, 0),
-		LatestPracticeTitle: "Pemahaman Inferensial & Hubungan Gagasan",
-		LatestPracticeDate:  "22 September 2026",
-		TrendText:           "Tren: Nilai latihan meningkat",
+		ChartData: make([]dto.StudentProgressChartPoint, 0),
 	}
 
 	if r.db == nil {
@@ -545,7 +615,7 @@ func (r *adminRepository) GetUserProgress(ctx context.Context, userID uuid.UUID,
 		for _, p := range practices {
 			if p.Score != nil {
 				title := "Latihan Mandiri"
-				domain := "Literasi Wacana"
+				domain := ""
 				if p.Package != nil && p.Package.Title != "" {
 					title = p.Package.Title
 				} else if p.Competency != nil && p.Competency.Name != "" {
@@ -571,7 +641,7 @@ func (r *adminRepository) GetUserProgress(ctx context.Context, userID uuid.UUID,
 		for _, t := range tryouts {
 			if t.Score != nil {
 				title := "Simulasi Tryout"
-				domain := "TKA Terstandar"
+				domain := ""
 				if t.Tryout != nil && t.Tryout.Title != "" {
 					title = t.Tryout.Title
 				}
@@ -629,28 +699,21 @@ func (r *adminRepository) GetUserProgress(ctx context.Context, userID uuid.UUID,
 			resultStatus = "Hasil: Cukup"
 		}
 
+		testDomain := "Bahasa Indonesia"
+		if sessions[lastIdx].Domain != "" {
+			testDomain = fmt.Sprintf("Bahasa Indonesia: %s", sessions[lastIdx].Domain)
+		}
+
 		resp.Evaluation = &dto.StudentAuditEvaluation{
 			EvaluationTitle: sessions[lastIdx].Title,
 			EvaluationDate:  formatIndoDate(sessions[lastIdx].Date),
 			ResultStatus:    resultStatus,
-			TestDomain:      fmt.Sprintf("Bahasa Indonesia: %s", sessions[lastIdx].Domain),
-			TestMode:        "Mandiri Berwaktu (TKA Standar)",
+			TestDomain:      testDomain,
+			TestMode:        "",
 			Score:           &resp.LatestScore,
 		}
-	} else {
-		// Provide starting baseline data point
-		resp.LatestScore = 80
-		resp.PreviousScore = 75
-		resp.ScoreDiff = 5
-		resp.TrendText = "Tren: Nilai latihan stabil"
-		resp.Evaluation = &dto.StudentAuditEvaluation{
-			EvaluationTitle: "Diagnostik Literasi Awal",
-			EvaluationDate:  formatIndoDate(time.Now()),
-			ResultStatus:    "Hasil: Baik",
-			TestDomain:      "Bahasa Indonesia: Literasi Wacana",
-			TestMode:        "Mandiri Berwaktu (TKA Standar)",
-		}
 	}
+	// Tanpa sesi: ChartData kosong, skor nol, Evaluation nil (jujur kosong).
 
 	return resp, nil
 }

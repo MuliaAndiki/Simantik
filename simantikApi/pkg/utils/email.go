@@ -61,6 +61,8 @@ type TryoutResultEmailData struct {
 	AnsweredCount   int
 	CorrectCount    int
 	TimeTakenMin    int
+	DurationMin     int
+	StatusText      string
 	Questions       []TryoutQuestionEmailItem
 	Materials       []TryoutMaterialEmailItem
 	Practices       []string
@@ -250,7 +252,7 @@ func (r *resendEmailSender) SendTryoutResult(ctx context.Context, toEmail, stude
 						</td>
 						<td style="text-align: right; vertical-align: middle;">
 							<span style="display: inline-block; background-color: rgba(45, 212, 191, 0.15); border: 1px solid #2DD4BF; color: #2DD4BF; font-size: 11px; font-weight: 800; padding: 5px 14px; border-radius: 9999px; letter-spacing: 1px; text-transform: uppercase;">
-								TRYOUT RESMI
+								HASIL TRYOUT
 							</span>
 						</td>
 					</tr>
@@ -560,8 +562,13 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 	}
 
 	timeTaken := data.TimeTakenMin
-	if timeTaken <= 0 {
-		timeTaken = 68
+	if timeTaken < 0 {
+		timeTaken = 0
+	}
+	durationMin := data.DurationMin
+	statusText := data.StatusText
+	if statusText == "" {
+		statusText = "Selesai"
 	}
 
 	var questionsHTML strings.Builder
@@ -586,7 +593,7 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 						</td>
 						<td style="text-align: right; vertical-align: middle;">
 							<span style="display: inline-block; background-color: rgba(45, 212, 191, 0.15); border: 1px solid #2DD4BF; color: #2DD4BF; font-size: 11px; font-weight: 800; padding: 5px 14px; border-radius: 9999px; letter-spacing: 1px; text-transform: uppercase;">
-								TRYOUT RESMI
+								HASIL TRYOUT
 							</span>
 						</td>
 					</tr>
@@ -614,8 +621,8 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 				<td style="width: 100px; text-align: center; vertical-align: middle;">
 					<div style="background-color: #EBF7FA; border: 1px solid #CFFAFE; border-radius: 16px; padding: 14px 8px; display: inline-block; width: 88px;">
 						<div style="font-size: 28px; line-height: 1;">👤</div>
-						<div style="font-size: 9px; font-weight: 900; color: #B45309; text-transform: uppercase; margin-top: 6px; letter-spacing: 0.5px;">
-							TERVERIFIKASI
+						<div style="font-size: 9px; font-weight: 900; color: #0F766E; text-transform: uppercase; margin-top: 6px; letter-spacing: 0.5px;">
+							PESERTA
 						</div>
 					</div>
 				</td>
@@ -632,12 +639,12 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 				<td style="width: 2%%;"></td>
 				<td style="width: 32%%; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 12px;">
 					<div style="font-size: 10px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Waktu Pengerjaan</div>
-					<div style="font-size: 14px; font-weight: 900; color: #0F172A; margin-top: 3px;">%d / 75 Menit</div>
+					<div style="font-size: 14px; font-weight: 900; color: #0F172A; margin-top: 3px;">%d / %d Menit</div>
 				</td>
 				<td style="width: 2%%;"></td>
 				<td style="width: 32%%; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 12px;">
 					<div style="font-size: 10px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Status Sesi</div>
-					<div style="font-size: 14px; font-weight: 900; color: #0F766E; margin-top: 3px;">Selesai Tepat Waktu</div>
+					<div style="font-size: 14px; font-weight: 900; color: #0F766E; margin-top: 3px;">%s</div>
 				</td>
 			</tr>
 		</table>
@@ -698,6 +705,8 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 		html.EscapeString(data.TryoutTitle),
 		totalQuestions,
 		timeTaken,
+		durationMin,
+		statusText,
 		data.Score,
 		data.CorrectCount,
 		incorrectCount,
