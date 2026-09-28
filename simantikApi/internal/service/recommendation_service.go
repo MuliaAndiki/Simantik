@@ -19,6 +19,10 @@ type RecommendationService interface {
 	GenerateRecommendationsFromProfile(ctx context.Context, userID uuid.UUID) ([]dto.RecommendationResponse, error)
 	GetStudentRecommendations(ctx context.Context, userID uuid.UUID, filter dto.ListRecommendationFilter) (*dto.PaginatedRecommendationsResponse, error)
 	DismissRecommendation(ctx context.Context, id, userID uuid.UUID) error
+	// FeedbackMaterials mengambil materi published per kompetensi (untuk engine).
+	FeedbackMaterials(ctx context.Context, compIDs []uuid.UUID, limitPer int) (map[uuid.UUID][]MaterialSuggestion, error)
+	// SaveFeedbackRecommendations menyimpan materi A..N hasil engine (idempoten per evaluasi).
+	SaveFeedbackRecommendations(ctx context.Context, userID, evalID uuid.UUID, fb AttemptFeedback) error
 }
 
 type recommendationService struct {
@@ -208,6 +212,76 @@ func (s *recommendationService) GenerateRecommendationsFromProfile(ctx context.C
 	}
 
 	return s.mapToRecommendationResponses(newRecs), nil
+}
+
+// FeedbackMaterials mengambil materi published per kompetensi untuk engine feedback.
+func (s *recommendationService) FeedbackMaterials(ctx context.Context, compIDs []uuid.UUID, limitPer int) (map[uuid.UUID][]MaterialSuggestion, error) {
+	out := make(map[uuid.UUID][]MaterialSuggestion, len(compIDs))
+	if s.materialRepo == nil {
+		return out, nil
+	}
+	if limitPer <= 0 {
+		limitPer = 2
+	}
+	for _, cid := range compIDs {
+		materials, err := s.materialRepo.FindByCompetencyID(ctx, cid)
+		if err != nil || len(materials) == 0 {
+			continue
+		}
+		limit := limitPer
+		if len(materials) < limit {
+			limit = len(materials)
+		}
+		sugs := make([]MaterialSuggestion, 0, limit)
+		for i := 0; i < limit; i++ {
+			sugs = append(sugs, MaterialSuggestion{
+				MaterialID: materials[i].ID,
+				Title:      materials[i].Title,
+			})
+		}
+		out[cid] = sugs
+	}
+	return out, nil
+}
+
+// SaveFeedbackRecommendations menyimpan materi A..N hasil engine sebagai
+// rekomendasi (idempoten per evaluasi via DeleteByEvaluationID).
+func (s *recommendationService) SaveFeedbackRecommendations(ctx context.Context, userID, evalID uuid.UUID, fb AttemptFeedback) error {
+	if s.recRepo == nil || len(fb.Materials) == 0 {
+		return nil
+	}
+	_ = s.recRepo.DeleteByEvaluationID(ctx, evalID)
+
+	priorityByGap := make(map[uuid.UUID]models.RecommendationPriority, len(fb.Gaps))
+	for _, gap := range fb.Gaps {
+		priority := models.RecommendationPriorityMedium
+		if gap.Level == "low" {
+			priority = models.RecommendationPriorityHigh
+		}
+		priorityByGap[gap.CompetencyID] = priority
+	}
+
+	recs := make([]models.Recommendation, 0, len(fb.Materials))
+	for _, m := range fb.Materials {
+		priority := priorityByGap[m.CompetencyID]
+		if priority == "" {
+			priority = models.RecommendationPriorityMedium
+		}
+		text := fmt.Sprintf("Pelajari materi '%s' untuk memperkuat penguasaan kompetensimu", m.Title)
+		if m.Reason != "" {
+			text = fmt.Sprintf("%s (%s)", text, m.Reason)
+		}
+		recs = append(recs, models.Recommendation{
+			ID:                 uuid.New(),
+			UserID:             userID,
+			CompetencyID:       m.CompetencyID,
+			EvaluationID:       &evalID,
+			MaterialID:         &m.MaterialID,
+			RecommendationText: text,
+			Priority:           priority,
+		})
+	}
+	return s.recRepo.BulkCreate(ctx, recs)
 }
 
 func (s *recommendationService) GetStudentRecommendations(ctx context.Context, userID uuid.UUID, filter dto.ListRecommendationFilter) (*dto.PaginatedRecommendationsResponse, error) {

@@ -26,6 +26,18 @@ export function isHtml(value?: string | null): boolean {
   return /<\/?[a-z][\s\S]*>/i.test(value);
 }
 
+export function normalizeWacanaKey(value?: string | null): string {
+  return (value ?? '').toUpperCase().replace(/\s+/g, '_');
+}
+
+export function humanizeWacanaKey(key?: string | null): string {
+  const parts = normalizeWacanaKey(key)
+    .split('_')
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  return parts.length > 0 ? parts.join(' ') : '-';
+}
+
 // Marker kunci matriks yang ditanam content_manager di option_text,
 // mis. "adsasd [KUNCI: SETUJU]". Sama dengan deteksi di TryoutQuestionContainer.
 const KUNCI_REGEX =

@@ -121,8 +121,8 @@ func (aq *AttemptQuestion) BeforeCreate(tx *gorm.DB) error {
 // StudentAnswer records the student's submission for a question in an attempt.
 type StudentAnswer struct {
 	ID                  uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
-	AttemptID           uuid.UUID  `gorm:"type:uuid;not null;index" json:"attemptId"`
-	QuestionID          uuid.UUID  `gorm:"type:uuid;not null;index" json:"questionId"`
+	AttemptID           uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_student_answers_attempt_question" json:"attemptId"`
+	QuestionID          uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_student_answers_attempt_question" json:"questionId"`
 	AttemptQuestionID   *uuid.UUID `gorm:"type:uuid;index" json:"attemptQuestionId"`
 	SelectedOptionID    *uuid.UUID `gorm:"type:uuid" json:"selectedOptionId"`
 	AnswerData          string     `gorm:"type:jsonb" json:"answerData"` // JSON representation for complex / multi-choice answers

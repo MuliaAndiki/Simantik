@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import StudentTryoutDetailPage from '@/components/page/private/student/StudentTryoutDetailPage';
 import { ProctoringProvider } from '@/core/providers/proctoring';
@@ -88,6 +88,9 @@ export interface StudentTryoutDetailProps {
 
 function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Dari modal pre-start di halaman daftar: langsung mulai tanpa modal ganda.
+  const preConfirmed = searchParams.get('confirmed') === '1';
   const proctoring = useProctoring();
   const { tryout } = useApi();
 
@@ -113,8 +116,9 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
   const [answeredNumbers, setAnsweredNumbers] = useState<Set<number>>(new Set());
 
   // Modal Dialogs State
-  const [isPreStartModalOpen, setIsPreStartModalOpen] = useState(true);
-  const [isPreStartChecked, setIsPreStartChecked] = useState(false);
+  // (preConfirmed: konfirmasi sudah dilakukan di halaman daftar)
+  const [isPreStartModalOpen, setIsPreStartModalOpen] = useState(!preConfirmed);
+  const [isPreStartChecked, setIsPreStartChecked] = useState(preConfirmed);
 
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
   const [warningLevel, setWarningLevel] = useState<number>(1);
@@ -208,6 +212,15 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
   const handlePreStartClose = useCallback(() => {
     router.push('/student/tryout');
   }, [router]);
+
+  // Konfirmasi dari halaman daftar: mulai sesi otomatis sekali saat mount.
+  const autoConfirmedRef = useRef(false);
+  useEffect(() => {
+    if (preConfirmed && !autoConfirmedRef.current) {
+      autoConfirmedRef.current = true;
+      handlePreStartConfirm();
+    }
+  }, [preConfirmed, handlePreStartConfirm]);
 
   const handlePreStartCheckChange = useCallback((checked: boolean) => {
     setIsPreStartChecked(checked);

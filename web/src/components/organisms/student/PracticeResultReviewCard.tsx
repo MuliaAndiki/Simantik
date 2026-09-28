@@ -1,4 +1,5 @@
-import { Check, ChevronDown, Info, Lightbulb, Maximize2, X } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, Info, Lightbulb, Maximize2, X } from 'lucide-react';
+import Link from 'next/link';
 import React from 'react';
 import { RichHtml } from '@/components/atoms/rich-html';
 import type { PracticeReviewItem } from '@/types/ui';
@@ -455,6 +456,27 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
             <RichHtml html={item.discussion.content} />
           </div>
         </div>
+
+        {/* Materi disarankan untuk soal yang salah */}
+        {item.suggestedMaterials && item.suggestedMaterials.length > 0 && (
+          <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/70 space-y-2">
+            <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wide text-blue-800">
+              <BookOpen className="w-4 h-4" aria-hidden="true" />
+              <span>Materi yang perlu dipelajari</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {item.suggestedMaterials.map((mat) => (
+                <Link
+                  key={mat.id}
+                  href={`/student/learning/material/${mat.id}`}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border border-blue-200 text-xs font-bold text-blue-800 hover:bg-blue-100 transition"
+                >
+                  <span>{mat.title}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </details>
   );
