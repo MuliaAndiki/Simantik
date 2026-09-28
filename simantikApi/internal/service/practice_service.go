@@ -46,6 +46,7 @@ type practiceService struct {
 	questionRepo   repository.QuestionRepository
 	evaluationRepo repository.EvaluationRepository
 	resolver       *JenjangResolver
+	recService     RecommendationService
 }
 
 // NewPracticeService constructs a PracticeService with required dependencies.
@@ -54,18 +55,16 @@ func NewPracticeService(
 	practiceRepo repository.PracticeRepository,
 	questionRepo repository.QuestionRepository,
 	evaluationRepo repository.EvaluationRepository,
-	resolver ...*JenjangResolver,
+	resolver *JenjangResolver,
+	recService RecommendationService,
 ) PracticeService {
-	var r *JenjangResolver
-	if len(resolver) > 0 {
-		r = resolver[0]
-	}
 	return &practiceService{
 		db:             db,
 		practiceRepo:   practiceRepo,
 		questionRepo:   questionRepo,
 		evaluationRepo: evaluationRepo,
-		resolver:       r,
+		resolver:       resolver,
+		recService:     recService,
 	}
 }
 
@@ -746,7 +745,7 @@ func (s *practiceService) CompletePracticeAttempt(ctx context.Context, attemptID
 			// Populate Competency Evaluations
 			var questions []models.Question
 			if len(qIDs) > 0 {
-				_ = s.db.WithContext(ctx).Preload("Competencies").Where("id IN ?", qIDs).Find(&questions).Error
+				_ = s.db.WithContext(ctx).Preload("Competencies").Preload("Options").Where("id IN ?", qIDs).Find(&questions).Error
 			}
 
 			qMap := make(map[uuid.UUID]*models.Question, len(questions))
@@ -807,6 +806,11 @@ func (s *practiceService) CompletePracticeAttempt(ctx context.Context, attemptID
 
 			if len(compEvals) > 0 && s.db != nil {
 				_ = s.db.WithContext(ctx).Create(&compEvals).Error
+			}
+
+			// Auto-generate rekomendasi materi dari feedback engine (best-effort).
+			if evidences, compNames := PracticeAnswerEvidences(answers, qMap); len(evidences) > 0 {
+				BuildAndSaveFeedback(ctx, s.db, s.recService, userID, evalID, evidences, compNames)
 			}
 		}
 	}

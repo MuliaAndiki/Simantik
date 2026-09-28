@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -35,6 +34,7 @@ type tryoutAttemptService struct {
 	adaptiveEngine adaptive.Engine
 	emailSender    utils.EmailSender
 	resolver       *JenjangResolver
+	recService     RecommendationService
 }
 
 // NewTryoutAttemptService constructs a TryoutAttemptService.
@@ -44,6 +44,7 @@ func NewTryoutAttemptService(
 	tryoutRepo repository.TryoutRepository,
 	emailSender utils.EmailSender,
 	resolver *JenjangResolver,
+	recService RecommendationService,
 ) TryoutAttemptService {
 	eng := adaptive.NewEngine(adaptive.DefaultConfig())
 
@@ -54,6 +55,7 @@ func NewTryoutAttemptService(
 		adaptiveEngine: eng,
 		emailSender:    emailSender,
 		resolver:       resolver,
+		recService:     recService,
 	}
 }
 
@@ -700,7 +702,7 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 
 	var questions []models.Question
 	if s.db != nil && len(questionIDs) > 0 {
-		_ = s.db.WithContext(ctx).Preload("Competencies").Where("id IN ?", questionIDs).Find(&questions).Error
+		_ = s.db.WithContext(ctx).Preload("Competencies").Preload("Options").Where("id IN ?", questionIDs).Find(&questions).Error
 	}
 
 	// Map questionID -> question for fast lookup
@@ -791,6 +793,11 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 
 	timeTakenSec := int(now.Sub(attempt.StartedAt).Seconds())
 
+	// Auto-generate rekomendasi materi dari feedback engine (best-effort).
+	if evidences, compNames := StudentAnswerEvidences(answers, qMap); len(evidences) > 0 {
+		BuildAndSaveFeedback(ctx, s.db, s.recService, userID, evalID, evidences, compNames)
+	}
+
 	// Dispatch detailed result email in background (non-blocking)
 	if s.emailSender != nil {
 		go s.sendTryoutResultEmailAsync(attempt.ID, userID, tryout.Title, score, accuracy, timeTakenSec)
@@ -826,13 +833,14 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 		return
 	}
 
-	// 2. Fetch all 30 AttemptQuestion records for this attempt in bulk with preloads
+	// 2. Fetch all AttemptQuestion records for this attempt in bulk with preloads
 	var aqs []models.AttemptQuestion
 	err := s.db.WithContext(ctx).
 		Preload("Question").
 		Preload("Question.Options", func(db *gorm.DB) *gorm.DB {
 			return db.Order("display_order ASC")
 		}).
+		Preload("Question.Competencies").
 		Preload("Question.Explanation").
 		Where("attempt_id = ?", attemptID).
 		Order("question_number ASC").
@@ -850,60 +858,59 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 		ansMap[a.QuestionID] = a
 	}
 
-	// 4. Build email question items
-	items := make([]utils.TryoutQuestionEmailItem, len(aqs))
+	// 4. Build email question items (hanya soal TERJAWAB: benar maupun salah)
+	items := make([]utils.TryoutQuestionEmailItem, 0, len(aqs))
 	correctCount := 0
 
-	for i, aq := range aqs {
-		q := aq.Question
-		ans, hasAns := ansMap[aq.QuestionID]
+	qMap := make(map[uuid.UUID]*models.Question, len(aqs))
+	for i := range aqs {
+		if aqs[i].Question != nil {
+			qMap[aqs[i].QuestionID] = aqs[i].Question
+		}
+	}
 
-		isCorrect := false
-		studentAnsText := "(Tidak dijawab)"
-		correctAnsText := ""
+	for _, aq := range aqs {
+		var ansPtr *models.StudentAnswer
+		if ans, hasAns := ansMap[aq.QuestionID]; hasAns {
+			ansCopy := ans
+			ansPtr = &ansCopy
+		}
+		item, answered := buildEmailQuestionItem(aq.QuestionNumber, aq.DifficultyLevel, aq.Question, ansPtr)
+		if !answered {
+			continue
+		}
+		if item.IsCorrect {
+			correctCount++
+		}
+		items = append(items, item)
+	}
 
-		if hasAns && ans.IsCorrect != nil {
-			isCorrect = *ans.IsCorrect
-			if isCorrect {
-				correctCount++
+	// 5. Feedback engine untuk seksi materi A..N (tanpa simpan ulang rekomendasi)
+	var emailMaterials []utils.TryoutMaterialEmailItem
+	var feedbackSummary string
+	if evidences, compNames := StudentAnswerEvidences(answers, qMap); len(evidences) > 0 {
+		compSet := make(map[uuid.UUID]bool)
+		for _, ev := range evidences {
+			for _, cid := range ev.CompetencyIDs {
+				compSet[cid] = true
 			}
 		}
-
-		if q != nil {
-			for _, opt := range q.Options {
-				if opt.IsCorrect {
-					correctAnsText = fmt.Sprintf("%s. %s", opt.OptionLabel, opt.OptionText)
-				}
-				if hasAns && ans.SelectedOptionID != nil && *ans.SelectedOptionID == opt.ID {
-					studentAnsText = fmt.Sprintf("%s. %s", opt.OptionLabel, opt.OptionText)
-				}
-			}
-			if studentAnsText == "(Tidak dijawab)" && hasAns && ans.AnswerData != "" {
-				studentAnsText = ans.AnswerData
-			}
+		compIDs := make([]uuid.UUID, 0, len(compSet))
+		for cid := range compSet {
+			compIDs = append(compIDs, cid)
 		}
-
-		explanation := ""
-		tips := ""
-		if q != nil && q.Explanation != nil {
-			explanation = q.Explanation.Explanation
-			tips = q.Explanation.AnsweringTips
+		history := FeedbackHistory(ctx, s.db, userID, uuid.Nil)
+		var mats map[uuid.UUID][]MaterialSuggestion
+		if s.recService != nil {
+			mats, _ = s.recService.FeedbackMaterials(ctx, compIDs, 2)
 		}
-
-		qText := ""
-		if q != nil {
-			qText = q.QuestionText
-		}
-
-		items[i] = utils.TryoutQuestionEmailItem{
-			QuestionNumber: aq.QuestionNumber,
-			QuestionText:   qText,
-			Difficulty:     aq.DifficultyLevel,
-			StudentAnswer:  studentAnsText,
-			CorrectAnswer:  correctAnsText,
-			IsCorrect:      isCorrect,
-			Explanation:    explanation,
-			AnsweringTips:  tips,
+		fb := BuildAttemptFeedback(evidences, compNames, history, mats, 6)
+		feedbackSummary = fb.Summary
+		for _, m := range fb.Materials {
+			emailMaterials = append(emailMaterials, utils.TryoutMaterialEmailItem{
+				Title:  m.Title,
+				Reason: m.Reason,
+			})
 		}
 	}
 
@@ -913,15 +920,18 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 	}
 
 	emailData := utils.TryoutResultEmailData{
-		StudentEmail:   user.Email,
-		StudentName:    user.FullName,
-		TryoutTitle:    tryoutTitle,
-		Score:          score,
-		Accuracy:       accuracy,
-		TotalQuestions: len(aqs),
-		CorrectCount:   correctCount,
-		TimeTakenMin:   timeTakenMin,
-		Questions:      items,
+		StudentEmail:    user.Email,
+		StudentName:     user.FullName,
+		TryoutTitle:     tryoutTitle,
+		Score:           score,
+		Accuracy:        accuracy,
+		TotalQuestions:  len(aqs),
+		AnsweredCount:   len(items),
+		CorrectCount:    correctCount,
+		TimeTakenMin:    timeTakenMin,
+		Questions:       items,
+		Materials:       emailMaterials,
+		FeedbackSummary: feedbackSummary,
 	}
 
 	_ = s.emailSender.SendTryoutDetailedResult(ctx, emailData)

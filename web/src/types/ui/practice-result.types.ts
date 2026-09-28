@@ -66,6 +66,7 @@ export interface PracticeReviewItem {
   prompt: string;
   options?: PracticeReviewOption[];
   matrixRows?: PracticeMatrixRow[];
+  suggestedMaterials?: { id: string; title: string }[];
   infographic?: PracticeInfographicData;
   discussion: PracticeDiscussionData;
 }

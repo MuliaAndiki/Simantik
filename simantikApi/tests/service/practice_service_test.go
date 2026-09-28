@@ -198,7 +198,7 @@ func (m *mockPracticeRepo) CountAnswers(_ context.Context, practiceID uuid.UUID)
 
 func TestPracticeService_CreatePackage_Success(t *testing.T) {
 	repo := newMockPracticeRepo()
-	svc := service.NewPracticeService(nil, repo, nil, nil)
+	svc := service.NewPracticeService(nil, repo, nil, nil, nil, nil)
 	ctx := context.Background()
 
 	adminID := uuid.New()
@@ -220,7 +220,7 @@ func TestPracticeService_CreatePackage_Success(t *testing.T) {
 
 func TestPracticeService_PublishEmptyPackage_Error(t *testing.T) {
 	repo := newMockPracticeRepo()
-	svc := service.NewPracticeService(nil, repo, nil, nil)
+	svc := service.NewPracticeService(nil, repo, nil, nil, nil, nil)
 	ctx := context.Background()
 
 	adminID := uuid.New()
@@ -236,7 +236,7 @@ func TestPracticeService_PublishEmptyPackage_Error(t *testing.T) {
 
 func TestPracticeService_StartAndCompletePractice_Scoring(t *testing.T) {
 	repo := newMockPracticeRepo()
-	svc := service.NewPracticeService(nil, repo, nil, nil)
+	svc := service.NewPracticeService(nil, repo, nil, nil, nil, nil)
 	ctx := context.Background()
 
 	adminID := uuid.New()
@@ -319,7 +319,7 @@ func TestPracticeService_StartAndCompletePractice_Scoring(t *testing.T) {
 
 func TestPracticeService_AutoSubmitPractice_Violations(t *testing.T) {
 	repo := newMockPracticeRepo()
-	svc := service.NewPracticeService(nil, repo, nil, nil)
+	svc := service.NewPracticeService(nil, repo, nil, nil, nil, nil)
 	ctx := context.Background()
 
 	adminID := uuid.New()
@@ -371,7 +371,7 @@ func TestPracticeService_AutoSubmitPractice_Violations(t *testing.T) {
 
 func TestPracticeService_BulkSubmit_Idempotency(t *testing.T) {
 	repo := newMockPracticeRepo()
-	svc := service.NewPracticeService(nil, repo, nil, nil)
+	svc := service.NewPracticeService(nil, repo, nil, nil, nil, nil)
 	ctx := context.Background()
 
 	adminID := uuid.New()
@@ -432,7 +432,7 @@ func TestPracticeService_BulkSubmit_Idempotency(t *testing.T) {
 
 func TestPracticeService_ZeroAnswerCorrection(t *testing.T) {
 	repo := newMockPracticeRepo()
-	svc := service.NewPracticeService(nil, repo, nil, nil)
+	svc := service.NewPracticeService(nil, repo, nil, nil, nil, nil)
 	ctx := context.Background()
 
 	adminID := uuid.New()

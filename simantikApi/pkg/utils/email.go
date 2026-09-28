@@ -9,9 +9,18 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
+
+// TryoutMatrixRowEmailItem stores one matrix statement review row.
+type TryoutMatrixRowEmailItem struct {
+	Statement  string
+	UserChoice string
+	CorrectKey string
+	IsCorrect  bool
+}
 
 // TryoutQuestionEmailItem stores question performance and explanation for email reports.
 type TryoutQuestionEmailItem struct {
@@ -23,19 +32,38 @@ type TryoutQuestionEmailItem struct {
 	IsCorrect      bool
 	Explanation    string
 	AnsweringTips  string
+	// Varian soal: "single", "mcma", atau "matrix".
+	QuestionType string
+	// Stimulus wacana (sudah HTML) + tubuh soal (sudah HTML bila dari editor).
+	StimulusTitle string
+	StimulusHTML  string
+	BodyHTML      string
+	// Semua kunci jawaban (untuk MCMA lebih dari satu).
+	CorrectAnswers []string
+	// Baris matriks (untuk varian matrix).
+	MatrixRows []TryoutMatrixRowEmailItem
+}
+
+// TryoutMaterialEmailItem stores one recommended material (A..N) for the email.
+type TryoutMaterialEmailItem struct {
+	Title  string
+	Reason string
 }
 
 // TryoutResultEmailData carries all data needed to render the detailed Tryout outcome email.
 type TryoutResultEmailData struct {
-	StudentEmail   string
-	StudentName    string
-	TryoutTitle    string
-	Score          float64
-	Accuracy       float64
-	TotalQuestions int
-	CorrectCount   int
-	TimeTakenMin   int
-	Questions      []TryoutQuestionEmailItem
+	StudentEmail    string
+	StudentName     string
+	TryoutTitle     string
+	Score           float64
+	Accuracy        float64
+	TotalQuestions  int
+	AnsweredCount   int
+	CorrectCount    int
+	TimeTakenMin    int
+	Questions       []TryoutQuestionEmailItem
+	Materials       []TryoutMaterialEmailItem
+	FeedbackSummary string
 }
 
 // EmailSender defines the contract for sending transactional emails in SIMANTIK.
@@ -275,6 +303,213 @@ func (r *resendEmailSender) SendTryoutResult(ctx context.Context, toEmail, stude
 	return r.send(ctx, toEmail, subject, html)
 }
 
+var emailHTMLTagRegex = regexp.MustCompile(`(?i)</?[a-z][\s\S]*>`)
+
+func emailHTMLOrEscaped(s string) string {
+	if emailHTMLTagRegex.MatchString(s) {
+		return s
+	}
+	return html.EscapeString(s)
+}
+
+func emailQuestionTypeLabel(t string) string {
+	switch t {
+	case "mcma":
+		return "Pilihan Ganda Kompleks"
+	case "matrix":
+		return "Matriks"
+	default:
+		return "Pilihan Ganda"
+	}
+}
+
+// renderEmailQuestionCard me-render satu kartu soal sesuai varian.
+func renderEmailQuestionCard(q TryoutQuestionEmailItem) string {
+	statusBadge := `<span style="display:inline-block; background-color:#FEE2E2; border:1px solid #FECDD3; color:#BE123C; font-size:11px; font-weight:800; padding:3px 12px; border-radius:9999px;">&#10008; Salah</span>`
+	if q.IsCorrect {
+		statusBadge = `<span style="display:inline-block; background-color:#E6F5F8; border:1px solid #99F6E4; color:#0F766E; font-size:11px; font-weight:800; padding:3px 12px; border-radius:9999px;">&#10004; Benar</span>`
+	}
+
+	stimulusHTML := ""
+	if strings.TrimSpace(q.StimulusHTML) != "" {
+		stimulusTitle := q.StimulusTitle
+		if stimulusTitle == "" {
+			stimulusTitle = "Wacana"
+		}
+		stimulusHTML = fmt.Sprintf(`
+		<div style="background-color: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
+			<div style="font-size: 11px; font-weight: 800; color: #0369A1; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">&#128214; %s</div>
+			<div style="font-size: 12px; color: #334155; line-height: 1.6;">%s</div>
+		</div>`, html.EscapeString(stimulusTitle), emailHTMLOrEscaped(q.StimulusHTML))
+	}
+
+	body := emailHTMLOrEscaped(q.BodyHTML)
+	if body == "" {
+		body = html.EscapeString(q.QuestionText)
+	}
+
+	answerBox := ""
+	switch q.QuestionType {
+	case "matrix":
+		var rows strings.Builder
+		for _, row := range q.MatrixRows {
+			mark := `<span style="color:#BE123C; font-weight:800;">&#10008;</span>`
+			if row.IsCorrect {
+				mark = `<span style="color:#0F766E; font-weight:800;">&#10004;</span>`
+			}
+			rows.WriteString(fmt.Sprintf(`
+			<tr>
+				<td style="padding: 8px 10px; border-bottom: 1px solid #E2E8F0; font-size: 12px; color: #1E293B;">%s</td>
+				<td style="padding: 8px 10px; border-bottom: 1px solid #E2E8F0; font-size: 12px; text-align: center; color: #0F766E; font-weight: 700;">%s</td>
+				<td style="padding: 8px 10px; border-bottom: 1px solid #E2E8F0; font-size: 12px; text-align: center; color: #334155; font-weight: 700;">%s</td>
+				<td style="padding: 8px 10px; border-bottom: 1px solid #E2E8F0; font-size: 12px; text-align: center;">%s</td>
+			</tr>`,
+				emailHTMLOrEscaped(row.Statement),
+				html.EscapeString(row.UserChoice),
+				html.EscapeString(row.CorrectKey),
+				mark,
+			))
+		}
+		answerBox = fmt.Sprintf(`
+		<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden; margin-top: 4px;">
+			<tr style="background-color: #F8FAFC;">
+				<td style="padding: 8px 10px; font-size: 11px; font-weight: 800; color: #64748B;">Pernyataan</td>
+				<td style="padding: 8px 10px; font-size: 11px; font-weight: 800; color: #64748B; text-align: center;">Pilihanmu</td>
+				<td style="padding: 8px 10px; font-size: 11px; font-weight: 800; color: #64748B; text-align: center;">Kunci</td>
+				<td style="padding: 8px 10px; font-size: 11px; font-weight: 800; color: #64748B; text-align: center;">Hasil</td>
+			</tr>
+			%s
+		</table>`, rows.String())
+	default:
+		studentAnsText := strings.TrimSpace(q.StudentAnswer)
+		if studentAnsText == "" {
+			studentAnsText = "-"
+		}
+		if q.IsCorrect {
+			answerBox = fmt.Sprintf(`
+			<div style="background-color: #E6F5F8; border: 1px solid #99F6E4; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #0F766E;">
+				<strong>&#10004; Jawaban Kamu:</strong> %s &bull; <span style="font-weight: 700;">Kunci Jawaban</span>
+			</div>`, html.EscapeString(studentAnsText))
+		} else {
+			keys := q.CorrectAnswer
+			if len(q.CorrectAnswers) > 1 {
+				keys = strings.Join(q.CorrectAnswers, "; ")
+			}
+			answerBox = fmt.Sprintf(`
+			<div style="background-color: #FEF2F2; border: 1px solid #FECDD3; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #991B1B; margin-bottom: 6px;">
+				<strong>&#10008; Pilihanmu:</strong> %s <span style="font-size: 11px; color: #BE123C;">(Kurang Tepat - Bukan Kunci)</span>
+			</div>
+			<div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #166534;">
+				<strong>&#10004; Kunci Jawaban:</strong> %s
+			</div>`, html.EscapeString(studentAnsText), html.EscapeString(keys))
+		}
+	}
+
+	return fmt.Sprintf(`
+	<div style="margin-bottom: 16px; padding: 18px; background-color: #ffffff; border: 1px solid #E2E8F0; border-radius: 16px;">
+		<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
+			<tr>
+				<td>
+					<span style="font-size: 16px; font-weight: 900; color: #0F172A;">%02d</span>
+					<span style="color: #CBD5E1; margin: 0 4px;">&bull;</span>
+					<span style="background-color: #F1F5F9; color: #475569; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Tingkat %d</span>
+					<span style="color: #CBD5E1; margin: 0 4px;">&bull;</span>
+					<span style="background-color: #EFF6FF; color: #1D4ED8; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">%s</span>
+				</td>
+				<td style="text-align: right;">
+					%s
+				</td>
+			</tr>
+		</table>
+		%s
+		<div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.6; margin-bottom: 14px;">
+			%s
+		</div>
+		%s
+	</div>`,
+		q.QuestionNumber,
+		q.Difficulty,
+		emailQuestionTypeLabel(q.QuestionType),
+		statusBadge,
+		stimulusHTML,
+		body,
+		answerBox,
+	)
+}
+
+// renderEmailExplanation me-render blok pembahasan satu soal.
+func renderEmailExplanation(q TryoutQuestionEmailItem) string {
+	tipsContent := ""
+	if q.AnsweringTips != "" {
+		tipsContent = fmt.Sprintf(`
+		<div style="margin-top: 8px; padding: 8px 12px; background-color: #FEFCE8; border-left: 3px solid #EAB308; border-radius: 6px; font-size: 11px; color: #854D0E;">
+			<strong>Tips &amp; Trik:</strong> %s
+		</div>`, html.EscapeString(q.AnsweringTips))
+	}
+
+	return fmt.Sprintf(`
+	<div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;">
+		<div style="font-size: 13px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
+			<span style="display: inline-block; width: 22px; height: 22px; background-color: #E0F2FE; color: #0284C7; border-radius: 50%%; text-align: center; line-height: 22px; font-size: 11px; margin-right: 6px;">%d</span>
+			Pembahasan Soal %02d
+		</div>
+		<div style="font-size: 12px; color: #334155; line-height: 1.6;">
+			<strong>Pembahasan:</strong> %s
+		</div>
+		%s
+	</div>`,
+		q.QuestionNumber,
+		q.QuestionNumber,
+		emailHTMLOrEscaped(q.Explanation),
+		tipsContent,
+	)
+}
+
+// renderEmailMaterials me-render seksi materi A..N hasil feedback engine.
+func renderEmailMaterials(materials []TryoutMaterialEmailItem, summary string) string {
+	if len(materials) == 0 {
+		return ""
+	}
+	var items strings.Builder
+	for i, m := range materials {
+		reason := ""
+		if strings.TrimSpace(m.Reason) != "" {
+			reason = fmt.Sprintf(`<div style="font-size: 11px; color: #64748B; margin-top: 4px; line-height: 1.5;">%s</div>`, html.EscapeString(m.Reason))
+		}
+		items.WriteString(fmt.Sprintf(`
+		<div style="background-color: #ffffff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;">
+			<div style="font-size: 13px; font-weight: 800; color: #0F172A;">
+				<span style="display: inline-block; min-width: 22px; height: 22px; background-color: #FEF3C7; color: #92400E; border-radius: 50%%; text-align: center; line-height: 22px; font-size: 11px; margin-right: 6px; padding: 0 4px;">%d</span>
+				%s
+			</div>
+			%s
+		</div>`,
+			i+1,
+			html.EscapeString(m.Title),
+			reason,
+		))
+	}
+
+	summaryHTML := ""
+	if strings.TrimSpace(summary) != "" {
+		summaryHTML = fmt.Sprintf(`<p style="color: #334155; font-size: 13px; line-height: 1.6; margin: 0 0 14px 0;">%s</p>`, html.EscapeString(summary))
+	}
+
+	return fmt.Sprintf(`
+	<div style="margin-top: 36px; padding-top: 24px; border-top: 1px dashed #CBD5E1;">
+		<div style="font-size: 11px; font-weight: 900; color: #0F766E; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+			&#128218; RENCANA BELAJAR
+		</div>
+		<h2 style="color: #0F172A; font-size: 18px; font-weight: 900; margin: 0 0 4px 0;">Materi yang Perlu Kamu Pelajari</h2>
+		<p style="color: #64748B; font-size: 12px; margin: 0 0 14px 0;">Berdasarkan analisis jawabanmu, pelajari kembali materi berikut lalu kerjakan latihannya.</p>
+		%s
+		%s
+	</div>`,
+		summaryHTML,
+		items.String(),
+	)
+}
+
 func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data TryoutResultEmailData) error {
 	subject := fmt.Sprintf("SIMANTIK - Hasil & Pembahasan Tryout: %s", data.TryoutTitle)
 
@@ -282,21 +517,23 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 	if totalQuestions <= 0 && len(data.Questions) > 0 {
 		totalQuestions = len(data.Questions)
 	}
-	correctCount := data.CorrectCount
-	incorrectCount := 0
-	unansweredCount := 0
-
+	answeredCount := data.AnsweredCount
+	if answeredCount <= 0 {
+		answeredCount = len(data.Questions)
+	}
+	correctCount := 0
 	for _, q := range data.Questions {
-		if !q.IsCorrect {
-			if strings.TrimSpace(q.StudentAnswer) == "" || q.StudentAnswer == "(Tidak dijawab)" {
-				unansweredCount++
-			} else {
-				incorrectCount++
-			}
+		if q.IsCorrect {
+			correctCount++
 		}
 	}
-	if incorrectCount == 0 && unansweredCount == 0 && totalQuestions > correctCount {
-		incorrectCount = totalQuestions - correctCount
+	incorrectCount := answeredCount - correctCount
+	if incorrectCount < 0 {
+		incorrectCount = 0
+	}
+	unansweredCount := totalQuestions - answeredCount
+	if unansweredCount < 0 {
+		unansweredCount = 0
 	}
 
 	timeTaken := data.TimeTakenMin
@@ -308,85 +545,13 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 	var explanationsHTML strings.Builder
 
 	for _, q := range data.Questions {
-		statusBadge := `<span style="display:inline-block; background-color:#FEE2E2; border:1px solid #FECDD3; color:#BE123C; font-size:11px; font-weight:800; padding:3px 12px; border-radius:9999px;">&#10008; Salah</span>`
-		if q.IsCorrect {
-			statusBadge = `<span style="display:inline-block; background-color:#E6F5F8; border:1px solid #99F6E4; color:#0F766E; font-size:11px; font-weight:800; padding:3px 12px; border-radius:9999px;">&#10004; Benar</span>`
-		}
-
-		studentAnsText := strings.TrimSpace(q.StudentAnswer)
-		if studentAnsText == "" {
-			studentAnsText = "(Tidak dijawab)"
-		}
-
-		var answerBox string
-		if q.IsCorrect {
-			answerBox = fmt.Sprintf(`
-			<div style="background-color: #E6F5F8; border: 1px solid #99F6E4; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #0F766E;">
-				<strong>&#10004; Jawaban Kamu:</strong> %s &bull; <span style="font-weight: 700;">Kunci Jawaban</span>
-			</div>`, html.EscapeString(studentAnsText))
-		} else {
-			answerBox = fmt.Sprintf(`
-			<div style="background-color: #FEF2F2; border: 1px solid #FECDD3; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #991B1B; margin-bottom: 6px;">
-				<strong>&#10008; Pilihanmu:</strong> %s <span style="font-size: 11px; color: #BE123C;">(Kurang Tepat - Bukan Kunci)</span>
-			</div>
-			<div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #166534;">
-				<strong>&#10004; Kunci Jawaban:</strong> %s
-			</div>`, html.EscapeString(studentAnsText), html.EscapeString(q.CorrectAnswer))
-		}
-
-		questionsHTML.WriteString(fmt.Sprintf(`
-		<div style="margin-bottom: 16px; padding: 18px; background-color: #ffffff; border: 1px solid #E2E8F0; border-radius: 16px;">
-			<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
-				<tr>
-					<td>
-						<span style="font-size: 16px; font-weight: 900; color: #0F172A;">%02d</span>
-						<span style="color: #CBD5E1; margin: 0 4px;">&bull;</span>
-						<span style="background-color: #F1F5F9; color: #475569; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Tingkat %d</span>
-					</td>
-					<td style="text-align: right;">
-						%s
-					</td>
-				</tr>
-			</table>
-			<div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.6; margin-bottom: 14px;">
-				%s
-			</div>
-			%s
-		</div>`,
-			q.QuestionNumber,
-			q.Difficulty,
-			statusBadge,
-			html.EscapeString(q.QuestionText),
-			answerBox,
-		))
-
+		questionsHTML.WriteString(renderEmailQuestionCard(q))
 		if q.Explanation != "" || q.AnsweringTips != "" {
-			tipsContent := ""
-			if q.AnsweringTips != "" {
-				tipsContent = fmt.Sprintf(`
-				<div style="margin-top: 8px; padding: 8px 12px; background-color: #FEFCE8; border-left: 3px solid #EAB308; border-radius: 6px; font-size: 11px; color: #854D0E;">
-					<strong>Tips &amp; Trik:</strong> %s
-				</div>`, html.EscapeString(q.AnsweringTips))
-			}
-
-			explanationsHTML.WriteString(fmt.Sprintf(`
-			<div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;">
-				<div style="font-size: 13px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
-					<span style="display: inline-block; width: 22px; height: 22px; background-color: #E0F2FE; color: #0284C7; border-radius: 50%%; text-align: center; line-height: 22px; font-size: 11px; margin-right: 6px;">%d</span>
-					Pembahasan Soal %02d
-				</div>
-				<div style="font-size: 12px; color: #334155; line-height: 1.6;">
-					<strong>Pembahasan:</strong> %s
-				</div>
-				%s
-			</div>`,
-				q.QuestionNumber,
-				q.QuestionNumber,
-				html.EscapeString(q.Explanation),
-				tipsContent,
-			))
+			explanationsHTML.WriteString(renderEmailExplanation(q))
 		}
 	}
+
+	materialsHTML := renderEmailMaterials(data.Materials, data.FeedbackSummary)
 
 	htmlBody := fmt.Sprintf(`
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px 16px; background-color: #f1f5f9;">
@@ -490,7 +655,7 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 		<!-- Detail Jawaban Section -->
 		<div style="margin-top: 28px;">
 			<h2 style="color: #0F172A; font-size: 18px; font-weight: 900; margin: 0 0 4px 0;">Detail Jawaban</h2>
-			<p style="color: #64748B; font-size: 12px; margin: 0 0 18px 0;">Periksa pilihan yang kamu ambil pada lembar kerja tryout dibandingkan dengan kunci jawaban resmi.</p>
+			<p style="color: #64748B; font-size: 12px; margin: 0 0 18px 0;">%d dari %d soal terjawab (benar maupun salah). Periksa pilihan yang kamu ambil dibandingkan dengan kunci jawaban resmi.</p>
 			%s
 		</div>
 
@@ -503,6 +668,8 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 			<p style="color: #64748B; font-size: 12px; margin: 0 0 18px 0;">Berikut pembahasan mendalam untuk setiap butir soal guna memperkuat pemahaman konsep literasi kamu.</p>
 			%s
 		</div>
+
+		%s
 	</div>
 
 	<!-- Footer -->
@@ -526,8 +693,11 @@ func (r *resendEmailSender) SendTryoutDetailedResult(ctx context.Context, data T
 		data.CorrectCount,
 		incorrectCount,
 		unansweredCount,
+		answeredCount,
+		totalQuestions,
 		questionsHTML.String(),
 		explanationsHTML.String(),
+		materialsHTML,
 	)
 
 	return r.send(ctx, data.StudentEmail, subject, htmlBody)
