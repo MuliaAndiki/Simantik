@@ -51,7 +51,24 @@ export interface TableLoaderProps {
   className?: string;
 }
 
-// Spin loader untuk data tabel. Dipakai saat isLoading.
+// Grid skeleton seragam untuk daftar card (6 kartu).
+export function CardGridSkeleton({
+  count = 6,
+  lines = 3,
+  className,
+}: {
+  count?: number;
+  lines?: number;
+  className?: string;
+}) {
+  return (
+    <div className={cn('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5', className)}>
+      {Array.from({ length: count }).map((_, i) => (
+        <CardSkeleton key={`card-skeleton-${i}`} lines={lines} />
+      ))}
+    </div>
+  );
+}
 export function TableLoader({ label = 'Memuat data...', className }: TableLoaderProps) {
   return (
     <div

@@ -1,6 +1,6 @@
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import React from 'react';
-import { TableLoader } from '@/components/atoms/loading';
+import { TableEmptyRow, TableLoadingRow } from '@/components/molecules/table';
 import type { RecentStudentItem } from '@/types/service';
 import { cn } from '@/utils/classname';
 
@@ -81,17 +81,9 @@ export const AdminDashboardRecentStudentsTable: React.FC<
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
             {isLoading ? (
-              <tr>
-                <td colSpan={5}>
-                  <TableLoader label="Memuat data siswa..." />
-                </td>
-              </tr>
+              <TableLoadingRow colSpan={5} label="Memuat data siswa..." />
             ) : displayStudents.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-slate-400 font-medium">
-                  Belum ada siswa terdaftar.
-                </td>
-              </tr>
+              <TableEmptyRow colSpan={5} message="Belum ada siswa terdaftar." />
             ) : (
               displayStudents.map((student) => {
                 const isActive =
