@@ -1,9 +1,8 @@
 import React from 'react';
+import { PageHeading, type PageHeadingProps } from '@/components/molecules/hero';
 import {
   ContentManagerCuratorActivities,
   type ContentManagerCuratorActivitiesProps,
-  ContentManagerHeroBanner,
-  type ContentManagerHeroBannerProps,
   ContentManagerManagedTryouts,
   type ContentManagerManagedTryoutsProps,
   ContentManagerPipelineCards,
@@ -16,7 +15,7 @@ import {
 import { cn } from '@/utils/classname';
 
 export interface ContentManagerDashboardTemplateProps {
-  heroProps?: ContentManagerHeroBannerProps;
+  heroProps?: PageHeadingProps;
   statCardsProps?: ContentManagerStatCardsProps;
   workflowCardProps?: ContentManagerTryoutWorkflowCardProps;
   pipelineCardsProps?: ContentManagerPipelineCardsProps;
@@ -37,7 +36,7 @@ export const ContentManagerDashboardTemplate: React.FC<ContentManagerDashboardTe
   return (
     <div className={cn('w-full max-w-full mx-auto space-y-6 md:space-y-7 pb-10', className)}>
       {/* 1. Header / Hero Banner */}
-      <ContentManagerHeroBanner {...heroProps} />
+      <PageHeading variant="card" {...heroProps} />
 
       {/* 2. Platform Overview KPI Cards */}
       <ContentManagerStatCards {...statCardsProps} />

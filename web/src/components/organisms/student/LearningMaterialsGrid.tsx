@@ -1,8 +1,6 @@
 import type * as React from 'react';
-import { CardSkeleton } from '@/components/atoms/loading';
-import { DashboardSectionHeader } from '@/components/molecules/student/DashboardSectionHeader';
+import { DashboardGrid } from '@/components/molecules/grid';
 import { MaterialCard } from '@/components/molecules/student/MaterialCard';
-import { cn } from '@/utils/classname';
 
 export interface DashboardMaterialItem {
   id: string;
@@ -302,32 +300,26 @@ export function LearningMaterialsGrid({
   );
 
   return (
-    <section className={cn('space-y-4', className)}>
-      <DashboardSectionHeader
-        title="Materi Bahasa Indonesia"
-        subtitle="Pelajari materi penting untuk mempersiapkan TKA Bahasa Indonesia."
-        actionText="Lihat Semua Materi"
-        actionHref={allMaterialsHref}
-        onAction={onViewAllMaterials}
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-        {isLoading
-          ? Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={`material-skeleton-${i}`} />)
-          : (materials ?? []).map((material, index) => (
-              <MaterialCard
-                key={material.id}
-                title={material.title}
-                description={material.description}
-                illustration={
-                  [BookIllustration, DocumentIllustration, MagnifierIllustration][index % 3]
-                }
-                actionText="Pelajari Materi"
-                href="/student/learning"
-                onLearn={() => onLearnMaterial?.(material.id)}
-              />
-            ))}
-      </div>
-    </section>
+    <DashboardGrid
+      title="Materi Bahasa Indonesia"
+      subtitle="Pelajari materi penting untuk mempersiapkan TKA Bahasa Indonesia."
+      actionText="Lihat Semua Materi"
+      actionHref={allMaterialsHref}
+      onAction={onViewAllMaterials}
+      isLoading={isLoading}
+      className={className}
+    >
+      {(materials ?? []).map((material, index) => (
+        <MaterialCard
+          key={material.id}
+          title={material.title}
+          description={material.description}
+          illustration={[BookIllustration, DocumentIllustration, MagnifierIllustration][index % 3]}
+          actionText="Pelajari Materi"
+          href="/student/learning"
+          onLearn={() => onLearnMaterial?.(material.id)}
+        />
+      ))}
+    </DashboardGrid>
   );
 }

@@ -3,6 +3,7 @@ export * from './ChangePasswordModal';
 export * from './EvaluationNextStepsSection';
 export * from './EvaluationOverviewGrid';
 export * from './EvaluationPillarsSection';
+export * from './EvaluationSection';
 export * from './LatestUpdatesGrid';
 export * from './LearningDetailContentCard';
 export * from './LearningDetailHeroBanner';

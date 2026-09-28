@@ -1,5 +1,12 @@
-import { ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 import React from 'react';
+import {
+  JenjangBadge,
+  ManagerPagination,
+  StatusPill,
+  type StatusPillTone,
+  TableEmptyRow,
+} from '@/components/molecules/table';
 import type { MaterialStatusType, ModuleItem } from '@/types/ui/material-manager.types';
 
 interface MaterialDataTableProps {
@@ -27,64 +34,28 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
   onPageChange,
   onRowsPerPageChange,
 }) => {
-  const totalPages = Math.ceil(totalItems / rowsPerPage) || 1;
-
-  const renderStatusBadge = (status: MaterialStatusType) => {
-    switch (status) {
-      case 'PUBLISHED':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#E8F8F3] text-[#059669]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
-            Published
-          </span>
-        );
-      case 'IN_REVIEW':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#FEF7EB] text-[#D97706]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#F5B731]" />
-            In Review
-          </span>
-        );
-      case 'DRAFT':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F1F5F9] text-[#64748B]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#94A3B8]" />
-            Draft
-          </span>
-        );
-      default:
-        return null;
-    }
+  const MATERIAL_STATUS_TONES: Record<string, StatusPillTone & { label: string }> = {
+    PUBLISHED: {
+      pill: 'bg-[#E8F8F3] text-[#059669]',
+      dot: 'bg-[#10B981]',
+      label: 'Published',
+    },
+    IN_REVIEW: {
+      pill: 'bg-[#FEF7EB] text-[#D97706]',
+      dot: 'bg-[#F5B731]',
+      label: 'In Review',
+    },
+    DRAFT: {
+      pill: 'bg-[#F1F5F9] text-[#64748B]',
+      dot: 'bg-[#94A3B8]',
+      label: 'Draft',
+    },
   };
 
-  const renderJenjangBadge = (jenjang?: string) => {
-    const j = (jenjang || 'sma').toLowerCase();
-    switch (j) {
-      case 'sd':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-            SD
-          </span>
-        );
-      case 'smp':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
-            SMP
-          </span>
-        );
-      case 'smk':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-            SMK
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-            SMA
-          </span>
-        );
-    }
+  const renderStatusBadge = (status: MaterialStatusType) => {
+    const tone = MATERIAL_STATUS_TONES[status];
+    if (!tone) return null;
+    return <StatusPill label={tone.label} tone={tone} />;
   };
 
   return (
@@ -105,11 +76,10 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
             {modules.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
-                  Belum ada modul pembelajaran terdaftar. Silakan buat modul atau materi baru.
-                </td>
-              </tr>
+              <TableEmptyRow
+                colSpan={7}
+                message="Belum ada modul pembelajaran terdaftar. Silakan buat modul atau materi baru."
+              />
             ) : (
               modules.map((item) => {
                 const isSelected = item.id === selectedId;
@@ -157,7 +127,7 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
 
                     {/* Jenjang */}
                     <td className="py-3.5 px-4 text-center align-top whitespace-nowrap">
-                      {renderJenjangBadge(item.jenjang)}
+                      <JenjangBadge value={item.jenjang} />
                     </td>
 
                     {/* Total Materi */}
@@ -229,50 +199,14 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
       </div>
 
       {/* Pagination Bar */}
-      <div className="p-3.5 sm:p-4 border-t border-slate-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-        {/* Rows Per Page */}
-        <div className="flex items-center gap-2">
-          <span>Baris per halaman:</span>
-          <select
-            value={rowsPerPage}
-            onChange={(e) => onRowsPerPageChange(Number(e.target.value))}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 font-medium cursor-pointer focus:outline-none focus:border-cyan-600"
-          >
-            <option value={6}>6</option>
-            <option value={12}>12</option>
-            <option value={24}>24</option>
-          </select>
-        </div>
-
-        {/* Page Information & Nav Buttons */}
-        <div className="flex items-center gap-3">
-          <span>
-            Halaman <strong className="text-slate-800">{currentPage}</strong> dari{' '}
-            <strong className="text-slate-800">{totalPages}</strong>
-          </span>
-
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={currentPage <= 1}
-              onClick={() => onPageChange(currentPage - 1)}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 transition cursor-pointer"
-              title="Halaman Sebelumnya"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              disabled={currentPage >= totalPages}
-              onClick={() => onPageChange(currentPage + 1)}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 transition cursor-pointer"
-              title="Halaman Selanjutnya"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
+      <ManagerPagination
+        currentPage={currentPage}
+        totalItems={totalItems}
+        rowsPerPage={rowsPerPage}
+        onPageChange={onPageChange}
+        onRowsPerPageChange={onRowsPerPageChange}
+        rowsPerPageOptions={[6, 12, 24]}
+      />
     </div>
   );
 };

@@ -1,15 +1,5 @@
 import type React from 'react';
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Input,
-} from '@/components/atoms';
-import type { AdminUserDetailResponse } from '@/types/service';
+import { AdminField, AdminFormDialogShell, AdminTextInput } from '@/components/molecules/dialog';
 
 export interface AdminStudentEditFormData {
   fullName: string;
@@ -37,96 +27,59 @@ export const AdminStudentEditDialog: React.FC<AdminStudentEditDialogProps> = ({
   isSubmitting = false,
 }) => {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-black text-slate-900">
-            Edit Informasi Siswa
-          </DialogTitle>
-          <DialogDescription className="text-xs text-slate-500 font-medium">
-            Perbarui data identitas dan profil akademik siswa.
-          </DialogDescription>
-        </DialogHeader>
+    <AdminFormDialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Edit Informasi Siswa"
+      description="Perbarui data identitas dan profil akademik siswa."
+      submitLabel="Simpan Perubahan"
+      isSubmitting={isSubmitting}
+      onSubmit={onSubmit}
+    >
+      <AdminField label="Nama Lengkap">
+        <AdminTextInput
+          value={formData.fullName}
+          onChange={(e) => onFormDataChange({ ...formData, fullName: e.target.value })}
+          required
+          placeholder="Contoh: Anindya Humairah"
+        />
+      </AdminField>
 
-        <form onSubmit={onSubmit} className="space-y-3.5 py-2">
-          {/* Full Name */}
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-700">Nama Lengkap</label>
-            <Input
-              value={formData.fullName}
-              onChange={(e) => onFormDataChange({ ...formData, fullName: e.target.value })}
-              required
-              className="h-10 rounded-xl bg-slate-50 text-xs font-semibold"
-              placeholder="Contoh: Anindya Humairah"
-            />
-          </div>
+      <AdminField label="Email Siswa">
+        <AdminTextInput
+          type="email"
+          value={formData.email}
+          onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
+          required
+          placeholder="Contoh: anindya@example.com"
+        />
+      </AdminField>
 
-          {/* Email */}
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-700">Email Siswa</label>
-            <Input
-              type="email"
-              value={formData.email}
-              onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
-              required
-              className="h-10 rounded-xl bg-slate-50 text-xs font-semibold"
-              placeholder="Contoh: anindya@example.com"
-            />
-          </div>
+      <AdminField label="Sekolah Asal">
+        <AdminTextInput
+          value={formData.school}
+          onChange={(e) => onFormDataChange({ ...formData, school: e.target.value })}
+          placeholder="Contoh: SMAN 3 Bandung"
+        />
+      </AdminField>
 
-          {/* School */}
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-700">Sekolah Asal</label>
-            <Input
-              value={formData.school}
-              onChange={(e) => onFormDataChange({ ...formData, school: e.target.value })}
-              className="h-10 rounded-xl bg-slate-50 text-xs font-semibold"
-              placeholder="Contoh: SMAN 3 Bandung"
-            />
-          </div>
-
-          {/* Grade & Major */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Kelas / Tingkat</label>
-              <Input
-                value={formData.grade}
-                onChange={(e) => onFormDataChange({ ...formData, grade: e.target.value })}
-                className="h-10 rounded-xl bg-slate-50 text-xs font-semibold"
-                placeholder="Contoh: XII"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Jurusan</label>
-              <Input
-                value={formData.major}
-                onChange={(e) => onFormDataChange({ ...formData, major: e.target.value })}
-                className="h-10 rounded-xl bg-slate-50 text-xs font-semibold"
-                placeholder="Contoh: MIPA 2"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-10 rounded-xl text-xs font-bold text-slate-700 border-slate-200"
-            >
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="h-10 px-5 rounded-xl font-bold text-xs bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 border-0 shadow-2xs cursor-pointer"
-            >
-              {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <div className="grid grid-cols-2 gap-2.5">
+        <AdminField label="Kelas / Tingkat">
+          <AdminTextInput
+            value={formData.grade}
+            onChange={(e) => onFormDataChange({ ...formData, grade: e.target.value })}
+            placeholder="Contoh: XII"
+          />
+        </AdminField>
+        <AdminField label="Jurusan">
+          <AdminTextInput
+            value={formData.major}
+            onChange={(e) => onFormDataChange({ ...formData, major: e.target.value })}
+            placeholder="Contoh: MIPA 2"
+          />
+        </AdminField>
+      </div>
+    </AdminFormDialogShell>
   );
 };
 

@@ -1,7 +1,7 @@
 import { Edit2, Trash2 } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/atoms';
-import { TableLoader } from '@/components/atoms/loading';
+import { TableEmptyRow, TableLoadingRow, TablePagination } from '@/components/molecules/table';
 import type { SchoolResponse } from '@/types/service';
 import { cn } from '@/utils/classname';
 
@@ -28,8 +28,6 @@ export const AdminSchoolDataTable: React.FC<AdminSchoolDataTableProps> = ({
   onDelete,
   className,
 }) => {
-  const totalPages = Math.ceil(totalItems / rowsPerPage) || 1;
-
   return (
     <div className={cn('space-y-4', className)}>
       <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-white shadow-2xs">
@@ -46,17 +44,12 @@ export const AdminSchoolDataTable: React.FC<AdminSchoolDataTableProps> = ({
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
-              <tr>
-                <td colSpan={6}>
-                  <TableLoader label="Memuat data sekolah..." />
-                </td>
-              </tr>
+              <TableLoadingRow colSpan={6} label="Memuat data sekolah..." />
             ) : schools.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-5 py-12 text-center text-slate-400 font-medium">
-                  Tidak ada data sekolah yang sesuai dengan pencarian atau filter.
-                </td>
-              </tr>
+              <TableEmptyRow
+                colSpan={6}
+                message="Tidak ada data sekolah yang sesuai dengan pencarian atau filter."
+              />
             ) : (
               schools.map((school) => (
                 <tr key={school.id} className="hover:bg-slate-50/70 transition-colors">
@@ -123,38 +116,14 @@ export const AdminSchoolDataTable: React.FC<AdminSchoolDataTableProps> = ({
       </div>
 
       {/* Pagination Bar */}
-      {totalItems > rowsPerPage && (
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-xs text-slate-400 font-medium">
-            Menampilkan {schools.length} dari {totalItems} sekolah
-          </span>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-              disabled={currentPage <= 1}
-              className="text-xs font-semibold rounded-lg"
-            >
-              Sebelumnya
-            </Button>
-            <span className="text-xs font-bold px-2 text-slate-700">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage >= totalPages}
-              className="text-xs font-semibold rounded-lg"
-            >
-              Selanjutnya
-            </Button>
-          </div>
-        </div>
-      )}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={totalItems}
+        rowsPerPage={rowsPerPage}
+        displayedCount={schools.length}
+        itemLabel="sekolah"
+        onPageChange={onPageChange}
+      />
     </div>
   );
 };
