@@ -14,6 +14,14 @@ import type {
   PracticeStats,
   PracticeStatusType,
 } from '@/types/ui/practice-manager.types';
+import {
+  countByStatus,
+  downloadTextFile,
+  formatDateTimeId,
+  formatItemNumber,
+  mapApiStatusToUi,
+  mapStatusFilterToApi,
+} from '@/utils/list-summary.util';
 
 const EMPTY_PRACTICE_FORM: PracticeDialogForm = {
   title: '',
@@ -48,18 +56,7 @@ export const PracticeListContainer: React.FC = () => {
   });
 
   // Map UI status filter to API status filter
-  const apiStatus = useMemo(() => {
-    switch (filters.status) {
-      case 'Published':
-        return 'published';
-      case 'Draft':
-        return 'draft';
-      case 'Unpublished':
-        return 'archived';
-      default:
-        return undefined;
-    }
-  }, [filters.status]);
+  const apiStatus = useMemo(() => mapStatusFilterToApi(filters.status), [filters.status]);
 
   const apiCompetencyId = useMemo(() => {
     return filters.competencyId !== 'Semua Kompetensi' ? filters.competencyId : undefined;
@@ -117,27 +114,12 @@ export const PracticeListContainer: React.FC = () => {
     }
 
     return filtered.map((pkg, idx) => {
-      const rawStatus = (pkg.status || 'draft').toUpperCase();
-      const status: PracticeStatusType =
-        rawStatus === 'PUBLISHED'
-          ? 'PUBLISHED'
-          : rawStatus === 'UNPUBLISHED' || rawStatus === 'ARCHIVED'
-            ? 'UNPUBLISHED'
-            : 'DRAFT';
-
-      const updatedAt = pkg.updated_at
-        ? new Date(pkg.updated_at).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })
-        : 'Baru saja';
+      const status: PracticeStatusType = mapApiStatusToUi(pkg.status);
+      const updatedAt = formatDateTimeId(pkg.updated_at);
 
       return {
         id: pkg.id,
-        number: String((filters.page - 1) * filters.perPage + idx + 1).padStart(2, '0'),
+        number: formatItemNumber(filters.page, filters.perPage, idx),
         title: pkg.title,
         description: pkg.description || undefined,
         competencyId: pkg.competency_id,
@@ -153,22 +135,13 @@ export const PracticeListContainer: React.FC = () => {
   // Statistics calculation
   const stats = useMemo<PracticeStats>(() => {
     const list = allPackagesQuery.data?.packages ?? [];
-    let draft = 0;
-    let published = 0;
-    let unpublished = 0;
-
-    for (const item of list) {
-      const st = (item.status || '').toLowerCase();
-      if (st === 'published') published++;
-      else if (st === 'unpublished' || st === 'archived') unpublished++;
-      else draft++;
-    }
+    const counts = countByStatus(list, (item) => item.status);
 
     return {
-      totalPackages: allPackagesQuery.data?.total ?? list.length,
-      draftCount: draft,
-      publishedCount: published,
-      unpublishedCount: unpublished,
+      totalPackages: allPackagesQuery.data?.total ?? counts.total,
+      draftCount: counts.draft,
+      publishedCount: counts.published,
+      unpublishedCount: counts.unpublished,
     };
   }, [allPackagesQuery.data]);
 
@@ -317,13 +290,7 @@ export const PracticeListContainer: React.FC = () => {
   const handleExportSummary = () => {
     const summaryText = `RINGKASAN PAKET LATIHAN SIMANTIK\n\nTotal Paket: ${stats.totalPackages}\nPublished: ${stats.publishedCount}\nDraft: ${stats.draftCount}\nUnpublished: ${stats.unpublishedCount}\nTanggal Unduh: ${new Date().toLocaleDateString('id-ID')}\n\nDaftar Paket Latihan:\n${packages.map((p, i) => `${i + 1}. ${p.title} (${p.competencyName}, ${p.totalQuestions} Soal) - Status: ${p.status}`).join('\n')}`;
 
-    const blob = new Blob([summaryText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'Ringkasan-Paket-Latihan-SIMANTIK.txt';
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile('Ringkasan-Paket-Latihan-SIMANTIK.txt', summaryText);
   };
 
   return (
