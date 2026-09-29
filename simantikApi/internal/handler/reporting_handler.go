@@ -99,3 +99,4 @@ func (h *ReportingHandler) GetDifficultyAnalytics(c *fiber.Ctx) error {
 
 	return utils.OK(c, "difficulty level analytics retrieved successfully", analytics)
 }
+
