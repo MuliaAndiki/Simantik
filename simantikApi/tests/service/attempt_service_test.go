@@ -74,6 +74,65 @@ func (m *mockTryoutAttemptRepo) FindAttemptQuestionByNumber(_ context.Context, a
 	return nil, gorm.ErrRecordNotFound
 }
 
+func (m *mockTryoutAttemptRepo) FindAttemptQuestionByQuestionID(_ context.Context, attemptID, questionID uuid.UUID) (*models.AttemptQuestion, error) {
+	for i, aq := range m.aqs[attemptID] {
+		if aq.QuestionID == questionID {
+			return &m.aqs[attemptID][i], nil
+		}
+	}
+	return nil, gorm.ErrRecordNotFound
+}
+
+func (m *mockTryoutAttemptRepo) FindAttemptQuestionsByQuestionIDs(_ context.Context, attemptID uuid.UUID, questionIDs []uuid.UUID) ([]models.AttemptQuestion, error) {
+	set := make(map[uuid.UUID]bool, len(questionIDs))
+	for _, id := range questionIDs {
+		set[id] = true
+	}
+	var out []models.AttemptQuestion
+	for _, aq := range m.aqs[attemptID] {
+		if set[aq.QuestionID] {
+			out = append(out, aq)
+		}
+	}
+	return out, nil
+}
+
+func (m *mockTryoutAttemptRepo) UpdateAttemptQuestion(_ context.Context, aq *models.AttemptQuestion) error {
+	for i, cur := range m.aqs[aq.AttemptID] {
+		if cur.ID == aq.ID {
+			m.aqs[aq.AttemptID][i] = *aq
+			return nil
+		}
+	}
+	return gorm.ErrRecordNotFound
+}
+
+func (m *mockTryoutAttemptRepo) CountAnswersBatch(_ context.Context, attemptIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
+	out := make(map[uuid.UUID]int64, len(attemptIDs))
+	for _, id := range attemptIDs {
+		var c int64
+		for _, ans := range m.answers {
+			if ans.AttemptID == id {
+				c++
+			}
+		}
+		out[id] = c
+	}
+	return out, nil
+}
+
+func (m *mockTryoutAttemptRepo) GetOptionCorrectness(_ context.Context, _ uuid.UUID) (bool, error) {
+	return false, nil
+}
+
+func (m *mockTryoutAttemptRepo) FindQuestionDifficulties(_ context.Context, ids []uuid.UUID) (map[uuid.UUID]int, error) {
+	out := make(map[uuid.UUID]int, len(ids))
+	for i, id := range ids {
+		out[id] = (i % 5) + 1
+	}
+	return out, nil
+}
+
 func (m *mockTryoutAttemptRepo) UpsertAnswer(_ context.Context, ans *models.StudentAnswer) error {
 	key := ans.AttemptID.String() + ":" + ans.QuestionID.String()
 	m.answers[key] = ans

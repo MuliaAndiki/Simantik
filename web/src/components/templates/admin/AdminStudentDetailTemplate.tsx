@@ -10,7 +10,7 @@ import {
   AdminStudentInfoCard,
   AdminStudentProfileHero,
   AdminStudentProgressChartCard,
-  AdminStudentStatusDialog,
+  AdminUserStatusDialog,
   type ChartDataPoint,
   type TimeframePeriod,
   type TimelineActivityItem,
@@ -298,7 +298,8 @@ export const AdminStudentDetailTemplate: React.FC<AdminStudentDetailTemplateProp
       </div>
 
       {/* Status Update Dialog */}
-      <AdminStudentStatusDialog
+      <AdminUserStatusDialog
+        variant="student"
         open={statusDialogOpen}
         onOpenChange={onStatusDialogOpenChange}
         selectedUser={{

@@ -23,6 +23,8 @@ func RegisterPracticeRoutes(api fiber.Router, cfg *config.Config, h *handler.Pra
 	pkg.Get("/", h.ListPackages)
 	pkg.Post("/", adminOrCM, h.CreatePackage)
 	pkg.Get("/:id", h.GetPackage)
+	pkg.Get("/:id/results", adminOrCM, h.GetPackageResults)
+	pkg.Get("/:id/activities", adminOrCM, h.GetPackageResults)
 	pkg.Put("/:id", adminOrCM, h.UpdatePackage)
 	pkg.Patch("/:id", adminOrCM, h.UpdatePackage)
 	pkg.Patch("/:id/status", adminOrCM, h.UpdatePackageStatus)

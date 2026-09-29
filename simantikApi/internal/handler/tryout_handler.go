@@ -251,3 +251,26 @@ func (h *TryoutHandler) RemoveQuestion(c *fiber.Ctx) error {
 
 	return utils.Success(c, "question removed from pool successfully", nil)
 }
+
+// GetTryoutResults handles GET /api/v1/tryouts/:id/results.
+func (h *TryoutHandler) GetTryoutResults(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid tryout id", err)
+	}
+
+	var filter dto.ListTryoutResultFilter
+	if err := c.QueryParser(&filter); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid query parameters", err)
+	}
+
+	res, err := h.tryoutService.GetTryoutPackageResults(c.UserContext(), id, filter)
+	if err != nil {
+		if errors.Is(err, service.ErrTryoutNotFound) {
+			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to fetch tryout results", err)
+	}
+
+	return utils.Success(c, "tryout results fetched successfully", res)
+}

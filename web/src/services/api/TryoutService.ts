@@ -9,6 +9,7 @@ import type {
   CompleteAttemptResponse,
   CreateTryoutRequest,
   ListTryoutFilter,
+  ListTryoutResultFilter,
   MyAttemptsFilter,
   PaginatedAttemptsResponse,
   PaginatedTryoutsResponse,
@@ -18,6 +19,7 @@ import type {
   SubmitAnswerResponse,
   SyncTryoutQuestionsRequest,
   TryoutDetailResponse,
+  TryoutPackageResultsResponse,
   TryoutResponse,
   UpdateTryoutRequest,
 } from '@/types/service';
@@ -51,6 +53,20 @@ class TryoutService {
     const res = await getHttp().GetResponse<TryoutDetailResponse>(
       EndpointEntry.tryout.tryoutDetail(id)
     );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async GetTryoutPackageResultsService(
+    id: string,
+    filter?: ListTryoutResultFilter
+  ): Promise<TResponse<TryoutPackageResultsResponse>> {
+    const url = buildQueryString(
+      EndpointEntry.tryout.tryoutResults(id),
+      filter as Record<string, unknown>
+    );
+    const res = await getHttp().GetResponse<TryoutPackageResultsResponse>(url);
     return toServiceResponse(res, {
       message: res.message,
     });

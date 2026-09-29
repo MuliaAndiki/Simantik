@@ -17,6 +17,7 @@ import {
   useMyAttempts,
   useTryoutDetail,
   useTryoutList,
+  useTryoutPackageResults,
 } from './state/query';
 
 export const useTryout = () => {
@@ -24,6 +25,7 @@ export const useTryout = () => {
     query: {
       list: useTryoutList,
       detail: useTryoutDetail,
+      packageResults: useTryoutPackageResults,
       attempts: useMyAttempts,
       attemptStatus: useAttemptStatus,
       attemptQuestion: useAttemptQuestion,

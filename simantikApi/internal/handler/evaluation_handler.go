@@ -90,7 +90,10 @@ func (h *EvaluationHandler) GetAttemptReview(c *fiber.Ctx) error {
 		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
 	}
 
-	res, err := h.evalService.GetAttemptReview(c.UserContext(), attemptID, userID)
+	role, _ := c.Locals(middleware.LocalsRole).(string)
+	isAdmin := role == "admin" || role == "content_manager"
+
+	res, err := h.evalService.GetAttemptReview(c.UserContext(), attemptID, userID, isAdmin)
 	if err != nil {
 		if errors.Is(err, service.ErrAttemptNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)

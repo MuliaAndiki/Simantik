@@ -161,6 +161,28 @@ func (m *mockMaterialRepo) UpdateStatusByModuleID(_ context.Context, moduleID uu
 	return nil
 }
 
+func (m *mockMaterialRepo) GetMaterialStudentActivities(_ context.Context, materialID uuid.UUID, filter dto.ListMaterialActivityFilter) (*dto.MaterialStudentActivitiesResponse, error) {
+	mat, ok := m.materials[materialID]
+	if !ok {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &dto.MaterialStudentActivitiesResponse{
+		MaterialID:         mat.ID,
+		MaterialTitle:      mat.Title,
+		ModuleID:           mat.ModuleID,
+		ModuleName:         "Mock Module",
+		CompetencyName:     "Pemahaman Tekstual",
+		Status:             string(mat.Status),
+		TotalStudents:      120,
+		AccessedStudents:   86,
+		UnaccessedStudents: 34,
+		ParticipationRate:  72,
+		LastUpdatedAt:      "22 September 2026, 10:20 WIB",
+		Students:           make([]dto.MaterialStudentActivityItem, 0),
+		Total:              120,
+	}, nil
+}
+
 func (m *mockMaterialRepo) PublishMaterialsByModuleID(ctx context.Context, moduleID uuid.UUID, updatedByID uuid.UUID) error {
 	return m.UpdateStatusByModuleID(ctx, moduleID, models.ContentStatusPublished, updatedByID)
 }
@@ -478,3 +500,39 @@ func TestLearningService_CascadingPublishMaterials(t *testing.T) {
 		t.Errorf("expected Material 2 to revert to draft, got %s", mat2Draft.Status)
 	}
 }
+
+func TestLearningService_GetMaterialStudentActivities(t *testing.T) {
+	ctx := context.Background()
+	modRepo := newMockModuleRepo()
+	matRepo := newMockMaterialRepo()
+	progRepo := newMockProgressRepo(modRepo, matRepo)
+	svc := service.NewLearningService(modRepo, matRepo, progRepo)
+
+	adminID := uuid.New()
+	mod, _ := svc.CreateModule(ctx, dto.CreateLearningModuleRequest{
+		Title:   "Modul 1",
+		Jenjang: "sma",
+	}, adminID)
+
+	mat, _ := svc.CreateMaterial(ctx, dto.CreateMaterialRequest{
+		ModuleID: mod.ID,
+		Title:    "Materi 1",
+		Content:  "Isi teks",
+		Type:     "text",
+	}, adminID)
+
+	res, err := svc.GetMaterialStudentActivities(ctx, mat.ID, dto.ListMaterialActivityFilter{})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if res.TotalStudents != 120 {
+		t.Errorf("expected 120 total students, got %d", res.TotalStudents)
+	}
+	if res.AccessedStudents != 86 {
+		t.Errorf("expected 86 accessed students, got %d", res.AccessedStudents)
+	}
+	if res.ParticipationRate != 72 {
+		t.Errorf("expected 72 participation rate, got %f", res.ParticipationRate)
+	}
+}
+

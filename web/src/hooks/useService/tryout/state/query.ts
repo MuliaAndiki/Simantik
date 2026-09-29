@@ -5,10 +5,12 @@ import type {
   AttemptQuestionResponse,
   AttemptStatusResponse,
   ListTryoutFilter,
+  ListTryoutResultFilter,
   MyAttemptsFilter,
   PaginatedAttemptsResponse,
   PaginatedTryoutsResponse,
   TryoutDetailResponse,
+  TryoutPackageResultsResponse,
 } from '@/types/service';
 
 export function useTryoutList(query?: ListTryoutFilter, options?: { enabled?: boolean }) {
@@ -27,6 +29,21 @@ export function useTryoutDetail(id: string, options?: { enabled?: boolean }) {
     queryKey: queryKey.tryout.detail(id),
     queryFn: async () => {
       const res = await Api.tryout.GetTryoutService(id);
+      return res.data;
+    },
+    enabled: !!id && (options?.enabled ?? true),
+  });
+}
+
+export function useTryoutPackageResults(
+  id: string,
+  query?: ListTryoutResultFilter,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: queryKey.tryout.packageResults(id, query),
+    queryFn: async () => {
+      const res = await Api.tryout.GetTryoutPackageResultsService(id, query);
       return res.data;
     },
     enabled: !!id && (options?.enabled ?? true),

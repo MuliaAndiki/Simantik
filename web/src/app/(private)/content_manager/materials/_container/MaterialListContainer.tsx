@@ -341,6 +341,10 @@ export const MaterialListContainer: React.FC = () => {
     setIsInspectorOpen(true);
   };
 
+  const handleNavigateModule = (item: ModuleItem) => {
+    router.push(`${basePath}/materials/${item.id}`);
+  };
+
   // User clicks a material item inside the sidebar list -> view switches to material detail
   const handleSelectMaterial = (item: MaterialItem) => {
     setSelectedMaterialId(item.id);
@@ -362,6 +366,10 @@ export const MaterialListContainer: React.FC = () => {
     router.push(
       `${basePath}/materials/create?id=${item.id}${selectedModuleId ? `&moduleId=${selectedModuleId}` : ''}`
     );
+  };
+
+  const handleViewMaterialActivities = (item: MaterialItem) => {
+    router.push(`${basePath}/materials/${selectedModuleId || item.id}/${item.id}`);
   };
 
   const handleCreateMaterial = () => {
@@ -436,12 +444,14 @@ export const MaterialListContainer: React.FC = () => {
       onStatusChange={handleStatusChange}
       onRefresh={handleRefresh}
       onSelectModule={handleSelectModule}
+      onNavigateModule={handleNavigateModule}
       onEditModule={handleEditModule}
       onDeleteModule={handleDeleteModule}
       onSelectMaterial={handleSelectMaterial}
       onBackToMaterialsList={handleBackToMaterialsList}
       onCloseInspector={handleCloseInspector}
       onEditMaterial={handleEditMaterial}
+      onViewActivities={handleViewMaterialActivities}
       onDownloadModule={handleDownloadModule}
       onExportSyllabus={handleExportSyllabus}
       onCreateMaterial={handleCreateMaterial}

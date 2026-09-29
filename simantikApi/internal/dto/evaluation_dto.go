@@ -80,6 +80,11 @@ type AttemptReviewResponse struct {
 	EvaluationID        *uuid.UUID                     `json:"evaluation_id,omitempty"`
 	CompetencyBreakdown []CompetencyEvaluationResponse `json:"competency_breakdown"`
 	Questions           []QuestionReviewResponse       `json:"questions"`
+	StudentName         string                         `json:"student_name,omitempty"`
+	StudentEmail        string                         `json:"student_email,omitempty"`
+	StudentNIS          string                         `json:"student_nis,omitempty"`
+	StudentSchool       string                         `json:"student_school,omitempty"`
+	StudentGrade        string                         `json:"student_grade,omitempty"`
 }
 
 // CompetencyMasteryItem aggregates student performance across all assessments for a competency.

@@ -206,6 +206,58 @@ export interface ModuleProgressSummaryResponse {
 }
 
 // ============================================================================
+// Material Student Activity & Inspection DTOs
+// ============================================================================
+
+export interface MaterialAccessLogItem {
+  session_number: number;
+  title: string;
+  timestamp: string;
+  formatted_time: string;
+}
+
+export interface MaterialStudentActivityItem {
+  user_id: string;
+  nis: string;
+  student_name: string;
+  student_email: string;
+  school: string;
+  grade: string;
+  is_accessed: boolean;
+  last_accessed_at?: string | null;
+  formatted_last_accessed: string;
+  access_count: number;
+  device_browser: string;
+  logs: MaterialAccessLogItem[];
+}
+
+export interface MaterialStudentActivitiesResponse {
+  material_id: string;
+  material_title: string;
+  module_id: string;
+  module_name: string;
+  competency_name: string;
+  status: string;
+  total_students: number;
+  accessed_students: number;
+  unaccessed_students: number;
+  participation_rate: number;
+  last_updated_at: string;
+  students: MaterialStudentActivityItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ListMaterialActivityFilter {
+  search?: string;
+  status?: 'all' | 'accessed' | 'unaccessed' | string;
+  sort?: 'newest' | 'oldest' | 'name_asc' | 'name_desc' | string;
+  limit?: number;
+  offset?: number;
+}
+
+// ============================================================================
 // Standard Wrapped Responses
 // ============================================================================
 
@@ -216,3 +268,4 @@ export type MaterialApiResponse = ApiResponse<MaterialResponse>;
 export type PaginatedMaterialsApiResponse = ApiResponse<PaginatedMaterialsResponse>;
 export type LearningProgressApiResponse = ApiResponse<LearningProgressResponse>;
 export type ModuleProgressSummaryApiResponse = ApiResponse<ModuleProgressSummaryResponse>;
+export type MaterialStudentActivitiesApiResponse = ApiResponse<MaterialStudentActivitiesResponse>;

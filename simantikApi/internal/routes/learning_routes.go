@@ -33,6 +33,7 @@ func RegisterLearningRoutes(api fiber.Router, cfg *config.Config, lh *handler.Le
 	mat.Patch("/:id", adminOrCM, lh.UpdateMaterial)
 	mat.Patch("/:id/status", adminOrCM, lh.UpdateMaterialStatus)
 	mat.Delete("/:id", adminOrCM, lh.DeleteMaterial)
+	mat.Get("/:id/activities", adminOrCM, lh.GetMaterialStudentActivities)
 	mat.Post("/:id/progress", lh.MarkMaterialProgress)
 
 	// ─── Progress ──────────────────────────────────────────────────────────────

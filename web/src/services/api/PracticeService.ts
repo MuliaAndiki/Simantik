@@ -7,12 +7,14 @@ import type {
   CompletePracticeResponse,
   CreatePracticePackageRequest,
   ListPracticePackageFilter,
+  ListPracticeResultFilter,
   MyPracticesFilter,
   PaginatedPracticePackagesResponse,
   PaginatedPracticesResponse,
   PracticeAttemptDetailResponse,
   PracticePackageDetailResponse,
   PracticePackageResponse,
+  PracticePackageResultsResponse,
   PracticeResultResponse,
   StartPracticeResponse,
   SubmitPracticeAnswerRequest,
@@ -223,6 +225,20 @@ class PracticeService {
     const res = await getHttp().DeleteResponse<null>(
       EndpointEntry.practice.removePackageQuestion(id, questionId)
     );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async GetPracticePackageResultsService(
+    id: string,
+    filter?: ListPracticeResultFilter
+  ): Promise<TResponse<PracticePackageResultsResponse>> {
+    const url = buildQueryString(
+      EndpointEntry.practice.packageResults(id),
+      filter as Record<string, unknown>
+    );
+    const res = await getHttp().GetResponse<PracticePackageResultsResponse>(url);
     return toServiceResponse(res, {
       message: res.message,
     });

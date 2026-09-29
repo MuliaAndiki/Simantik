@@ -1,6 +1,6 @@
 import React from 'react';
-import { TryoutQuestionContainer } from '@/app/(private)/content_manager/tryouts/[id]/_container/TryoutQuestionContainer';
+import { TryoutPackageDetailContainer } from '@/app/(private)/content_manager/tryouts/[id]/_container/TryoutPackageDetailContainer';
 
-export default function AdminTryoutDetailPage() {
-  return <TryoutQuestionContainer />;
+export default function AdminTryoutPackageDetailPage() {
+  return <TryoutPackageDetailContainer />;
 }

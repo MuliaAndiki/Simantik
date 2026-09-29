@@ -9,6 +9,7 @@ export const LearningEndpoint = {
   materials: `${mountEntry.materials}`,
   materialDetail: (id: string) => `${mountEntry.materials}/${id}`,
   materialStatus: (id: string) => `${mountEntry.materials}/${id}/status`,
+  materialActivities: (id: string) => `${mountEntry.materials}/${id}/activities`,
   materialProgress: (id: string) => `${mountEntry.materials}/${id}/progress`,
   myProgress: `${mountEntry.learningProgress}`,
 } as const;

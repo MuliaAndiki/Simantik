@@ -23,6 +23,7 @@ type TryoutService interface {
 	AddQuestionsToPool(ctx context.Context, tryoutID uuid.UUID, req dto.AddTryoutQuestionsRequest) (*dto.TryoutDetailResponse, error)
 	SyncQuestions(ctx context.Context, tryoutID uuid.UUID, req dto.SyncTryoutQuestionsRequest, userID uuid.UUID) (*dto.TryoutDetailResponse, error)
 	RemoveQuestionFromPool(ctx context.Context, tryoutID, questionID uuid.UUID) error
+	GetTryoutPackageResults(ctx context.Context, tryoutID uuid.UUID, filter dto.ListTryoutResultFilter) (*dto.TryoutPackageResultsResponse, error)
 }
 
 type tryoutService struct {
@@ -309,6 +310,17 @@ func (s *tryoutService) RemoveQuestionFromPool(ctx context.Context, tryoutID, qu
 	}
 
 	return s.repo.RemoveQuestion(ctx, tryoutID, questionID)
+}
+
+func (s *tryoutService) GetTryoutPackageResults(ctx context.Context, tryoutID uuid.UUID, filter dto.ListTryoutResultFilter) (*dto.TryoutPackageResultsResponse, error) {
+	_, err := s.repo.FindByID(ctx, tryoutID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrTryoutNotFound
+		}
+		return nil, err
+	}
+	return s.repo.GetTryoutPackageResults(ctx, tryoutID, filter)
 }
 
 func (s *tryoutService) mapQuestionToAdminResponse(q *models.Question) *dto.QuestionAdminResponse {

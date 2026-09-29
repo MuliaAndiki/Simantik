@@ -7,9 +7,11 @@ import type {
   LearningModuleDetailResponse,
   LearningModuleResponse,
   LearningProgressResponse,
+  ListMaterialActivityFilter,
   ListMaterialFilter,
   ListModuleFilter,
   MaterialResponse,
+  MaterialStudentActivitiesResponse,
   ModuleProgressSummaryResponse,
   PaginatedMaterialsResponse,
   PaginatedModulesResponse,
@@ -191,6 +193,20 @@ class LearningService {
     const res = await getHttp().GetResponse<LearningProgressResponse[]>(
       EndpointEntry.learning.myProgress
     );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async GetMaterialStudentActivitiesService(
+    id: string,
+    filter?: ListMaterialActivityFilter
+  ): Promise<TResponse<MaterialStudentActivitiesResponse>> {
+    const url = buildQueryString(
+      EndpointEntry.learning.materialActivities(id),
+      filter as Record<string, unknown>
+    );
+    const res = await getHttp().GetResponse<MaterialStudentActivitiesResponse>(url);
     return toServiceResponse(res, {
       message: res.message,
     });

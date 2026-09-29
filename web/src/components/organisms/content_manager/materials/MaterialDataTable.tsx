@@ -1,5 +1,12 @@
-import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { Eye, Layers, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import React from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/atoms/dropdown-menu';
 import {
   JenjangBadge,
   ManagerPagination,
@@ -13,6 +20,7 @@ interface MaterialDataTableProps {
   modules: ModuleItem[];
   selectedId: string;
   onSelectModule: (item: ModuleItem) => void;
+  onNavigateModule?: (item: ModuleItem) => void;
   onEditModule?: (item: ModuleItem) => void;
   onDeleteModule?: (item: ModuleItem) => void;
   currentPage: number;
@@ -26,6 +34,7 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
   modules,
   selectedId,
   onSelectModule,
+  onNavigateModule,
   onEditModule,
   onDeleteModule,
   currentPage,
@@ -148,47 +157,73 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
                     </td>
 
                     {/* Aksi */}
-                    <td className="py-3.5 px-4 align-top text-center">
-                      <div className="inline-flex items-center justify-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectModule(item);
-                          }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#EAF6F8] text-[#0E7490] hover:bg-[#D5EEF3] transition cursor-pointer"
-                          title="Lihat Daftar Materi"
+                    <td className="py-3.5 px-4 align-middle text-center">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition cursor-pointer inline-flex items-center justify-center"
+                            title="Menu Aksi"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-48 bg-white shadow-lg border border-slate-200/80 rounded-xl p-1 z-50"
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Lihat</span>
-                        </button>
-                        {onEditModule && (
-                          <button
-                            type="button"
+                          {onNavigateModule && (
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onNavigateModule(item);
+                              }}
+                              className="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold text-slate-700 hover:text-cyan-800 hover:bg-cyan-50/70 rounded-lg cursor-pointer"
+                            >
+                              <Layers className="w-4 h-4 text-cyan-700" />
+                              <span>Buka Daftar Materi</span>
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              onEditModule(item);
+                              onSelectModule(item);
                             }}
-                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition cursor-pointer"
-                            title="Edit Modul"
+                            className="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold text-slate-700 hover:text-cyan-800 hover:bg-cyan-50/70 rounded-lg cursor-pointer"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                        {onDeleteModule && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteModule(item);
-                            }}
-                            className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                            title="Hapus Modul"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
+                            <Eye className="w-4 h-4 text-slate-500" />
+                            <span>Lihat Panel Samping</span>
+                          </DropdownMenuItem>
+                          {onEditModule && (
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditModule(item);
+                              }}
+                              className="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold text-slate-700 hover:text-amber-700 hover:bg-amber-50/70 rounded-lg cursor-pointer"
+                            >
+                              <Pencil className="w-4 h-4 text-amber-500" />
+                              <span>Edit Modul</span>
+                            </DropdownMenuItem>
+                          )}
+                          {onDeleteModule && (
+                            <>
+                              <DropdownMenuSeparator className="my-1 border-slate-100" />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteModule(item);
+                                }}
+                                className="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4 text-rose-500" />
+                                <span>Hapus Modul</span>
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 );

@@ -1,6 +1,6 @@
 import React from 'react';
-import { TryoutQuestionContainer } from './_container/TryoutQuestionContainer';
+import { TryoutPackageDetailContainer } from './_container/TryoutPackageDetailContainer';
 
-export default function ContentManagerTryoutDetailPage() {
-  return <TryoutQuestionContainer />;
+export default function ContentManagerTryoutPackageDetailPage() {
+  return <TryoutPackageDetailContainer />;
 }

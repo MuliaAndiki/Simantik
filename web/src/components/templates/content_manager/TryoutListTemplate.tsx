@@ -40,6 +40,7 @@ export interface TryoutListTemplateProps {
   onSubmitDialog: () => Promise<void> | void;
   onEdit: (item: TryoutPackageItem) => void;
   onManageQuestions?: (item: TryoutPackageItem) => void;
+  onViewResults?: (item: TryoutPackageItem) => void;
   onToggleStatus: (item: TryoutPackageItem) => void;
   onDelete: (item: TryoutPackageItem) => void;
   onExportSummary: () => void;
@@ -68,6 +69,7 @@ export const TryoutListTemplate: React.FC<TryoutListTemplateProps> = ({
   onSubmitDialog,
   onEdit,
   onManageQuestions,
+  onViewResults,
   onToggleStatus,
   onDelete,
   onExportSummary,
@@ -149,6 +151,7 @@ export const TryoutListTemplate: React.FC<TryoutListTemplateProps> = ({
           onRowsPerPageChange={onRowsPerPageChange}
           onEdit={onEdit}
           onManageQuestions={onManageQuestions}
+          onViewResults={onViewResults}
           onToggleStatus={onToggleStatus}
           onDelete={onDelete}
         />

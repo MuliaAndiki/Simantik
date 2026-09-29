@@ -70,9 +70,14 @@ func (r *evaluationRepository) ListByUserID(ctx context.Context, userID uuid.UUI
 		return nil, 0, err
 	}
 
-	if filter.Limit > 0 {
-		query = query.Limit(filter.Limit)
+	// Guard: cegah full-scan saat Limit 0 (default 20, max 100).
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 20
+	} else if limit > 100 {
+		limit = 100
 	}
+	query = query.Limit(limit)
 	if filter.Offset > 0 {
 		query = query.Offset(filter.Offset)
 	}

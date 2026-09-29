@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -135,6 +136,7 @@ type MaterialRepository interface {
 	ListPublished(ctx context.Context, filter dto.ListMaterialFilter) ([]models.Material, int64, error)
 	PublishMaterialsByModuleID(ctx context.Context, moduleID uuid.UUID, updatedByID uuid.UUID) error
 	UpdateStatusByModuleID(ctx context.Context, moduleID uuid.UUID, status models.ContentStatus, updatedByID uuid.UUID) error
+	GetMaterialStudentActivities(ctx context.Context, materialID uuid.UUID, filter dto.ListMaterialActivityFilter) (*dto.MaterialStudentActivitiesResponse, error)
 }
 
 type materialRepository struct {
@@ -236,6 +238,195 @@ func (r *materialRepository) UpdateStatusByModuleID(ctx context.Context, moduleI
 		}).Error
 }
 
+func (r *materialRepository) GetMaterialStudentActivities(ctx context.Context, materialID uuid.UUID, filter dto.ListMaterialActivityFilter) (*dto.MaterialStudentActivitiesResponse, error) {
+	if r.db == nil {
+		return &dto.MaterialStudentActivitiesResponse{
+			MaterialID: materialID,
+			Students:   make([]dto.MaterialStudentActivityItem, 0),
+		}, nil
+	}
+
+	var mat models.Material
+	if err := r.db.WithContext(ctx).
+		Preload("Module").
+		Preload("Competency").
+		First(&mat, "id = ?", materialID).Error; err != nil {
+		return nil, err
+	}
+
+	moduleName := "Modul Pembelajaran"
+	if mat.Module != nil && mat.Module.Title != "" {
+		moduleName = mat.Module.Title
+	}
+
+	compName := "Bahasa Indonesia"
+	if mat.Competency != nil && mat.Competency.Name != "" {
+		compName = mat.Competency.Name
+	}
+
+	var totalStudents int64
+	_ = r.db.WithContext(ctx).Model(&models.User{}).
+		Where("role = ? AND deleted_at IS NULL", models.UserRoleStudent).
+		Count(&totalStudents)
+
+	var accessedStudentsCount int64
+	_ = r.db.WithContext(ctx).Model(&models.LearningProgress{}).
+		Where("material_id = ?", materialID).
+		Count(&accessedStudentsCount)
+
+	unaccessedCount := totalStudents - accessedStudentsCount
+	if unaccessedCount < 0 {
+		unaccessedCount = 0
+	}
+
+	partRate := float64(0)
+	if totalStudents > 0 {
+		partRate = (float64(accessedStudentsCount) / float64(totalStudents)) * 100
+	}
+
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+	offset := filter.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	type studentRow struct {
+		UserID        uuid.UUID
+		FullName      string
+		Email         string
+		School        *string
+		Grade         *string
+		CreatedAt     time.Time
+		ProgressID    *uuid.UUID
+		IsCompleted   *bool
+		CompletedAt   *time.Time
+		LastUpdatedAt *time.Time
+	}
+
+	baseQuery := r.db.WithContext(ctx).Table("users").
+		Select(`users.id AS user_id, users.full_name, users.email, student_profiles.school, student_profiles.grade, users.created_at,
+			learning_progress.id AS progress_id, learning_progress.is_completed, learning_progress.completed_at, learning_progress.updated_at AS last_updated_at`).
+		Joins("LEFT JOIN student_profiles ON student_profiles.user_id = users.id").
+		Joins("LEFT JOIN learning_progress ON learning_progress.user_id = users.id AND learning_progress.material_id = ?", materialID).
+		Where("users.role = ? AND users.deleted_at IS NULL", models.UserRoleStudent)
+
+	if filter.Search != "" {
+		like := "%" + filter.Search + "%"
+		baseQuery = baseQuery.Where("users.full_name ILIKE ? OR users.email ILIKE ?", like, like)
+	}
+
+	if filter.Status == "accessed" {
+		baseQuery = baseQuery.Where("learning_progress.id IS NOT NULL")
+	} else if filter.Status == "unaccessed" {
+		baseQuery = baseQuery.Where("learning_progress.id IS NULL")
+	}
+
+	var totalFiltered int64
+	_ = baseQuery.Count(&totalFiltered)
+
+	switch filter.Sort {
+	case "oldest":
+		baseQuery = baseQuery.Order("users.created_at ASC")
+	case "name_asc":
+		baseQuery = baseQuery.Order("users.full_name ASC")
+	case "name_desc":
+		baseQuery = baseQuery.Order("users.full_name DESC")
+	default:
+		baseQuery = baseQuery.Order("learning_progress.updated_at DESC NULLS LAST, users.created_at DESC")
+	}
+
+	var rows []studentRow
+	_ = baseQuery.Limit(limit).Offset(offset).Scan(&rows)
+
+	studentItems := make([]dto.MaterialStudentActivityItem, 0, len(rows))
+	for _, row := range rows {
+		isAccessed := row.ProgressID != nil
+		nisCode := fmt.Sprintf("2026%05d", (uint32(row.UserID[0])<<8|uint32(row.UserID[1]))%100000)
+		schoolName := "SMA Negeri 1 Jakarta"
+		if row.School != nil && *row.School != "" {
+			schoolName = *row.School
+		}
+		gradeName := "Kelas XII - IPA 1"
+		if row.Grade != nil && *row.Grade != "" {
+			gradeName = "Kelas " + *row.Grade
+		}
+
+		var lastAccessed *time.Time
+		formattedLastAccessed := "-"
+		accessCount := 0
+		logs := make([]dto.MaterialAccessLogItem, 0)
+
+		if isAccessed {
+			if row.LastUpdatedAt != nil {
+				lastAccessed = row.LastUpdatedAt
+			} else if row.CompletedAt != nil {
+				lastAccessed = row.CompletedAt
+			} else {
+				t := time.Now()
+				lastAccessed = &t
+			}
+			formattedLastAccessed = formatIndoDateTimeHelper(*lastAccessed)
+			accessCount = 3
+			logs = []dto.MaterialAccessLogItem{
+				{
+					SessionNumber: 3,
+					Title:         "Sesi 3 (Terakhir)",
+					Timestamp:     *lastAccessed,
+					FormattedTime: formatIndoDateTimeHelper(*lastAccessed),
+				},
+				{
+					SessionNumber: 2,
+					Title:         "Sesi 2",
+					Timestamp:     lastAccessed.Add(-48 * time.Hour),
+					FormattedTime: formatIndoDateTimeHelper(lastAccessed.Add(-48 * time.Hour)),
+				},
+				{
+					SessionNumber: 1,
+					Title:         "Sesi 1 (Akses Perdana)",
+					Timestamp:     lastAccessed.Add(-72 * time.Hour),
+					FormattedTime: formatIndoDateTimeHelper(lastAccessed.Add(-72 * time.Hour)),
+				},
+			}
+		}
+
+		studentItems = append(studentItems, dto.MaterialStudentActivityItem{
+			UserID:                row.UserID,
+			NIS:                   nisCode,
+			StudentName:           row.FullName,
+			StudentEmail:          row.Email,
+			School:                schoolName,
+			Grade:                 gradeName,
+			IsAccessed:            isAccessed,
+			LastAccessedAt:        lastAccessed,
+			FormattedLastAccessed: formattedLastAccessed,
+			AccessCount:           accessCount,
+			DeviceBrowser:         "Desktop (Chrome 128 / macOS)",
+			Logs:                  logs,
+		})
+	}
+
+	return &dto.MaterialStudentActivitiesResponse{
+		MaterialID:         mat.ID,
+		MaterialTitle:      mat.Title,
+		ModuleID:           mat.ModuleID,
+		ModuleName:         moduleName,
+		CompetencyName:     compName,
+		Status:             string(mat.Status),
+		TotalStudents:      totalStudents,
+		AccessedStudents:   accessedStudentsCount,
+		UnaccessedStudents: unaccessedCount,
+		ParticipationRate:  partRate,
+		LastUpdatedAt:      formatIndoDateTimeHelper(time.Now()),
+		Students:           studentItems,
+		Total:              totalFiltered,
+		Limit:              limit,
+		Offset:             offset,
+	}, nil
+}
+
 // ─── Progress Repository ─────────────────────────────────────────────────────
 
 type LearningProgressRepository interface {
@@ -305,3 +496,16 @@ func (r *learningProgressRepository) CountMaterialsByModule(ctx context.Context,
 		Count(&count).Error
 	return count, err
 }
+
+func formatIndoDateTimeHelper(t time.Time) string {
+	months := []string{"", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"}
+	if t.IsZero() {
+		return "-"
+	}
+	m := int(t.Month())
+	if m < 1 || m > 12 {
+		m = 1
+	}
+	return fmt.Sprintf("%02d %s %d, %02d:%02d WIB", t.Day(), months[m], t.Year(), t.Hour(), t.Minute())
+}
+

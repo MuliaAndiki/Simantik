@@ -336,6 +336,29 @@ func (h *LearningHandler) ListMaterials(c *fiber.Ctx) error {
 	return utils.Success(c, "materials fetched successfully", res)
 }
 
+// GetMaterialStudentActivities handles GET /api/v1/materials/:id/activities.
+func (h *LearningHandler) GetMaterialStudentActivities(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid material id", err)
+	}
+
+	var filter dto.ListMaterialActivityFilter
+	if err := c.QueryParser(&filter); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid query parameters", err)
+	}
+
+	res, err := h.learnService.GetMaterialStudentActivities(c.UserContext(), id, filter)
+	if err != nil {
+		if errors.Is(err, service.ErrMaterialNotFound) {
+			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to retrieve student activities", err)
+	}
+
+	return utils.Success(c, "student activities retrieved successfully", res)
+}
+
 // ─── Progress Endpoints ──────────────────────────────────────────────────────
 
 // MarkMaterialProgress handles POST /api/v1/materials/:id/progress.

@@ -42,12 +42,14 @@ export interface MaterialListTemplateProps {
   onStatusChange: (val: string) => void;
   onRefresh: () => void;
   onSelectModule: (item: ModuleItem) => void;
+  onNavigateModule?: (item: ModuleItem) => void;
   onEditModule: (item: ModuleItem) => void;
   onDeleteModule: (item: ModuleItem) => void;
   onSelectMaterial: (item: MaterialItem) => void;
   onBackToMaterialsList: () => void;
   onCloseInspector: () => void;
   onEditMaterial: (item: MaterialItem) => void;
+  onViewActivities?: (item: MaterialItem) => void;
   onDownloadModule: (item: MaterialItem) => void;
   onExportSyllabus: () => void;
   onCreateMaterial: () => void;
@@ -74,12 +76,14 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
   onStatusChange,
   onRefresh,
   onSelectModule,
+  onNavigateModule,
   onEditModule,
   onDeleteModule,
   onSelectMaterial,
   onBackToMaterialsList,
   onCloseInspector,
   onEditMaterial,
+  onViewActivities,
   onDownloadModule,
   onExportSyllabus,
   onCreateMaterial,
@@ -171,6 +175,7 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
               modules={modules}
               selectedId={selectedModuleId}
               onSelectModule={onSelectModule}
+              onNavigateModule={onNavigateModule}
               onEditModule={onEditModule}
               onDeleteModule={onDeleteModule}
               currentPage={filters.page}
@@ -194,6 +199,7 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
               onSelectMaterial={onSelectMaterial}
               onBackToMaterialsList={onBackToMaterialsList}
               onEdit={onEditMaterial}
+              onViewActivities={onViewActivities}
               onDownload={onDownloadModule}
               onCreateMaterialInModule={onCreateMaterialInModule}
             />

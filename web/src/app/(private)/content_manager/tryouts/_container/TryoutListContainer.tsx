@@ -310,7 +310,8 @@ export const TryoutListContainer: React.FC = () => {
       onDialogFormChange={handleDialogFormChange}
       onSubmitDialog={handleSubmitDialog}
       onEdit={handleEdit}
-      onManageQuestions={(item) => router.push(`${basePath}/tryouts/${item.id}`)}
+      onViewResults={(item) => router.push(`${basePath}/tryouts/${item.id}`)}
+      onManageQuestions={(item) => router.push(`${basePath}/tryouts/${item.id}/edit`)}
       onToggleStatus={handleToggleStatus}
       onDelete={handleDelete}
       onExportSummary={handleExportSummary}
