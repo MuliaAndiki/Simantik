@@ -17,8 +17,7 @@ export function ContentManagerDashboard() {
   const router = useRouter();
   const api = useApi();
 
-  // Queries
-  const { data: adminDashboardData, isLoading: isAdminLoading } = api.admin.query.dashboard();
+  // Queries — jangan pakai api.admin (endpoint /admin/* khusus role admin, CM ditolak 403).
   const { data: materialsData, isLoading: isMaterialsLoading } = api.learning.query.materials({
     limit: 100,
   });
@@ -34,7 +33,6 @@ export function ContentManagerDashboard() {
     api.content.query.cmsTestimonials();
 
   const isLoading =
-    isAdminLoading ||
     isMaterialsLoading ||
     isQuestionsLoading ||
     isTryoutsLoading ||
@@ -46,7 +44,6 @@ export function ContentManagerDashboard() {
   const kpiStats = useMemo<ContentManagerKpiStats | undefined>(() => {
     if (
       !materialsData &&
-      !adminDashboardData &&
       !questionsData &&
       !tryoutsData &&
       !newsData &&
@@ -55,9 +52,9 @@ export function ContentManagerDashboard() {
     ) {
       return undefined;
     }
-    const totalMateri = materialsData?.total ?? adminDashboardData?.total_materials ?? 0;
-    const paketBankSoal = questionsData?.total ?? adminDashboardData?.total_questions ?? 0;
-    const totalPaketTryout = tryoutsData?.total ?? adminDashboardData?.total_tryouts ?? 0;
+    const totalMateri = materialsData?.total ?? 0;
+    const paketBankSoal = questionsData?.total ?? 0;
+    const totalPaketTryout = tryoutsData?.total ?? 0;
 
     const kontenPublik =
       (newsData?.total ?? 0) + (docData?.total ?? 0) + (testimonialsData?.total ?? 0);
@@ -72,15 +69,7 @@ export function ContentManagerDashboard() {
       kontenPublik,
       kontenPublikSubtitle: 'News, docs, review & video',
     };
-  }, [
-    materialsData,
-    adminDashboardData,
-    questionsData,
-    tryoutsData,
-    newsData,
-    docData,
-    testimonialsData,
-  ]);
+  }, [materialsData, questionsData, tryoutsData, newsData, docData, testimonialsData]);
 
   // 2. Tryout Workflow Automation
   const tryoutWorkflow = useMemo<TryoutWorkflowAutomation | undefined>(() => {
@@ -183,24 +172,8 @@ export function ContentManagerDashboard() {
     return undefined;
   }, [tryoutsData]);
 
-  // 6. Curator Activities
-  const curatorActivities = useMemo<CuratorActivityItem[] | undefined>(() => {
-    if (adminDashboardData?.recent_activities && adminDashboardData.recent_activities.length > 0) {
-      const colors: Array<CuratorActivityItem['dotColor']> = ['yellow', 'blue', 'teal', 'navy'];
-      return adminDashboardData.recent_activities.slice(0, 5).map((act, idx) => ({
-        id: act.attempt_id || String(idx + 1),
-        title: `${act.student_name} menyelesaikan ${act.tryout_title}`,
-        timeAgo: act.submitted_at
-          ? new Date(act.submitted_at).toLocaleTimeString('id-ID', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })
-          : '—',
-        dotColor: colors[idx % colors.length],
-      }));
-    }
-    return undefined;
-  }, [adminDashboardData]);
+  // 6. Curator Activities — tidak ada sumber CM (recent_activities hanya di /admin/dashboard khusus admin).
+  const curatorActivities = useMemo<CuratorActivityItem[] | undefined>(() => undefined, []);
 
   // Handlers
   const handleAddMaterial = () => router.push('/content_manager/materials/create');
