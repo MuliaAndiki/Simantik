@@ -239,17 +239,19 @@ func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userI
 		StartedAt:              now,
 	}
 
-	// Build pool candidates with difficulty levels
+	// Build pool candidates with difficulty levels (select id+difficulty saja, hemat TEXT).
 	var candidates []adaptive.QuestionCandidate
 	if s.db != nil {
-		var poolQModels []models.Question
-		_ = s.db.WithContext(ctx).Where("id IN ?", poolQuestions).Find(&poolQModels).Error
-		candidates = make([]adaptive.QuestionCandidate, len(poolQModels))
-		for i, q := range poolQModels {
-			candidates[i] = adaptive.QuestionCandidate{
-				ID:              q.ID,
-				DifficultyLevel: q.DifficultyLevel,
+		if diffMap, err := s.attemptRepo.FindQuestionDifficulties(ctx, poolQuestions); err == nil {
+			candidates = make([]adaptive.QuestionCandidate, 0, len(poolQuestions))
+			for _, qid := range poolQuestions {
+				if d, ok := diffMap[qid]; ok {
+					candidates = append(candidates, adaptive.QuestionCandidate{ID: qid, DifficultyLevel: d})
+				}
 			}
+		}
+		if candidates == nil {
+			candidates = []adaptive.QuestionCandidate{}
 		}
 	} else {
 		candidates = make([]adaptive.QuestionCandidate, len(poolQuestions))
@@ -485,28 +487,35 @@ func (s *tryoutAttemptService) SubmitAnswer(ctx context.Context, attemptID, user
 		return nil, ErrAttemptExpired
 	}
 
-	// Find the AttemptQuestion for this question
-	aqs, err := s.attemptRepo.FindAttemptQuestions(ctx, attemptID)
-	if err != nil {
-		return nil, err
-	}
+	// Lite lookup 1 row tanpa preload (ganti load full + loop Go).
 	var aq *models.AttemptQuestion
-	for i := range aqs {
-		if aqs[i].QuestionID == req.QuestionID {
-			aq = &aqs[i]
-			break
+	if s.db != nil {
+		var err error
+		aq, err = s.attemptRepo.FindAttemptQuestionByQuestionID(ctx, attemptID, req.QuestionID)
+		if err != nil {
+			return nil, errors.New("question not found in this attempt")
+		}
+	} else {
+		aqs, err := s.attemptRepo.FindAttemptQuestions(ctx, attemptID)
+		if err != nil {
+			return nil, err
+		}
+		for i := range aqs {
+			if aqs[i].QuestionID == req.QuestionID {
+				aq = &aqs[i]
+				break
+			}
+		}
+		if aq == nil {
+			return nil, errors.New("question not found in this attempt")
 		}
 	}
-	if aq == nil {
-		return nil, errors.New("question not found in this attempt")
-	}
 
-	// Determine correctness by querying the option
+	// Correctness via select 1 kolom (ganti First full row).
 	isCorrect := false
 	if req.SelectedOptionID != nil && s.db != nil {
-		var opt models.QuestionOption
-		if err := s.db.WithContext(ctx).First(&opt, "id = ?", req.SelectedOptionID).Error; err == nil {
-			isCorrect = opt.IsCorrect
+		if v, err := s.attemptRepo.GetOptionCorrectness(ctx, *req.SelectedOptionID); err == nil {
+			isCorrect = v
 		}
 	}
 
@@ -575,13 +584,12 @@ func (s *tryoutAttemptService) SubmitAnswer(ctx context.Context, attemptID, user
 
 					var candidates []adaptive.QuestionCandidate
 					if s.db != nil {
-						var poolQModels []models.Question
-						_ = s.db.WithContext(ctx).Where("id IN ?", poolQIDs).Find(&poolQModels).Error
-						candidates = make([]adaptive.QuestionCandidate, len(poolQModels))
-						for i, q := range poolQModels {
-							candidates[i] = adaptive.QuestionCandidate{
-								ID:              q.ID,
-								DifficultyLevel: q.DifficultyLevel,
+						if diffMap, derr := s.attemptRepo.FindQuestionDifficulties(ctx, poolQIDs); derr == nil {
+							candidates = make([]adaptive.QuestionCandidate, 0, len(poolQIDs))
+							for _, qid := range poolQIDs {
+								if d, ok := diffMap[qid]; ok {
+									candidates = append(candidates, adaptive.QuestionCandidate{ID: qid, DifficultyLevel: d})
+								}
 							}
 						}
 					} else {
@@ -599,7 +607,7 @@ func (s *tryoutAttemptService) SubmitAnswer(ctx context.Context, attemptID, user
 						nextAQ.QuestionID = chosen.ID
 						nextAQ.DifficultyLevel = chosen.DifficultyLevel
 						if s.db != nil {
-							_ = s.db.WithContext(ctx).Save(nextAQ).Error
+							_ = s.attemptRepo.UpdateAttemptQuestion(ctx, nextAQ)
 						}
 					}
 				}
@@ -702,7 +710,8 @@ func (s *tryoutAttemptService) CompleteAttempt(ctx context.Context, attemptID, u
 
 	var questions []models.Question
 	if s.db != nil && len(questionIDs) > 0 {
-		_ = s.db.WithContext(ctx).Preload("Competencies").Preload("Options").Where("id IN ?", questionIDs).Find(&questions).Error
+		// Hanya Competencies (Options tidak dipakai untuk comp stats, hemat TEXT).
+		_ = s.db.WithContext(ctx).Preload("Competencies").Where("id IN ?", questionIDs).Find(&questions).Error
 	}
 
 	// Map questionID -> question for fast lookup
@@ -839,29 +848,20 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 		return
 	}
 
-	// 2. Fetch all AttemptQuestion records for this attempt in bulk with preloads
-	var aqs []models.AttemptQuestion
-	err := s.db.WithContext(ctx).
-		Preload("Question").
-		Preload("Question.Options", func(db *gorm.DB) *gorm.DB {
-			return db.Order("display_order ASC")
-		}).
-		Preload("Question.Competencies").
-		Preload("Question.Explanation").
-		Where("attempt_id = ?", attemptID).
-		Order("question_number ASC").
-		Find(&aqs).Error
-	if err != nil || len(aqs) == 0 {
+	// 2. Fetch answers dulu, lalu hanya load aqs yang TERJAWAB (hemat -80% rows).
+	answers, _ := s.attemptRepo.FindAllAnswers(ctx, attemptID)
+	if len(answers) == 0 {
 		return
 	}
-
-	// 3. Fetch all student answers for this attempt in bulk
-	var answers []models.StudentAnswer
-	_ = s.db.WithContext(ctx).Where("attempt_id = ?", attemptID).Find(&answers).Error
-
 	ansMap := make(map[uuid.UUID]models.StudentAnswer, len(answers))
+	answeredIDs := make([]uuid.UUID, 0, len(answers))
 	for _, a := range answers {
 		ansMap[a.QuestionID] = a
+		answeredIDs = append(answeredIDs, a.QuestionID)
+	}
+	aqs, err := s.attemptRepo.FindAttemptQuestionsByQuestionIDs(ctx, attemptID, answeredIDs)
+	if err != nil || len(aqs) == 0 {
+		return
 	}
 
 	// 4. Build email question items (hanya soal TERJAWAB: benar maupun salah)
@@ -947,7 +947,7 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 		TryoutTitle:     tryoutTitle,
 		Score:           score,
 		Accuracy:        accuracy,
-		TotalQuestions:  len(aqs),
+		TotalQuestions:  s.totalQuestions(ctx, attempt.TryoutID),
 		AnsweredCount:   len(items),
 		CorrectCount:    correctCount,
 		TimeTakenMin:    timeTakenMin,
@@ -968,13 +968,28 @@ func (s *tryoutAttemptService) ListMyAttempts(ctx context.Context, userID uuid.U
 		return nil, err
 	}
 
+	// Batch answered counts 3N+1 -> 2 query (ponytail: 1 GROUP BY).
+	var batchCounts map[uuid.UUID]int64
+	if s.db != nil && len(attempts) > 0 {
+		ids := make([]uuid.UUID, 0, len(attempts))
+		for _, a := range attempts {
+			ids = append(ids, a.ID)
+		}
+		batchCounts, _ = s.attemptRepo.CountAnswersBatch(ctx, ids)
+	}
+	// Cache tryout per ID (banyak attempt share tryout yang sama).
+	type tryoutCache struct{ total, duration int }
+	tryoutMap := make(map[uuid.UUID]tryoutCache)
+
 	items := make([]dto.AttemptStatusResponse, len(attempts))
 	for i, a := range attempts {
 		var tq, ds int
-		tryout, err := s.tryoutRepo.FindByID(ctx, a.TryoutID)
-		if err == nil && tryout != nil {
+		if c, ok := tryoutMap[a.TryoutID]; ok {
+			tq, ds = c.total, c.duration
+		} else if tryout, err := s.tryoutRepo.FindByID(ctx, a.TryoutID); err == nil && tryout != nil {
 			tq = s.totalQuestions(ctx, a.TryoutID)
 			ds = tryout.DurationSeconds
+			tryoutMap[a.TryoutID] = tryoutCache{total: tq, duration: ds}
 		}
 
 		elapsed := int(time.Since(a.StartedAt).Seconds())
@@ -983,7 +998,12 @@ func (s *tryoutAttemptService) ListMyAttempts(ctx context.Context, userID uuid.U
 			remaining = 0
 		}
 
-		answeredCount, _ := s.attemptRepo.CountAnswers(ctx, a.ID)
+		var answeredCount int64
+		if batchCounts != nil {
+			answeredCount = batchCounts[a.ID]
+		} else {
+			answeredCount, _ = s.attemptRepo.CountAnswers(ctx, a.ID)
+		}
 
 		items[i] = dto.AttemptStatusResponse{
 			AttemptID:             a.ID,

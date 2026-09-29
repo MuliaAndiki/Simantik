@@ -357,6 +357,7 @@ export const PracticeListContainer: React.FC = () => {
       onExportSummary={handleExportSummary}
       onCreatePractice={() => handleOpenDialogChange(true)}
       onManageQuestions={(item) => router.push(`${basePath}/practice/${item.id}`)}
+      onViewResults={(item) => router.push(`${basePath}/practice/${item.id}`)}
     />
   );
 };

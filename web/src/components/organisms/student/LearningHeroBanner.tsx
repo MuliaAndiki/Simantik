@@ -1,5 +1,5 @@
 import type * as React from 'react';
-import { SplitHero } from '@/components/molecules/hero';
+import { PackageHeroBanner, type PackageHeroBannerProps } from './PackageHeroBanner';
 
 export interface LearningHeroBannerProps {
   title?: string;
@@ -7,17 +7,8 @@ export interface LearningHeroBannerProps {
   className?: string;
 }
 
-export function LearningHeroBanner({
-  title = 'Materi Bahasa Indonesia',
-  description = 'Pelajari berbagai materi untuk membantu kamu memahami soal TKA Bahasa Indonesia. Dirancang terstruktur mencakup seluruh domain uji kompetensi nasional.',
-  className,
-}: LearningHeroBannerProps) {
-  return (
-    <SplitHero
-      title={title}
-      description={description}
-      illustrationAlt="Materi Pembelajaran Siswa"
-      className={className}
-    />
-  );
+export function LearningHeroBanner(props: LearningHeroBannerProps) {
+  return <PackageHeroBanner variant="learning" {...props} />;
 }
+
+export type { PackageHeroBannerProps };

@@ -10,6 +10,7 @@ import {
   useUpdateModuleStatus,
 } from './state/mutate';
 import {
+  useMaterialActivities,
   useMaterialDetail,
   useMaterialList,
   useModuleDetail,
@@ -28,6 +29,7 @@ export const useLearning = () => {
       moduleProgress: useModuleProgress,
       materials: useMaterialList,
       materialDetail: useMaterialDetail,
+      materialActivities: useMaterialActivities,
       myProgress: useMyLearningProgress,
     },
     mutate: {

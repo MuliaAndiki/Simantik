@@ -3,11 +3,13 @@ import { queryKey } from '@/configs/query-key';
 import Api from '@/services/props.service';
 import type {
   ListPracticePackageFilter,
+  ListPracticeResultFilter,
   MyPracticesFilter,
   PaginatedPracticePackagesResponse,
   PaginatedPracticesResponse,
   PracticeAttemptDetailResponse,
   PracticePackageDetailResponse,
+  PracticePackageResultsResponse,
   PracticeResultResponse,
 } from '@/types/service';
 
@@ -88,6 +90,21 @@ export function useManagementPracticePackageDetail(id: string, options?: { enabl
     queryKey: queryKey.practice.packageDetail(id),
     queryFn: async () => {
       const res = await Api.practice.GetPackageService(id);
+      return res.data;
+    },
+    enabled: !!id && (options?.enabled ?? true),
+  });
+}
+
+export function useManagementPracticePackageResults(
+  id: string,
+  query?: ListPracticeResultFilter,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: queryKey.practice.packageResults(id, query),
+    queryFn: async () => {
+      const res = await Api.practice.GetPracticePackageResultsService(id, query);
       return res.data;
     },
     enabled: !!id && (options?.enabled ?? true),

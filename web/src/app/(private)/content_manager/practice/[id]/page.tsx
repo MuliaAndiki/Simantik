@@ -1,6 +1,6 @@
 import React from 'react';
-import { PracticeQuestionContainer } from './_container/PracticeQuestionContainer';
+import { PracticePackageDetailContainer } from './_container/PracticePackageDetailContainer';
 
 export default function ContentManagerPracticeDetailPage() {
-  return <PracticeQuestionContainer />;
+  return <PracticePackageDetailContainer />;
 }

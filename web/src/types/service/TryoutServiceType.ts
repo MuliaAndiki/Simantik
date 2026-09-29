@@ -254,6 +254,72 @@ export interface OptionResponse {
 }
 
 // ============================================================================
+// Tryout Package Results & Cognitive Breakdown DTOs (Admin / Content Manager)
+// ============================================================================
+
+export interface TryoutCognitiveBreakdown {
+  c1_count: number;
+  c2_count: number;
+  c3_count: number;
+  c4_count: number;
+  c5_count: number;
+}
+
+export interface TryoutStudentResultItem {
+  user_id: string;
+  nis: string;
+  student_name: string;
+  student_email: string;
+  school: string;
+  grade: string;
+  score: number;
+  correct_answers: number;
+  total_questions: number;
+  incorrect_answers: number;
+  duration_minutes: number;
+  formatted_duration: string;
+  status: 'completed' | 'in_progress' | 'not_started' | string;
+  completed_at?: string | null;
+  formatted_completed_at: string;
+  attempt_id?: string | null;
+}
+
+export interface TryoutPackageResultsResponse {
+  tryout_id: string;
+  tryout_title: string;
+  description: string;
+  jenjang: string;
+  duration_minutes: number;
+  total_pool_questions: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  formatted_created_at: string;
+  formatted_updated_at: string;
+  cognitive_breakdown: TryoutCognitiveBreakdown;
+  total_students_completed: number;
+  average_score: number;
+  highest_score: number;
+  highest_correct_answers: number;
+  highest_incorrect_answers: number;
+  lowest_score: number;
+  lowest_correct_answers: number;
+  lowest_incorrect_answers: number;
+  students: TryoutStudentResultItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ListTryoutResultFilter {
+  search?: string;
+  status?: string;
+  sort?: string;
+  limit?: number;
+  offset?: number;
+}
+
+// ============================================================================
 // Standard Wrapped Responses
 // ============================================================================
 
@@ -266,3 +332,4 @@ export type SubmitAnswerApiResponse = ApiResponse<SubmitAnswerResponse>;
 export type CompleteAttemptApiResponse = ApiResponse<CompleteAttemptResponse>;
 export type AttemptStatusApiResponse = ApiResponse<AttemptStatusResponse>;
 export type PaginatedAttemptsApiResponse = ApiResponse<PaginatedAttemptsResponse>;
+export type TryoutPackageResultsApiResponse = ApiResponse<TryoutPackageResultsResponse>;

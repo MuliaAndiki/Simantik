@@ -194,6 +194,22 @@ func (m *mockPracticeRepo) CountAnswers(_ context.Context, practiceID uuid.UUID)
 	return int64(len(m.answers[practiceID])), nil
 }
 
+func (m *mockPracticeRepo) GetPracticePackageResults(_ context.Context, packageID uuid.UUID, _ dto.ListPracticeResultFilter) (*dto.PracticePackageResultsResponse, error) {
+	pkg, ok := m.packages[packageID]
+	if !ok {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &dto.PracticePackageResultsResponse{
+		PackageID:              pkg.ID,
+		PackageTitle:           pkg.Title,
+		Status:                 string(pkg.Status),
+		TotalStudentsCompleted: 1,
+		AverageScore:           85.0,
+		HighestScore:           85.0,
+		LowestScore:            85.0,
+	}, nil
+}
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 func TestPracticeService_CreatePackage_Success(t *testing.T) {
@@ -473,5 +489,27 @@ func TestPracticeService_ZeroAnswerCorrection(t *testing.T) {
 	}
 	if res2.Unanswered != 1 {
 		t.Errorf("expected 1 unanswered after recovery, got %d", res2.Unanswered)
+	}
+}
+
+func TestPracticeService_GetPracticePackageResults(t *testing.T) {
+	repo := newMockPracticeRepo()
+	svc := service.NewPracticeService(nil, repo, nil, nil, nil, nil)
+	ctx := context.Background()
+
+	adminID := uuid.New()
+	pkg, _ := svc.CreatePackage(ctx, dto.CreatePracticePackageRequest{
+		Title: "Paket Latihan Evaluasi",
+	}, adminID)
+
+	res, err := svc.GetPracticePackageResults(ctx, pkg.ID, dto.ListPracticeResultFilter{})
+	if err != nil {
+		t.Fatalf("unexpected error getting practice results: %v", err)
+	}
+	if res.PackageID != pkg.ID {
+		t.Errorf("expected package id %v, got %v", pkg.ID, res.PackageID)
+	}
+	if res.AverageScore != 85.0 {
+		t.Errorf("expected average score 85.0, got %f", res.AverageScore)
 	}
 }

@@ -118,6 +118,11 @@ export interface AttemptReviewResponse {
   evaluation_id?: string | null;
   competency_breakdown: CompetencyEvaluationResponse[];
   questions: QuestionReviewResponse[];
+  student_name?: string;
+  student_email?: string;
+  student_nis?: string;
+  student_school?: string;
+  student_grade?: string;
 }
 
 // ============================================================================

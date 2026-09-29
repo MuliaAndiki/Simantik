@@ -14,6 +14,7 @@ export * from './LearningMaterialsGrid';
 export * from './LearningMaterialsListGrid';
 export * from './ModuleDetailHeroBanner';
 export * from './ModuleMaterialsListGrid';
+export * from './PackageHeroBanner';
 export * from './PerformanceSummaryGrid';
 export * from './PracticeConfirmModal';
 export * from './PracticeHeroBanner';

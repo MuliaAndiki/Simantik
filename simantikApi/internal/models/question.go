@@ -88,7 +88,7 @@ func (qo *QuestionOption) BeforeCreate(tx *gorm.DB) error {
 // QuestionCompetency is the junction table connecting questions to evaluated competencies.
 type QuestionCompetency struct {
 	QuestionID   uuid.UUID `gorm:"type:uuid;primaryKey" json:"questionId"`
-	CompetencyID uuid.UUID `gorm:"type:uuid;primaryKey" json:"competencyId"`
+	CompetencyID uuid.UUID `gorm:"type:uuid;primaryKey;index:idx_qc_comp" json:"competencyId"`
 	CreatedAt    time.Time `json:"createdAt"`
 }
 

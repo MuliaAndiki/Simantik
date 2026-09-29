@@ -19,6 +19,7 @@ export interface PracticeDataTableProps {
   onToggleStatus: (item: PracticePackageItem) => void;
   onDelete: (item: PracticePackageItem) => void;
   onManageQuestions?: (item: PracticePackageItem) => void;
+  onViewResults?: (item: PracticePackageItem) => void;
 }
 
 export const PracticeDataTable: React.FC<PracticeDataTableProps> = ({
@@ -32,6 +33,7 @@ export const PracticeDataTable: React.FC<PracticeDataTableProps> = ({
   onToggleStatus,
   onDelete,
   onManageQuestions,
+  onViewResults,
 }) => {
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
   const endItem = Math.min(currentPage * rowsPerPage, totalItems);
@@ -120,10 +122,12 @@ export const PracticeDataTable: React.FC<PracticeDataTableProps> = ({
                         isPublished={isPublished}
                         onEdit={onEdit}
                         onManageQuestions={onManageQuestions}
+                        onViewResults={onViewResults}
                         onToggleStatus={onToggleStatus}
                         onDelete={onDelete}
                         labels={{
                           manage: 'Kelola Butir Soal',
+                          results: 'Detail & Hasil Siswa',
                           edit: 'Edit Paket Latihan',
                           publish: 'Publikasikan (Publish)',
                           unpublish: 'Nonaktifkan (Unpublish)',

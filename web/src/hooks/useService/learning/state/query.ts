@@ -4,9 +4,11 @@ import Api from '@/services/props.service';
 import type {
   LearningModuleDetailResponse,
   LearningProgressResponse,
+  ListMaterialActivityFilter,
   ListMaterialFilter,
   ListModuleFilter,
   MaterialResponse,
+  MaterialStudentActivitiesResponse,
   ModuleProgressSummaryResponse,
   PaginatedMaterialsResponse,
   PaginatedModulesResponse,
@@ -86,5 +88,20 @@ export function useMyLearningProgress(options?: { enabled?: boolean }) {
       return res.data;
     },
     enabled: options?.enabled,
+  });
+}
+
+export function useMaterialActivities(
+  id: string,
+  query?: ListMaterialActivityFilter,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: queryKey.learning.materialActivities(id, query),
+    queryFn: async () => {
+      const res = await Api.learning.GetMaterialStudentActivitiesService(id, query);
+      return res.data;
+    },
+    enabled: !!id && (options?.enabled ?? true),
   });
 }

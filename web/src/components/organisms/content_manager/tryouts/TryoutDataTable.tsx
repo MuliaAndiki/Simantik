@@ -18,6 +18,7 @@ export interface TryoutDataTableProps {
   onRowsPerPageChange: (rows: number) => void;
   onEdit: (item: TryoutPackageItem) => void;
   onManageQuestions?: (item: TryoutPackageItem) => void;
+  onViewResults?: (item: TryoutPackageItem) => void;
   onToggleStatus: (item: TryoutPackageItem) => void;
   onDelete: (item: TryoutPackageItem) => void;
 }
@@ -31,6 +32,7 @@ export const TryoutDataTable: React.FC<TryoutDataTableProps> = ({
   onRowsPerPageChange,
   onEdit,
   onManageQuestions,
+  onViewResults,
   onToggleStatus,
   onDelete,
 }) => {
@@ -75,7 +77,13 @@ export const TryoutDataTable: React.FC<TryoutDataTableProps> = ({
                     <td className="py-4 px-4 align-middle">
                       <button
                         type="button"
-                        onClick={() => (onManageQuestions ? onManageQuestions(item) : onEdit(item))}
+                        onClick={() =>
+                          onViewResults
+                            ? onViewResults(item)
+                            : onManageQuestions
+                              ? onManageQuestions(item)
+                              : onEdit(item)
+                        }
                         className="text-left font-bold text-slate-800 text-xs sm:text-sm leading-snug hover:text-cyan-800 transition cursor-pointer"
                       >
                         {item.title}
@@ -123,9 +131,11 @@ export const TryoutDataTable: React.FC<TryoutDataTableProps> = ({
                         isPublished={isPublished}
                         onEdit={onEdit}
                         onManageQuestions={onManageQuestions}
+                        onViewResults={onViewResults}
                         onToggleStatus={onToggleStatus}
                         onDelete={onDelete}
                         labels={{
+                          results: 'Aktivitas & Hasil Siswa',
                           manage: 'Kelola Butir Soal Adaptif',
                           edit: 'Edit Tryout',
                           publish: 'Publikasikan ke Siswa',
