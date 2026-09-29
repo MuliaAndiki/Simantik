@@ -13,6 +13,14 @@ import type {
   TryoutStats,
   TryoutStatusType,
 } from '@/types/ui/tryout-manager.types';
+import {
+  countByStatus,
+  downloadTextFile,
+  formatDateTimeId,
+  formatItemNumber,
+  mapApiStatusToUi,
+  mapStatusFilterToApi,
+} from '@/utils/list-summary.util';
 
 const EMPTY_TRYOUT_FORM: TryoutDialogForm = {
   title: '',
@@ -45,18 +53,7 @@ export const TryoutListContainer: React.FC = () => {
   });
 
   // Map UI status filter to API status filter
-  const apiStatus = useMemo(() => {
-    switch (filters.status) {
-      case 'Published':
-        return 'published';
-      case 'Draft':
-        return 'draft';
-      case 'Unpublished':
-        return 'archived';
-      default:
-        return undefined;
-    }
-  }, [filters.status]);
+  const apiStatus = useMemo(() => mapStatusFilterToApi(filters.status), [filters.status]);
 
   const apiJenjang = useMemo(() => {
     return filters.jenjang !== 'Semua Jenjang'
@@ -87,29 +84,15 @@ export const TryoutListContainer: React.FC = () => {
     const rawList = tryoutsQuery.data?.tryouts ?? [];
 
     return rawList.map((t, idx) => {
-      const rawStatus = (t.status || 'draft').toUpperCase();
-      const status: TryoutStatusType =
-        rawStatus === 'PUBLISHED'
-          ? 'PUBLISHED'
-          : rawStatus === 'UNPUBLISHED' || rawStatus === 'ARCHIVED'
-            ? 'UNPUBLISHED'
-            : 'DRAFT';
+      const status: TryoutStatusType = mapApiStatusToUi(t.status);
 
       const durationMinutes = t.duration_seconds ? Math.round(t.duration_seconds / 60) : 75;
 
-      const updatedAt = t.updated_at
-        ? new Date(t.updated_at).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })
-        : 'Baru saja';
+      const updatedAt = formatDateTimeId(t.updated_at);
 
       return {
         id: t.id,
-        number: String((filters.page - 1) * filters.perPage + idx + 1).padStart(2, '0'),
+        number: formatItemNumber(filters.page, filters.perPage, idx),
         title: t.title,
         author: 'Tim Litbang Asesmen SIMANTIK',
         jenjang: t.jenjang || 'sma',
@@ -125,22 +108,13 @@ export const TryoutListContainer: React.FC = () => {
   // Statistics calculation
   const stats = useMemo<TryoutStats>(() => {
     const list = allTryoutsQuery.data?.tryouts ?? [];
-    let draft = 0;
-    let published = 0;
-    let unpublished = 0;
-
-    for (const item of list) {
-      const st = (item.status || '').toLowerCase();
-      if (st === 'published') published++;
-      else if (st === 'unpublished' || st === 'archived') unpublished++;
-      else draft++;
-    }
+    const counts = countByStatus(list, (item) => item.status);
 
     return {
-      totalTryouts: allTryoutsQuery.data?.total ?? list.length,
-      draftCount: draft,
-      publishedCount: published,
-      unpublishedCount: unpublished,
+      totalTryouts: allTryoutsQuery.data?.total ?? counts.total,
+      draftCount: counts.draft,
+      publishedCount: counts.published,
+      unpublishedCount: counts.unpublished,
     };
   }, [allTryoutsQuery.data]);
 
@@ -278,13 +252,7 @@ export const TryoutListContainer: React.FC = () => {
   const handleExportSummary = () => {
     const summaryText = `RINGKASAN DAFTAR TRYOUT SIMANTIK\n\nTotal Paket: ${stats.totalTryouts}\nPublished: ${stats.publishedCount}\nDraft: ${stats.draftCount}\nUnpublished: ${stats.unpublishedCount}\nTanggal Unduh: ${new Date().toLocaleDateString('id-ID')}\n\nDaftar Tryout:\n${tryouts.map((t, i) => `${i + 1}. ${t.title} (${t.durationMinutes} Menit, ${t.totalQuestions} Soal) - Status: ${t.status}`).join('\n')}`;
 
-    const blob = new Blob([summaryText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'Ringkasan-Daftar-Tryout-SIMANTIK.txt';
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile('Ringkasan-Daftar-Tryout-SIMANTIK.txt', summaryText);
   };
 
   return (

@@ -12,6 +12,7 @@ import type {
   PipelineMateriData,
   TryoutWorkflowAutomation,
 } from '@/types/ui/content-manager-dashboard.types';
+import { countByStatus, publishedPct } from '@/utils/list-summary.util';
 
 export function ContentManagerDashboard() {
   const router = useRouter();
@@ -96,23 +97,14 @@ export function ContentManagerDashboard() {
   // 3. Pipeline Materi Data
   const materiPipeline = useMemo<PipelineMateriData | undefined>(() => {
     if (materialsData?.materials && materialsData.materials.length > 0) {
-      let draft = 0;
-      let published = 0;
-      let archived = 0;
-      for (const item of materialsData.materials) {
-        const s = item.status?.toLowerCase();
-        if (s === 'published') published++;
-        else if (s === 'archived') archived++;
-        else draft++;
-      }
-      const total = draft + published + archived || materialsData.materials.length;
-      const pct = total > 0 ? Number(((published / total) * 100).toFixed(1)) : 0;
+      // archived API -> unpublished di helper
+      const counts = countByStatus(materialsData.materials, (item) => item.status);
       return {
-        total,
-        siapDigunakanPercentage: pct,
-        draftCount: draft,
-        publishedCount: published,
-        archivedCount: archived,
+        total: counts.total,
+        siapDigunakanPercentage: publishedPct(counts.published, counts.total),
+        draftCount: counts.draft,
+        publishedCount: counts.published,
+        archivedCount: counts.unpublished,
       };
     }
     return undefined;
@@ -121,23 +113,13 @@ export function ContentManagerDashboard() {
   // 4. Distribusi Bank Soal Data
   const bankSoalDistribusi = useMemo<DistribusiBankSoalData | undefined>(() => {
     if (questionsData?.questions && questionsData.questions.length > 0) {
-      let draft = 0;
-      let published = 0;
-      let unpublished = 0;
-      for (const item of questionsData.questions) {
-        const s = item.status?.toLowerCase();
-        if (s === 'published' || s === 'active') published++;
-        else if (s === 'unpublished' || s === 'archived') unpublished++;
-        else draft++;
-      }
-      const total = draft + published + unpublished || questionsData.questions.length;
-      const pct = total > 0 ? Number(((published / total) * 100).toFixed(1)) : 0;
+      const counts = countByStatus(questionsData.questions, (item) => item.status, ['active']);
       return {
-        total,
-        aktifPercentage: pct,
-        draftCount: draft,
-        publishedCount: published,
-        unpublishedCount: unpublished,
+        total: counts.total,
+        aktifPercentage: publishedPct(counts.published, counts.total),
+        draftCount: counts.draft,
+        publishedCount: counts.published,
+        unpublishedCount: counts.unpublished,
       };
     }
     return undefined;
