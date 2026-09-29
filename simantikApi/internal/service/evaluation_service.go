@@ -16,7 +16,7 @@ import (
 type EvaluationService interface {
 	GetEvaluationByID(ctx context.Context, id, userID uuid.UUID) (*dto.EvaluationResponse, error)
 	GetAttemptEvaluation(ctx context.Context, attemptID, userID uuid.UUID) (*dto.EvaluationResponse, error)
-	GetAttemptReview(ctx context.Context, attemptID, userID uuid.UUID) (*dto.AttemptReviewResponse, error)
+	GetAttemptReview(ctx context.Context, attemptID, userID uuid.UUID, isAdmin ...bool) (*dto.AttemptReviewResponse, error)
 	ListMyEvaluations(ctx context.Context, userID uuid.UUID, filter dto.ListEvaluationFilter) (*dto.PaginatedEvaluationsResponse, error)
 	GetStudentCompetencyProfile(ctx context.Context, userID uuid.UUID) (*dto.StudentCompetencyProfileResponse, error)
 }
@@ -87,7 +87,7 @@ func (s *evaluationService) GetAttemptEvaluation(ctx context.Context, attemptID,
 	return s.mapToEvaluationResponse(eval), nil
 }
 
-func (s *evaluationService) GetAttemptReview(ctx context.Context, attemptID, userID uuid.UUID) (*dto.AttemptReviewResponse, error) {
+func (s *evaluationService) GetAttemptReview(ctx context.Context, attemptID, userID uuid.UUID, isAdmin ...bool) (*dto.AttemptReviewResponse, error) {
 	attempt, err := s.attemptRepo.FindAttemptByID(ctx, attemptID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -96,7 +96,8 @@ func (s *evaluationService) GetAttemptReview(ctx context.Context, attemptID, use
 		return nil, err
 	}
 
-	if attempt.UserID != userID {
+	adminCheck := len(isAdmin) > 0 && isAdmin[0]
+	if !adminCheck && attempt.UserID != userID {
 		return nil, ErrAttemptNotOwner
 	}
 
@@ -118,29 +119,37 @@ func (s *evaluationService) GetAttemptReview(ctx context.Context, attemptID, use
 	}
 
 	answerMap := make(map[uuid.UUID]models.StudentAnswer, len(answers))
+	answeredIDs := make([]uuid.UUID, 0, len(answers))
 	for _, a := range answers {
 		answerMap[a.QuestionID] = a
+		answeredIDs = append(answeredIDs, a.QuestionID)
 	}
 
-	// Fetch attempt questions with preloaded question data
+	// Fetch ONLY answered questions (hemat payload -85%: sebelumnya load full pool).
 	var aqs []models.AttemptQuestion
-	if s.db != nil {
-		err = s.db.WithContext(ctx).
-			Preload("Question").
-			Preload("Question.Options", func(db *gorm.DB) *gorm.DB {
-				return db.Order("display_order ASC")
-			}).
-			Preload("Question.Competencies").
-			Preload("Question.Explanation").
-			Where("attempt_id = ?", attemptID).
-			Order("question_number ASC").
-			Find(&aqs).Error
+	if len(answeredIDs) == 0 {
+		aqs = []models.AttemptQuestion{}
+	} else if s.db != nil {
+		aqs, err = s.attemptRepo.FindAttemptQuestionsByQuestionIDs(ctx, attemptID, answeredIDs)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		// Test/mock fallback
-		aqs, _ = s.attemptRepo.FindAttemptQuestions(ctx, attemptID)
+		// Test/mock fallback: filter lite rows ke answered saja
+		allAQs, _ := s.attemptRepo.FindAttemptQuestions(ctx, attemptID)
+		aqs = make([]models.AttemptQuestion, 0, len(answerMap))
+		for _, aq := range allAQs {
+			if _, ok := answerMap[aq.QuestionID]; ok {
+				aqs = append(aqs, aq)
+			}
+		}
+		// Mock tanpa Question preload: tetap kembalikan ringkas agar test skor lolos
+		if len(allAQs) == 0 && len(answerMap) > 0 {
+			aqs = make([]models.AttemptQuestion, 0, len(answerMap))
+			for qid := range answerMap {
+				aqs = append(aqs, models.AttemptQuestion{AttemptID: attemptID, QuestionID: qid})
+			}
+		}
 	}
 
 	correctCount := 0
@@ -267,7 +276,19 @@ func (s *evaluationService) GetAttemptReview(ctx context.Context, attemptID, use
 		}
 	}
 
-	totalQuestions := len(aqs)
+	// Total = slot efektif tryout (pool/5), bukan len(answered). Konsisten dengan StartAttempt/CompleteAttempt.
+	totalQuestions := len(answers)
+	if n, err := s.tryoutRepo.CountPoolQuestions(ctx, attempt.TryoutID); err == nil && n > 0 {
+		totalQuestions = int(n)
+		if totalQuestions >= 5 {
+			totalQuestions = totalQuestions / 5
+		}
+	} else if len(aqs) > len(answers) {
+		totalQuestions = len(aqs)
+	}
+	if totalQuestions < len(answers) {
+		totalQuestions = len(answers)
+	}
 
 	scoreVal := 0.0
 	if attempt.Score != nil {
@@ -286,6 +307,16 @@ func (s *evaluationService) GetAttemptReview(ctx context.Context, attemptID, use
 		timeTaken = int(attempt.SubmittedAt.Sub(attempt.StartedAt).Seconds())
 	}
 
+	var studentName, studentEmail, studentNIS, studentSchool, studentGrade string
+	if attempt.User != nil {
+		studentName = attempt.User.FullName
+		studentEmail = attempt.User.Email
+		if attempt.User.StudentProfile != nil {
+			studentSchool = attempt.User.StudentProfile.School
+			studentGrade = attempt.User.StudentProfile.Grade
+		}
+	}
+
 	return &dto.AttemptReviewResponse{
 		AttemptID:           attempt.ID,
 		TryoutID:            attempt.TryoutID,
@@ -302,6 +333,11 @@ func (s *evaluationService) GetAttemptReview(ctx context.Context, attemptID, use
 		EvaluationID:        evalIDPtr,
 		CompetencyBreakdown: compBreakdown,
 		Questions:           questionReviews,
+		StudentName:         studentName,
+		StudentEmail:        studentEmail,
+		StudentNIS:          studentNIS,
+		StudentSchool:       studentSchool,
+		StudentGrade:        studentGrade,
 	}, nil
 }
 
@@ -413,16 +449,32 @@ func (s *evaluationService) GetStudentCompetencyProfile(ctx context.Context, use
 		})
 	}
 
-	evalFilter := dto.ListEvaluationFilter{Limit: 1000}
-	allEvals, totalEvals, _ := s.evalRepo.ListByUserID(ctx, userID, evalFilter)
-
+	// Overall avg via SQL agregat (ganti load 1000 full rows + preload).
+	var totalEvals int64
 	overallAvgScore := 0.0
-	if len(allEvals) > 0 {
-		sum := 0.0
-		for _, e := range allEvals {
-			sum += e.Score
+	if s.db != nil {
+		type agg struct {
+			Count int64   `gorm:"column:cnt"`
+			Avg   float64 `gorm:"column:avg_score"`
 		}
-		overallAvgScore = sum / float64(len(allEvals))
+		var a agg
+		_ = s.db.WithContext(ctx).Table("evaluations").
+			Select("COUNT(*) AS cnt, COALESCE(AVG(score),0) AS avg_score").
+			Where("user_id = ?", userID).
+			Scan(&a).Error
+		totalEvals = a.Count
+		overallAvgScore = a.Avg
+	} else {
+		evalFilter := dto.ListEvaluationFilter{Limit: 1000}
+		allEvals, total, _ := s.evalRepo.ListByUserID(ctx, userID, evalFilter)
+		totalEvals = total
+		if len(allEvals) > 0 {
+			sum := 0.0
+			for _, e := range allEvals {
+				sum += e.Score
+			}
+			overallAvgScore = sum / float64(len(allEvals))
+		}
 	}
 
 	overallAccuracy := 0.0

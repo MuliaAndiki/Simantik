@@ -45,6 +45,8 @@ export const queryKey = {
   tryout: {
     list: (query?: Record<string, any>) => ['tryout', 'list', query] as const,
     detail: (id: string) => ['tryout', 'detail', id] as const,
+    packageResults: (id: string, query?: Record<string, any>) =>
+      ['tryout', 'packageResults', id, query] as const,
     attempts: (query?: Record<string, any>) => ['tryout', 'attempts', query] as const,
     attemptStatus: (attemptId: string) => ['tryout', 'attemptStatus', attemptId] as const,
     attemptQuestion: (attemptId: string, number: number | string) =>

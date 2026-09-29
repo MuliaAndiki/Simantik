@@ -9,6 +9,7 @@ export const TryoutEndpoint = {
   removeQuestion: (id: string, questionId: string) =>
     `${mountEntry.tryouts}/${id}/questions/${questionId}`,
   startAttempt: (id: string) => `${mountEntry.tryouts}/${id}/attempts`,
+  tryoutResults: (id: string) => `${mountEntry.tryouts}/${id}/results`,
   attempts: `${mountEntry.attempts}`,
   attemptStatus: (attemptId: string) => `${mountEntry.attempts}/${attemptId}`,
   attemptQuestion: (attemptId: string, number: number | string) =>

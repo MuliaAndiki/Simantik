@@ -37,8 +37,8 @@ const (
 type Evaluation struct {
 	ID               uuid.UUID            `gorm:"type:uuid;primaryKey" json:"id"`
 	UserID           uuid.UUID            `gorm:"type:uuid;not null;index" json:"userId"`
-	SourceType       EvaluationSourceType `gorm:"type:varchar(20);not null;index" json:"sourceType"`
-	SourceID         uuid.UUID            `gorm:"type:uuid;not null;index" json:"sourceId"`
+	SourceType       EvaluationSourceType `gorm:"type:varchar(20);not null;index;index:idx_evals_source,priority:1" json:"sourceType"`
+	SourceID         uuid.UUID            `gorm:"type:uuid;not null;index;index:idx_evals_source,priority:2" json:"sourceId"`
 	TotalQuestions   int                  `gorm:"not null" json:"totalQuestions"`
 	CorrectAnswers   int                  `gorm:"not null" json:"correctAnswers"`
 	IncorrectAnswers int                  `gorm:"not null" json:"incorrectAnswers"`

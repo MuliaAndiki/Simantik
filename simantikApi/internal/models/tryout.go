@@ -22,9 +22,9 @@ type Tryout struct {
 	ID              uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
 	Title           string         `gorm:"type:varchar(200);not null" json:"title"`
 	Description     string         `gorm:"type:text" json:"description"`
-	Jenjang         SchoolLevel    `gorm:"column:jenjang;type:varchar(20);not null;default:'sma';index" json:"jenjang"`
+	Jenjang         SchoolLevel    `gorm:"column:jenjang;type:varchar(20);not null;default:'sma';index;index:idx_tryouts_status_jenjang,priority:2" json:"jenjang"`
 	DurationSeconds int            `gorm:"not null;default:4500" json:"durationSeconds"` // e.g. 75 mins = 4500s
-	Status          ContentStatus  `gorm:"type:varchar(20);not null;default:'draft';index" json:"status"`
+	Status          ContentStatus  `gorm:"type:varchar(20);not null;default:'draft';index;index:idx_tryouts_status_jenjang,priority:1" json:"status"`
 	StartAt         *time.Time     `json:"startAt"`
 	EndAt           *time.Time     `json:"endAt"`
 	CreatedBy       uuid.UUID      `gorm:"type:uuid;not null;index" json:"createdBy"`
@@ -46,7 +46,7 @@ func (t *Tryout) BeforeCreate(tx *gorm.DB) error {
 // TryoutQuestion assigns a question pool to a tryout with optional display order and score weight.
 type TryoutQuestion struct {
 	TryoutID     uuid.UUID `gorm:"type:uuid;primaryKey" json:"tryoutId"`
-	QuestionID   uuid.UUID `gorm:"type:uuid;primaryKey" json:"questionId"`
+	QuestionID   uuid.UUID `gorm:"type:uuid;primaryKey;index:idx_tq_q" json:"questionId"`
 	DisplayOrder int       `gorm:"not null;default:0" json:"displayOrder"`
 	ScoreWeight  float64   `gorm:"type:numeric(5,2);not null;default:1.0" json:"scoreWeight"`
 	CreatedAt    time.Time `json:"createdAt"`
@@ -56,9 +56,9 @@ type TryoutQuestion struct {
 // It tracks adaptive state transitions (CurrentDifficultyLevel, CorrectStreak).
 type TryoutAttempt struct {
 	ID                     uuid.UUID     `gorm:"type:uuid;primaryKey" json:"id"`
-	TryoutID               uuid.UUID     `gorm:"type:uuid;not null;index" json:"tryoutId"`
-	UserID                 uuid.UUID     `gorm:"type:uuid;not null;index" json:"userId"`
-	Status                 AttemptStatus `gorm:"type:varchar(20);not null;default:'in_progress';index" json:"status"`
+	TryoutID               uuid.UUID     `gorm:"type:uuid;not null;index;index:idx_attempts_user_tryout_status,priority:2" json:"tryoutId"`
+	UserID                 uuid.UUID     `gorm:"type:uuid;not null;index;index:idx_attempts_user_tryout_status,priority:1;index:idx_attempts_user_started,priority:1" json:"userId"`
+	Status                 AttemptStatus `gorm:"type:varchar(20);not null;default:'in_progress';index;index:idx_attempts_user_tryout_status,priority:3" json:"status"`
 	CurrentQuestionNumber  int           `gorm:"not null;default:1" json:"currentQuestionNumber"`
 	CurrentDifficultyLevel int           `gorm:"not null;default:1" json:"currentDifficultyLevel"` // 1 to 5
 	TargetStreak           int           `gorm:"not null;default:2" json:"targetStreak"`           // dynamic window (1 to 3)
@@ -69,7 +69,7 @@ type TryoutAttempt struct {
 	IsAutoSubmitted        bool          `gorm:"not null;default:false" json:"isAutoSubmitted"`
 	AutoSubmitReason       string        `gorm:"type:varchar(100)" json:"autoSubmitReason,omitempty"`
 	Score                  *float64      `gorm:"type:numeric(10,2)" json:"score"`
-	StartedAt              time.Time     `gorm:"not null" json:"startedAt"`
+	StartedAt              time.Time     `gorm:"not null;index:idx_attempts_user_started,priority:2" json:"startedAt"`
 	SubmittedAt            *time.Time    `json:"submittedAt"`
 	CreatedAt              time.Time     `json:"createdAt"`
 	UpdatedAt              time.Time     `json:"updatedAt"`
@@ -97,9 +97,9 @@ func (ta *TryoutAttempt) BeforeCreate(tx *gorm.DB) error {
 // This enables complete reconstruction and audit of adaptive test paths.
 type AttemptQuestion struct {
 	ID              uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
-	AttemptID       uuid.UUID  `gorm:"type:uuid;not null;index" json:"attemptId"`
-	QuestionID      uuid.UUID  `gorm:"type:uuid;not null;index" json:"questionId"`
-	QuestionNumber  int        `gorm:"not null" json:"questionNumber"`
+	AttemptID       uuid.UUID  `gorm:"type:uuid;not null;index;index:idx_aq_attempt_number,priority:1;index:idx_aq_attempt_question,priority:1" json:"attemptId"`
+	QuestionID      uuid.UUID  `gorm:"type:uuid;not null;index;index:idx_aq_attempt_question,priority:2" json:"questionId"`
+	QuestionNumber  int        `gorm:"not null;index:idx_aq_attempt_number,priority:2" json:"questionNumber"`
 	DifficultyLevel int        `gorm:"not null" json:"difficultyLevel"`
 	PresentedAt     time.Time  `gorm:"not null" json:"presentedAt"`
 	AnsweredAt      *time.Time `json:"answeredAt"`

@@ -30,3 +30,5 @@ export * from './AdminStudentProfileHero';
 export * from './AdminStudentProgressChartCard';
 export * from './AdminStudentStatCards';
 export * from './AdminStudentStatusDialog';
+export * from './AdminUserFilterBar';
+export * from './AdminUserStatusDialog';

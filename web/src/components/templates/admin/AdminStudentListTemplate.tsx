@@ -2,10 +2,10 @@ import React from 'react';
 import {
   AdminStudentDataTable,
   AdminStudentDetailDialog,
-  AdminStudentFilterBar,
   AdminStudentStatCards,
   type AdminStudentStatCardsProps,
-  AdminStudentStatusDialog,
+  AdminUserFilterBar,
+  AdminUserStatusDialog,
 } from '@/components/organisms/admin';
 import type { AdminUserDetailResponse, AdminUserListItem, UserStatus } from '@/types/service';
 import { cn } from '@/utils/classname';
@@ -93,7 +93,8 @@ export const AdminStudentListTemplate: React.FC<AdminStudentListTemplateProps> =
 
       {/* Filter & Search Bar */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs p-5 md:p-6 space-y-4">
-        <AdminStudentFilterBar
+        <AdminUserFilterBar
+          variant="student"
           search={search}
           statusFilter={statusFilter}
           isRefreshing={isRefreshing}
@@ -116,7 +117,8 @@ export const AdminStudentListTemplate: React.FC<AdminStudentListTemplateProps> =
       </div>
 
       {/* Status Update Dialog */}
-      <AdminStudentStatusDialog
+      <AdminUserStatusDialog
+        variant="student"
         open={isStatusDialogOpen}
         onOpenChange={onOpenStatusDialogChange}
         selectedUser={selectedUser}

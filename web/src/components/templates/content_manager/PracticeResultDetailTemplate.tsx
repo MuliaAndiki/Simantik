@@ -142,10 +142,10 @@ export const PracticeResultDetailTemplate: React.FC<PracticeResultDetailTemplate
 
       {/* 2. Student Profile Hero Card */}
       <PracticeResultStudentCard
-        studentName={resultData.student_name || 'Anindya Humairah'}
-        studentEmail={resultData.student_email || 'anindya.h@siswa.simantik.id'}
-        studentNis={resultData.student_nis || '202611092'}
-        studentGrade={resultData.student_grade || 'Kelas XII IPA 1'}
+        studentName={resultData.student_name || 'Siswa'}
+        studentEmail={resultData.student_email || '-'}
+        studentNis={resultData.student_nis || '-'}
+        studentGrade={resultData.student_grade || '-'}
         packageTitle={resultData.package_title || 'Pemahaman Inferensial'}
         totalQuestions={totalQuestions}
         durationMinutes={durationMinutes}

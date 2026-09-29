@@ -1,11 +1,11 @@
 import React from 'react';
 import {
   AdminContentManagerDataTable,
-  AdminContentManagerFilterBar,
   AdminContentManagerRoleDialog,
   AdminContentManagerStatCards,
   type AdminContentManagerStatCardsProps,
-  AdminContentManagerStatusDialog,
+  AdminUserFilterBar,
+  AdminUserStatusDialog,
 } from '@/components/organisms/admin';
 import type { AdminUserListItem, UserRole, UserStatus } from '@/types/service';
 import { cn } from '@/utils/classname';
@@ -97,7 +97,8 @@ export const AdminContentManagerListTemplate: React.FC<AdminContentManagerListTe
 
       {/* Filter & Search Bar */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs p-5 md:p-6 space-y-4">
-        <AdminContentManagerFilterBar
+        <AdminUserFilterBar
+          variant="content_manager"
           search={search}
           statusFilter={statusFilter}
           isRefreshing={isRefreshing}
@@ -120,7 +121,8 @@ export const AdminContentManagerListTemplate: React.FC<AdminContentManagerListTe
       </div>
 
       {/* Status Update Dialog */}
-      <AdminContentManagerStatusDialog
+      <AdminUserStatusDialog
+        variant="content_manager"
         open={isStatusDialogOpen}
         onOpenChange={onOpenStatusDialogChange}
         selectedUser={selectedUser}
