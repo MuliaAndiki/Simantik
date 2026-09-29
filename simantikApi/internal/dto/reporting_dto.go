@@ -131,3 +131,4 @@ type AdminOverviewAnalyticsResponse struct {
 	AverageScorePlatform     float64            `json:"average_score_platform"`
 	DailyAttemptTrend        []DailyAttemptItem `json:"daily_attempt_trend"`
 }
+
