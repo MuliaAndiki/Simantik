@@ -1,3 +1,4 @@
+import RoleGuard from '@/app/(private)/_shared/RoleGuard';
 import DetailStudentDetailContainer from '../_container/[id]/_container/DetailStudent';
 
 interface DetailStudentDetailPageProps {
@@ -6,5 +7,9 @@ interface DetailStudentDetailPageProps {
 
 export default async function DetailStudentDetailPage({ params }: DetailStudentDetailPageProps) {
   const { id } = await params;
-  return <DetailStudentDetailContainer id={id} />;
+  return (
+    <RoleGuard allowed={['admin']}>
+      <DetailStudentDetailContainer id={id} />
+    </RoleGuard>
+  );
 }
