@@ -5,7 +5,7 @@ import { VerifyOtpPage } from '@/components/page/auth/VerifyOtpPage';
 import { useApi } from '@/hooks/useApi';
 import { useAuthForm } from '@/hooks/useAuthForm';
 import { type VerifyOtpFormData, verifyOtpSchema } from '@/schemas/auth/auth.schema';
-import { setSessionCookies } from '@/utils/session-cookie';
+import { setSessionCookies, shouldPersistSession } from '@/utils/session-cookie';
 
 // ponytail: redirect pasca-verifikasi register diputuskan di hooks auth
 // (routeAfterAuth); container hanya menyimpan sesi cookie.
@@ -36,6 +36,7 @@ export default function ContainerVerifyOtp() {
             accessToken: res.data.accessToken,
             refreshToken: res.data.refreshToken ?? undefined,
             role: res.data.user.role,
+            persistent: shouldPersistSession(),
           });
         },
       });

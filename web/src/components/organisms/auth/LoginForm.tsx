@@ -14,6 +14,8 @@ export interface LoginFormProps {
   values: LoginFormData;
   errors?: Partial<Record<keyof LoginFormData, string>>;
   loading?: boolean;
+  rememberMe: boolean;
+  onRememberMeChange: (remember: boolean) => void;
   onChange: (field: keyof LoginFormData, value: string) => void;
   onSubmit: (e?: React.FormEvent) => void;
   onGoogleLogin?: () => void;
@@ -26,6 +28,8 @@ export function LoginForm({
   values,
   errors,
   loading = false,
+  rememberMe,
+  onRememberMeChange,
   onChange,
   onSubmit,
   onGoogleLogin,
@@ -33,8 +37,6 @@ export function LoginForm({
   onNavigateToRegister,
   googleSlot,
 }: LoginFormProps) {
-  const [rememberMe, setRememberMe] = React.useState(false);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(e);
@@ -75,7 +77,8 @@ export function LoginForm({
           <input
             type="checkbox"
             checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
+            disabled={loading}
+            onChange={(e) => onRememberMeChange(e.target.checked)}
             className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 accent-teal-600 cursor-pointer"
           />
           <span>Ingat saya</span>
