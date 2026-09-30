@@ -34,10 +34,7 @@ describe('sidebar menus', () => {
     expect(getSidebarFooterMenus('CONTENT_MANAGER').map((m) => m.url)).toEqual([
       '/content_manager/settings',
     ]);
-    expect(getSidebarFooterMenus('STUDENT').map((m) => m.url)).toEqual([
-      '/student/setting',
-      '/student/help',
-    ]);
+    expect(getSidebarFooterMenus('STUDENT').map((m) => m.url)).toEqual(['/student/setting']);
     expect(getSidebarFooterMenus(undefined)).toEqual([]);
   });
   test('labels', () => {
