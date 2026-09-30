@@ -79,8 +79,9 @@ function mapBackendPackages(
       id: pkg.id,
       title: pkg.title,
       description: pkg.description,
-      competencyCode: pkg.competency_code || 'pemahaman-tekstual',
-      competencyName: pkg.competency_name || 'Kompetensi Umum',
+      competencyCode: pkg.competency_code || '',
+      competencyId: pkg.competency_id ?? null,
+      competencyName: pkg.competency_name || 'Tanpa Kompetensi',
       status: isCompleted ? 'sudah-dikerjakan' : 'belum-dikerjakan',
       totalQuestions: pkg.total_questions ?? 0,
       score:
@@ -131,39 +132,61 @@ export default function StudentPractice() {
     return toPracticePackagesFromCompetencies(competenciesPage?.competencies, practiceResults);
   }, [practicePage?.packages, competenciesPage?.competencies, practiceResults]);
 
+  // Peta code master -> id (untuk deep-link ?competency=<code> lama).
+  const masterCodeToId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const competency of competenciesPage?.competencies ?? []) {
+      map.set(competency.code, competency.id);
+    }
+    return map;
+  }, [competenciesPage]);
+
+  // Dropdown diisi DARI data paket (distinct competency_name), bukan hardcoded.
   const competencyOptions = useMemo(() => {
-    const list = competenciesPage?.competencies ?? [];
-    if (list.length > 0) {
+    if (packages.length > 0) {
+      const uniqueCompetencies = new Map<string, string>();
+      let hasUncategorized = false;
+      for (const pkg of packages) {
+        if (pkg.competencyId) {
+          if (!uniqueCompetencies.has(pkg.competencyId)) {
+            uniqueCompetencies.set(pkg.competencyId, pkg.competencyName);
+          }
+        } else {
+          hasUncategorized = true;
+        }
+      }
+
       return [
         { value: 'all', label: 'Semua Kompetensi' },
-        ...list.map((competency) => ({
-          value: competency.code,
-          label: competency.name,
+        ...Array.from(uniqueCompetencies.entries()).map(([id, name]) => ({
+          value: id,
+          label: name,
         })),
+        ...(hasUncategorized ? [{ value: 'uncategorized', label: 'Tanpa Kompetensi' }] : []),
       ];
     }
 
-    // Extract unique competencies from packages if list is empty
-    const uniqueCompetencies = new Map<string, string>();
-    for (const pkg of packages) {
-      if (pkg.competencyCode && !uniqueCompetencies.has(pkg.competencyCode)) {
-        uniqueCompetencies.set(pkg.competencyCode, pkg.competencyName);
-      }
-    }
-
+    // Fallback saat backend belum punya paket: dari master kompetensi.
+    const list = competenciesPage?.competencies ?? [];
     return [
       { value: 'all', label: 'Semua Kompetensi' },
-      ...Array.from(uniqueCompetencies.entries()).map(([code, name]) => ({
-        value: code,
-        label: name,
+      ...list.map((competency) => ({
+        value: competency.code,
+        label: competency.name,
       })),
     ];
-  }, [competenciesPage, packages]);
+  }, [packages, competenciesPage]);
 
   const filteredPackages = useMemo(() => {
+    // Samakan deep-link code lama ke id master bila cocok.
+    const effectiveSelected = masterCodeToId.get(selectedCompetency) ?? selectedCompetency;
     return packages.filter((pkg) => {
       const matchesCompetency =
-        selectedCompetency === 'all' || pkg.competencyCode === selectedCompetency;
+        selectedCompetency === 'all' ||
+        pkg.competencyId === effectiveSelected ||
+        pkg.competencyId === selectedCompetency ||
+        (selectedCompetency === 'uncategorized' && !pkg.competencyId) ||
+        (pkg.competencyCode !== '' && pkg.competencyCode === selectedCompetency);
 
       const matchesStatus = selectedStatus === 'all' || pkg.status === selectedStatus;
 
