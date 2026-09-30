@@ -18,6 +18,8 @@ export interface PracticePackageItem {
   description: string;
   competencyCode: CompetencyCategory;
   competencyName: string;
+  /** UUID kompetensi dari respons API (null = tanpa kompetensi). */
+  competencyId?: string | null;
   status: PracticeStatus;
   totalQuestions: number;
   score?: number;
