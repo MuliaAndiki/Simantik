@@ -1,7 +1,7 @@
-import type * as React from 'react';
-import { SplitHero } from '@/components/molecules/hero';
+import type * as React from "react";
+import { SplitHero } from "@/components/molecules/hero";
 
-export type PackageHeroVariant = 'learning' | 'practice';
+export type PackageHeroVariant = "learning" | "practice";
 
 export interface PackageHeroBannerProps {
   variant?: PackageHeroVariant;
@@ -10,23 +10,26 @@ export interface PackageHeroBannerProps {
   className?: string;
 }
 
-const DEFAULTS: Record<PackageHeroVariant, { title: string; description: string; alt: string }> = {
+const DEFAULTS: Record<
+  PackageHeroVariant,
+  { title: string; description: string; alt: string }
+> = {
   learning: {
-    title: 'Materi Bahasa Indonesia',
+    title: "Module Bahasa Indonesia",
     description:
-      'Pelajari berbagai materi untuk membantu kamu memahami soal TKA Bahasa Indonesia. Dirancang terstruktur mencakup seluruh domain uji kompetensi nasional.',
-    alt: 'Materi Pembelajaran Siswa',
+      "Pelajari berbagai module untuk membantu kamu memahami soal TKA Bahasa Indonesia. Dirancang terstruktur mencakup seluruh domain uji kompetensi nasional.",
+    alt: "module Pembelajaran Siswa",
   },
   practice: {
-    title: 'Latihan Soal TKA Bahasa Indonesia',
+    title: "Latihan Soal TKA Bahasa Indonesia",
     description:
-      'Latih kemampuan membaca dan pahami berbagai jenis teks untuk menghadapi TKA Bahasa Indonesia. Kerjakan paket soal terstandardisasi dan evaluasi akurasi jawabanmu.',
-    alt: 'Latihan Soal Siswa',
+      "Latih kemampuan membaca dan pahami berbagai jenis teks untuk menghadapi TKA Bahasa Indonesia. Kerjakan paket soal terstandardisasi dan evaluasi akurasi jawabanmu.",
+    alt: "Latihan Soal Siswa",
   },
 };
 
 export function PackageHeroBanner({
-  variant = 'learning',
+  variant = "learning",
   title,
   description,
   className,
