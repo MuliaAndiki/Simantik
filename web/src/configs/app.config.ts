@@ -13,8 +13,8 @@ import {
   UserCheck,
   Users,
   Video,
-} from 'lucide-react';
-import React from 'react';
+} from "lucide-react";
+import React from "react";
 
 interface AppConfig {
   name: string;
@@ -57,36 +57,36 @@ export type PropsParams = {
 };
 
 export const appConfig: AppConfig = {
-  name: 'App',
-  description: 'App',
-  logo: '/images/logo.png',
+  name: "App",
+  description: "App",
+  logo: "/images/logo.png",
   metadata: {
-    title: 'App',
-    description: 'App',
-    keywords: ['App'],
-    author: 'App',
-    image: 'App',
+    title: "App",
+    description: "App",
+    keywords: ["App"],
+    author: "App",
+    image: "App",
   },
   social_media: {
     twitter: {
-      url: 'https://twitter.com/app',
-      icon: 'hugeicons:new-twitter-rectangle',
+      url: "https://twitter.com/app",
+      icon: "hugeicons:new-twitter-rectangle",
     },
     instagram: {
-      url: 'https://instagram.com/app',
-      icon: 'basil:instagram-outline',
+      url: "https://instagram.com/app",
+      icon: "basil:instagram-outline",
     },
     linkedin: {
-      url: 'https://linkedin.com/app',
-      icon: 'tabler:brand-linkedin',
+      url: "https://linkedin.com/app",
+      icon: "tabler:brand-linkedin",
     },
     youtube: {
-      url: 'https://youtube.com/app',
-      icon: 'mingcute:youtube-line',
+      url: "https://youtube.com/app",
+      icon: "mingcute:youtube-line",
     },
     tiktok: {
-      url: 'https://tiktok.com/app',
-      icon: 'hugeicons:tiktok',
+      url: "https://tiktok.com/app",
+      icon: "hugeicons:tiktok",
     },
   },
 };
@@ -97,26 +97,26 @@ interface NavigationMenuConfig {
     href: string;
     icon?: React.ReactNode;
     description?: string;
-    children?: NavigationMenuConfig['items'];
+    children?: NavigationMenuConfig["items"];
   }[];
 }
 
 export const navigationMenuConfig: NavigationMenuConfig = {
   items: [
     {
-      title: 'Home',
-      href: '/',
-      description: 'Home',
+      title: "Home",
+      href: "/",
+      description: "Home",
     },
     {
-      title: 'masuk',
-      href: '/login',
-      description: 'masuk',
+      title: "masuk",
+      href: "/login",
+      description: "masuk",
     },
   ],
 };
 
-export type UserRole = 'student' | 'admin' | 'content_manager';
+export type UserRole = "student" | "admin" | "content_manager";
 
 export interface NavItem {
   name: string;
@@ -127,81 +127,80 @@ export interface NavItem {
 
 export const SIDEBAR_MENU: NavItem[] = [
   {
-    name: 'Dashboard',
-    url: '/student/dashboard',
+    name: "Dashboard",
+    url: "/student/dashboard",
     icon: LayoutDashboard,
     subMenu: [],
   },
-  { name: 'Belajar', url: '/student/learning', icon: BookOpen, subMenu: [] },
+  { name: "Belajar", url: "/student/learning", icon: BookOpen, subMenu: [] },
   {
-    name: 'Latihan',
-    url: '/student/practice',
+    name: "Latihan",
+    url: "/student/practice",
     icon: FileQuestion,
     subMenu: [],
   },
-  { name: 'Tryout', url: '/student/tryout', icon: Trophy, subMenu: [] },
-  { name: 'Berita', url: '/student/news', icon: User, subMenu: [] },
+  { name: "Tryout", url: "/student/tryout", icon: Trophy, subMenu: [] },
+  { name: "Berita", url: "/student/news", icon: User, subMenu: [] },
   {
-    name: 'Evaluasi',
-    url: '/student/evaluation',
+    name: "Evaluasi",
+    url: "/student/evaluation",
     icon: BarChart3,
     subMenu: [],
   },
-  { name: 'Pengaturan', url: '/student/setting', icon: Settings, subMenu: [] },
-  { name: 'Bantuan & Panduan', url: '/student/help', icon: User, subMenu: [] },
+  { name: "Pengaturan", url: "/student/setting", icon: Settings, subMenu: [] },
 ];
 
 export const ROLE_SIDEBAR_MENU: Record<string, NavItem[]> = {
   STUDENT: SIDEBAR_MENU,
   ADMIN: [
     {
-      name: 'Dashboard',
-      url: '/admin/dashboard',
+      name: "Dashboard",
+      url: "/admin/dashboard",
       icon: LayoutDashboard,
       subMenu: [],
     },
     {
-      name: 'Materi',
-      url: '/admin/materials',
+      name: "Materi",
+      url: "/admin/materials",
       icon: BookOpen,
       subMenu: [],
     },
     {
-      name: 'Paket Latihan',
-      url: '/admin/practice',
+      name: "Paket Latihan",
+      url: "/admin/practice",
       icon: FileQuestion,
       subMenu: [],
     },
     {
-      name: 'Paket Tryout',
-      url: '/admin/tryouts',
+      name: "Paket Tryout",
+      url: "/admin/tryouts",
       icon: Trophy,
       subMenu: [],
     },
     {
-      name: 'News',
-      url: '/admin/news',
+      name: "News",
+      url: "/admin/news",
       icon: Newspaper,
       subMenu: [],
     },
     {
-      name: 'Manajemen Data',
-      url: '/admin/schools',
+      name: "Manajemen Data",
+      url: "/admin/schools",
       icon: Users,
       subMenu: [
         {
-          name: 'Kelola Sekolah',
-          url: '/admin/schools',
+          name: "Kelola Sekolah",
+          url: "/admin/schools",
           icon: School,
         },
         {
-          name: 'Kelola Siswa',
-          url: '/admin/students',
+          name: "Kelola Siswa",
+          url: "/admin/students",
           icon: Users,
         },
         {
-          name: 'Kelola Content Manager',
-          url: '/admin/content-managers',
+          name: "Kelola Content Manager",
+          url: "/admin/content-managers",
           icon: UserCheck,
         },
       ],
@@ -209,32 +208,32 @@ export const ROLE_SIDEBAR_MENU: Record<string, NavItem[]> = {
   ],
   CONTENT_MANAGER: [
     {
-      name: 'Dashboard',
-      url: '/content_manager/dashboard',
+      name: "Dashboard",
+      url: "/content_manager/dashboard",
       icon: LayoutDashboard,
       subMenu: [],
     },
     {
-      name: 'Materi',
-      url: '/content_manager/materials',
+      name: "Materi",
+      url: "/content_manager/materials",
       icon: BookOpen,
       subMenu: [],
     },
     {
-      name: 'Paket Latihan',
-      url: '/content_manager/practice',
+      name: "Paket Latihan",
+      url: "/content_manager/practice",
       icon: FileQuestion,
       subMenu: [],
     },
     {
-      name: 'Paket Tryout',
-      url: '/content_manager/tryouts',
+      name: "Paket Tryout",
+      url: "/content_manager/tryouts",
       icon: Trophy,
       subMenu: [],
     },
     {
-      name: 'News',
-      url: '/content_manager/news',
+      name: "News",
+      url: "/content_manager/news",
       icon: Newspaper,
       subMenu: [],
     },
@@ -242,9 +241,81 @@ export const ROLE_SIDEBAR_MENU: Record<string, NavItem[]> = {
 };
 
 export function getRoleDashboardPath(role?: string | null): string {
-  if (role === 'admin') return '/admin/dashboard';
-  if (role === 'content_manager') return '/content_manager/dashboard';
-  return '/student/dashboard';
+  if (role === "admin") return "/admin/dashboard";
+  if (role === "content_manager") return "/content_manager/dashboard";
+  return "/student/dashboard";
+}
+
+// ─── Sidebar reusable per-role ─────────────────────────────────────────────
+// Satu section = satu grup berlabel; tiap item (NavItem) boleh punya subMenu.
+
+export type SidebarRoleKey = "STUDENT" | "ADMIN" | "CONTENT_MANAGER";
+
+export interface NavSection {
+  label?: string;
+  items: NavItem[];
+}
+
+/** Samakan dengan logika lama AppSidebar (role query + fallback prefix path). */
+export function resolveSidebarRole(
+  userRole?: string | null,
+  pathname?: string,
+): SidebarRoleKey | undefined {
+  const upper = userRole?.toUpperCase();
+  if (upper === "CONTENT_MANAGER" || pathname?.startsWith("/content_manager")) {
+    return "CONTENT_MANAGER";
+  }
+  if (upper === "ADMIN" || pathname?.startsWith("/admin")) {
+    return "ADMIN";
+  }
+  if (upper === "STUDENT") return "STUDENT";
+  return undefined;
+}
+
+export function getSidebarMenus(roleKey?: SidebarRoleKey): NavItem[] {
+  if (roleKey && ROLE_SIDEBAR_MENU[roleKey]) return ROLE_SIDEBAR_MENU[roleKey];
+  return SIDEBAR_MENU;
+}
+
+/** Menu utama (tanpa footer). Student hanya 6 item pertama. */
+export function getSidebarMainMenus(roleKey?: SidebarRoleKey): NavItem[] {
+  const menus = getSidebarMenus(roleKey);
+  if (roleKey === "ADMIN" || roleKey === "CONTENT_MANAGER") return menus;
+  return menus.slice(0, 6);
+}
+
+/** Item footer per role — tambah item baru cukup di sini. */
+export const ROLE_SIDEBAR_FOOTER: Record<SidebarRoleKey, NavItem[]> = {
+  ADMIN: [
+    { name: "Pengaturan", url: "/admin/settings", icon: Settings, subMenu: [] },
+  ],
+  CONTENT_MANAGER: [
+    {
+      name: "Pengaturan",
+      url: "/content_manager/settings",
+      icon: Settings,
+      subMenu: [],
+    },
+  ],
+  STUDENT: SIDEBAR_MENU.slice(6),
+};
+
+export function getSidebarFooterMenus(roleKey?: SidebarRoleKey): NavItem[] {
+  if (roleKey && ROLE_SIDEBAR_FOOTER[roleKey])
+    return ROLE_SIDEBAR_FOOTER[roleKey];
+  return [];
+}
+
+export function getPortalLabel(roleKey?: SidebarRoleKey): string {
+  if (roleKey === "ADMIN") return "Admin Portal";
+  if (roleKey === "CONTENT_MANAGER") return "Content Manager";
+  return "SMA / SMK TKA Portal";
+}
+
+export function getSidebarGroupLabel(roleKey?: SidebarRoleKey): string {
+  if (roleKey === "ADMIN") return "ADMINISTRASI";
+  if (roleKey === "CONTENT_MANAGER") return "MAIN";
+  return "Menu";
 }
 
 export function isMenuActive(url: string, pathname: string): boolean {
@@ -258,4 +329,4 @@ export function isItemActive(item: NavItem, pathname: string): boolean {
   return isMenuActive(item.url, pathname);
 }
 
-export const baseUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080'}${process.env.NEXT_PUBLIC_GATE_API || '/api'}${process.env.NEXT_PUBLIC_VERSION_API || '/v1'}`;
+export const baseUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8080"}${process.env.NEXT_PUBLIC_GATE_API || "/api"}${process.env.NEXT_PUBLIC_VERSION_API || "/v1"}`;

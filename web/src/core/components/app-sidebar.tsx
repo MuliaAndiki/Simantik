@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, DoorOpen, Settings } from 'lucide-react';
+import { ChevronDown, DoorOpen } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -24,18 +24,45 @@ import {
   useSidebar,
 } from '@/components/atoms';
 import {
+  getPortalLabel,
+  getSidebarFooterMenus,
+  getSidebarGroupLabel,
+  getSidebarMainMenus,
   isItemActive,
   isMenuActive,
   type NavItem,
-  ROLE_SIDEBAR_MENU,
-  SIDEBAR_MENU,
+  type NavSection,
+  resolveSidebarRole,
 } from '@/configs/app.config';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
 import { cn } from '@/utils/classname';
 import { clearSessionCookies, getRefreshToken } from '@/utils/session-cookie';
 
-export function AppSidebar() {
+export interface AppSidebarProps {
+  /** Override menu utama (default: ikut role). */
+  menus?: NavItem[];
+  /** Override footer (default: ikut role). Tambah item bebas di sini. */
+  footerMenus?: NavItem[];
+  /**
+   * Section tambahan/penuh: tiap section jadi satu grup berlabel dan
+   * tiap item boleh punya `subMenu`. Bila diisi, menggantikan grup utama
+   * default (footer tetap kecuali di-override).
+   */
+  sections?: NavSection[];
+  /** Override label grup utama default. */
+  groupLabel?: string;
+  /** Override badge portal di header. */
+  portalLabel?: string;
+}
+
+export function AppSidebar({
+  menus: menusProp,
+  footerMenus: footerMenusProp,
+  sections: sectionsProp,
+  groupLabel: groupLabelProp,
+  portalLabel: portalLabelProp,
+}: AppSidebarProps = {}) {
   const ns = useAppNameSpace();
   const pathname = usePathname();
   const router = useRouter();
@@ -44,47 +71,33 @@ export function AppSidebar() {
 
   const isCollapsed = state === 'collapsed';
 
-  const userRole = api.auth.query.me().data?.role?.toUpperCase();
-  const isContentManager =
-    userRole === 'CONTENT_MANAGER' || pathname.startsWith('/content_manager');
-  const isAdmin = userRole === 'ADMIN' || pathname.startsWith('/admin');
-  const role = isContentManager ? 'CONTENT_MANAGER' : isAdmin ? 'ADMIN' : userRole;
-  const menus = role ? (ROLE_SIDEBAR_MENU[role] ?? SIDEBAR_MENU) : SIDEBAR_MENU;
+  const roleKey = resolveSidebarRole(api.auth.query.me().data?.role, pathname);
+  const isAdmin = roleKey === 'ADMIN';
+  const isContentManager = roleKey === 'CONTENT_MANAGER';
 
-  const mainMenus = isContentManager || isAdmin ? menus : menus.slice(0, 6);
-  const footerMenus: NavItem[] = isContentManager
-    ? [
-        {
-          name: 'Pengaturan',
-          url: '/content_manager/settings',
-          icon: Settings,
-          subMenu: [],
-        },
-      ]
-    : isAdmin
-      ? [
-          {
-            name: 'Pengaturan',
-            url: '/admin/settings',
-            icon: Settings,
-            subMenu: [],
-          },
-        ]
-      : menus.slice(5, 6);
+  const mainMenus = menusProp ?? getSidebarMainMenus(roleKey);
+  const footerMenus = footerMenusProp ?? getSidebarFooterMenus(roleKey);
+  const sections: NavSection[] = sectionsProp ?? [
+    { label: groupLabelProp ?? getSidebarGroupLabel(roleKey), items: mainMenus },
+  ];
+  const portalLabel = portalLabelProp ?? getPortalLabel(roleKey);
 
   const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>({});
 
   // Auto-expand sub-menus when active route is a child
   useEffect(() => {
-    for (const item of mainMenus) {
-      if (item.subMenu && item.subMenu.length > 0) {
-        const isChildActive = item.subMenu.some((sub) => isMenuActive(sub.url, pathname));
-        if (isChildActive) {
-          setOpenSubMenus((prev) => ({ ...prev, [item.name]: true }));
+    for (const section of sections) {
+      for (const item of section.items) {
+        if (item.subMenu && item.subMenu.length > 0) {
+          const isChildActive = item.subMenu.some((sub) => isMenuActive(sub.url, pathname));
+          if (isChildActive) {
+            setOpenSubMenus((prev) => ({ ...prev, [item.name]: true }));
+          }
         }
       }
     }
-  }, [pathname, mainMenus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const toggleSubMenu = (itemName: string) => {
     setOpenSubMenus((prev) => ({
@@ -208,36 +221,26 @@ export function AppSidebar() {
             <span className="text-xl font-semibold">SIMANTIK</span>
 
             <span className="truncate text-xs font-semibold text-primary-foreground/70 rounded-lg bg-primary-foreground/10 p-2 uppercase tracking-wider">
-              {isAdmin
-                ? 'Admin Portal'
-                : isContentManager
-                  ? 'Content Manager'
-                  : 'SMA / SMK TKA Portal'}
+              {portalLabel}
             </span>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-        {isContentManager || isAdmin ? (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-              {isAdmin ? 'ADMINISTRASI' : 'MAIN'}
-            </SidebarGroupLabel>
+        {sections.map((section, idx) => (
+          <SidebarGroup key={section.label ?? `section-${idx}`}>
+            {section.label && (
+              <SidebarGroupLabel className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+                {section.label}
+              </SidebarGroupLabel>
+            )}
 
             <SidebarGroupContent>
-              <SidebarMenu>{mainMenus.map(renderMenuItem)}</SidebarMenu>
+              <SidebarMenu>{section.items.map(renderMenuItem)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        ) : (
-          <SidebarGroup>
-            <SidebarGroupLabel>Menu</SidebarGroupLabel>
-
-            <SidebarGroupContent>
-              <SidebarMenu>{mainMenus.map(renderMenuItem)}</SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        ))}
       </SidebarContent>
 
       <SidebarFooter>
