@@ -18,7 +18,7 @@ import type {
   VerifyRegisterOTPRequest,
 } from '@/types/service';
 import { type AuthCacheContext, readAuthSnapshot } from '@/utils/cache/auth.cache';
-import { setSessionCookies } from '@/utils/session-cookie';
+import { setSessionCookies, shouldPersistSession } from '@/utils/session-cookie';
 
 const STUDENT_ROLE = 'student';
 const SCHOOL_ONBOARDING_PATH = '/pilih-sekolah';
@@ -48,6 +48,7 @@ export function useLogin() {
           accessToken: res.data.accessToken,
           refreshToken: res.data.refreshToken ?? undefined,
           role: res.data.user.role,
+          persistent: shouldPersistSession(),
         });
       }
       routeAfterAuth(res.data?.user);
@@ -72,6 +73,7 @@ export function useVerifyRegisterOTP() {
           accessToken: res.data.accessToken,
           refreshToken: res.data.refreshToken ?? undefined,
           role: res.data.user.role,
+          persistent: shouldPersistSession(),
         });
       }
       routeAfterAuth(res.data?.user);
@@ -96,6 +98,7 @@ export function useRefreshToken() {
           accessToken: res.data.accessToken,
           refreshToken: res.data.refreshToken ?? undefined,
           role: res.data.user.role,
+          persistent: shouldPersistSession(),
         });
       }
     },
@@ -140,6 +143,7 @@ export function useGoogleLogin() {
           accessToken: res.data.accessToken,
           refreshToken: res.data.refreshToken ?? undefined,
           role: res.data.user.role,
+          persistent: shouldPersistSession(),
         });
       }
       routeAfterAuth(res.data?.user);

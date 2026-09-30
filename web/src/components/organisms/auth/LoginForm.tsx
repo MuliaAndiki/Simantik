@@ -1,19 +1,21 @@
-'use client';
+"use client";
 
-import { ArrowRight, User } from 'lucide-react';
-import Link from 'next/link';
-import * as React from 'react';
-import { AuthInput } from '@/components/molecules/auth/AuthInput';
-import { AuthSecurityNotice } from '@/components/molecules/auth/AuthSecurityNotice';
-import { FormField } from '@/components/molecules/auth/FormField';
-import { PasswordField } from '@/components/molecules/auth/PasswordField';
-import { SocialLoginButton } from '@/components/molecules/auth/SocialLoginButton';
-import type { LoginFormData } from '@/schemas/auth/auth.schema';
+import { ArrowRight, User } from "lucide-react";
+import Link from "next/link";
+import * as React from "react";
+import { AuthInput } from "@/components/molecules/auth/AuthInput";
+import { AuthSecurityNotice } from "@/components/molecules/auth/AuthSecurityNotice";
+import { FormField } from "@/components/molecules/auth/FormField";
+import { PasswordField } from "@/components/molecules/auth/PasswordField";
+import { SocialLoginButton } from "@/components/molecules/auth/SocialLoginButton";
+import type { LoginFormData } from "@/schemas/auth/auth.schema";
 
 export interface LoginFormProps {
   values: LoginFormData;
   errors?: Partial<Record<keyof LoginFormData, string>>;
   loading?: boolean;
+  rememberMe: boolean;
+  onRememberMeChange: (remember: boolean) => void;
   onChange: (field: keyof LoginFormData, value: string) => void;
   onSubmit: (e?: React.FormEvent) => void;
   onGoogleLogin?: () => void;
@@ -26,6 +28,8 @@ export function LoginForm({
   values,
   errors,
   loading = false,
+  rememberMe,
+  onRememberMeChange,
   onChange,
   onSubmit,
   onGoogleLogin,
@@ -33,8 +37,6 @@ export function LoginForm({
   onNavigateToRegister,
   googleSlot,
 }: LoginFormProps) {
-  const [rememberMe, setRememberMe] = React.useState(false);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(e);
@@ -43,7 +45,12 @@ export function LoginForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
       {/* Email / Username Input */}
-      <FormField id="email" label="Email / Username" error={errors?.email} required>
+      <FormField
+        id="email"
+        label="Email / Username"
+        error={errors?.email}
+        required
+      >
         <AuthInput
           id="email"
           type="email"
@@ -51,19 +58,24 @@ export function LoginForm({
           autoComplete="email"
           placeholder="masukkan email/username"
           value={values.email}
-          onChange={(e) => onChange('email', e.target.value)}
+          onChange={(e) => onChange("email", e.target.value)}
           disabled={loading}
           error={!!errors?.email}
         />
       </FormField>
 
       {/* Password Input */}
-      <FormField id="password" label="Password" error={errors?.password} required>
+      <FormField
+        id="password"
+        label="Password"
+        error={errors?.password}
+        required
+      >
         <PasswordField
           id="password"
           placeholder="••••••••"
           value={values.password}
-          onChange={(e) => onChange('password', e.target.value)}
+          onChange={(e) => onChange("password", e.target.value)}
           disabled={loading}
           error={!!errors?.password}
         />
@@ -75,7 +87,8 @@ export function LoginForm({
           <input
             type="checkbox"
             checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
+            disabled={loading}
+            onChange={(e) => onRememberMeChange(e.target.checked)}
             className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 accent-teal-600 cursor-pointer"
           />
           <span>Ingat saya</span>
@@ -101,13 +114,13 @@ export function LoginForm({
         disabled={loading}
         className="w-full h-12 mt-1 rounded-xl bg-[#F5C242] hover:bg-[#E8B534] active:bg-[#DBA726] text-slate-900 font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-2xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
-        <span>{loading ? 'Memproses...' : 'Masuk'}</span>
+        <span>{loading ? "Memproses..." : "Masuk"}</span>
         <ArrowRight className="w-4 h-4" />
       </button>
 
       {/* Register Link Text */}
       <p className="text-center text-xs text-slate-500 pt-1">
-        Belum punya akun?{' '}
+        Belum punya akun?{" "}
         <Link
           href="/register"
           onClick={(e) => {
@@ -119,7 +132,7 @@ export function LoginForm({
           className="font-bold text-teal-600 hover:text-teal-700 hover:underline transition-colors"
         >
           Daftar sekarang
-        </Link>{' '}
+        </Link>{" "}
         untuk akses latihan gratis.
       </p>
 
@@ -129,15 +142,21 @@ export function LoginForm({
           <span className="w-full border-t border-slate-200" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-white px-3 text-slate-400">atau masuk dengan</span>
+          <span className="bg-white px-3 text-slate-400">
+            atau masuk dengan
+          </span>
         </div>
       </div>
 
       {/* Google Login Slot / Fallback Button */}
       {googleSlot ? (
-        <div className="flex justify-center w-full">{googleSlot}</div>
+        <div className="flex justify-center w-full ">{googleSlot}</div>
       ) : (
-        <SocialLoginButton provider="google" onClick={onGoogleLogin} disabled={loading}>
+        <SocialLoginButton
+          provider="google"
+          onClick={onGoogleLogin}
+          disabled={loading}
+        >
           Login dengan Google
         </SocialLoginButton>
       )}

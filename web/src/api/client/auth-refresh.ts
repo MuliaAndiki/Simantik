@@ -1,6 +1,6 @@
 import { baseUrl } from '@/configs/app.config';
 import { EndpointEntry } from '@/configs/endpoints/EndpointEntry';
-import { getRefreshToken, setSessionCookies } from '@/utils/session-cookie';
+import { getRefreshToken, setSessionCookies, shouldPersistSession } from '@/utils/session-cookie';
 
 let _refreshInFlight: Promise<boolean> | null = null;
 
@@ -50,6 +50,9 @@ async function refreshAccessTokenOnce(): Promise<boolean> {
       accessToken: json.data.accessToken,
       refreshToken: json.data.refreshToken ?? undefined,
       expiresIn: json.data.expiresIn,
+      // Pertahankan mode sesi: refresh tidak boleh mengubah cookie sesi
+      // menjadi persisten bila user tak mencentang "Ingat saya".
+      persistent: shouldPersistSession(),
     });
 
     return true;
