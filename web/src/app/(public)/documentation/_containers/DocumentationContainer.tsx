@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CardGridSkeleton } from '@/components/atoms/loading';
+import { PublicPageLoader } from '@/components/atoms/loading';
 import { DocumentationPage } from '@/components/page/public/DocumentationPage';
 import { DEFAULT_DOCUMENTATION_DATA } from '@/configs/public-data';
 import { useApi } from '@/hooks/useApi';
@@ -101,12 +101,13 @@ export function DocumentationContainer() {
     setSubmittedQuery(kw);
   };
 
-  // Skeleton saat fetch pertama — jangan tampilkan data contoh.
+  // Loading saat fetch pertama — tampilkan animasi logo loader premium.
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <CardGridSkeleton count={6} />
-      </div>
+      <PublicPageLoader
+        label="Memuat Dokumentasi..."
+        sublabel="Menyiapkan panduan dan direktori artikel SIMANTIK..."
+      />
     );
   }
 

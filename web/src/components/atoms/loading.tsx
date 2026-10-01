@@ -82,3 +82,5 @@ export function TableLoader({ label = 'Memuat data...', className }: TableLoader
     </div>
   );
 }
+
+export * from './loading/PublicPageLoader';
