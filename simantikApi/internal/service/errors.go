@@ -78,12 +78,15 @@ var (
 	ErrMaterialNotFound       = errors.New("material not found")
 )
 
-// Content errors (News, Documentation, Testimonials).
+// Content errors (News, Documentation, Tutorials, Testimonials).
 var (
 	ErrNewsNotFound            = errors.New("news article not found")
 	ErrNewsSlugExists          = errors.New("news article slug already exists")
 	ErrDocumentationNotFound   = errors.New("documentation article not found")
 	ErrDocumentationSlugExists = errors.New("documentation slug already exists")
+	ErrTutorialNotFound        = errors.New("tutorial not found")
+	ErrTutorialSlugExists      = errors.New("tutorial slug already exists")
+	ErrInvalidYoutubeURL       = errors.New("invalid YouTube URL")
 	ErrTestimonialNotFound     = errors.New("testimonial not found")
 	ErrCannotChangeOwnRole     = errors.New("you cannot change your own role")
 )

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -36,6 +37,16 @@ type ContentService interface {
 	ListDocumentationAdmin(ctx context.Context, filter dto.ListDocumentationFilter) (*dto.PaginatedDocumentationResponse, error)
 	ListDocumentationPublic(ctx context.Context, filter dto.ListDocumentationFilter) (*dto.PaginatedDocumentationResponse, error)
 
+	// Tutorials
+	CreateTutorial(ctx context.Context, req dto.CreateTutorialRequest, authorID uuid.UUID) (*dto.TutorialResponse, error)
+	GetTutorialByID(ctx context.Context, id uuid.UUID) (*dto.TutorialResponse, error)
+	GetTutorialBySlug(ctx context.Context, slug string) (*dto.TutorialResponse, error)
+	UpdateTutorial(ctx context.Context, id uuid.UUID, req dto.UpdateTutorialRequest, updatedByID uuid.UUID) (*dto.TutorialResponse, error)
+	UpdateTutorialStatus(ctx context.Context, id uuid.UUID, status string, updatedByID uuid.UUID) (*dto.TutorialResponse, error)
+	DeleteTutorial(ctx context.Context, id uuid.UUID) error
+	ListTutorialAdmin(ctx context.Context, filter dto.ListTutorialFilter) (*dto.PaginatedTutorialsResponse, error)
+	ListTutorialPublic(ctx context.Context, filter dto.ListTutorialFilter) (*dto.PaginatedTutorialsResponse, error)
+
 	// Testimonials
 	CreateTestimonial(ctx context.Context, req dto.CreateTestimonialRequest, userID *uuid.UUID) (*dto.TestimonialResponse, error)
 	UpdateTestimonialStatus(ctx context.Context, id uuid.UUID, req dto.UpdateTestimonialStatusRequest) (*dto.TestimonialResponse, error)
@@ -45,20 +56,23 @@ type ContentService interface {
 }
 
 type contentService struct {
-	newsRepo repository.NewsRepository
-	docRepo  repository.DocumentationRepository
-	testRepo repository.TestimonialRepository
+	newsRepo     repository.NewsRepository
+	docRepo      repository.DocumentationRepository
+	tutorialRepo repository.TutorialRepository
+	testRepo     repository.TestimonialRepository
 }
 
 func NewContentService(
 	newsRepo repository.NewsRepository,
 	docRepo repository.DocumentationRepository,
 	testRepo repository.TestimonialRepository,
+	tutorialRepo repository.TutorialRepository,
 ) ContentService {
 	return &contentService{
-		newsRepo: newsRepo,
-		docRepo:  docRepo,
-		testRepo: testRepo,
+		newsRepo:     newsRepo,
+		docRepo:      docRepo,
+		testRepo:     testRepo,
+		tutorialRepo: tutorialRepo,
 	}
 }
 
@@ -413,6 +427,203 @@ func (s *contentService) ListDocumentationPublic(ctx context.Context, filter dto
 	}, nil
 }
 
+// ─── Tutorial Methods ────────────────────────────────────────────────────────
+
+func (s *contentService) CreateTutorial(ctx context.Context, req dto.CreateTutorialRequest, authorID uuid.UUID) (*dto.TutorialResponse, error) {
+	slug := req.Slug
+	if strings.TrimSpace(slug) == "" {
+		slug = slugify(req.Title)
+	} else {
+		slug = slugify(slug)
+	}
+
+	existing, err := s.tutorialRepo.FindBySlug(ctx, slug)
+	if err == nil && existing != nil {
+		return nil, ErrTutorialSlugExists
+	}
+
+	if _, ok := toYoutubeEmbedURL(req.YoutubeURL); !ok {
+		return nil, ErrInvalidYoutubeURL
+	}
+
+	status := models.ContentStatusDraft
+	if req.Status != "" {
+		status = models.ContentStatus(req.Status)
+	}
+
+	var publishedAt *time.Time
+	if status == models.ContentStatusPublished {
+		now := time.Now()
+		publishedAt = &now
+	}
+
+	tutorial := &models.Tutorial{
+		Title:           req.Title,
+		Slug:            slug,
+		Description:     req.Description,
+		YoutubeURL:      strings.TrimSpace(req.YoutubeURL),
+		DurationSeconds: req.DurationSeconds,
+		Category:        req.Category,
+		Jenjang:         models.SchoolLevelSMA,
+		Status:          status,
+		PublishedAt:     publishedAt,
+		CreatedBy:       authorID,
+	}
+
+	if err := s.tutorialRepo.Create(ctx, tutorial); err != nil {
+		return nil, err
+	}
+
+	return mapTutorialToResponse(tutorial), nil
+}
+
+func (s *contentService) GetTutorialByID(ctx context.Context, id uuid.UUID) (*dto.TutorialResponse, error) {
+	tutorial, err := s.tutorialRepo.FindByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrTutorialNotFound
+		}
+		return nil, err
+	}
+	return mapTutorialToResponse(tutorial), nil
+}
+
+func (s *contentService) GetTutorialBySlug(ctx context.Context, slug string) (*dto.TutorialResponse, error) {
+	tutorial, err := s.tutorialRepo.FindBySlug(ctx, slug)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrTutorialNotFound
+		}
+		return nil, err
+	}
+	return mapTutorialToResponse(tutorial), nil
+}
+
+func (s *contentService) UpdateTutorial(ctx context.Context, id uuid.UUID, req dto.UpdateTutorialRequest, updatedByID uuid.UUID) (*dto.TutorialResponse, error) {
+	tutorial, err := s.tutorialRepo.FindByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrTutorialNotFound
+		}
+		return nil, err
+	}
+
+	if req.Title != "" {
+		tutorial.Title = req.Title
+	}
+	if req.Slug != "" {
+		newSlug := slugify(req.Slug)
+		if newSlug != tutorial.Slug {
+			existing, err := s.tutorialRepo.FindBySlug(ctx, newSlug)
+			if err == nil && existing != nil && existing.ID != tutorial.ID {
+				return nil, ErrTutorialSlugExists
+			}
+			tutorial.Slug = newSlug
+		}
+	}
+	if req.Description != "" {
+		tutorial.Description = req.Description
+	}
+	if req.YoutubeURL != "" {
+		if _, ok := toYoutubeEmbedURL(req.YoutubeURL); !ok {
+			return nil, ErrInvalidYoutubeURL
+		}
+		tutorial.YoutubeURL = strings.TrimSpace(req.YoutubeURL)
+	}
+	if req.DurationSeconds != nil {
+		tutorial.DurationSeconds = *req.DurationSeconds
+	}
+	if req.Category != "" {
+		tutorial.Category = req.Category
+	}
+	if req.Status != "" {
+		newStatus := models.ContentStatus(req.Status)
+		if tutorial.Status != models.ContentStatusPublished && newStatus == models.ContentStatusPublished && tutorial.PublishedAt == nil {
+			now := time.Now()
+			tutorial.PublishedAt = &now
+		}
+		tutorial.Status = newStatus
+	}
+
+	tutorial.UpdatedBy = &updatedByID
+	if err := s.tutorialRepo.Update(ctx, tutorial); err != nil {
+		return nil, err
+	}
+
+	return mapTutorialToResponse(tutorial), nil
+}
+
+func (s *contentService) UpdateTutorialStatus(ctx context.Context, id uuid.UUID, status string, updatedByID uuid.UUID) (*dto.TutorialResponse, error) {
+	return s.UpdateTutorial(ctx, id, dto.UpdateTutorialRequest{Status: status}, updatedByID)
+}
+
+func (s *contentService) DeleteTutorial(ctx context.Context, id uuid.UUID) error {
+	_, err := s.tutorialRepo.FindByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrTutorialNotFound
+		}
+		return err
+	}
+	return s.tutorialRepo.Delete(ctx, id)
+}
+
+func (s *contentService) ListTutorialAdmin(ctx context.Context, filter dto.ListTutorialFilter) (*dto.PaginatedTutorialsResponse, error) {
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	offset := filter.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	list, total, err := s.tutorialRepo.List(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]dto.TutorialResponse, len(list))
+	for i := range list {
+		items[i] = *mapTutorialToResponse(&list[i])
+	}
+
+	return &dto.PaginatedTutorialsResponse{
+		Tutorials: items,
+		Total:     total,
+		Limit:     limit,
+		Offset:    offset,
+	}, nil
+}
+
+func (s *contentService) ListTutorialPublic(ctx context.Context, filter dto.ListTutorialFilter) (*dto.PaginatedTutorialsResponse, error) {
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	offset := filter.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	list, total, err := s.tutorialRepo.ListPublished(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]dto.TutorialResponse, len(list))
+	for i := range list {
+		items[i] = *mapTutorialToResponse(&list[i])
+	}
+
+	return &dto.PaginatedTutorialsResponse{
+		Tutorials: items,
+		Total:     total,
+		Limit:     limit,
+		Offset:    offset,
+	}, nil
+}
+
 // ─── Testimonial Methods ─────────────────────────────────────────────────────
 
 func (s *contentService) CreateTestimonial(ctx context.Context, req dto.CreateTestimonialRequest, userID *uuid.UUID) (*dto.TestimonialResponse, error) {
@@ -553,6 +764,85 @@ func mapDocToResponse(d *models.Documentation) *dto.DocumentationResponse {
 		UpdatedBy: d.UpdatedBy,
 		CreatedAt: d.CreatedAt,
 		UpdatedAt: d.UpdatedAt,
+	}
+}
+
+var youtubeIDRegex = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+
+// toYoutubeEmbedURL converts a YouTube watch, share, shorts, or embed URL
+// into its canonical embed form. Raw embed URLs are returned as-is.
+func toYoutubeEmbedURL(raw string) (string, bool) {
+	trimmed := strings.TrimSpace(raw)
+	u, err := url.Parse(trimmed)
+	if err != nil {
+		return "", false
+	}
+
+	host := strings.ToLower(u.Hostname())
+	switch {
+	case host == "youtu.be" || strings.HasSuffix(host, ".youtu.be"):
+		id := firstPathSegment(u.Path)
+		if !youtubeIDRegex.MatchString(id) {
+			return "", false
+		}
+		return "https://www.youtube.com/embed/" + id, true
+	case host == "youtube.com" || strings.HasSuffix(host, ".youtube.com"):
+		switch {
+		case u.Path == "/watch":
+			id := u.Query().Get("v")
+			if !youtubeIDRegex.MatchString(id) {
+				return "", false
+			}
+			return "https://www.youtube.com/embed/" + id, true
+		case strings.HasPrefix(u.Path, "/embed/"):
+			id := firstPathSegment(strings.TrimPrefix(u.Path, "/embed"))
+			if !youtubeIDRegex.MatchString(id) {
+				return "", false
+			}
+			return trimmed, true
+		case strings.HasPrefix(u.Path, "/shorts/"):
+			id := firstPathSegment(strings.TrimPrefix(u.Path, "/shorts"))
+			if !youtubeIDRegex.MatchString(id) {
+				return "", false
+			}
+			return "https://www.youtube.com/embed/" + id, true
+		default:
+			return "", false
+		}
+	default:
+		return "", false
+	}
+}
+
+func firstPathSegment(p string) string {
+	seg := strings.Trim(p, "/")
+	if i := strings.Index(seg, "/"); i >= 0 {
+		seg = seg[:i]
+	}
+	return seg
+}
+
+func mapTutorialToResponse(t *models.Tutorial) *dto.TutorialResponse {
+	embedURL := t.YoutubeURL
+	if e, ok := toYoutubeEmbedURL(t.YoutubeURL); ok {
+		embedURL = e
+	}
+	return &dto.TutorialResponse{
+		ID:              t.ID,
+		Title:           t.Title,
+		Slug:            t.Slug,
+		Description:     t.Description,
+		YoutubeURL:      t.YoutubeURL,
+		YoutubeEmbedURL: embedURL,
+		DurationSeconds: t.DurationSeconds,
+		Category:        t.Category,
+		Jenjang:         string(t.Jenjang),
+		Status:          string(t.Status),
+		PublishedAt:     t.PublishedAt,
+		CreatedBy:       t.CreatedBy,
+		UpdatedBy:       t.UpdatedBy,
+		CreatedAt:       t.CreatedAt,
+		UpdatedAt:       t.UpdatedAt,
 	}
 }
 

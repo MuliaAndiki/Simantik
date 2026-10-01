@@ -183,6 +183,94 @@ func (r *documentationRepository) ListPublished(ctx context.Context, filter dto.
 	return r.List(ctx, filter)
 }
 
+// ─── Tutorial Repository ─────────────────────────────────────────────────────
+
+type TutorialRepository interface {
+	Create(ctx context.Context, t *models.Tutorial) error
+	FindByID(ctx context.Context, id uuid.UUID) (*models.Tutorial, error)
+	FindBySlug(ctx context.Context, slug string) (*models.Tutorial, error)
+	Update(ctx context.Context, t *models.Tutorial) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	List(ctx context.Context, filter dto.ListTutorialFilter) ([]models.Tutorial, int64, error)
+	ListPublished(ctx context.Context, filter dto.ListTutorialFilter) ([]models.Tutorial, int64, error)
+}
+
+type tutorialRepository struct {
+	db *gorm.DB
+}
+
+func NewTutorialRepository(db *gorm.DB) TutorialRepository {
+	return &tutorialRepository{db: db}
+}
+
+func (r *tutorialRepository) Create(ctx context.Context, t *models.Tutorial) error {
+	return r.db.WithContext(ctx).Create(t).Error
+}
+
+func (r *tutorialRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Tutorial, error) {
+	var t models.Tutorial
+	if err := r.db.WithContext(ctx).First(&t, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+func (r *tutorialRepository) FindBySlug(ctx context.Context, slug string) (*models.Tutorial, error) {
+	var t models.Tutorial
+	if err := r.db.WithContext(ctx).First(&t, "slug = ?", slug).Error; err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+func (r *tutorialRepository) Update(ctx context.Context, t *models.Tutorial) error {
+	return r.db.WithContext(ctx).Save(t).Error
+}
+
+func (r *tutorialRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Delete(&models.Tutorial{}, "id = ?", id).Error
+}
+
+func (r *tutorialRepository) List(ctx context.Context, filter dto.ListTutorialFilter) ([]models.Tutorial, int64, error) {
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	offset := filter.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	query := r.db.WithContext(ctx).Model(&models.Tutorial{})
+	if filter.Search != "" {
+		like := "%" + filter.Search + "%"
+		query = query.Where("title ILIKE ? OR description ILIKE ?", like, like)
+	}
+	if filter.Category != "" {
+		query = query.Where("category = ?", filter.Category)
+	}
+	if filter.Status != "" {
+		query = query.Where("status = ?", filter.Status)
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var list []models.Tutorial
+	if err := query.Order("created_at DESC").Limit(limit).Offset(offset).Find(&list).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return list, total, nil
+}
+
+func (r *tutorialRepository) ListPublished(ctx context.Context, filter dto.ListTutorialFilter) ([]models.Tutorial, int64, error) {
+	filter.Status = string(models.ContentStatusPublished)
+	return r.List(ctx, filter)
+}
+
 // ─── Testimonial Repository ──────────────────────────────────────────────────
 
 type TestimonialRepository interface {

@@ -7,6 +7,12 @@ import { setAuthErrorHandler } from '@/api/client/client-http';
 import { clearSessionCookies, getAccessToken, getRefreshToken } from '@/utils/session-cookie';
 
 const PUBLIC_PATHS = [
+  '/',
+  '/home',
+  '/documentation',
+  '/tutorials',
+  '/testimonials',
+  '/news',
   '/login',
   '/register',
   '/forgot-password',
@@ -16,11 +22,26 @@ const PUBLIC_PATHS = [
   '/privacy',
   '/terms',
   '/verify-email',
-  '/auth/verify-email',
+  '/auth',
   '/magic-link',
-  '/auth/magic-link',
-  '/home',
+  '/coming-soon',
+  '/desain',
+  '/illustrations',
+  '/images',
+  '/avatars',
 ];
+
+/**
+ * Check if the given pathname is public (accessible without login).
+ * Root '/' matches only exact '/', while other paths match exact or child paths.
+ */
+export function isPublicRoute(pathname: string | null | undefined): boolean {
+  if (!pathname) return true;
+  return PUBLIC_PATHS.some((path) => {
+    if (path === '/') return pathname === '/';
+    return pathname === path || pathname.startsWith(`${path}/`);
+  });
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -43,10 +64,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Jika hanya refresh token yang tersisa, biarkan berjalan — client-http akan
   // memanggil POST /auth/refresh-token untuk memperbarui access token.
   useEffect(() => {
-    const isPublicPath = PUBLIC_PATHS.some((path) => pathname?.startsWith(path));
+    const isPublic = isPublicRoute(pathname);
     const hasSession = Boolean(getAccessToken() || getRefreshToken());
 
-    if (!isPublicPath && !hasSession) {
+    if (!isPublic && !hasSession) {
       router.replace('/login');
     }
   }, [pathname, router]);

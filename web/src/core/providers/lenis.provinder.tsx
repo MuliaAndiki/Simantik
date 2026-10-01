@@ -3,7 +3,9 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ReactLenis, useLenis } from 'lenis/react';
-import { ReactNode, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect } from 'react';
+import { ScrollScribbleTracker } from '@/components/atoms/doodles/ScribbleDoodles';
 
 interface LenisProviderProps {
   children: ReactNode;
@@ -20,24 +22,26 @@ function ScrollTriggerSync() {
     gsap.registerPlugin(ScrollTrigger);
 
     // Update ScrollTrigger on Lenis scroll
-    lenis.on('scroll', ScrollTrigger.update);
+    const handleScroll = () => {
+      ScrollTrigger.update();
+    };
+    lenis.on('scroll', handleScroll);
 
-    // Set up GSAP ticker to sync with Lenis
-    gsap.ticker.add((time) => {
+    // Set up GSAP ticker to drive Lenis smoothly
+    const updateTicker = (time: number) => {
       lenis.raf(time * 1000);
-    });
+    };
+    gsap.ticker.add(updateTicker);
 
-    // Disable Lenis internal RAF since GSAP handles it
+    // Disable lag smoothing so animations stay crisp and synced
     gsap.ticker.lagSmoothing(0);
 
-    // Refresh ScrollTrigger after setup
+    // Refresh ScrollTrigger after initial setup
     ScrollTrigger.refresh();
 
     return () => {
-      lenis.off('scroll', ScrollTrigger.update);
-      gsap.ticker.remove((time) => {
-        lenis.raf(time * 1000);
-      });
+      lenis.off('scroll', handleScroll);
+      gsap.ticker.remove(updateTicker);
     };
   }, [lenis]);
 
@@ -55,13 +59,16 @@ export function LenisProvider({ children }: LenisProviderProps) {
         gestureOrientation: 'vertical',
         smoothWheel: true,
         wheelMultiplier: 1,
-        touchMultiplier: 2,
+        touchMultiplier: 1.5,
         infinite: false,
-        autoRaf: false, // Disable auto RAF, let GSAP handle it
+        autoRaf: false, // GSAP ticker drives RAF
       }}
     >
       <ScrollTriggerSync />
+      <ScrollScribbleTracker />
       {children}
     </ReactLenis>
   );
 }
+
+export default LenisProvider;

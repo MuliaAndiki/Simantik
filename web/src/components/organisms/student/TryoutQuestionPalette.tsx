@@ -16,7 +16,6 @@ export const TryoutQuestionPalette: React.FC<TryoutQuestionPaletteProps> = ({
 }) => {
   // Compute counts for the legend
   const answeredCount = items.filter((i) => i.status === 'answered').length;
-  const flaggedCount = items.filter((i) => i.status === 'flagged').length;
   const lockedCount = items.filter((i) => i.status === 'locked').length;
 
   return (
@@ -57,9 +56,6 @@ export const TryoutQuestionPalette: React.FC<TryoutQuestionPaletteProps> = ({
           } else if (item.status === 'answered') {
             styleClasses =
               'bg-[#244252] text-white border-transparent font-bold cursor-not-allowed';
-          } else if (item.status === 'flagged') {
-            styleClasses =
-              'bg-[#50C8DC] text-white border-transparent font-bold cursor-not-allowed';
           } else if (item.status === 'locked') {
             styleClasses =
               'bg-[#EAF6F8] text-slate-400 border-transparent opacity-80 cursor-not-allowed';
@@ -90,11 +86,6 @@ export const TryoutQuestionPalette: React.FC<TryoutQuestionPaletteProps> = ({
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#F5B731] shrink-0" />
           <span>Sedang Dikerjakan</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#50C8DC] shrink-0" />
-          <span>Ragu-ragu ({flaggedCount})</span>
         </div>
 
         <div className="flex items-center gap-2">

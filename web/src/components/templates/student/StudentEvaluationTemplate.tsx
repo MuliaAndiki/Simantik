@@ -29,13 +29,21 @@ export function StudentEvaluationTemplate({
   nextStepsProps,
   className,
 }: StudentEvaluationTemplateProps) {
+  const trendData = overviewProps?.trendProps?.data ?? [];
+  const trendLoading = overviewProps?.trendProps?.isLoading ?? false;
+  // Label eksplisit ATAU data <2 (mis. API gagal/null) -> empty state ramah.
+  // Jangan tampil saat loading agar tidak flicker sebelum data tiba.
+  const showEmptyTrend =
+    overviewProps?.trendProps?.trendStatusLabel === 'Data Belum Cukup' ||
+    (trendData.length < 2 && !trendLoading);
+
   return (
     <div className={cn('w-full max-w-full mx-auto space-y-6 md:space-y-8 pb-6', className)}>
       {/* 1. Header Hero Banner with Student Illustration */}
       <EvaluationHeroBanner {...heroProps} />
 
       {/* 2. 3-Column Performance Metrics (Overall Gauge, Latest Score, Trend Area Chart) */}
-      {overviewProps?.trendProps?.trendStatusLabel === 'Data Belum Cukup' ? (
+      {showEmptyTrend ? (
         <div className="p-8 text-center bg-white border border-slate-200 rounded-2xl">
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg

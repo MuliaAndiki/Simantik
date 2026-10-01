@@ -5,14 +5,18 @@ import type {
   CreateDocumentationRequest,
   CreateNewsRequest,
   CreateTestimonialRequest,
+  CreateTutorialRequest,
   DocumentationResponse,
   NewsResponse,
   TestimonialResponse,
+  TutorialResponse,
   UpdateDocumentationRequest,
   UpdateDocumentationStatusRequest,
   UpdateNewsRequest,
   UpdateNewsStatusRequest,
   UpdateTestimonialStatusRequest,
+  UpdateTutorialRequest,
+  UpdateTutorialStatusRequest,
 } from '@/types/service';
 import { type ContentCacheContext, readContentSnapshot } from '@/utils/cache/content.cache';
 
@@ -87,6 +91,44 @@ export function useUpdateDocumentationStatus() {
 export function useDeleteDocumentation() {
   return useAppMutation<null, string, ContentCacheContext>({
     mutationFn: (id: string) => Api.content.DeleteDocumentationService(id),
+    invalidateKeys: [queryKey.contentRoot()],
+  });
+}
+
+export function useCreateTutorial() {
+  return useAppMutation<TutorialResponse, CreateTutorialRequest, ContentCacheContext>({
+    mutationFn: (body: CreateTutorialRequest) => Api.content.CreateTutorialService(body),
+    invalidateKeys: [queryKey.contentRoot()],
+  });
+}
+
+export function useUpdateTutorial() {
+  return useAppMutation<
+    TutorialResponse,
+    { id: string; body: UpdateTutorialRequest },
+    ContentCacheContext
+  >({
+    mutationFn: ({ id, body }: { id: string; body: UpdateTutorialRequest }) =>
+      Api.content.UpdateTutorialService(id, body),
+    invalidateKeys: [queryKey.contentRoot()],
+  });
+}
+
+export function useUpdateTutorialStatus() {
+  return useAppMutation<
+    TutorialResponse,
+    { id: string; body: UpdateTutorialStatusRequest },
+    ContentCacheContext
+  >({
+    mutationFn: ({ id, body }: { id: string; body: UpdateTutorialStatusRequest }) =>
+      Api.content.UpdateTutorialStatusService(id, body),
+    invalidateKeys: [queryKey.contentRoot()],
+  });
+}
+
+export function useDeleteTutorial() {
+  return useAppMutation<null, string, ContentCacheContext>({
+    mutationFn: (id: string) => Api.content.DeleteTutorialService(id),
     invalidateKeys: [queryKey.contentRoot()],
   });
 }

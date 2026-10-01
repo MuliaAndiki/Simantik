@@ -34,14 +34,6 @@ export function LegalDocNavbar({ className }: LegalDocNavbarProps) {
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Beranda</span>
           </Link>
-
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-1.5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-semibold px-4 py-1.5 shadow-2xs transition-all"
-          >
-            <LogIn className="w-3.5 h-3.5" />
-            <span>Masuk</span>
-          </Link>
         </div>
       </div>
     </header>

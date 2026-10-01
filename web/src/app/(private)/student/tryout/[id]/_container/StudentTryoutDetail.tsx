@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import StudentTryoutDetailPage from '@/components/page/private/student/StudentTryoutDetailPage';
 import { ProctoringProvider } from '@/core/providers/proctoring';
 import { useApi } from '@/hooks/useApi';
+import useAppNameSpace from '@/hooks/useAppNameSpace';
 import { useProctoring } from '@/hooks/useProctoring';
 import type { QuestionStudentResponse, SubmitAnswerRequest } from '@/types/service';
 import type {
@@ -20,6 +21,18 @@ import { parseMatrixOptions, parseWacanaQuestion } from '@/utils/wacana';
 function isUUID(str?: string | null): boolean {
   if (!str) return false;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
+/**
+ * Adaptive tryout wajib dijawab: engine butuh benar/salah tiap soal untuk
+ * menentukan soal berikutnya. String kosong, array kosong, dan record
+ * kosong semuanya berarti BELUM dijawab.
+ */
+function hasAnswerValue(answer: TryoutAnswerValue | undefined): boolean {
+  if (answer === undefined || answer === null) return false;
+  if (typeof answer === 'string') return answer.trim() !== '';
+  if (Array.isArray(answer)) return answer.length > 0;
+  return Object.keys(answer).length > 0;
 }
 
 function formatSecondsToDigital(totalSeconds: number): string {
@@ -92,6 +105,7 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
   // Dari modal pre-start di halaman daftar: langsung mulai tanpa modal ganda.
   const preConfirmed = searchParams.get('confirmed') === '1';
   const proctoring = useProctoring();
+  const ns = useAppNameSpace();
   const { tryout } = useApi();
 
   // Mutations
@@ -112,7 +126,6 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
 
   // User answers state: questionId -> choice value
   const [answers, setAnswers] = useState<Record<string, TryoutAnswerValue>>({});
-  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
   const [answeredNumbers, setAnsweredNumbers] = useState<Set<number>>(new Set());
 
   // Modal Dialogs State
@@ -157,7 +170,7 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
   }, [questionData?.question, currentQuestionNumber, isQuestionLoading]);
 
   const currentAnswer = answers[activeQuestion.id];
-  const isCurrentFlagged = flaggedQuestions.has(currentQuestionNumber);
+  const hasCurrentAnswer = hasAnswerValue(currentAnswer);
   const isLastQuestion = currentQuestionNumber >= totalQuestions;
 
   // 1. Pre-Start Rules confirmation + Start Exam Attempt
@@ -393,26 +406,24 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
     [activeQuestion.id]
   );
 
-  // Toggle flagged (Ragu-ragu) status
-  const handleToggleFlag = useCallback(() => {
-    setFlaggedQuestions((prev) => {
-      const next = new Set(prev);
-      if (next.has(currentQuestionNumber)) {
-        next.delete(currentQuestionNumber);
-      } else {
-        next.add(currentQuestionNumber);
-      }
-      return next;
-    });
-  }, [currentQuestionNumber]);
-
   // 6. Next Question Progression & Adaptive Submission
   const handleNext = useCallback(async () => {
     const curAns = answers[activeQuestion.id];
     const targetAttemptId = attemptId || attemptIdRef.current;
 
+    // Adaptive wajib ada jawaban: tolak lanjut + tandai belum dijawab.
+    if (!hasAnswerValue(curAns)) {
+      ns.alert.toast({
+        title: 'Soal Belum Dijawab',
+        message:
+          'Pilih jawaban dulu sebelum lanjut — tryout adaptif menentukan soal berikutnya dari jawaban ini.',
+        icon: 'warning',
+      });
+      return;
+    }
+
     // Submit answer to backend to invoke Adaptive Engine
-    if (targetAttemptId && isUUID(targetAttemptId) && curAns !== undefined) {
+    if (targetAttemptId && isUUID(targetAttemptId)) {
       try {
         await submitAnswerMutation.mutateAsync({
           attemptId: targetAttemptId,
@@ -481,8 +492,6 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
 
       if (qNum === currentQuestionNumber) {
         status = 'active';
-      } else if (flaggedQuestions.has(qNum)) {
-        status = 'flagged';
       } else if (answeredNumbers.has(qNum) || qNum < currentQuestionNumber) {
         status = 'answered';
       } else {
@@ -495,7 +504,7 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
         status,
       };
     });
-  }, [totalQuestions, currentQuestionNumber, flaggedQuestions, answeredNumbers]);
+  }, [totalQuestions, currentQuestionNumber, answeredNumbers]);
 
   return (
     <StudentTryoutDetailPage
@@ -508,14 +517,13 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
       onExit={handleExitClick}
       question={activeQuestion}
       currentAnswer={currentAnswer}
-      isFlagged={isCurrentFlagged}
       isLastQuestion={isLastQuestion}
       isSubmitting={isQuestionLoading || submitAnswerMutation.isPending}
       onSelectSingleChoice={handleSelectSingleChoice}
       onToggleComplexChoice={handleToggleComplexChoice}
       onSelectMatrixChoice={handleSelectMatrixChoice}
-      onToggleFlag={handleToggleFlag}
       onNext={handleNext}
+      isNextDisabled={!hasCurrentAnswer}
       paletteItems={paletteItems}
       isPreStartModalOpen={isPreStartModalOpen}
       isPreStartChecked={isPreStartChecked}
