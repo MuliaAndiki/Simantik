@@ -1,23 +1,23 @@
-import React from "react";
-import { PracticeConfirmModal } from "@/components/organisms/student/PracticeConfirmModal";
-import { PracticePreStartModal } from "@/components/organisms/student/PracticePreStartModal";
-import { PracticeProctoringWarningModal } from "@/components/organisms/student/PracticeProctoringWarningModal";
-import { PracticeQuestionHeader } from "@/components/organisms/student/PracticeQuestionHeader";
+import React from 'react';
+import { PracticeConfirmModal } from '@/components/organisms/student/PracticeConfirmModal';
+import { PracticePreStartModal } from '@/components/organisms/student/PracticePreStartModal';
+import { PracticeProctoringWarningModal } from '@/components/organisms/student/PracticeProctoringWarningModal';
+import { PracticeQuestionHeader } from '@/components/organisms/student/PracticeQuestionHeader';
 import {
   PracticeQuestionPalette,
   type QuestionPaletteItem,
-} from "@/components/organisms/student/PracticeQuestionPalette";
-import { PracticeQuestionStimulus } from "@/components/organisms/student/PracticeQuestionStimulus";
-import { ComplexMultipleChoiceQuestion } from "@/components/organisms/student/questions/ComplexMultipleChoiceQuestion";
-import { MatrixCategoryQuestion } from "@/components/organisms/student/questions/MatrixCategoryQuestion";
-import { SingleChoiceQuestion } from "@/components/organisms/student/questions/SingleChoiceQuestion";
-import { StudentDashboardFooter } from "@/components/organisms/student/StudentDashboardFooter";
+} from '@/components/organisms/student/PracticeQuestionPalette';
+import { PracticeQuestionStimulus } from '@/components/organisms/student/PracticeQuestionStimulus';
+import { ComplexMultipleChoiceQuestion } from '@/components/organisms/student/questions/ComplexMultipleChoiceQuestion';
+import { MatrixCategoryQuestion } from '@/components/organisms/student/questions/MatrixCategoryQuestion';
+import { SingleChoiceQuestion } from '@/components/organisms/student/questions/SingleChoiceQuestion';
+import { StudentDashboardFooter } from '@/components/organisms/student/StudentDashboardFooter';
 import type {
   ChoiceOption,
   MatrixStatement,
   PracticeQuestionItem,
   QuestionAnswerValue,
-} from "@/types/ui";
+} from '@/types/ui';
 
 export interface StudentPracticeDetailTemplateProps {
   competencyName: string;
@@ -62,14 +62,12 @@ export interface StudentPracticeDetailTemplateProps {
 
   // Confirmation modal (exit or submit)
   isConfirmModalOpen: boolean;
-  confirmModalType: "exit" | "submit";
+  confirmModalType: 'exit' | 'submit';
   onConfirmModalCancel: () => void;
   onConfirmModalProceed: () => void;
 }
 
-export const StudentPracticeDetailTemplate: React.FC<
-  StudentPracticeDetailTemplateProps
-> = ({
+export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTemplateProps> = ({
   competencyName,
   categoryLabel,
   title,
@@ -106,15 +104,9 @@ export const StudentPracticeDetailTemplate: React.FC<
   const isLastQuestion = currentIndex === totalQuestions - 1;
 
   // Counts for confirm modal
-  const answeredCount = paletteItems.filter(
-    (p) => p.status === "answered",
-  ).length;
-  const flaggedCount = paletteItems.filter(
-    (p) => p.status === "flagged",
-  ).length;
-  const unansweredCount = paletteItems.filter(
-    (p) => p.status === "unanswered",
-  ).length;
+  const answeredCount = paletteItems.filter((p) => p.status === 'answered').length;
+  const flaggedCount = paletteItems.filter((p) => p.status === 'flagged').length;
+  const unansweredCount = paletteItems.filter((p) => p.status === 'unanswered').length;
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 pb-8">
@@ -139,35 +131,31 @@ export const StudentPracticeDetailTemplate: React.FC<
           )}
 
           {/* Question Body Depending on Type */}
-          {currentQuestion.type === "pilihan-ganda" && (
+          {currentQuestion.type === 'pilihan-ganda' && (
             <SingleChoiceQuestion
               questionNumber={currentQuestion.questionNumber}
               instruction={currentQuestion.instruction}
               promptCategory={currentQuestion.promptCategory}
               questionText={currentQuestion.questionText}
               options={currentQuestion.options || []}
-              selectedOptionId={
-                typeof currentAnswer === "string" ? currentAnswer : undefined
-              }
+              selectedOptionId={typeof currentAnswer === 'string' ? currentAnswer : undefined}
               onSelectOption={onSelectSingleChoice}
             />
           )}
 
-          {currentQuestion.type === "pilihan-ganda-kompleks" && (
+          {currentQuestion.type === 'pilihan-ganda-kompleks' && (
             <ComplexMultipleChoiceQuestion
               questionNumber={currentQuestion.questionNumber}
               instruction={currentQuestion.instruction}
               promptCategory={currentQuestion.promptCategory}
               questionText={currentQuestion.questionText}
               options={currentQuestion.options || []}
-              selectedOptionIds={
-                Array.isArray(currentAnswer) ? currentAnswer : []
-              }
+              selectedOptionIds={Array.isArray(currentAnswer) ? currentAnswer : []}
               onToggleOption={onToggleComplexChoice}
             />
           )}
 
-          {currentQuestion.type === "benar-salah" && (
+          {currentQuestion.type === 'benar-salah' && (
             <MatrixCategoryQuestion
               mode="BENAR_SALAH"
               questionNumber={currentQuestion.questionNumber}
@@ -176,8 +164,7 @@ export const StudentPracticeDetailTemplate: React.FC<
               questionText={currentQuestion.questionText}
               statements={currentQuestion.statements || []}
               answers={
-                typeof currentAnswer === "object" &&
-                !Array.isArray(currentAnswer)
+                typeof currentAnswer === 'object' && !Array.isArray(currentAnswer)
                   ? (currentAnswer as Record<string, string>)
                   : {}
               }
@@ -185,7 +172,7 @@ export const StudentPracticeDetailTemplate: React.FC<
             />
           )}
 
-          {currentQuestion.type === "tepat-tidak-tepat" && (
+          {currentQuestion.type === 'tepat-tidak-tepat' && (
             <MatrixCategoryQuestion
               mode="TEPAT_TIDAK_TEPAT"
               questionNumber={currentQuestion.questionNumber}
@@ -194,8 +181,7 @@ export const StudentPracticeDetailTemplate: React.FC<
               questionText={currentQuestion.questionText}
               statements={currentQuestion.statements || []}
               answers={
-                typeof currentAnswer === "object" &&
-                !Array.isArray(currentAnswer)
+                typeof currentAnswer === 'object' && !Array.isArray(currentAnswer)
                   ? (currentAnswer as Record<string, string>)
                   : {}
               }
@@ -203,7 +189,7 @@ export const StudentPracticeDetailTemplate: React.FC<
             />
           )}
 
-          {currentQuestion.type === "setuju-tidak-setuju" && (
+          {currentQuestion.type === 'setuju-tidak-setuju' && (
             <MatrixCategoryQuestion
               mode="SETUJU_TIDAK_SETUJU"
               questionNumber={currentQuestion.questionNumber}
@@ -212,8 +198,7 @@ export const StudentPracticeDetailTemplate: React.FC<
               questionText={currentQuestion.questionText}
               statements={currentQuestion.statements || []}
               answers={
-                typeof currentAnswer === "object" &&
-                !Array.isArray(currentAnswer)
+                typeof currentAnswer === 'object' && !Array.isArray(currentAnswer)
                   ? (currentAnswer as Record<string, string>)
                   : {}
               }
@@ -224,12 +209,12 @@ export const StudentPracticeDetailTemplate: React.FC<
           {/* Immediate Feedback Box (Lazy implementation) */}
           {feedback && feedback.isCorrect !== undefined && (
             <div
-              className={`mt-6 p-5 rounded-2xl border ${feedback.isCorrect ? "bg-teal-50 border-teal-200" : "bg-red-50 border-red-200"}`}
+              className={`mt-6 p-5 rounded-2xl border ${feedback.isCorrect ? 'bg-teal-50 border-teal-200' : 'bg-red-50 border-red-200'}`}
             >
               <div
-                className={`font-black text-lg mb-2 flex items-center gap-2 ${feedback.isCorrect ? "text-teal-800" : "text-red-800"}`}
+                className={`font-black text-lg mb-2 flex items-center gap-2 ${feedback.isCorrect ? 'text-teal-800' : 'text-red-800'}`}
               >
-                {feedback.isCorrect ? "Benar!" : "Salah!"}
+                {feedback.isCorrect ? 'Benar!' : 'Salah!'}
               </div>
               {feedback.explanation && (
                 <div
@@ -240,8 +225,7 @@ export const StudentPracticeDetailTemplate: React.FC<
               )}
               {feedback.answeringTips && (
                 <div className="text-sm text-slate-600 mt-3 font-medium bg-white/60 p-3 rounded-xl border border-white">
-                  <strong className="text-slate-800">Tips:</strong>{" "}
-                  {feedback.answeringTips}
+                  <strong className="text-slate-800">Tips:</strong> {feedback.answeringTips}
                 </div>
               )}
             </div>

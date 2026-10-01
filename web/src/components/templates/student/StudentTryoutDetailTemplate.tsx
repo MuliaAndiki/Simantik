@@ -23,14 +23,13 @@ export interface StudentTryoutDetailTemplateProps {
 
   question: TryoutQuestionItem;
   currentAnswer?: TryoutAnswerValue;
-  isFlagged?: boolean;
   isLastQuestion?: boolean;
   isSubmitting?: boolean;
   onSelectSingleChoice: (optionId: string) => void;
   onToggleComplexChoice: (optionId: string) => void;
   onSelectMatrixChoice: (statementId: string, value: string) => void;
-  onToggleFlag: () => void;
   onNext: () => void;
+  isNextDisabled?: boolean;
 
   paletteItems: TryoutPaletteItem[];
 
@@ -70,14 +69,13 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
 
   question,
   currentAnswer,
-  isFlagged,
   isLastQuestion,
   isSubmitting,
   onSelectSingleChoice,
   onToggleComplexChoice,
   onSelectMatrixChoice,
-  onToggleFlag,
   onNext,
+  isNextDisabled = false,
 
   paletteItems,
 
@@ -128,14 +126,13 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
           <TryoutQuestionCard
             question={question}
             currentAnswer={currentAnswer}
-            isFlagged={isFlagged}
             isLastQuestion={isLastQuestion}
             isSubmitting={isSubmitting}
             onSelectSingleChoice={onSelectSingleChoice}
             onToggleComplexChoice={onToggleComplexChoice}
             onSelectMatrixChoice={onSelectMatrixChoice}
-            onToggleFlag={onToggleFlag}
             onNext={onNext}
+            isNextDisabled={isNextDisabled}
           />
         </section>
 

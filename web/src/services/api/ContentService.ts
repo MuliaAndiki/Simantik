@@ -5,20 +5,26 @@ import type {
   CreateDocumentationRequest,
   CreateNewsRequest,
   CreateTestimonialRequest,
+  CreateTutorialRequest,
   DocumentationResponse,
   ListDocumentationFilter,
   ListNewsFilter,
   ListTestimonialFilter,
+  ListTutorialFilter,
   NewsResponse,
   PaginatedDocumentationResponse,
   PaginatedNewsResponse,
   PaginatedTestimonialsResponse,
+  PaginatedTutorialsResponse,
   TestimonialResponse,
+  TutorialResponse,
   UpdateDocumentationRequest,
   UpdateDocumentationStatusRequest,
   UpdateNewsRequest,
   UpdateNewsStatusRequest,
   UpdateTestimonialStatusRequest,
+  UpdateTutorialRequest,
+  UpdateTutorialStatusRequest,
 } from '@/types/service';
 import { buildQueryString } from '@/utils/query-string.util';
 import { toServiceResponse } from '@/utils/service.respone';
@@ -156,6 +162,75 @@ class ContentService {
     });
   }
 
+  // CMS Tutorials
+  public async CreateTutorialService(
+    payload: CreateTutorialRequest
+  ): Promise<TResponse<TutorialResponse>> {
+    const res = await getHttp().PostResponse<TutorialResponse>(
+      EndpointEntry.content.cmsTutorials,
+      payload
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+      statusCode: 201,
+    });
+  }
+
+  public async ListTutorialsCMSService(
+    filter?: ListTutorialFilter
+  ): Promise<TResponse<PaginatedTutorialsResponse>> {
+    const url = buildQueryString(
+      EndpointEntry.content.cmsTutorials,
+      filter as Record<string, unknown>
+    );
+    const res = await getHttp().GetResponse<PaginatedTutorialsResponse>(url);
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async GetTutorialDetailService(id: string): Promise<TResponse<TutorialResponse>> {
+    const res = await getHttp().GetResponse<TutorialResponse>(
+      EndpointEntry.content.cmsTutorialDetail(id)
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async UpdateTutorialService(
+    id: string,
+    payload: UpdateTutorialRequest
+  ): Promise<TResponse<TutorialResponse>> {
+    const res = await getHttp().PatchResponse<TutorialResponse>(
+      EndpointEntry.content.cmsTutorialDetail(id),
+      payload
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async UpdateTutorialStatusService(
+    id: string,
+    payload: UpdateTutorialStatusRequest
+  ): Promise<TResponse<TutorialResponse>> {
+    const res = await getHttp().PatchResponse<TutorialResponse>(
+      EndpointEntry.content.tutorialStatus(id),
+      payload
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async DeleteTutorialService(id: string): Promise<TResponse<null>> {
+    const res = await getHttp().DeleteResponse<null>(EndpointEntry.content.cmsTutorialDetail(id));
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
   // CMS Testimonials
   public async ListTestimonialsAdminService(
     filter?: ListTestimonialFilter
@@ -230,6 +305,28 @@ class ContentService {
   ): Promise<TResponse<DocumentationResponse>> {
     const res = await getHttp().PublicGetResponse<DocumentationResponse>(
       EndpointEntry.content.documentationBySlug(slug)
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async ListTutorialsPublicService(
+    filter?: ListTutorialFilter
+  ): Promise<TResponse<PaginatedTutorialsResponse>> {
+    const url = buildQueryString(
+      EndpointEntry.content.tutorials,
+      filter as Record<string, unknown>
+    );
+    const res = await getHttp().PublicGetResponse<PaginatedTutorialsResponse>(url);
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async GetTutorialBySlugService(slug: string): Promise<TResponse<TutorialResponse>> {
+    const res = await getHttp().PublicGetResponse<TutorialResponse>(
+      EndpointEntry.content.tutorialBySlug(slug)
     );
     return toServiceResponse(res, {
       message: res.message,

@@ -22,7 +22,6 @@ export interface TryoutCompletionCardProps {
   submittedAtFormatted?: string;
   isAutoSubmitted?: boolean;
   onBackToDashboard: () => void;
-  onReviewAnswers?: () => void;
   className?: string;
 }
 
@@ -36,19 +35,21 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
   submittedAtFormatted = 'Hari ini, 11:15 WIB',
   isAutoSubmitted = false,
   onBackToDashboard,
-  onReviewAnswers,
   className,
 }) => {
   const isAllAnswered = answeredCount >= totalQuestions;
 
   return (
     <div
-      className={cn('w-full max-w-xl mx-auto flex flex-col items-center select-none', className)}
+      className={cn(
+        'w-full max-w-2xl mx-auto flex flex-col items-center select-none px-3 sm:px-0',
+        className
+      )}
     >
       {/* Centered Master Card */}
-      <div className="w-full bg-white rounded-[32px] border border-slate-100 shadow-xl p-6 sm:p-9 flex flex-col items-center text-center gap-6">
+      <div className="w-full bg-white rounded-[28px] sm:rounded-[32px] border border-slate-100 shadow-xl p-5 sm:p-8 flex flex-col items-center text-center gap-5 sm:gap-6 overflow-hidden">
         {/* Top Avatar with Yellow Checkmark Badge */}
-        <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
+        <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center shrink-0">
           <Image
             src="/images/tryout-avatar-success.png"
             alt="Tryout Selesai"
@@ -60,13 +61,15 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
         </div>
 
         {/* Pill Badge */}
-        <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-[#EAF6F8] border border-cyan-200 text-teal-800 text-xs font-bold -mt-2">
-          <ShieldCheck className="w-3.5 h-3.5 text-teal-700" aria-hidden="true" />
-          <span className="uppercase tracking-wider">SIMANTIK TKA BAHASA INDONESIA</span>
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#EAF6F8] border border-cyan-200 text-teal-800 text-xs font-bold -mt-2 max-w-full min-w-0">
+          <ShieldCheck className="w-3.5 h-3.5 text-teal-700 shrink-0" aria-hidden="true" />
+          <span className="uppercase tracking-wider truncate max-w-[260px] sm:max-w-md">
+            {tryoutTitle}
+          </span>
         </div>
 
         {/* Title & Subtitle */}
-        <div className="-mt-1">
+        <div className="-mt-1 max-w-full">
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Tryout Selesai!
           </h1>
@@ -76,7 +79,7 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
 
           {/* Submission Timestamp Pill */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 font-medium mt-3">
-            <Clock className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true" />
             <span>Diserahkan pada: {submittedAtFormatted}</span>
           </div>
         </div>
@@ -84,12 +87,12 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
         {/* 2 Metric Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full text-left">
           {/* Card 1: Pengerjaan */}
-          <div className="p-4 rounded-2xl bg-[#F0FDF9] border border-teal-100/90 flex items-start gap-3">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#F0FDF9] border border-teal-100/90 flex items-start gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-cyan-100/80 text-teal-800 flex items-center justify-center shrink-0 mt-0.5">
               <CheckSquare className="w-5 h-5 text-teal-700" aria-hidden="true" />
             </div>
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
                 Pengerjaan
               </span>
               <span className="text-sm sm:text-base font-black text-slate-900 block mt-0.5">
@@ -104,12 +107,12 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
           </div>
 
           {/* Card 2: Durasi Sesi */}
-          <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-100/90 flex items-start gap-3">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-50/60 border border-amber-100/90 flex items-start gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
               <Clock className="w-5 h-5 text-amber-700" aria-hidden="true" />
             </div>
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
                 Durasi Sesi
               </span>
               <span className="text-sm sm:text-base font-black text-slate-900 block mt-0.5">
@@ -123,16 +126,16 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
         </div>
 
         {/* Status Saved Card */}
-        <div className="w-full p-4 rounded-2xl bg-[#EAF6F8]/80 border border-cyan-200/90 flex items-start gap-3.5 text-left">
+        <div className="w-full p-3.5 sm:p-4 rounded-2xl bg-[#EAF6F8]/80 border border-cyan-200/90 flex items-start gap-3.5 text-left min-w-0">
           <div className="w-8 h-8 rounded-xl bg-teal-700 text-white flex items-center justify-center shrink-0 mt-0.5">
             <Lock className="w-4 h-4" aria-hidden="true" />
           </div>
-          <div className="text-xs">
+          <div className="text-xs min-w-0 flex-1">
             <div className="font-bold text-teal-950 flex items-center gap-1.5">
               <span>
                 {isAutoSubmitted ? 'Sesi difinalisasi otomatis' : 'Jawaban berhasil disimpan'}
               </span>
-              <span className="w-2 h-2 rounded-full bg-teal-500" />
+              <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
             </div>
             <p className="text-[11px] text-slate-600 leading-relaxed mt-0.5">
               Seluruh jawaban kamu telah dikunci dan berhasil disimpan oleh sistem SIMANTIK. Tryout
@@ -142,11 +145,11 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
         </div>
 
         {/* Email Notification Card */}
-        <div className="w-full p-5 rounded-2xl bg-cyan-50/40 border border-cyan-100/80 text-left">
+        <div className="w-full p-4 sm:p-5 rounded-2xl bg-cyan-50/40 border border-cyan-100/80 text-left overflow-hidden">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-2 flex-1">
+            <div className="space-y-2 flex-1 min-w-0 w-full sm:w-auto">
               <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                <Mail className="w-4 h-4 text-teal-700" aria-hidden="true" />
+                <Mail className="w-4 h-4 text-teal-700 shrink-0" aria-hidden="true" />
                 <span>Hasil tryout akan dikirim</span>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
@@ -154,9 +157,9 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
               </p>
 
               {/* Email Address Capsule */}
-              <div className="p-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-slate-400" />
-                <span>{studentEmail}</span>
+              <div className="p-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 flex items-center gap-2 min-w-0 max-w-full overflow-hidden">
+                <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="min-w-0 break-all">{studentEmail}</span>
               </div>
 
               {/* You will receive section */}
@@ -166,15 +169,15 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
                 </span>
                 <div className="space-y-1 text-xs font-semibold text-slate-700">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
                     <span>Nilai hasil tryout</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
                     <span>Detail jawaban</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
                     <span>Pembahasan soal</span>
                   </div>
                 </div>
@@ -182,12 +185,12 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
             </div>
 
             {/* Student Illustration */}
-            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-white border border-cyan-100 p-1 flex items-center justify-center shadow-2xs shrink-0 self-center">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white border border-cyan-100 p-1 flex items-center justify-center shadow-2xs shrink-0 self-center sm:self-auto">
               <Image
                 src="/images/tryout-email-student.png"
                 alt="Pengiriman Hasil Tryout"
-                width={128}
-                height={128}
+                width={112}
+                height={112}
                 className="w-full h-full object-contain"
               />
             </div>
@@ -195,44 +198,14 @@ export const TryoutCompletionCard: React.FC<TryoutCompletionCardProps> = ({
         </div>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto print:hidden">
-          <Button
-            type="button"
-            onClick={() => window.print()}
-            className="w-full sm:w-auto h-12 px-6 rounded-full font-black text-slate-700 border-2 border-slate-300 bg-white hover:bg-slate-50 text-sm flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95"
-          >
-            <svg
-              aria-hidden="true"
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-              />
-            </svg>
-            Cetak Hasil
-          </Button>
-          {onReviewAnswers && (
-            <Button
-              type="button"
-              onClick={onReviewAnswers}
-              className="w-full sm:w-auto h-12 px-8 rounded-full font-black text-teal-900 border-2 border-teal-700 bg-white hover:bg-teal-50 text-sm flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95"
-            >
-              Pembahasan & Review Soal
-            </Button>
-          )}
+        <div className="w-full flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2.5 sm:gap-3 ">
           <Button
             type="button"
             onClick={onBackToDashboard}
-            className="w-full sm:w-auto h-12 px-8 rounded-full font-black text-slate-900 text-sm bg-[#F5B731] hover:bg-[#E5A721] shadow-xs flex items-center justify-center gap-2 border-0 cursor-pointer transition-transform active:scale-95"
+            className="w-full  px-4 sm:px-5 rounded-full font-black text-slate-900 text-xs sm:text-sm bg-[#F5B731] hover:bg-[#E5A721] shadow-xs flex items-center justify-center gap-2 border-0 cursor-pointer transition-transform active:scale-95 shrink-0"
           >
-            Kembali ke Dashboard
-            <ArrowRight className="w-4 h-4 ml-1" />
+            <span>Kembali ke Dashboard</span>
+            <ArrowRight className="w-4 h-4 ml-0.5 shrink-0" />
           </Button>
         </div>
       </div>

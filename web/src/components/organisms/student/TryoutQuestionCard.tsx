@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Bookmark, Check, Lock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Lock } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/atoms/button';
 import { RichHtml } from '@/components/atoms/rich-html';
@@ -13,28 +13,26 @@ import { cn } from '@/utils/classname';
 export interface TryoutQuestionCardProps {
   question: TryoutQuestionItem;
   currentAnswer?: TryoutAnswerValue;
-  isFlagged?: boolean;
   isLastQuestion?: boolean;
   isSubmitting?: boolean;
   onSelectSingleChoice: (optionId: string) => void;
   onToggleComplexChoice: (optionId: string) => void;
   onSelectMatrixChoice: (statementId: string, value: string) => void;
-  onToggleFlag: () => void;
   onNext: () => void;
+  isNextDisabled?: boolean;
   className?: string;
 }
 
 export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
   question,
   currentAnswer,
-  isFlagged = false,
   isLastQuestion = false,
   isSubmitting = false,
   onSelectSingleChoice,
   onToggleComplexChoice,
   onSelectMatrixChoice,
-  onToggleFlag,
   onNext,
+  isNextDisabled = false,
   className,
 }) => {
   const selectedSingle = typeof currentAnswer === 'string' ? currentAnswer : '';
@@ -255,29 +253,14 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
           <Lock className="w-3 h-3 text-slate-400 ml-0.5" aria-hidden="true" />
         </Button>
 
-        {/* Right Buttons: Tandai Ragu-ragu & Lanjut */}
+        {/* Right: Lanjut (tanpa lompat soal, tandai ragu-ragu tidak berlaku) */}
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          {/* Flag Toggle Button */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onToggleFlag}
-            className={cn(
-              'flex-1 sm:flex-none h-11 px-5 rounded-full font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer',
-              isFlagged
-                ? 'bg-[#50C8DC] text-white border-transparent'
-                : 'bg-[#EAF6F8] text-teal-800 border border-cyan-200 hover:bg-cyan-100/70'
-            )}
-          >
-            <Bookmark className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>{isFlagged ? 'Ragu-ragu Terpilih' : 'Tandai Ragu-ragu'}</span>
-          </Button>
-
           {/* Lanjut -> or Selesai Action Button */}
           <Button
             type="button"
             onClick={onNext}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isNextDisabled}
+            title={isNextDisabled ? 'Pilih jawaban dulu sebelum lanjut' : undefined}
             className="flex-1 sm:flex-none h-11 px-6 rounded-full bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs cursor-pointer border-0 transition-transform active:scale-95"
           >
             <span>{isLastQuestion ? 'Selesai & Kumpulkan' : 'Lanjut'}</span>

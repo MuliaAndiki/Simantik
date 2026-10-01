@@ -12,6 +12,7 @@ export * from './chart';
 export * from './command';
 export * from './countdown-digit';
 export * from './dialog';
+export * from './doodles/ScribbleDoodles';
 export * from './dropdown-menu';
 export * from './input';
 export * from './loading';

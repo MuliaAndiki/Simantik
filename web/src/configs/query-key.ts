@@ -101,12 +101,16 @@ export const queryKey = {
     cmsDocumentation: (query?: Record<string, any>) =>
       ['content', 'cmsDocumentation', query] as const,
     cmsDocumentationDetail: (id: string) => ['content', 'cmsDocumentationDetail', id] as const,
+    cmsTutorials: (query?: Record<string, any>) => ['content', 'cmsTutorials', query] as const,
+    cmsTutorialDetail: (id: string) => ['content', 'cmsTutorialDetail', id] as const,
     cmsTestimonials: (query?: Record<string, any>) =>
       ['content', 'cmsTestimonials', query] as const,
     news: (query?: Record<string, any>) => ['content', 'news', query] as const,
     newsBySlug: (slug: string) => ['content', 'newsBySlug', slug] as const,
     documentation: (query?: Record<string, any>) => ['content', 'documentation', query] as const,
     documentationBySlug: (slug: string) => ['content', 'documentationBySlug', slug] as const,
+    tutorials: (query?: Record<string, any>) => ['content', 'tutorials', query] as const,
+    tutorialBySlug: (slug: string) => ['content', 'tutorialBySlug', slug] as const,
     testimonials: (query?: Record<string, any>) => ['content', 'testimonials', query] as const,
   },
 

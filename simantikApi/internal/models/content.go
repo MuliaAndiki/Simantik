@@ -52,6 +52,32 @@ func (d *Documentation) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
+// Tutorial represents learning videos embedded via YouTube URL.
+type Tutorial struct {
+	ID              uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
+	Title           string         `gorm:"type:varchar(255);not null" json:"title"`
+	Slug            string         `gorm:"type:varchar(255);not null;uniqueIndex" json:"slug"`
+	Description     string         `gorm:"type:text" json:"description"`
+	YoutubeURL      string         `gorm:"type:varchar(500);not null" json:"youtubeUrl"`
+	DurationSeconds int            `gorm:"not null;default:0" json:"durationSeconds"`
+	Category        string         `gorm:"type:varchar(100);not null;index" json:"category"`
+	Jenjang         SchoolLevel    `gorm:"column:jenjang;type:varchar(20);not null;default:'sma'" json:"jenjang"`
+	Status          ContentStatus  `gorm:"type:varchar(20);not null;default:'draft';index" json:"status"`
+	PublishedAt     *time.Time     `json:"publishedAt"`
+	CreatedBy       uuid.UUID      `gorm:"type:uuid;not null;index" json:"createdBy"`
+	UpdatedBy       *uuid.UUID     `gorm:"type:uuid" json:"updatedBy"`
+	CreatedAt       time.Time      `json:"createdAt"`
+	UpdatedAt       time.Time      `json:"updatedAt"`
+	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+func (t *Tutorial) BeforeCreate(tx *gorm.DB) error {
+	if t.ID == uuid.Nil {
+		t.ID = uuid.New()
+	}
+	return nil
+}
+
 // TestimonialStatus represents the moderation state of a student testimonial.
 type TestimonialStatus string
 

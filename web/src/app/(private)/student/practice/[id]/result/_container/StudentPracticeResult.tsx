@@ -190,7 +190,7 @@ export function StudentPracticeResult() {
           opt.is_selected ||
             (rev.selected_option_id &&
               opt.id?.toLowerCase() === rev.selected_option_id?.toLowerCase()) ||
-            (rev.answer_data && rev.answer_data.toLowerCase().includes(opt.id?.toLowerCase())) ||
+            rev.answer_data?.toLowerCase().includes(opt.id?.toLowerCase()) ||
             (opt.option_label && rev.answer_data === opt.option_label)
         );
 

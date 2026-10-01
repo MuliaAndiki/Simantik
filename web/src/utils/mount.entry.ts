@@ -15,6 +15,7 @@ export const mountEntry = {
   cms: '/cms',
   news: '/news',
   documentation: '/documentation',
+  tutorials: '/tutorials',
   testimonials: '/testimonials',
   notifications: '/notifications',
   reports: '/reports',

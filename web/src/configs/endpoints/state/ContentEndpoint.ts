@@ -7,6 +7,9 @@ export const ContentEndpoint = {
   cmsDocumentation: `${mountEntry.cms}/documentation`,
   cmsDocumentationDetail: (id: string) => `${mountEntry.cms}/documentation/${id}`,
   cmsDocumentationStatus: (id: string) => `${mountEntry.cms}/documentation/${id}/status`,
+  cmsTutorials: `${mountEntry.cms}/tutorials`,
+  cmsTutorialDetail: (id: string) => `${mountEntry.cms}/tutorials/${id}`,
+  tutorialStatus: (id: string) => `${mountEntry.cms}/tutorials/${id}/status`,
   cmsTestimonials: `${mountEntry.cms}/testimonials`,
   cmsTestimonialStatus: (id: string) => `${mountEntry.cms}/testimonials/${id}/status`,
   cmsTestimonialDelete: (id: string) => `${mountEntry.cms}/testimonials/${id}`,
@@ -14,5 +17,7 @@ export const ContentEndpoint = {
   newsBySlug: (slug: string) => `${mountEntry.news}/${slug}`,
   documentation: `${mountEntry.documentation}`,
   documentationBySlug: (slug: string) => `${mountEntry.documentation}/${slug}`,
+  tutorials: `${mountEntry.tutorials}`,
+  tutorialBySlug: (slug: string) => `${mountEntry.tutorials}/${slug}`,
   testimonials: `${mountEntry.testimonials}`,
 } as const;

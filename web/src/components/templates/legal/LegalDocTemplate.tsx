@@ -39,12 +39,12 @@ export function LegalDocTemplate({
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between text-slate-800 selection:bg-teal-100 selection:text-teal-900">
+    <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-between text-slate-800 selection:bg-teal-100 selection:text-teal-900">
       {/* Top Main Navbar */}
       <LegalDocNavbar />
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1">
+      <main className="max-w-7xl w-fit mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1">
         {/* Mobile Route Switcher Tabs */}
         <div className="md:hidden flex items-center gap-2 overflow-x-auto pb-4 mb-4 scrollbar-none print:hidden">
           {navTabs.map((tab) => {

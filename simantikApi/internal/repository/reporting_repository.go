@@ -130,14 +130,37 @@ func (r *reportingRepository) GetStudentTrend(ctx context.Context, userID uuid.U
 	}
 
 	var rows []trendRow
-	err := r.db.WithContext(ctx).Table("tryout_attempts").
-		Select("tryout_attempts.id AS attempt_id, tryout_attempts.tryout_id, tryouts.title AS tryout_title, tryout_attempts.score, evaluations.accuracy, tryout_attempts.submitted_at").
-		Joins("JOIN tryouts ON tryouts.id = tryout_attempts.tryout_id").
-		Joins("LEFT JOIN evaluations ON evaluations.source_id = tryout_attempts.id").
-		Where("tryout_attempts.user_id = ? AND tryout_attempts.status = ?", userID, models.AttemptStatusCompleted).
-		Order("tryout_attempts.submitted_at ASC").
-		Limit(10).
-		Scan(&rows).Error
+	// Tren gabungan tryout + practice: siswa yang riwayatnya dominan latihan
+	// sebelumnya selalu dapat tren kosong. COALESCE menjaga scan dari NULL
+	// (package_id/title bisa NULL pada practice tanpa paket).
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT attempt_id, tryout_id, tryout_title, score, accuracy, submitted_at FROM (
+			SELECT tryout_attempts.id AS attempt_id,
+				tryout_attempts.tryout_id AS tryout_id,
+				tryouts.title AS tryout_title,
+				tryout_attempts.score AS score,
+				evaluations.accuracy AS accuracy,
+				tryout_attempts.submitted_at AS submitted_at
+			FROM tryout_attempts
+			JOIN tryouts ON tryouts.id = tryout_attempts.tryout_id
+			LEFT JOIN evaluations ON evaluations.source_id = tryout_attempts.id
+			WHERE tryout_attempts.user_id = ? AND tryout_attempts.status = ?
+			UNION ALL
+			SELECT practices.id AS attempt_id,
+				COALESCE(practices.package_id, '00000000-0000-0000-0000-000000000000') AS tryout_id,
+				COALESCE(practice_packages.title, 'Latihan') AS tryout_title,
+				practices.score AS score,
+				NULL AS accuracy,
+				practices.completed_at AS submitted_at
+			FROM practices
+			LEFT JOIN practice_packages ON practice_packages.id = practices.package_id
+			WHERE practices.user_id = ? AND practices.status = ?
+		) AS combined
+		ORDER BY submitted_at ASC NULLS LAST
+		LIMIT 10`,
+		userID, models.AttemptStatusCompleted,
+		userID, models.AttemptStatusCompleted,
+	).Scan(&rows).Error
 	if err != nil {
 		return nil, err
 	}

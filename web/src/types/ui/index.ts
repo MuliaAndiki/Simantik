@@ -30,6 +30,7 @@ export * from './practice.types';
 export * from './practice-manager.types';
 export * from './practice-question-editor.types';
 export * from './practice-result.types';
+export * from './public.types';
 export * from './tryout.types';
 export * from './tryout-manager.types';
 export * from './tryout-question-editor.types';

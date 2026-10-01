@@ -32,7 +32,7 @@ export interface TryoutQuestionItem {
   difficultyLevel?: number;
 }
 
-export type TryoutPaletteStatus = 'answered' | 'active' | 'flagged' | 'locked';
+export type TryoutPaletteStatus = 'answered' | 'active' | 'locked';
 
 export interface TryoutPaletteItem {
   number: number;

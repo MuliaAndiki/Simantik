@@ -106,6 +106,65 @@ type PaginatedDocumentationResponse struct {
 	Offset        int                     `json:"offset"`
 }
 
+// ─── Tutorial DTOs ───────────────────────────────────────────────────────────
+
+type CreateTutorialRequest struct {
+	Title           string `json:"title" validate:"required,min=3,max=255"`
+	Slug            string `json:"slug" validate:"omitempty,min=3,max=255"`
+	Description     string `json:"description"`
+	YoutubeURL      string `json:"youtube_url" validate:"required"`
+	DurationSeconds int    `json:"duration_seconds" validate:"gte=0"`
+	Category        string `json:"category" validate:"required,min=2,max=100"`
+	Status          string `json:"status" validate:"omitempty,oneof=draft review published archived"`
+}
+
+type UpdateTutorialRequest struct {
+	Title           string `json:"title" validate:"omitempty,min=3,max=255"`
+	Slug            string `json:"slug" validate:"omitempty,min=3,max=255"`
+	Description     string `json:"description"`
+	YoutubeURL      string `json:"youtube_url" validate:"omitempty"`
+	DurationSeconds *int   `json:"duration_seconds" validate:"omitempty,gte=0"`
+	Category        string `json:"category" validate:"omitempty,min=2,max=100"`
+	Status          string `json:"status" validate:"omitempty,oneof=draft review published archived"`
+}
+
+type UpdateTutorialStatusRequest struct {
+	Status string `json:"status" validate:"required,oneof=draft review published archived"`
+}
+
+type TutorialResponse struct {
+	ID              uuid.UUID  `json:"id"`
+	Title           string     `json:"title"`
+	Slug            string     `json:"slug"`
+	Description     string     `json:"description"`
+	YoutubeURL      string     `json:"youtube_url"`
+	YoutubeEmbedURL string     `json:"youtube_embed_url"`
+	DurationSeconds int        `json:"duration_seconds"`
+	Category        string     `json:"category"`
+	Jenjang         string     `json:"jenjang"`
+	Status          string     `json:"status"`
+	PublishedAt     *time.Time `json:"published_at"`
+	CreatedBy       uuid.UUID  `json:"created_by"`
+	UpdatedBy       *uuid.UUID `json:"updated_by"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+}
+
+type ListTutorialFilter struct {
+	Search   string `query:"search"`
+	Category string `query:"category"`
+	Status   string `query:"status"`
+	Limit    int    `query:"limit"`
+	Offset   int    `query:"offset"`
+}
+
+type PaginatedTutorialsResponse struct {
+	Tutorials []TutorialResponse `json:"tutorials"`
+	Total     int64              `json:"total"`
+	Limit     int                `json:"limit"`
+	Offset    int                `json:"offset"`
+}
+
 // ─── Testimonial DTOs ────────────────────────────────────────────────────────
 
 type CreateTestimonialRequest struct {
