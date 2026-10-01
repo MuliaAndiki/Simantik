@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { PublicPageLoader } from '@/components/atoms/loading';
 import { PrivacyPage } from '@/components/page/legal/PrivacyPage';
 import { useApi } from '@/hooks/useApi';
 import { mapDocumentationToLegalDoc } from '@/utils/legal-doc.mapper';
@@ -77,10 +78,10 @@ export default function PrivacyContainer() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col w-full items-center justify-center min-h-[60vh] space-y-4">
-        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-semibold text-slate-600">Memuat kebijakan privasi...</p>
-      </div>
+      <PublicPageLoader
+        label="Memuat Kebijakan Privasi..."
+        sublabel="Menyiapkan dokumen legalitas dan privasi SIMANTIK..."
+      />
     );
   }
 

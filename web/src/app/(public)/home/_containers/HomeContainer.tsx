@@ -6,6 +6,7 @@ import { LandingPage } from '@/components/page/public/LandingPage';
 import { DEFAULT_LANDING_DATA } from '@/configs/public-data';
 import { useApi } from '@/hooks/useApi';
 import type { LandingNewsItem, LandingPageData } from '@/types/ui';
+import PublicLoading from '../../loading';
 
 export function HomeContainer() {
   const { content } = useApi();
@@ -43,7 +44,7 @@ export function HomeContainer() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <CardGridSkeleton count={6} />
+        <PublicLoading  />
       </div>
     );
   }

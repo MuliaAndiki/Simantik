@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CardGridSkeleton } from '@/components/atoms/loading';
+import { PublicPageLoader } from '@/components/atoms/loading';
 import {
   type PlayingVideo,
   VideoPlayerModal,
@@ -84,12 +84,13 @@ export function TutorialsContainer() {
     setPlaying({ id: found.id, title: found.title, videoUrl: found.videoUrl });
   };
 
-  // Skeleton saat fetch pertama — jangan tampilkan data contoh.
+  // Loading saat fetch pertama — tampilkan animasi logo loader premium.
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <CardGridSkeleton count={6} />
-      </div>
+      <PublicPageLoader
+        label="Memuat Video Tutorial..."
+        sublabel="Menyiapkan direktori video panduan belajar SIMANTIK..."
+      />
     );
   }
 
