@@ -26,8 +26,6 @@ export function TutorialHeroSearch({
   return (
     <section className="relative overflow-hidden pt-12 pb-10 bg-linear-to-b from-cyan-50/50 via-white to-white text-center">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-
-      
         {/* Heading */}
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
           Tutorial <span className="text-teal-800">SIMANTIK</span>
