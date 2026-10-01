@@ -1,13 +1,12 @@
 'use client';
 
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useMemo } from 'react';
 import StudentTryoutResultPage from '@/components/page/private/student/StudentTryoutResultPage';
 import { useApi } from '@/hooks/useApi';
 
 export function StudentTryoutResult() {
   const router = useRouter();
-  const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const attemptId = searchParams.get('attemptId');
 
@@ -54,12 +53,6 @@ export function StudentTryoutResult() {
     router.push('/student/dashboard');
   };
 
-  const handleReviewAnswers = () => {
-    if (attemptId) {
-      router.push(`/student/tryout/${params.id}/review?attemptId=${attemptId}`);
-    }
-  };
-
   return (
     <StudentTryoutResultPage
       tryoutTitle={tryoutTitle}
@@ -71,7 +64,6 @@ export function StudentTryoutResult() {
       submittedAtFormatted={submittedAtFormatted}
       isAutoSubmitted={Boolean(isAutoSubmitted)}
       onBackToDashboard={handleBackToDashboard}
-      onReviewAnswers={handleReviewAnswers}
     />
   );
 }

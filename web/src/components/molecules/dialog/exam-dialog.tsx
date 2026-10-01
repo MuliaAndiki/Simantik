@@ -29,7 +29,7 @@ export function ExamDialogShell({
     >
       <DialogContent
         className={cn(
-          'w-full rounded-[28px] bg-white border border-slate-100 shadow-2xl [&>button]:hidden',
+          'w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[28px] bg-white border border-slate-100 shadow-2xl [&>button]:hidden',
           contentClassName
         )}
         overlayClassName="bg-slate-950/70 backdrop-blur-sm fixed inset-0 z-50"

@@ -372,6 +372,188 @@ func (h *ContentHandler) ListDocumentationPublic(c *fiber.Ctx) error {
 	return utils.OK(c, "documentation retrieved successfully", res)
 }
 
+// ─── Tutorial Endpoints ──────────────────────────────────────────────────────
+
+// CreateTutorial handles POST /api/v1/cms/tutorials.
+func (h *ContentHandler) CreateTutorial(c *fiber.Ctx) error {
+	var req dto.CreateTutorialRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid request body", err)
+	}
+	if errs := utils.ValidateStruct(req); errs != nil {
+		return utils.ValidationError(c, errs)
+	}
+
+	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
+	if !ok {
+		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
+	}
+
+	res, err := h.contentService.CreateTutorial(c.UserContext(), req, userID)
+	if err != nil {
+		if errors.Is(err, service.ErrTutorialSlugExists) {
+			return utils.Error(c, fiber.StatusConflict, "tutorial slug already in use", err)
+		}
+		if errors.Is(err, service.ErrInvalidYoutubeURL) {
+			return utils.Error(c, fiber.StatusBadRequest, "invalid youtube url", err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to create tutorial", err)
+	}
+
+	return utils.Created(c, "tutorial created successfully", res)
+}
+
+// GetTutorialByID handles GET /api/v1/cms/tutorials/:id.
+func (h *ContentHandler) GetTutorialByID(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid tutorial id", err)
+	}
+
+	res, err := h.contentService.GetTutorialByID(c.UserContext(), id)
+	if err != nil {
+		if errors.Is(err, service.ErrTutorialNotFound) {
+			return utils.Error(c, fiber.StatusNotFound, "tutorial not found", err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to get tutorial", err)
+	}
+
+	return utils.OK(c, "tutorial retrieved successfully", res)
+}
+
+// GetTutorialBySlug handles GET /api/v1/tutorials/:slug.
+func (h *ContentHandler) GetTutorialBySlug(c *fiber.Ctx) error {
+	slug := c.Params("slug")
+	if slug == "" {
+		return utils.Error(c, fiber.StatusBadRequest, "slug is required", errors.New("missing slug"))
+	}
+
+	res, err := h.contentService.GetTutorialBySlug(c.UserContext(), slug)
+	if err != nil {
+		if errors.Is(err, service.ErrTutorialNotFound) {
+			return utils.Error(c, fiber.StatusNotFound, "tutorial not found", err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to get tutorial", err)
+	}
+
+	return utils.OK(c, "tutorial retrieved successfully", res)
+}
+
+// UpdateTutorial handles PATCH /api/v1/cms/tutorials/:id.
+func (h *ContentHandler) UpdateTutorial(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid tutorial id", err)
+	}
+
+	var req dto.UpdateTutorialRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid request body", err)
+	}
+	if errs := utils.ValidateStruct(req); errs != nil {
+		return utils.ValidationError(c, errs)
+	}
+
+	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
+	if !ok {
+		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
+	}
+
+	res, err := h.contentService.UpdateTutorial(c.UserContext(), id, req, userID)
+	if err != nil {
+		if errors.Is(err, service.ErrTutorialNotFound) {
+			return utils.Error(c, fiber.StatusNotFound, "tutorial not found", err)
+		}
+		if errors.Is(err, service.ErrTutorialSlugExists) {
+			return utils.Error(c, fiber.StatusConflict, "tutorial slug already in use", err)
+		}
+		if errors.Is(err, service.ErrInvalidYoutubeURL) {
+			return utils.Error(c, fiber.StatusBadRequest, "invalid youtube url", err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to update tutorial", err)
+	}
+
+	return utils.OK(c, "tutorial updated successfully", res)
+}
+
+// UpdateTutorialStatus handles PATCH /api/v1/cms/tutorials/:id/status.
+func (h *ContentHandler) UpdateTutorialStatus(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid tutorial id", err)
+	}
+
+	var req dto.UpdateTutorialStatusRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid request body", err)
+	}
+	if errs := utils.ValidateStruct(req); errs != nil {
+		return utils.ValidationError(c, errs)
+	}
+
+	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
+	if !ok {
+		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
+	}
+
+	res, err := h.contentService.UpdateTutorialStatus(c.UserContext(), id, req.Status, userID)
+	if err != nil {
+		if errors.Is(err, service.ErrTutorialNotFound) {
+			return utils.Error(c, fiber.StatusNotFound, "tutorial not found", err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to update tutorial status", err)
+	}
+
+	return utils.OK(c, "tutorial status updated successfully", res)
+}
+
+// DeleteTutorial handles DELETE /api/v1/cms/tutorials/:id.
+func (h *ContentHandler) DeleteTutorial(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid tutorial id", err)
+	}
+
+	if err := h.contentService.DeleteTutorial(c.UserContext(), id); err != nil {
+		if errors.Is(err, service.ErrTutorialNotFound) {
+			return utils.Error(c, fiber.StatusNotFound, "tutorial not found", err)
+		}
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to delete tutorial", err)
+	}
+
+	return utils.OK(c, "tutorial deleted successfully", nil)
+}
+
+// ListTutorialsAdmin handles GET /api/v1/cms/tutorials.
+func (h *ContentHandler) ListTutorialsAdmin(c *fiber.Ctx) error {
+	var filter dto.ListTutorialFilter
+	if err := c.QueryParser(&filter); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid query parameters", err)
+	}
+
+	res, err := h.contentService.ListTutorialAdmin(c.UserContext(), filter)
+	if err != nil {
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to list tutorials", err)
+	}
+
+	return utils.OK(c, "tutorials retrieved successfully", res)
+}
+
+// ListTutorialsPublic handles GET /api/v1/tutorials.
+func (h *ContentHandler) ListTutorialsPublic(c *fiber.Ctx) error {
+	var filter dto.ListTutorialFilter
+	if err := c.QueryParser(&filter); err != nil {
+		return utils.Error(c, fiber.StatusBadRequest, "invalid query parameters", err)
+	}
+
+	res, err := h.contentService.ListTutorialPublic(c.UserContext(), filter)
+	if err != nil {
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to list tutorials", err)
+	}
+
+	return utils.OK(c, "tutorials retrieved successfully", res)
+}
+
 // ─── Testimonial Endpoints ───────────────────────────────────────────────────
 
 // CreateTestimonial handles POST /api/v1/testimonials.

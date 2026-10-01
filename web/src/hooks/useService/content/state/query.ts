@@ -5,6 +5,7 @@ import type {
   ListDocumentationFilter,
   ListNewsFilter,
   ListTestimonialFilter,
+  ListTutorialFilter,
 } from '@/types/service';
 
 export function useCmsNewsList(query?: ListNewsFilter, options?: { enabled?: boolean }) {
@@ -48,6 +49,28 @@ export function useCmsDocumentationDetail(id: string, options?: { enabled?: bool
     queryKey: queryKey.content.cmsDocumentationDetail(id),
     queryFn: async () => {
       const res = await Api.content.GetDocumentationByIdService(id);
+      return res.data;
+    },
+    enabled: !!id && (options?.enabled ?? true),
+  });
+}
+
+export function useCmsTutorialList(query?: ListTutorialFilter, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.content.cmsTutorials(query),
+    queryFn: async () => {
+      const res = await Api.content.ListTutorialsCMSService(query);
+      return res.data;
+    },
+    enabled: options?.enabled,
+  });
+}
+
+export function useCmsTutorialDetail(id: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.content.cmsTutorialDetail(id),
+    queryFn: async () => {
+      const res = await Api.content.GetTutorialDetailService(id);
       return res.data;
     },
     enabled: !!id && (options?.enabled ?? true),
@@ -109,6 +132,28 @@ export function usePublicDocumentationBySlug(slug: string, options?: { enabled?:
     queryKey: queryKey.content.documentationBySlug(slug),
     queryFn: async () => {
       const res = await Api.content.GetDocumentationBySlugService(slug);
+      return res.data;
+    },
+    enabled: !!slug && (options?.enabled ?? true),
+  });
+}
+
+export function usePublicTutorialList(query?: ListTutorialFilter, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.content.tutorials(query),
+    queryFn: async () => {
+      const res = await Api.content.ListTutorialsPublicService(query);
+      return res.data;
+    },
+    enabled: options?.enabled,
+  });
+}
+
+export function usePublicTutorialBySlug(slug: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.content.tutorialBySlug(slug),
+    queryFn: async () => {
+      const res = await Api.content.GetTutorialBySlugService(slug);
       return res.data;
     },
     enabled: !!slug && (options?.enabled ?? true),

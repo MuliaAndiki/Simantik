@@ -41,6 +41,7 @@ func AllModels() []interface{} {
 		&Recommendation{},
 		&News{},
 		&Documentation{},
+		&Tutorial{},
 		&Testimonial{},
 		&AuditLog{},
 		&Notification{},

@@ -201,7 +201,7 @@ func TestContentService_News(t *testing.T) {
 	newsRepo := newMockNewsRepo()
 	docRepo := newMockDocRepo()
 	testRepo := newMockTestimonialRepo()
-	svc := service.NewContentService(newsRepo, docRepo, testRepo)
+	svc := service.NewContentService(newsRepo, docRepo, testRepo, newMockTutorialRepo())
 
 	authorID := uuid.New()
 
@@ -268,7 +268,7 @@ func TestContentService_Documentation(t *testing.T) {
 	newsRepo := newMockNewsRepo()
 	docRepo := newMockDocRepo()
 	testRepo := newMockTestimonialRepo()
-	svc := service.NewContentService(newsRepo, docRepo, testRepo)
+	svc := service.NewContentService(newsRepo, docRepo, testRepo, newMockTutorialRepo())
 
 	authorID := uuid.New()
 
@@ -300,7 +300,7 @@ func TestContentService_Testimonials(t *testing.T) {
 	newsRepo := newMockNewsRepo()
 	docRepo := newMockDocRepo()
 	testRepo := newMockTestimonialRepo()
-	svc := service.NewContentService(newsRepo, docRepo, testRepo)
+	svc := service.NewContentService(newsRepo, docRepo, testRepo, newMockTutorialRepo())
 
 	studentID := uuid.New()
 

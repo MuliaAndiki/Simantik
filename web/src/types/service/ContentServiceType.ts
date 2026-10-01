@@ -154,6 +154,91 @@ export interface PaginatedDocumentationResponse {
 }
 
 // ============================================================================
+// Tutorial CMS DTOs
+// ============================================================================
+
+/**
+ * Payload for creating tutorial videos (YouTube)
+ * Maps to backend: `dto.CreateTutorialRequest`
+ */
+export interface CreateTutorialRequest {
+  title: string;
+  slug?: string;
+  description?: string;
+  youtube_url: string;
+  duration_seconds?: number;
+  category: string;
+  status?: ContentStatus | string;
+}
+
+/**
+ * Payload for updating tutorial videos
+ * Maps to backend: `dto.UpdateTutorialRequest`
+ */
+export interface UpdateTutorialRequest {
+  title?: string;
+  slug?: string;
+  description?: string;
+  youtube_url?: string;
+  duration_seconds?: number;
+  category?: string;
+  status?: ContentStatus | string;
+}
+
+/**
+ * Payload for updating tutorial status
+ * Maps to backend: `dto.UpdateTutorialStatusRequest`
+ */
+export interface UpdateTutorialStatusRequest {
+  status: ContentStatus | string;
+}
+
+/**
+ * Tutorial video representation
+ * Maps to backend: `dto.TutorialResponse`
+ */
+export interface TutorialResponse {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  youtube_url: string;
+  youtube_embed_url: string;
+  duration_seconds: number;
+  category: string;
+  jenjang: string;
+  status: string;
+  published_at: string | null;
+  created_by: string;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Query filter for tutorial videos
+ * Maps to backend: `dto.ListTutorialFilter`
+ */
+export interface ListTutorialFilter {
+  search?: string;
+  category?: string;
+  status?: ContentStatus | string;
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Paginated tutorials response
+ * Maps to backend: `dto.PaginatedTutorialsResponse`
+ */
+export interface PaginatedTutorialsResponse {
+  tutorials: TutorialResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// ============================================================================
 // Testimonial CMS DTOs
 // ============================================================================
 
@@ -221,5 +306,7 @@ export type NewsApiResponse = ApiResponse<NewsResponse>;
 export type PaginatedNewsApiResponse = ApiResponse<PaginatedNewsResponse>;
 export type DocumentationApiResponse = ApiResponse<DocumentationResponse>;
 export type PaginatedDocumentationApiResponse = ApiResponse<PaginatedDocumentationResponse>;
+export type TutorialApiResponse = ApiResponse<TutorialResponse>;
+export type PaginatedTutorialsApiResponse = ApiResponse<PaginatedTutorialsResponse>;
 export type TestimonialApiResponse = ApiResponse<TestimonialResponse>;
 export type PaginatedTestimonialsApiResponse = ApiResponse<PaginatedTestimonialsResponse>;

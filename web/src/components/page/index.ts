@@ -12,7 +12,6 @@ export * from './private/content_manager/ContentManagerDashboardPage';
 export * from './private/content_manager/MaterialCreatePage';
 export * from './private/content_manager/MaterialListPage';
 export * from './private/student/DashboardStudentPage';
-
 export * from './private/student/StudentEvaluationPage';
 export * from './private/student/StudentLearningDetailPage';
 export * from './private/student/StudentLearningPage';
@@ -21,3 +20,7 @@ export * from './private/student/StudentPracticePage';
 export * from './private/student/StudentTryoutDetailPage';
 export * from './private/student/StudentTryoutPage';
 export * from './private/student/StudentTryoutResultPage';
+export * from './public/DocumentationPage';
+export * from './public/LandingPage';
+export * from './public/TestimonialsPage';
+export * from './public/TutorialsPage';
