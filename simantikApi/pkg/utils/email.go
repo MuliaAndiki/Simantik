@@ -151,7 +151,7 @@ func (r *resendEmailSender) send(ctx context.Context, toEmail, subject, htmlBody
 	if err != nil {
 		return fmt.Errorf("failed to send email via Resend: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
 		respBody, _ := io.ReadAll(resp.Body)
@@ -360,7 +360,7 @@ func renderEmailQuestionCard(q TryoutQuestionEmailItem) string {
 			if row.IsCorrect {
 				mark = `<span style="color:#0F766E; font-weight:800;">&#10004;</span>`
 			}
-			rows.WriteString(fmt.Sprintf(`
+			fmt.Fprintf(&rows, `
 			<tr>
 				<td style="padding: 8px 10px; border-bottom: 1px solid #E2E8F0; font-size: 12px; color: #1E293B;">%s</td>
 				<td style="padding: 8px 10px; border-bottom: 1px solid #E2E8F0; font-size: 12px; text-align: center; color: #0F766E; font-weight: 700;">%s</td>
@@ -371,7 +371,7 @@ func renderEmailQuestionCard(q TryoutQuestionEmailItem) string {
 				html.EscapeString(row.UserChoice),
 				html.EscapeString(row.CorrectKey),
 				mark,
-			))
+			)
 		}
 		answerBox = fmt.Sprintf(`
 		<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden; margin-top: 4px;">
@@ -485,7 +485,7 @@ func renderEmailFeedback(materials []TryoutMaterialEmailItem, practices []string
 		if strings.TrimSpace(m.Reason) != "" {
 			reason = fmt.Sprintf(`<div style="font-size: 11px; color: #64748B; margin-top: 4px; line-height: 1.5;">%s</div>`, html.EscapeString(m.Reason))
 		}
-		items.WriteString(fmt.Sprintf(`
+		fmt.Fprintf(&items, `
 		<div style="background-color: #ffffff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;">
 			<div style="font-size: 13px; font-weight: 800; color: #0F172A;">
 				<span style="display: inline-block; min-width: 22px; height: 22px; background-color: #FEF3C7; color: #92400E; border-radius: 50%%; text-align: center; line-height: 22px; font-size: 11px; margin-right: 6px; padding: 0 4px;">%d</span>
@@ -496,17 +496,17 @@ func renderEmailFeedback(materials []TryoutMaterialEmailItem, practices []string
 			i+1,
 			html.EscapeString(m.Title),
 			reason,
-		))
+		)
 	}
 
 	practiceHTML := ""
 	if len(practices) > 0 {
 		var rows strings.Builder
 		for _, name := range practices {
-			rows.WriteString(fmt.Sprintf(`
+			fmt.Fprintf(&rows, `
 			<div style="background-color: #ffffff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: #0F766E;">
 				&#10004; Kerjakan latihan: %s
-			</div>`, html.EscapeString(name)))
+			</div>`, html.EscapeString(name))
 		}
 		practiceHTML = fmt.Sprintf(`
 		<div style="font-size: 13px; font-weight: 800; color: #0F172A; margin: 18px 0 10px 0;">Latihan yang perlu dikerjakan</div>

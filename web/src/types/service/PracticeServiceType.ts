@@ -142,6 +142,7 @@ export interface PracticeAnswerReviewItem {
   question_number: number;
   question_id: string;
   question_text: string;
+  stimulus?: { id: string; title: string; content: string } | null;
   competencies: CompetencyResponse[];
   options: OptionReviewResponse[];
   selected_option_id: string | null;

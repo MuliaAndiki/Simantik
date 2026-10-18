@@ -48,9 +48,11 @@ type practiceService struct {
 	evaluationRepo repository.EvaluationRepository
 	resolver       *JenjangResolver
 	recService     RecommendationService
+	stimulusRepo   repository.StimulusRepository
 }
 
 // NewPracticeService constructs a PracticeService with required dependencies.
+// Optional trailing args: repository.StimulusRepository (per-package stimulus scope).
 func NewPracticeService(
 	db *gorm.DB,
 	practiceRepo repository.PracticeRepository,
@@ -58,8 +60,9 @@ func NewPracticeService(
 	evaluationRepo repository.EvaluationRepository,
 	resolver *JenjangResolver,
 	recService RecommendationService,
+	optional ...interface{},
 ) PracticeService {
-	return &practiceService{
+	s := &practiceService{
 		db:             db,
 		practiceRepo:   practiceRepo,
 		questionRepo:   questionRepo,
@@ -67,6 +70,12 @@ func NewPracticeService(
 		resolver:       resolver,
 		recService:     recService,
 	}
+	for _, opt := range optional {
+		if repo, ok := opt.(repository.StimulusRepository); ok {
+			s.stimulusRepo = repo
+		}
+	}
+	return s
 }
 
 // ─── Package Management ──────────────────────────────────────────────────────
@@ -241,6 +250,10 @@ func (s *practiceService) AddQuestionsToPackage(ctx context.Context, packageID u
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrPracticePackageNotFound
 		}
+		return nil, err
+	}
+
+	if err := EnsureQuestionsPackageScope(ctx, s.questionRepo, s.stimulusRepo, "practice", packageID, req.QuestionIDs); err != nil {
 		return nil, err
 	}
 
@@ -940,6 +953,7 @@ func (s *practiceService) GetPracticeResult(ctx context.Context, attemptID, user
 				Score:            score,
 				Explanation:      explanation,
 				AnsweringTips:    answeringTips,
+				Stimulus:         dto.StimulusRefFromQuestion(&q),
 			}
 		}
 	} else if len(answers) > 0 {
@@ -992,6 +1006,7 @@ func (s *practiceService) GetPracticeResult(ctx context.Context, attemptID, user
 				Score:            score,
 				Explanation:      explanation,
 				AnsweringTips:    answeringTips,
+				Stimulus:         dto.StimulusRefFromQuestion(ans.Question),
 			}
 		}
 	}
@@ -1167,5 +1182,6 @@ func (s *practiceService) mapQuestionStudentResponse(q *models.Question) dto.Que
 		DifficultyLevel: q.DifficultyLevel,
 		Options:         opts,
 		Competencies:    comps,
+		Stimulus:        dto.StimulusRefFromQuestion(q),
 	}
 }

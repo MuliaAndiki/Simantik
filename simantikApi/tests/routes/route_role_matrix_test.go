@@ -58,6 +58,7 @@ func newRoleMatrixApp() *fiber.App {
 		School:         handler.NewSchoolHandler(nil),
 		Practice:       handler.NewPracticeHandler(nil),
 		System:         handler.NewSystemHandler(nil, cfg),
+		Stimulus:       handler.NewStimulusHandler(nil),
 	})
 	return app
 }
@@ -126,6 +127,14 @@ func TestRouteRoleMatrix(t *testing.T) {
 		{"CMSNewsCreate", "POST", "/api/v1/cms/news", shared, sharedAllow},
 		{"CMSDocList", "GET", "/api/v1/cms/documentation", shared, sharedAllow},
 		{"CMSTestimonials", "GET", "/api/v1/cms/testimonials", shared, sharedAllow},
+		{"StimulusList", "GET", "/api/v1/stimuli/", shared, sharedAllow},
+		{"StimulusCreate", "POST", "/api/v1/stimuli/", shared, sharedAllow},
+		{"StimulusGet", "GET", "/api/v1/stimuli/" + id, shared, sharedAllow},
+		{"StimulusUpdate", "PATCH", "/api/v1/stimuli/" + id, shared, sharedAllow},
+		{"StimulusLink", "POST", "/api/v1/stimuli/" + id + "/questions", shared, sharedAllow},
+		{"StimulusUnlink", "DELETE", "/api/v1/stimuli/questions/" + id, shared, sharedAllow},
+		{"StimulusDelete", "DELETE", "/api/v1/stimuli/" + id, shared, sharedAllow},
+		{"StimulusBackfill", "POST", "/api/v1/admin/stimuli/backfill", adminOnly, adminOnlyAllow},
 		{"ReportsOverview", "GET", "/api/v1/admin/reports/overview", shared, sharedAllow},
 		{"ReportsCompetencies", "GET", "/api/v1/admin/reports/competencies", shared, sharedAllow},
 		{"ReportsDifficulties", "GET", "/api/v1/admin/reports/difficulties", shared, sharedAllow},

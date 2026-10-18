@@ -66,9 +66,12 @@ function mapApiToTryoutQuestion(apiQ: QuestionStudentResponse, qNum: number): Tr
   }));
 
   const parsed = parseWacanaQuestion(apiQ.question_text);
-  const stimulus = parsed.hasStimulus
-    ? { title: parsed.stimulusTitle, content: parsed.stimulusHtml }
-    : undefined;
+  // Relasi stimulus diutamakan; fallback ke marker embedded lama.
+  const stimulus =
+    apiQ.stimulus ??
+    (parsed.hasStimulus
+      ? { title: parsed.stimulusTitle, content: parsed.stimulusHtml }
+      : undefined);
 
   // Opsi bertanda `[KUNCI: ...]` = soal matriks, bukan pilihan ganda.
   const matrix = parseMatrixOptions(apiQ.options);

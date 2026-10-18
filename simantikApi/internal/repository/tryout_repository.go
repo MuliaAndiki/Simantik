@@ -283,12 +283,14 @@ func (r *tryoutRepository) GetTryoutPackageResults(ctx context.Context, tryoutID
 
 	var allItems []dto.TryoutStudentResultItem
 	var completedScores []float64
-	var highestScore float64 = 0
-	var highestCorrect int = 0
-	var highestIncorrect int = 0
-	var lowestScore float64 = 100
-	var lowestCorrect int = 0
-	var lowestIncorrect int = 0
+	var (
+		highestScore     float64
+		highestCorrect   int
+		highestIncorrect int
+		lowestScore      = 100.0
+		lowestCorrect    int
+		lowestIncorrect  int
+	)
 	hasCompleted := false
 
 	for _, row := range rows {
@@ -402,7 +404,7 @@ func (r *tryoutRepository) GetTryoutPackageResults(ctx context.Context, tryoutID
 			}
 		}
 		if filter.Status != "" && filter.Status != "all" {
-			if strings.ToLower(item.Status) != strings.ToLower(filter.Status) {
+			if !strings.EqualFold(item.Status, filter.Status) {
 				continue
 			}
 		}

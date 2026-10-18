@@ -119,8 +119,10 @@ func main() {
 	)
 	userService := service.NewUserService(userRepo, refreshTokenRepo, schoolRepo, profileRepo)
 	jenjangResolver := service.NewJenjangResolver(profileRepo, schoolRepo)
-	questionService := service.NewQuestionService(competencyRepo, questionRepo, db)
-	tryoutService := service.NewTryoutService(tryoutRepo, questionRepo, jenjangResolver, questionService, db)
+	stimulusRepo := repository.NewStimulusRepository(db)
+	questionService := service.NewQuestionService(competencyRepo, questionRepo, stimulusRepo, db)
+	stimulusService := service.NewStimulusService(stimulusRepo, questionRepo)
+	tryoutService := service.NewTryoutService(tryoutRepo, questionRepo, jenjangResolver, questionService, db, stimulusRepo)
 	recommendationService := service.NewRecommendationService(recommendationRepo, evaluationRepo, materialRepo)
 	attemptService := service.NewTryoutAttemptService(db, attemptRepo, tryoutRepo, emailSender, jenjangResolver, recommendationService)
 	evaluationService := service.NewEvaluationService(evaluationRepo, attemptRepo, tryoutRepo, db)
@@ -130,12 +132,13 @@ func main() {
 	notificationService := service.NewNotificationService(notifRepo, emailSender)
 	reportingService := service.NewReportingService(reportingRepo, recommendationService)
 	schoolService := service.NewSchoolService(schoolRepo)
-	practiceService := service.NewPracticeService(db, practiceRepo, questionRepo, evaluationRepo, jenjangResolver, recommendationService)
+	practiceService := service.NewPracticeService(db, practiceRepo, questionRepo, evaluationRepo, jenjangResolver, recommendationService, stimulusRepo)
 
 	// ─── 4. HTTP Handlers ──────────────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authService, cfg)
 	userHandler := handler.NewUserHandler(userService)
 	questionHandler := handler.NewQuestionHandler(questionService)
+	stimulusHandler := handler.NewStimulusHandler(stimulusService)
 	tryoutHandler := handler.NewTryoutHandler(tryoutService)
 	attemptHandler := handler.NewTryoutAttemptHandler(attemptService)
 	evaluationHandler := handler.NewEvaluationHandler(evaluationService)
@@ -173,6 +176,7 @@ func main() {
 		Auth:           authHandler,
 		User:           userHandler,
 		Question:       questionHandler,
+		Stimulus:       stimulusHandler,
 		Tryout:         tryoutHandler,
 		TryoutAttempt:  attemptHandler,
 		Evaluation:     evaluationHandler,

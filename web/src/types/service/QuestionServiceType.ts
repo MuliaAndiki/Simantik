@@ -154,6 +154,7 @@ export interface CreateQuestionRequest {
   options: CreateQuestionOptionRequest[];
   competency_ids?: string[];
   explanation?: CreateQuestionExplanationRequest | null;
+  stimulus_id?: string | null;
 }
 
 /**
@@ -217,6 +218,8 @@ export interface QuestionStudentResponse {
   difficulty_level: number;
   options: QuestionOptionStudentResponse[];
   competencies: CompetencyResponse[];
+  /** Shared reading passage (relasi stimulus, null = soal mandiri). */
+  stimulus?: { id: string; title: string; content: string } | null;
 }
 
 /**

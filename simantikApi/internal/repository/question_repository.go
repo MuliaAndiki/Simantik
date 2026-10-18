@@ -22,6 +22,11 @@ type QuestionRepository interface {
 	ReplaceCompetencies(ctx context.Context, tx *gorm.DB, questionID uuid.UUID, competencyIDs []uuid.UUID) error
 	PublishQuestionsByIDs(ctx context.Context, ids []uuid.UUID, updatedByID uuid.UUID) error
 	UpdateStatusByIDs(ctx context.Context, ids []uuid.UUID, status models.ContentStatus, updatedByID uuid.UUID) error
+	// Stimulus linking + backfill scan.
+	ListEmbeddedStimulusQuestions(ctx context.Context, limit, offset int) ([]models.Question, error)
+	SetStimulusID(ctx context.Context, questionID uuid.UUID, stimulusID *uuid.UUID) error
+	// StripWacanaMarker replaces question_text with the bare body (post-link cleanup).
+	StripWacanaMarker(ctx context.Context, questionID uuid.UUID, bareText string) error
 }
 
 type questionRepository struct {
@@ -42,6 +47,7 @@ func (r *questionRepository) FindByID(ctx context.Context, id uuid.UUID) (*model
 	// The DTO mapping handles removing IsCorrect for students.
 	err := r.db.WithContext(ctx).
 		Preload("Type").
+		Preload("Stimulus").
 		Preload("Options", func(db *gorm.DB) *gorm.DB {
 			return db.Order("display_order ASC")
 		}).
@@ -161,6 +167,37 @@ func (r *questionRepository) ReplaceCompetencies(ctx context.Context, tx *gorm.D
 
 func (r *questionRepository) PublishQuestionsByIDs(ctx context.Context, ids []uuid.UUID, updatedByID uuid.UUID) error {
 	return r.UpdateStatusByIDs(ctx, ids, models.ContentStatusPublished, updatedByID)
+}
+
+// ListEmbeddedStimulusQuestions scans questions that still carry the legacy
+// embedded `[WACANA: ...]` marker and are not linked yet (backfill source).
+func (r *questionRepository) ListEmbeddedStimulusQuestions(ctx context.Context, limit, offset int) ([]models.Question, error) {
+	var questions []models.Question
+	if limit <= 0 {
+		limit = 100
+	}
+	err := r.db.WithContext(ctx).
+		Select("id", "question_text").
+		Where("stimulus_id IS NULL AND question_text LIKE ?", "[WACANA:%").
+		Order("id ASC").
+		Limit(limit).
+		Offset(offset).
+		Find(&questions).Error
+	return questions, err
+}
+
+func (r *questionRepository) SetStimulusID(ctx context.Context, questionID uuid.UUID, stimulusID *uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Model(&models.Question{}).
+		Where("id = ?", questionID).
+		Update("stimulus_id", stimulusID).Error
+}
+
+func (r *questionRepository) StripWacanaMarker(ctx context.Context, questionID uuid.UUID, bareText string) error {
+	return r.db.WithContext(ctx).
+		Model(&models.Question{}).
+		Where("id = ?", questionID).
+		Update("question_text", bareText).Error
 }
 
 func (r *questionRepository) UpdateStatusByIDs(ctx context.Context, ids []uuid.UUID, status models.ContentStatus, updatedByID uuid.UUID) error {

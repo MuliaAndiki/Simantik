@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, Check, Lock } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/atoms/button';
 import { RichHtml } from '@/components/atoms/rich-html';
+import { PracticeQuestionStimulus } from '@/components/organisms/student/PracticeQuestionStimulus';
 import type {
   TryoutAnswerValue,
   TryoutChoiceOption,
@@ -52,24 +53,13 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
     >
       {/* 1. Question Prompt & Stimulus */}
       <div className="space-y-6">
-        {/* Optional stimulus context */}
+        {/* Bacaan Bersama / Stimulus */}
         {question.stimulus && (
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs sm:text-sm text-slate-700 leading-relaxed">
-            {question.stimulus.title && (
-              <div className="font-bold text-slate-900 mb-1.5 uppercase tracking-wider text-xs">
-                {question.stimulus.title}
-              </div>
-            )}
-            {Array.isArray(question.stimulus.content) ? (
-              question.stimulus.content?.map((par, i) => (
-                <p key={`stimulus-par-${i}`} className="mb-2 last:mb-0">
-                  <RichHtml html={par} />
-                </p>
-              ))
-            ) : (
-              <RichHtml html={question.stimulus.content} />
-            )}
-          </div>
+          <PracticeQuestionStimulus
+            stimulus={question.stimulus}
+            questionNumber={question.questionNumber}
+            relatedQuestionNumbers={question.relatedQuestionNumbers}
+          />
         )}
 
         {/* Primary Question Prompt */}

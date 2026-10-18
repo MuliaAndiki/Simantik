@@ -260,9 +260,10 @@ func gapReason(gap CompetencyGap) string {
 		}
 		parts = append(parts, fmt.Sprintf("jebakan tersering: \"%s\" (%dx dipilih)", short, gap.TopDistractorCount))
 	}
-	if gap.Trend == "declining" {
+	switch gap.Trend {
+	case "declining":
 		parts = append(parts, "tren menurun dibanding attempt sebelumnya")
-	} else if gap.Trend == "improving" {
+	case "improving":
 		parts = append(parts, "tren membaik, pertahankan")
 	}
 	return strings.Join(parts, "; ")

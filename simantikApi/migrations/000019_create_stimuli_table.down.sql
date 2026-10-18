@@ -1,0 +1,2 @@
+ALTER TABLE questions DROP COLUMN IF EXISTS stimulus_id;
+DROP TABLE IF EXISTS stimuli;

@@ -11,6 +11,7 @@ import { PracticeQuestionStimulus } from '@/components/organisms/student/Practic
 import { ComplexMultipleChoiceQuestion } from '@/components/organisms/student/questions/ComplexMultipleChoiceQuestion';
 import { MatrixCategoryQuestion } from '@/components/organisms/student/questions/MatrixCategoryQuestion';
 import { SingleChoiceQuestion } from '@/components/organisms/student/questions/SingleChoiceQuestion';
+import { StimulusRereadCard } from '@/components/organisms/student/StimulusRereadCard';
 import { StudentDashboardFooter } from '@/components/organisms/student/StudentDashboardFooter';
 import type {
   ChoiceOption,
@@ -127,7 +128,11 @@ export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTempla
         <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 sm:p-7 shadow-sm space-y-6">
           {/* Optional Stimulus */}
           {currentQuestion.stimulus && (
-            <PracticeQuestionStimulus stimulus={currentQuestion.stimulus} />
+            <PracticeQuestionStimulus
+              stimulus={currentQuestion.stimulus}
+              questionNumber={currentQuestion.questionNumber}
+              relatedQuestionNumbers={currentQuestion.relatedQuestionNumbers}
+            />
           )}
 
           {/* Question Body Depending on Type */}
@@ -306,13 +311,18 @@ export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTempla
           </div>
         </div>
 
-        {/* Right: Question Palette */}
-        <div className="lg:col-span-4">
+        {/* Right: Question Palette + Stimulus re-read */}
+        <div className="lg:col-span-4 flex flex-col gap-6">
           <PracticeQuestionPalette
             totalQuestions={totalQuestions}
             items={paletteItems}
             currentIndex={currentIndex}
             onSelectQuestion={onSelectQuestionNumber}
+          />
+          <StimulusRereadCard
+            stimulus={currentQuestion.stimulus}
+            questionNumber={currentQuestion.questionNumber}
+            relatedQuestionNumbers={currentQuestion.relatedQuestionNumbers}
           />
         </div>
       </div>

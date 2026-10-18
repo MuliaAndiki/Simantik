@@ -217,6 +217,7 @@ func (r *practiceRepository) FindAttemptByIDWithDetails(ctx context.Context, id 
 		Preload("User.StudentProfile").
 		Preload("Package").
 		Preload("Package.Questions").
+		Preload("Package.Questions.Stimulus").
 		Preload("Package.Questions.Options", func(db *gorm.DB) *gorm.DB {
 			return db.Order("display_order ASC")
 		}).
@@ -361,6 +362,7 @@ func (r *practiceRepository) FindAllAnswers(ctx context.Context, practiceID uuid
 	var answers []models.PracticeAnswer
 	err := r.db.WithContext(ctx).
 		Preload("Question").
+		Preload("Question.Stimulus").
 		Preload("Question.Options").
 		Where("practice_id = ?", practiceID).
 		Find(&answers).Error
@@ -439,10 +441,12 @@ func (r *practiceRepository) GetPracticePackageResults(ctx context.Context, pack
 
 	var allItems []dto.PracticeStudentResultItem
 	var completedScores []float64
-	var highestScore float64 = 0
-	var highestStudentName string = "-"
-	var lowestScore float64 = 100
-	var lowestStudentName string = "-"
+	var (
+		highestScore       float64
+		highestStudentName = "-"
+		lowestScore        = 100.0
+		lowestStudentName  = "-"
+	)
 	hasCompleted := false
 
 	compName := "Bahasa Indonesia"
@@ -583,7 +587,7 @@ func (r *practiceRepository) GetPracticePackageResults(ctx context.Context, pack
 			}
 		}
 		if filter.Status != "" && filter.Status != "all" {
-			if strings.ToLower(item.Status) != strings.ToLower(filter.Status) {
+			if !strings.EqualFold(item.Status, filter.Status) {
 				continue
 			}
 		}

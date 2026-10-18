@@ -2,6 +2,7 @@
 
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type { SharedStimulusOption } from '@/components/organisms/content_manager/practice_create';
 import { PracticeCreatePage } from '@/components/page/private/content_manager/PracticeCreatePage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
@@ -318,6 +319,112 @@ export const PracticeQuestionContainer: React.FC = () => {
       stimulus: {
         ...prev.stimulus,
         hasStimulus,
+        // Matikan tautan bank saat stimulus dinonaktifkan.
+        stimulusId: hasStimulus ? prev.stimulus.stimulusId : null,
+      },
+    }));
+  };
+
+  const createStimulusMutation = api.stimulus.mutate.create();
+  const deleteStimulusMutation = api.stimulus.mutate.delete();
+
+  // Hapus bacaan dari bank bersama + lepas tautan pada soal yang menggunakannya
+  const handleDeleteSharedStimulus = (stimulusId: string) => {
+    const opt = sharedStimulusOptions.find((o) => o.id === stimulusId);
+    const title = opt?.title || 'bacaan bersama';
+    ns.alert.confirm({
+      title: 'Hapus Bacaan Bersama',
+      deskripsi: `Apakah Anda yakin ingin menghapus "${title}" dari bank bacaan? Soal yang terhubung akan dilepas tautannya.`,
+      icon: 'error',
+      onConfirm: async () => {
+        try {
+          await deleteStimulusMutation.mutateAsync(stimulusId);
+          setPackageForm((prev) => ({
+            ...prev,
+            questions: prev.questions.map((q) =>
+              q.stimulus?.stimulusId === stimulusId
+                ? { ...q, stimulus: { ...q.stimulus, stimulusId: null } }
+                : q
+            ),
+          }));
+          ns.alert.toast({
+            title: 'Stimulus Dihapus',
+            message: 'Bacaan berhasil dihapus dari bank bersama.',
+            icon: 'success',
+          });
+        } catch {
+          // Handled by mutation toast
+        }
+      },
+    });
+  };
+
+  // Simpan teks baru ke bank bersama + langsung tautkan ke soal aktif.
+  const handleSaveSharedStimulus = async () => {
+    const st = activeQuestion.stimulus;
+    if (!st || st.stimulusId) return;
+    try {
+      const res = await createStimulusMutation.mutateAsync({
+        title: st.title.trim(),
+        content: st.content,
+        package_id: packageId || undefined,
+        package_kind: 'practice',
+      });
+      const id = res.data?.id;
+      if (!id) return;
+      updateActiveQuestion((prev) => ({
+        ...prev,
+        stimulus: { ...prev.stimulus, stimulusId: id },
+      }));
+      ns.alert.toast({
+        title: 'Stimulus Tersimpan',
+        message: 'Teks masuk bank bersama dan terhubung ke soal ini.',
+        icon: 'success',
+      });
+    } catch {
+      // Handled by mutation toast
+    }
+  };
+
+  // Bank stimulus bersama (search + pilih untuk ditautkan saat save).
+  const [stimulusSearch, setStimulusSearch] = useState('');
+  const [stimulusLimit, setStimulusLimit] = useState(10);
+  const stimuliQuery = api.stimulus.query.list({
+    search: stimulusSearch.trim() || undefined,
+    limit: stimulusLimit,
+    // Scope per paket: stimulus milik paket lain disembunyikan.
+    package_id: packageId || undefined,
+    package_kind: 'practice',
+  });
+  const sharedStimulusOptions: SharedStimulusOption[] = useMemo(() => {
+    return (stimuliQuery.data?.stimuli ?? []).map((s) => ({
+      id: s.id,
+      title: s.title,
+      content: s.content,
+      questionCount: s.question_count,
+      levelsCovered: s.levels_covered ?? [],
+      isFull: s.question_count >= 3,
+    }));
+  }, [stimuliQuery.data]);
+
+  const handleSelectSharedStimulus = (id: string | null) => {
+    if (id === null) {
+      updateActiveQuestion((prev) => ({
+        ...prev,
+        stimulus: { ...prev.stimulus, stimulusId: null },
+      }));
+      return;
+    }
+    const opt = sharedStimulusOptions.find((o) => o.id === id);
+    if (!opt || opt.isFull) return;
+    updateActiveQuestion((prev) => ({
+      ...prev,
+      stimulus: {
+        ...prev.stimulus,
+        hasStimulus: true,
+        title: opt.title,
+        content: opt.content,
+        stimulusId: opt.id,
       },
     }));
   };
@@ -539,15 +646,18 @@ export const PracticeQuestionContainer: React.FC = () => {
               }));
 
         try {
-          const fullQuestionText = q.stimulus.hasStimulus
-            ? `[WACANA: ${q.stimulus.title || 'Wacana'}]\n${q.stimulus.content}\n\n${q.questionText}`
-            : q.questionText;
+          // Tertaut bank bersama -> teks polos (relasi di BE), tanpa marker duplikat.
+          const fullQuestionText =
+            q.stimulus.stimulusId || !q.stimulus.hasStimulus
+              ? q.questionText
+              : `[WACANA: ${q.stimulus.title || 'Wacana'}]\n${q.stimulus.content}\n\n${q.questionText}`;
 
           const res = await createQuestionMutation.mutateAsync({
             question_type_id: defaultTypeId,
             question_text: fullQuestionText,
             difficulty_level: 3,
             competency_ids: packageForm.competency_id ? [packageForm.competency_id] : undefined,
+            stimulus_id: q.stimulus.stimulusId || undefined,
             options: mappedOptions,
             explanation: q.explanation
               ? {
@@ -650,6 +760,16 @@ export const PracticeQuestionContainer: React.FC = () => {
       onQuestionTypeChange={handleQuestionTypeChange}
       onStimulusChange={handleStimulusChange}
       onToggleStimulus={handleToggleStimulus}
+      sharedStimuli={sharedStimulusOptions}
+      isLoadingSharedStimuli={stimuliQuery.isPending}
+      stimulusSearch={stimulusSearch}
+      onStimulusSearchChange={setStimulusSearch}
+      onSelectSharedStimulus={handleSelectSharedStimulus}
+      onSaveSharedStimulus={handleSaveSharedStimulus}
+      isSavingSharedStimulus={createStimulusMutation.isPending}
+      hasMoreSharedStimuli={(stimuliQuery.data?.total ?? 0) > sharedStimulusOptions.length}
+      onLoadMoreSharedStimuli={() => setStimulusLimit((n) => n + 10)}
+      onDeleteSharedStimulus={handleDeleteSharedStimulus}
       onUploadImage={handleUploadImage}
       onDeleteImage={handleDeleteImage}
       onQuestionTextChange={handleQuestionTextChange}

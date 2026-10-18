@@ -33,6 +33,8 @@ function mapApiQuestionType(typeIdStr: string): PracticeQuestionType {
   return 'pilihan-ganda';
 }
 
+import { buildStimulusQuestionMap, getStimulusKey } from '@/utils/stimulus.util';
+
 function transformApiQuestions(
   apiQuestions: (QuestionAdminResponse | QuestionStudentResponse)[] | undefined,
   competencyName: string
@@ -41,18 +43,22 @@ function transformApiQuestions(
     return [];
   }
 
-  return apiQuestions.map((q, idx) => {
+  const items: PracticeQuestionItem[] = apiQuestions.map((q, idx) => {
     const compBadge =
       q.competencies && q.competencies.length > 0
         ? q.competencies.map((c) => c.name.toUpperCase()).join(' • ')
         : competencyName.toUpperCase();
 
-    // Soal dari admin/content_manager menyimpan stimulus + body HTML
-    // dalam satu `question_text` berformat `[WACANA: title]\n<html>\n\n<html>`.
+    // Relasi stimulus diutamakan; fallback ke marker embedded lama
+    // `[WACANA: title]\n<html>\n\n<html>`.
     const parsed = parseWacanaQuestion(q.question_text);
-    const stimulus = parsed.hasStimulus
-      ? { title: parsed.stimulusTitle, content: parsed.stimulusHtml }
-      : undefined;
+    // QuestionAdminResponse tak punya relasi stimulus — narrow aman.
+    const related = 'stimulus' in q ? q.stimulus : undefined;
+    const stimulus =
+      related ??
+      (parsed.hasStimulus
+        ? { title: parsed.stimulusTitle, content: parsed.stimulusHtml }
+        : undefined);
 
     // Opsi bertanda `[KUNCI: ...]` = soal matriks (benar-salah / tepat / setuju).
     const matrix = parseMatrixOptions(q.options);
@@ -86,6 +92,23 @@ function transformApiQuestions(
       questionText: parsed.bodyHtml,
       stimulus,
       options,
+    };
+  });
+
+  // Hitung relasi nomor soal secara dinamis untuk stimulus bersama
+  const stimulusMap = buildStimulusQuestionMap(items);
+
+  return items.map((item) => {
+    if (!item.stimulus) return item;
+    const key = getStimulusKey(item.stimulus);
+    const relatedNumbers = (key ? stimulusMap.get(key) : undefined) || [item.questionNumber];
+    return {
+      ...item,
+      relatedQuestionNumbers: relatedNumbers,
+      stimulus: {
+        ...item.stimulus,
+        relatedQuestionNumbers: relatedNumbers,
+      },
     };
   });
 }

@@ -32,6 +32,7 @@ type tryoutService struct {
 	questionService QuestionService
 	resolver        *JenjangResolver
 	db              *gorm.DB
+	stimulusRepo    repository.StimulusRepository
 }
 
 // NewTryoutService constructs a TryoutService backed by the provided repository.
@@ -47,6 +48,8 @@ func NewTryoutService(
 			s.questionService = qs
 		} else if db, ok := opt.(*gorm.DB); ok {
 			s.db = db
+		} else if repo, ok := opt.(repository.StimulusRepository); ok {
+			s.stimulusRepo = repo
 		}
 	}
 	return s
@@ -242,6 +245,10 @@ func (s *tryoutService) AddQuestionsToPool(ctx context.Context, tryoutID uuid.UU
 		return nil, err
 	}
 
+	if err := EnsureQuestionsPackageScope(ctx, s.questionRepo, s.stimulusRepo, "tryout", tryoutID, req.QuestionIDs); err != nil {
+		return nil, err
+	}
+
 	if err := s.repo.AddQuestions(ctx, tryoutID, req.QuestionIDs); err != nil {
 		return nil, err
 	}
@@ -286,6 +293,10 @@ func (s *tryoutService) SyncQuestions(ctx context.Context, tryoutID uuid.UUID, r
 			// Fallback for isolated mock test
 			questionIDs = append(questionIDs, uuid.New())
 		}
+	}
+
+	if err := EnsureQuestionsPackageScope(ctx, s.questionRepo, s.stimulusRepo, "tryout", tryoutID, questionIDs); err != nil {
+		return nil, err
 	}
 
 	if err := s.repo.SyncQuestions(ctx, tryoutID, questionIDs); err != nil {

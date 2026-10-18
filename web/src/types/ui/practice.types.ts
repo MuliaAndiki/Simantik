@@ -6,11 +6,14 @@ export type PracticeQuestionType =
   | 'setuju-tidak-setuju';
 
 export interface StimulusData {
+  id?: string;
   title?: string;
   quote?: string;
   // string[] = legacy teks polos per paragraf, string = HTML dari RichTextEditor
   content?: string[] | string;
   source?: string;
+  /** Daftar nomor soal yang menggunakan bacaan ini (dihitung dinamis) */
+  relatedQuestionNumbers?: number[];
 }
 
 export interface ChoiceOption {
@@ -35,6 +38,8 @@ export interface PracticeQuestionItem {
   promptCategory?: string;
   questionText: string;
   stimulus?: StimulusData;
+  /** Daftar nomor soal yang menggunakan bacaan ini (dihitung dinamis) */
+  relatedQuestionNumbers?: number[];
   options?: ChoiceOption[];
   statements?: MatrixStatement[];
 }

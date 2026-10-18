@@ -1,7 +1,8 @@
 'use client';
 
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { SharedStimulusOption } from '@/components/organisms/content_manager/practice_create';
 import { TryoutCreatePage } from '@/components/page/private/content_manager/TryoutCreatePage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
@@ -469,6 +470,126 @@ export const TryoutQuestionContainer: React.FC = () => {
       stimulus: {
         ...prev.stimulus,
         hasStimulus,
+        stimulusId: hasStimulus ? prev.stimulus.stimulusId : null,
+      },
+    }));
+  };
+
+  const createStimulusMutation = api.stimulus.mutate.create();
+  const deleteStimulusMutation = api.stimulus.mutate.delete();
+
+  // Hapus bacaan dari bank bersama + lepas tautan pada seluruh varian soal yang menggunakannya
+  const handleDeleteSharedStimulus = (stimulusId: string) => {
+    const opt = sharedStimulusOptions.find((o) => o.id === stimulusId);
+    const title = opt?.title || 'bacaan bersama';
+    ns.alert.confirm({
+      title: 'Hapus Bacaan Bersama',
+      deskripsi: `Apakah Anda yakin ingin menghapus "${title}" dari bank bacaan? Soal yang terhubung akan dilepas tautannya.`,
+      icon: 'error',
+      onConfirm: async () => {
+        try {
+          await deleteStimulusMutation.mutateAsync(stimulusId);
+          setPackageForm((prev) => ({
+            ...prev,
+            questions: prev.questions.map((q) => {
+              const updatedVariants = { ...q.variants };
+              for (const lvl of [1, 2, 3, 4, 5] as const) {
+                if (updatedVariants[lvl]?.stimulus?.stimulusId === stimulusId) {
+                  updatedVariants[lvl] = {
+                    ...updatedVariants[lvl],
+                    stimulus: {
+                      ...updatedVariants[lvl].stimulus,
+                      stimulusId: null,
+                    },
+                  };
+                }
+              }
+              return {
+                ...q,
+                variants: updatedVariants,
+              };
+            }),
+          }));
+          ns.alert.toast({
+            title: 'Stimulus Dihapus',
+            message: 'Bacaan berhasil dihapus dari bank bersama.',
+            icon: 'success',
+          });
+        } catch {
+          // Handled by mutation toast
+        }
+      },
+    });
+  };
+
+  // Simpan teks baru ke bank bersama + langsung tautkan ke varian aktif.
+  const handleSaveSharedStimulus = async () => {
+    const variant =
+      activeQuestion.variants[activeQuestion.activeLevel] || activeQuestion.variants[1];
+    const st = variant?.stimulus;
+    if (!st || st.stimulusId) return;
+    try {
+      const res = await createStimulusMutation.mutateAsync({
+        title: st.title.trim(),
+        content: st.content,
+        package_id: tryoutId || undefined,
+        package_kind: 'tryout',
+      });
+      const id = res.data?.id;
+      if (!id) return;
+      updateActiveVariant((prev) => ({
+        ...prev,
+        stimulus: { ...prev.stimulus, stimulusId: id },
+      }));
+      ns.alert.toast({
+        title: 'Stimulus Tersimpan',
+        message: 'Teks masuk bank bersama dan terhubung ke varian ini.',
+        icon: 'success',
+      });
+    } catch {
+      // Handled by mutation toast
+    }
+  };
+
+  // Bank stimulus bersama untuk varian aktif.
+  const [stimulusSearch, setStimulusSearch] = useState('');
+  const [stimulusLimit, setStimulusLimit] = useState(10);
+  const stimuliQuery = api.stimulus.query.list({
+    search: stimulusSearch.trim() || undefined,
+    limit: stimulusLimit,
+    // Scope per paket: stimulus milik paket lain disembunyikan.
+    package_id: tryoutId || undefined,
+    package_kind: 'tryout',
+  });
+  const sharedStimulusOptions: SharedStimulusOption[] = useMemo(() => {
+    return (stimuliQuery.data?.stimuli ?? []).map((s) => ({
+      id: s.id,
+      title: s.title,
+      content: s.content,
+      questionCount: s.question_count,
+      levelsCovered: s.levels_covered ?? [],
+      isFull: s.question_count >= 3,
+    }));
+  }, [stimuliQuery.data]);
+
+  const handleSelectSharedStimulus = (id: string | null) => {
+    if (id === null) {
+      updateActiveVariant((prev) => ({
+        ...prev,
+        stimulus: { ...prev.stimulus, stimulusId: null },
+      }));
+      return;
+    }
+    const opt = sharedStimulusOptions.find((o) => o.id === id);
+    if (!opt || opt.isFull) return;
+    updateActiveVariant((prev) => ({
+      ...prev,
+      stimulus: {
+        ...prev.stimulus,
+        hasStimulus: true,
+        title: opt.title,
+        content: opt.content,
+        stimulusId: opt.id,
       },
     }));
   };
@@ -724,14 +845,16 @@ export const TryoutQuestionContainer: React.FC = () => {
                   display_order: idx + 1,
                 }));
 
-          const fullQuestionText = v.stimulus.hasStimulus
-            ? `[WACANA: ${v.stimulus.title || 'Wacana'}]\n${v.stimulus.content}\n\n${v.questionText}`
-            : v.questionText;
+          const fullQuestionText =
+            v.stimulus.stimulusId || !v.stimulus.hasStimulus
+              ? v.questionText
+              : `[WACANA: ${v.stimulus.title || 'Wacana'}]\n${v.stimulus.content}\n\n${v.questionText}`;
 
           questionsPayload.push({
             question_type_id: questionTypeId,
             question_text: fullQuestionText,
             difficulty_level: lvl,
+            stimulus_id: v.stimulus.stimulusId || undefined,
             options: mappedOptions,
             explanation: v.explanation
               ? {
@@ -777,6 +900,16 @@ export const TryoutQuestionContainer: React.FC = () => {
       onQuestionTypeChange={handleQuestionTypeChange}
       onStimulusChange={handleStimulusChange}
       onToggleStimulus={handleToggleStimulus}
+      sharedStimuli={sharedStimulusOptions}
+      isLoadingSharedStimuli={stimuliQuery.isPending}
+      stimulusSearch={stimulusSearch}
+      onStimulusSearchChange={setStimulusSearch}
+      onSelectSharedStimulus={handleSelectSharedStimulus}
+      onSaveSharedStimulus={handleSaveSharedStimulus}
+      isSavingSharedStimulus={createStimulusMutation.isPending}
+      hasMoreSharedStimuli={(stimuliQuery.data?.total ?? 0) > sharedStimulusOptions.length}
+      onLoadMoreSharedStimuli={() => setStimulusLimit((n) => n + 10)}
+      onDeleteSharedStimulus={handleDeleteSharedStimulus}
       onQuestionTextChange={handleQuestionTextChange}
       onSingleChoiceOptionChange={handleSingleChoiceOptionChange}
       onSelectSingleChoiceCorrect={handleSelectSingleChoiceCorrect}

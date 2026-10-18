@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"simantikApi/internal/models"
 )
 
 // Competency DTOs
@@ -102,6 +104,8 @@ type CreateQuestionRequest struct {
 	Options         []CreateQuestionOptionRequest     `json:"options" validate:"required,min=2"`
 	CompetencyIDs   []uuid.UUID                       `json:"competency_ids"`
 	Explanation     *CreateQuestionExplanationRequest `json:"explanation"`
+	// StimulusID links the new question to a shared stimulus (max 3 enforced).
+	StimulusID *uuid.UUID `json:"stimulus_id,omitempty"`
 }
 
 type CreateQuestionsBulkRequest struct {
@@ -149,6 +153,27 @@ type QuestionStudentResponse struct {
 	DifficultyLevel int                             `json:"difficulty_level"`
 	Options         []QuestionOptionStudentResponse `json:"options"`
 	Competencies    []CompetencyResponse            `json:"competencies"`
+	// Stimulus shared reading passage (nil = standalone question).
+	Stimulus *StimulusRefResponse `json:"stimulus,omitempty"`
+}
+
+// StimulusRefResponse is the compact stimulus embedded in question payloads.
+type StimulusRefResponse struct {
+	ID      uuid.UUID `json:"id"`
+	Title   string    `json:"title"`
+	Content string    `json:"content"`
+}
+
+// StimulusRefFromQuestion maps a preloaded Stimulus relation (nil-safe).
+func StimulusRefFromQuestion(q *models.Question) *StimulusRefResponse {
+	if q == nil || q.Stimulus == nil {
+		return nil
+	}
+	return &StimulusRefResponse{
+		ID:      q.Stimulus.ID,
+		Title:   q.Stimulus.Title,
+		Content: q.Stimulus.Content,
+	}
 }
 
 type PaginatedQuestionsAdminResponse struct {

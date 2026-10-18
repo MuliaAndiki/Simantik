@@ -14,7 +14,6 @@ import type {
   TryoutStatusType,
 } from '@/types/ui/tryout-manager.types';
 import {
-  countByStatus,
   downloadTextFile,
   formatDateTimeId,
   formatItemNumber,
@@ -70,8 +69,10 @@ export const TryoutListContainer: React.FC = () => {
     offset: (filters.page - 1) * filters.perPage,
   });
 
-  // Query for global statistics
-  const allTryoutsQuery = api.tryout.query.list({ limit: 100 });
+  // Stats via tiny limit:1 count queries (total dari respons, tanpa 100 objek penuh).
+  const totalCountQuery = api.tryout.query.list({ limit: 1 });
+  const publishedCountQuery = api.tryout.query.list({ status: 'published', limit: 1 });
+  const archivedCountQuery = api.tryout.query.list({ status: 'archived', limit: 1 });
 
   // Mutations
   const createTryoutMutation = api.tryout.mutate.create();
@@ -105,18 +106,19 @@ export const TryoutListContainer: React.FC = () => {
     });
   }, [tryoutsQuery.data, filters.page, filters.perPage]);
 
-  // Statistics calculation
+  // Statistics calculation (dari total server, tanpa memuat 100 objek).
   const stats = useMemo<TryoutStats>(() => {
-    const list = allTryoutsQuery.data?.tryouts ?? [];
-    const counts = countByStatus(list, (item) => item.status);
+    const total = totalCountQuery.data?.total ?? 0;
+    const published = publishedCountQuery.data?.total ?? 0;
+    const unpublished = archivedCountQuery.data?.total ?? 0;
 
     return {
-      totalTryouts: allTryoutsQuery.data?.total ?? counts.total,
-      draftCount: counts.draft,
-      publishedCount: counts.published,
-      unpublishedCount: counts.unpublished,
+      totalTryouts: total,
+      draftCount: Math.max(0, total - published - unpublished),
+      publishedCount: published,
+      unpublishedCount: unpublished,
     };
-  }, [allTryoutsQuery.data]);
+  }, [totalCountQuery.data, publishedCountQuery.data, archivedCountQuery.data]);
 
   const totalItems = tryoutsQuery.data?.total ?? tryouts.length;
 
@@ -144,7 +146,12 @@ export const TryoutListContainer: React.FC = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([tryoutsQuery.refetch(), allTryoutsQuery.refetch()]);
+      await Promise.all([
+        tryoutsQuery.refetch(),
+        totalCountQuery.refetch(),
+        publishedCountQuery.refetch(),
+        archivedCountQuery.refetch(),
+      ]);
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
     }

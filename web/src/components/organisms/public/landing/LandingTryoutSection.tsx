@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import { ArrowRight, CheckSquare, Clock, Flame, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
