@@ -1,8 +1,12 @@
-type ToastType = 'success' | 'error' | 'warning' | 'info' | 'question';
-export interface ModalProps {
-  title: string;
-  icon: ToastType;
-  deskripsi: string;
+import type { ReactNode } from 'react';
+import type { ActionConfirmModalProps, ActionModalVariant } from './action-modal.types';
+
+export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'question';
+
+export interface ModalProps extends Partial<Omit<ActionConfirmModalProps, 'icon'>> {
+  title: ReactNode;
+  icon?: ToastType | ActionModalVariant | any;
+  deskripsi?: string;
   confirmButtonText?: string;
   confirmButtonColor?: string;
   onConfirm?: () => void;
@@ -18,10 +22,13 @@ export interface ToastProps {
 
 export interface AlertContexType {
   toast: (p: ToastProps) => void;
-  modal: (p: ModalProps) => void;
-  confirm: (p: ModalProps) => Promise<boolean>;
+  modal: (p: ActionConfirmModalProps | ModalProps) => void;
+  confirm: (p: ActionConfirmModalProps | ModalProps) => Promise<boolean>;
+  actionConfirm: (p: ActionConfirmModalProps) => Promise<boolean>;
+  confirmAction: (p: ActionConfirmModalProps) => Promise<boolean>;
 }
 
+export * from './action-modal.types';
 export * from './content-manager-dashboard.types';
 export * from './legal.types';
 export * from './material-editor.types';

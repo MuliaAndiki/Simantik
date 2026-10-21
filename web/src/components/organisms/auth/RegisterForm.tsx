@@ -61,7 +61,7 @@ export function RegisterForm({
         />
       </FormField>
 
-      <Button type="submit" className="w-full h-12 rounded-sm mt-2" disabled={loading}>
+      <Button type="submit" className="w-full h-12 rounded-sm mt-2" isLoading={loading}>
         {loading ? 'Mendaftar...' : 'Daftar Sekarang'}
       </Button>
     </form>

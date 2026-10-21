@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   PracticeProctoringWarningModal,
+  StimulusRereadCard,
   StudentDashboardFooter,
   TryoutConfirmModal,
   TryoutHeader,
@@ -137,8 +138,13 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
         </section>
 
         {/* Right: Question Palette & Adaptive Info (Width: 4 cols on large screens) */}
-        <section className="lg:col-span-4 w-full">
+        <section className="lg:col-span-4 w-full flex flex-col gap-6 lg:gap-8">
           <TryoutQuestionPalette items={paletteItems} totalQuestions={totalQuestions} />
+          <StimulusRereadCard
+            stimulus={question.stimulus}
+            questionNumber={currentQuestionNumber}
+            relatedQuestionNumbers={question.relatedQuestionNumbers}
+          />
         </section>
       </div>
 
@@ -148,6 +154,7 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
         isOpen={isPreStartModalOpen}
         isChecked={isPreStartChecked}
         totalQuestions={totalQuestions}
+        isSubmitting={isSubmitting}
         onCheckChange={onPreStartCheckChange}
         onConfirm={onPreStartConfirm}
         onClose={onPreStartClose}
@@ -167,6 +174,7 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
         answeredCount={answeredCount}
         totalQuestions={totalQuestions}
         remainingTimeFormatted={formattedTime}
+        isSubmitting={isSubmitting}
         onCancel={onConfirmModalCancel}
         onConfirm={onConfirmModalProceed}
       />

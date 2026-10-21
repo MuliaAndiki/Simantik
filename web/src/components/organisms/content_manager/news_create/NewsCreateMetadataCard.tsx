@@ -1,5 +1,6 @@
-import { Image as ImageIcon, Loader2, Upload } from 'lucide-react';
+import { Image as ImageIcon, Upload } from 'lucide-react';
 import React, { useRef, useState } from 'react';
+import { Spinner } from '@/components/atoms';
 import type { ContentStatus } from '@/types/model';
 import type { CreateNewsRequest } from '@/types/service';
 
@@ -98,11 +99,7 @@ export const NewsCreateMetadataCard: React.FC<NewsCreateMetadataCardProps> = ({
                 disabled={isUploadingThumbnail}
                 className="inline-flex items-center gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 transition cursor-pointer disabled:opacity-50"
               >
-                {isUploadingThumbnail ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Upload className="w-4 h-4" />
-                )}
+                {isUploadingThumbnail ? <Spinner size="xs" /> : <Upload className="w-4 h-4" />}
                 <span>{isUploadingThumbnail ? 'Mengunggah...' : 'Pilih Gambar'}</span>
               </button>
               <p className="text-[11px] text-slate-400">Format JPG, PNG, atau WEBP</p>

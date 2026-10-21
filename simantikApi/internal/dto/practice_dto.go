@@ -154,6 +154,7 @@ type PracticeAnswerReviewItem struct {
 	QuestionNumber   int                      `json:"question_number"`
 	QuestionID       uuid.UUID                `json:"question_id"`
 	QuestionText     string                   `json:"question_text"`
+	Stimulus         *StimulusRefResponse     `json:"stimulus,omitempty"`
 	Competencies     []CompetencyResponse     `json:"competencies"`
 	Options          []OptionReviewResponse   `json:"options"`
 	SelectedOptionID *uuid.UUID               `json:"selected_option_id"`

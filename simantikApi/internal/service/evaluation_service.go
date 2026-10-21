@@ -244,6 +244,7 @@ func (s *evaluationService) GetAttemptReview(ctx context.Context, attemptID, use
 			ResponseTimeSeconds: respTime,
 			Explanation:         explText,
 			AnsweringTips:       answeringTips,
+			Stimulus:            dto.StimulusRefFromQuestion(q),
 		}
 	}
 

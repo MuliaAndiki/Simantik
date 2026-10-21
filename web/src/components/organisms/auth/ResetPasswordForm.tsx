@@ -2,6 +2,7 @@
 
 import { ArrowRight } from 'lucide-react';
 import type * as React from 'react';
+import { Spinner } from '@/components/atoms/loading/Spinner';
 import { AuthSecurityNotice } from '@/components/molecules/auth/AuthSecurityNotice';
 import { FormField } from '@/components/molecules/auth/FormField';
 import { PasswordField } from '@/components/molecules/auth/PasswordField';
@@ -61,8 +62,9 @@ export function ResetPasswordForm({
         disabled={loading}
         className="w-full h-12 mt-1 rounded-xl bg-[#F5C242] hover:bg-[#E8B534] active:bg-[#DBA726] text-slate-900 font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-2xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
+        {loading && <Spinner size="sm" className="text-slate-900" />}
         <span>{loading ? 'Menyimpan...' : 'Perbarui Password'}</span>
-        <ArrowRight className="w-4 h-4" />
+        {!loading && <ArrowRight className="w-4 h-4" />}
       </button>
 
       <div className="pt-1">

@@ -4,5 +4,11 @@
   "less.lint.unknownAtRules": "ignore",
   "editor.quickSuggestions": {
     "strings": true
-  }
+  },
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": [
+    "--path-mode=abs",
+    "--fast-only"
+  ],
+  "go.lintOnSave": "package"
 }

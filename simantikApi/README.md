@@ -38,6 +38,16 @@ go mod download
 air              # live reload, or: go run ./cmd/api
 ```
 
+## Code Quality & Linting
+
+Project ini menggunakan [golangci-lint](https://golangci-lint.run/) untuk static analysis dan code quality enforcement:
+
+```bash
+golangci-lint run ./...
+# atau dengan auto-fix jika memungkinkan:
+golangci-lint run --fix ./...
+```
+
 ## Docker
 
 ```bash

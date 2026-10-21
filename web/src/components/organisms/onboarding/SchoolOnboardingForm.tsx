@@ -54,7 +54,8 @@ export function SchoolOnboardingForm({
       <Button
         type="submit"
         className="w-full h-12 rounded-sm mt-2"
-        disabled={loading || !selectedSchool}
+        disabled={!selectedSchool}
+        isLoading={loading}
       >
         {loading ? 'Menyimpan...' : 'Simpan & Lanjutkan'}
       </Button>

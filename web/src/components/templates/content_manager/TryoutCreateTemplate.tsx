@@ -7,6 +7,7 @@ import {
   PracticeQuestionEditorHeader,
   PracticeStemSection,
   PracticeStimulusSection,
+  type SharedStimulusPickerProps,
 } from '@/components/organisms/content_manager/practice_create';
 import {
   TryoutCreateTopBar,
@@ -23,7 +24,7 @@ import type {
   TryoutPackageEditorForm,
 } from '@/types/ui/tryout-question-editor.types';
 
-export interface TryoutCreateTemplateProps {
+export interface TryoutCreateTemplateProps extends SharedStimulusPickerProps {
   packageForm: TryoutPackageEditorForm;
   activeQuestion: TryoutAdaptiveQuestionItemForm;
   isSubmitting?: boolean;
@@ -78,6 +79,16 @@ export const TryoutCreateTemplate: React.FC<TryoutCreateTemplateProps> = ({
   onQuestionTypeChange,
   onStimulusChange,
   onToggleStimulus,
+  sharedStimuli,
+  isLoadingSharedStimuli,
+  stimulusSearch,
+  onStimulusSearchChange,
+  onSelectSharedStimulus,
+  onSaveSharedStimulus,
+  isSavingSharedStimulus,
+  hasMoreSharedStimuli,
+  onLoadMoreSharedStimuli,
+  onDeleteSharedStimulus,
   onQuestionTextChange,
   onSingleChoiceOptionChange,
   onSelectSingleChoiceCorrect,
@@ -161,6 +172,16 @@ export const TryoutCreateTemplate: React.FC<TryoutCreateTemplateProps> = ({
             onToggleStimulus={onToggleStimulus}
             onUploadImage={onUploadImage}
             onDeleteImage={onDeleteImage}
+            sharedStimuli={sharedStimuli}
+            isLoadingSharedStimuli={isLoadingSharedStimuli}
+            stimulusSearch={stimulusSearch}
+            onStimulusSearchChange={onStimulusSearchChange}
+            onSelectSharedStimulus={onSelectSharedStimulus}
+            onSaveSharedStimulus={onSaveSharedStimulus}
+            isSavingSharedStimulus={isSavingSharedStimulus}
+            hasMoreSharedStimuli={hasMoreSharedStimuli}
+            onLoadMoreSharedStimuli={onLoadMoreSharedStimuli}
+            onDeleteSharedStimulus={onDeleteSharedStimulus}
           />
 
           {/* Section 2: Pertanyaan (Stem) */}

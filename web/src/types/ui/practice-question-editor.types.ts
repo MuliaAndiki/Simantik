@@ -20,6 +20,12 @@ export interface QuestionStimulusForm {
   title: string;
   content: string;
   source: string;
+  /** ID stimulus bersama bila dipilih dari bank (null = tulis baru/embed). */
+  stimulusId?: string | null;
+  /** Jumlah soal aktual yang terhubung dengan stimulus ini */
+  questionCount?: number;
+  /** Menandakan apakah stimulus ini dimiliki paket lain */
+  isForeign?: boolean;
 }
 
 export interface QuestionEditorItemForm {

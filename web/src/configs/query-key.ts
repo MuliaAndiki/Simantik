@@ -41,6 +41,12 @@ export const queryKey = {
     detail: (id: string) => ['question', 'detail', id] as const,
   },
 
+  stimulusRoot: () => ['stimulus'] as const,
+  stimulus: {
+    list: (query?: Record<string, any>) => ['stimulus', 'list', query] as const,
+    detail: (id: string) => ['stimulus', 'detail', id] as const,
+  },
+
   tryoutRoot: () => ['tryout'] as const,
   tryout: {
     list: (query?: Record<string, any>) => ['tryout', 'list', query] as const,

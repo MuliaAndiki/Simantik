@@ -27,6 +27,8 @@ export interface TryoutQuestionItem {
   instruction?: string;
   questionText: string;
   stimulus?: StimulusData;
+  /** Daftar nomor soal yang menggunakan bacaan ini (dihitung dinamis) */
+  relatedQuestionNumbers?: number[];
   options?: TryoutChoiceOption[];
   statements?: TryoutMatrixStatement[];
   difficultyLevel?: number;

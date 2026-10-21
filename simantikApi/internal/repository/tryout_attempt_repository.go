@@ -84,6 +84,7 @@ func (r *tryoutAttemptRepository) FindAttemptQuestionByNumber(ctx context.Contex
 	var aq models.AttemptQuestion
 	err := r.db.WithContext(ctx).
 		Preload("Question").
+		Preload("Question.Stimulus").
 		Preload("Question.Options").
 		Where("attempt_id = ? AND question_number = ?", attemptID, questionNumber).
 		First(&aq).Error
@@ -154,6 +155,7 @@ func (r *tryoutAttemptRepository) FindAttemptQuestionsByQuestionIDs(ctx context.
 	var aqs []models.AttemptQuestion
 	err := r.db.WithContext(ctx).
 		Preload("Question").
+		Preload("Question.Stimulus").
 		Preload("Question.Options", func(db *gorm.DB) *gorm.DB {
 			return db.Order("display_order ASC")
 		}).

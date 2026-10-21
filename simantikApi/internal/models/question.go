@@ -38,6 +38,9 @@ func (qt *QuestionType) BeforeCreate(tx *gorm.DB) error {
 type Question struct {
 	ID              uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
 	QuestionTypeID  uuid.UUID      `gorm:"type:uuid;not null;index" json:"questionTypeId"`
+	// StimulusID links to a shared reading passage (nullable: standalone questions).
+	StimulusID      *uuid.UUID     `gorm:"type:uuid;index" json:"stimulusId,omitempty"`
+	Stimulus        *Stimulus      `gorm:"foreignKey:StimulusID;" json:"stimulus,omitempty"`
 	QuestionText    string         `gorm:"type:text;not null" json:"questionText"`
 	DifficultyLevel int            `gorm:"not null;default:1;index" json:"difficultyLevel"` // 1 (easiest) to 5 (hardest)
 	Status          ContentStatus  `gorm:"type:varchar(20);not null;default:'draft';index" json:"status"`

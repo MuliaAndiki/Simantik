@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"simantikApi/internal/models"
 )
 
 // Competency DTOs
@@ -76,6 +78,7 @@ type QuestionOptionStudentResponse struct {
 	ID           string `json:"id"`
 	OptionLabel  string `json:"option_label"`
 	OptionText   string `json:"option_text"`
+	IsCorrect    *bool  `json:"is_correct,omitempty"`
 	DisplayOrder int    `json:"display_order"`
 }
 
@@ -102,6 +105,8 @@ type CreateQuestionRequest struct {
 	Options         []CreateQuestionOptionRequest     `json:"options" validate:"required,min=2"`
 	CompetencyIDs   []uuid.UUID                       `json:"competency_ids"`
 	Explanation     *CreateQuestionExplanationRequest `json:"explanation"`
+	// StimulusID links the new question to a shared stimulus (max 3 enforced).
+	StimulusID *uuid.UUID `json:"stimulus_id,omitempty"`
 }
 
 type CreateQuestionsBulkRequest struct {
@@ -130,25 +135,53 @@ type ListQuestionFilter struct {
 }
 
 type QuestionAdminResponse struct {
-	ID              string                        `json:"id"`
-	QuestionTypeID  string                        `json:"question_type_id"`
-	QuestionText    string                        `json:"question_text"`
-	DifficultyLevel int                           `json:"difficulty_level"`
-	Status          string                        `json:"status"`
-	Options         []QuestionOptionAdminResponse `json:"options"`
-	Competencies    []CompetencyResponse          `json:"competencies"`
-	Explanation     *QuestionExplanationResponse  `json:"explanation,omitempty"`
-	CreatedAt       time.Time                     `json:"created_at"`
-	UpdatedAt       time.Time                     `json:"updated_at"`
+	ID               string                        `json:"id"`
+	QuestionTypeID   string                        `json:"question_type_id"`
+	QuestionTypeCode string                        `json:"question_type_code,omitempty"`
+	QuestionTypeName string                        `json:"question_type_name,omitempty"`
+	QuestionText     string                        `json:"question_text"`
+	DifficultyLevel  int                           `json:"difficulty_level"`
+	Status           string                        `json:"status"`
+	Options          []QuestionOptionAdminResponse `json:"options"`
+	Competencies     []CompetencyResponse          `json:"competencies"`
+	Explanation      *QuestionExplanationResponse  `json:"explanation,omitempty"`
+	StimulusID       *uuid.UUID                    `json:"stimulus_id,omitempty"`
+	Stimulus         *StimulusRefResponse          `json:"stimulus,omitempty"`
+	CreatedAt        time.Time                     `json:"created_at"`
+	UpdatedAt        time.Time                     `json:"updated_at"`
 }
 
 type QuestionStudentResponse struct {
-	ID              string                          `json:"id"`
-	QuestionTypeID  string                          `json:"question_type_id"`
-	QuestionText    string                          `json:"question_text"`
-	DifficultyLevel int                             `json:"difficulty_level"`
-	Options         []QuestionOptionStudentResponse `json:"options"`
-	Competencies    []CompetencyResponse            `json:"competencies"`
+	ID               string                          `json:"id"`
+	QuestionTypeID   string                          `json:"question_type_id"`
+	QuestionTypeCode string                          `json:"question_type_code,omitempty"`
+	QuestionTypeName string                          `json:"question_type_name,omitempty"`
+	QuestionText     string                          `json:"question_text"`
+	DifficultyLevel  int                             `json:"difficulty_level"`
+	Options          []QuestionOptionStudentResponse `json:"options"`
+	Competencies     []CompetencyResponse            `json:"competencies"`
+	// Stimulus shared reading passage (nil = standalone question).
+	Stimulus    *StimulusRefResponse         `json:"stimulus,omitempty"`
+	Explanation *QuestionExplanationResponse `json:"explanation,omitempty"`
+}
+
+// StimulusRefResponse is the compact stimulus embedded in question payloads.
+type StimulusRefResponse struct {
+	ID      uuid.UUID `json:"id"`
+	Title   string    `json:"title"`
+	Content string    `json:"content"`
+}
+
+// StimulusRefFromQuestion maps a preloaded Stimulus relation (nil-safe).
+func StimulusRefFromQuestion(q *models.Question) *StimulusRefResponse {
+	if q == nil || q.Stimulus == nil {
+		return nil
+	}
+	return &StimulusRefResponse{
+		ID:      q.Stimulus.ID,
+		Title:   q.Stimulus.Title,
+		Content: q.Stimulus.Content,
+	}
 }
 
 type PaginatedQuestionsAdminResponse struct {

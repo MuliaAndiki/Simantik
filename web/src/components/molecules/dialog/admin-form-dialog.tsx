@@ -59,7 +59,7 @@ export function AdminFormDialogShell({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              isLoading={isSubmitting}
               className="h-10 px-5 rounded-xl font-bold text-xs bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 border-0 shadow-2xs cursor-pointer transition-transform active:scale-98"
             >
               {isSubmitting ? 'Menyimpan...' : submitLabel}

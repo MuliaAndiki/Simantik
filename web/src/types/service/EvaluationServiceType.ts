@@ -96,6 +96,7 @@ export interface QuestionReviewResponse {
   response_time_seconds: number;
   explanation?: string;
   answering_tips?: string;
+  stimulus?: { id: string; title: string; content: string } | null;
 }
 
 /**

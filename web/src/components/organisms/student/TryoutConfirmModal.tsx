@@ -10,6 +10,7 @@ export interface TryoutConfirmModalProps {
   answeredCount: number;
   totalQuestions: number;
   remainingTimeFormatted?: string;
+  isSubmitting?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -20,6 +21,7 @@ export const TryoutConfirmModal: React.FC<TryoutConfirmModalProps> = ({
   answeredCount,
   totalQuestions,
   remainingTimeFormatted = '24:15',
+  isSubmitting = false,
   onCancel,
   onConfirm,
 }) => {
@@ -142,9 +144,11 @@ export const TryoutConfirmModal: React.FC<TryoutConfirmModalProps> = ({
         <Button
           type="button"
           onClick={onConfirm}
+          disabled={isSubmitting}
+          isLoading={isSubmitting}
           className="w-full sm:flex-1 h-11 sm:h-12 rounded-full font-black text-xs sm:text-sm bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 shadow-xs flex items-center justify-center gap-1.5 border-0 cursor-pointer transition-transform active:scale-95 px-4"
         >
-          <Send className="w-4 h-4 text-slate-900 shrink-0" aria-hidden="true" />
+          {!isSubmitting && <Send className="w-4 h-4 text-slate-900 shrink-0" aria-hidden="true" />}
           <span className="whitespace-nowrap">Ya, Kumpulkan & Selesaikan</span>
         </Button>
       </div>

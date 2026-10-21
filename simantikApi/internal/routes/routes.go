@@ -14,6 +14,7 @@ type Handlers struct {
 	Auth           *handler.AuthHandler
 	User           *handler.UserHandler
 	Question       *handler.QuestionHandler
+	Stimulus       *handler.StimulusHandler
 	Tryout         *handler.TryoutHandler
 	TryoutAttempt  *handler.TryoutAttemptHandler
 	Evaluation     *handler.EvaluationHandler
@@ -57,6 +58,9 @@ func Register(app *fiber.App, cfg *config.Config, h *Handlers) {
 	registerAuthRoutes(api, cfg, h.Auth)
 	registerUserRoutes(api, cfg, h.User)
 	RegisterQuestionRoutes(api, cfg, h.Question)
+	if h.Stimulus != nil {
+		RegisterStimulusRoutes(api, cfg, h.Stimulus)
+	}
 	RegisterTryoutRoutes(api, cfg, h.Tryout)
 	RegisterAttemptRoutes(api, cfg, h.TryoutAttempt)
 	RegisterEvaluationRoutes(api, cfg, h.Evaluation)

@@ -17,5 +17,6 @@ export * from './QuestionServiceType';
 export * from './RecommendationServiceType';
 export * from './ReportingServiceType';
 export * from './SchoolServiceType';
+export * from './StimulusServiceType';
 export * from './TryoutServiceType';
 export * from './UserServiceType';
