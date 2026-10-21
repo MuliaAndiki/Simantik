@@ -1,6 +1,5 @@
-import { Loader2 } from 'lucide-react';
 import * as React from 'react';
-import { Button, ButtonProps } from '../atoms';
+import { Button, type ButtonProps, Spinner } from '../atoms';
 
 export interface ActionButtonProps extends ButtonProps {
   isPending?: boolean;
@@ -12,7 +11,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
   ({ children, isPending = false, iconLeft, iconRight, disabled, ...props }, ref) => {
     return (
       <Button ref={ref} disabled={isPending || disabled} {...props}>
-        {isPending ? <Loader2 className="size-4 animate-spin shrink-0" /> : iconLeft}
+        {isPending ? <Spinner size="sm" /> : iconLeft}
 
         {children}
 

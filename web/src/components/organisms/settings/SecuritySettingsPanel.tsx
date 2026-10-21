@@ -79,9 +79,11 @@ export const SecuritySettingsPanel: React.FC<SecuritySettingsPanelProps> = ({
         <Button
           type="submit"
           disabled={isSubmitting}
+          isLoading={isSubmitting}
+          loadingText="Menyimpan..."
           className="mt-2 h-10 px-5 rounded-xl font-bold text-xs bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 border-0 shadow-2xs cursor-pointer transition-transform active:scale-98 disabled:opacity-60"
         >
-          {isSubmitting ? 'Menyimpan...' : 'Perbarui Kata Sandi'}
+          Perbarui Kata Sandi
         </Button>
       </form>
     </div>

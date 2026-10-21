@@ -168,9 +168,9 @@ func TestStimulusService_LinkMaxThree(t *testing.T) {
 		}
 	}
 
-	// Fourth is rejected (hard cap).
-	if _, err := svc.LinkQuestionToStimulus(ctx, stim.ID, ids[3]); err != service.ErrStimulusFull {
-		t.Errorf("expected ErrStimulusFull, got %v", err)
+	// Fourth and subsequent questions link successfully (unlimited).
+	if _, err := svc.LinkQuestionToStimulus(ctx, stim.ID, ids[3]); err != nil {
+		t.Errorf("expected 4th question to link successfully, got %v", err)
 	}
 
 	// Relink of an already-linked question is idempotent.
@@ -271,9 +271,9 @@ func TestQuestionService_CreateLinksStimulus(t *testing.T) {
 		}
 	}
 
-	// Fourth is rejected (max 3).
-	if _, err := svc.CreateQuestion(ctx, newQuestion(5), adminID); err != service.ErrStimulusFull {
-		t.Errorf("expected ErrStimulusFull, got %v", err)
+	// Fourth is allowed without cap.
+	if _, err := svc.CreateQuestion(ctx, newQuestion(5), adminID); err != nil {
+		t.Errorf("expected 4th question creation to succeed, got %v", err)
 	}
 
 	// Unknown stimulus is rejected.

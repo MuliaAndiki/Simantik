@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, ListOrdered, Plus, Trash2 } from 'lucide-react';
 import type React from 'react';
+import { Spinner } from '@/components/atoms';
 import type { QuestionEditorItemForm } from '@/types/ui/practice-question-editor.types';
 
 export interface PracticeQuestionPaletteCardProps {
@@ -151,9 +152,10 @@ export const PracticeQuestionPaletteCard: React.FC<PracticeQuestionPaletteCardPr
         type="button"
         onClick={onSaveQuestions}
         disabled={isSubmitting}
-        className="w-full py-3 px-4 rounded-xl bg-[#F5B731] hover:bg-[#E0A422] text-slate-900 font-bold text-xs sm:text-sm tracking-wide shadow-xs transition cursor-pointer disabled:opacity-60"
+        className="w-full py-3 px-4 rounded-xl bg-[#F5B731] hover:bg-[#E0A422] text-slate-900 font-bold text-xs sm:text-sm tracking-wide shadow-xs transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
       >
-        {isSubmitting ? 'Menyimpan...' : 'Simpan Soal'}
+        {isSubmitting && <Spinner size="xs" />}
+        <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Soal'}</span>
       </button>
     </div>
   );

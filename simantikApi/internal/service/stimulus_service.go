@@ -175,8 +175,7 @@ func EnsureQuestionsPackageScope(ctx context.Context, questionRepo repository.Qu
 	return nil
 }
 
-// ensureStimulusCapacity validates existence + max-3 cap (shared by
-// link endpoint and question creation).
+// ensureStimulusCapacity validates stimulus existence for question creation.
 func ensureStimulusCapacity(ctx context.Context, repo repository.StimulusRepository, stimulusID uuid.UUID) error {
 	if repo == nil {
 		return nil
@@ -186,13 +185,6 @@ func ensureStimulusCapacity(ctx context.Context, repo repository.StimulusReposit
 			return ErrStimulusNotFound
 		}
 		return err
-	}
-	linked, err := repo.FindLinkedQuestions(ctx, stimulusID)
-	if err != nil {
-		return err
-	}
-	if len(linked) >= dto.MaxQuestionsPerStimulus {
-		return ErrStimulusFull
 	}
 	return nil
 }
@@ -214,9 +206,6 @@ func (s *stimulusService) LinkQuestionToStimulus(ctx context.Context, stimulusID
 			// Idempotent: already linked.
 			return &dto.LinkStimulusQuestionResponse{StimulusID: stimulusID, QuestionID: questionID}, nil
 		}
-	}
-	if len(linked) >= dto.MaxQuestionsPerStimulus {
-		return nil, ErrStimulusFull
 	}
 
 	if err := s.questionRepo.SetStimulusID(ctx, questionID, &stimulusID); err != nil {

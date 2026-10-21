@@ -2,6 +2,7 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
+import { Spinner } from '@/components/atoms/loading/Spinner';
 import { cn } from '@/utils/classname';
 
 const buttonVariants = cva(
@@ -37,27 +38,53 @@ const buttonVariants = cva(
   }
 );
 
-function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  ...props
-}: React.ComponentProps<'button'> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-  }) {
-  const Comp = asChild ? Slot : 'button';
-
-  return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  );
+export interface ButtonProps
+  extends React.ComponentProps<'button'>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+  isLoading?: boolean;
+  loading?: boolean;
+  loadingText?: React.ReactNode;
+  spinnerPlacement?: 'start' | 'end';
 }
 
-export type ButtonProps = React.ComponentProps<typeof Button> & VariantProps<typeof buttonVariants>;
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      isLoading = false,
+      loading = false,
+      loadingText,
+      spinnerPlacement = 'start',
+      disabled,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const isBusy = Boolean(isLoading || loading);
+    const Comp = asChild ? Slot : 'button';
+    const spinnerSize = size === 'sm' ? 'xs' : size === 'lg' ? 'md' : 'sm';
+
+    return (
+      <Comp
+        ref={ref}
+        data-slot="button"
+        disabled={disabled || isBusy}
+        aria-busy={isBusy}
+        className={cn(buttonVariants({ variant, size, className }), isBusy && 'cursor-wait')}
+        {...props}
+      >
+        {isBusy && spinnerPlacement === 'start' && <Spinner size={spinnerSize} />}
+        {isBusy && loadingText !== undefined ? loadingText : children}
+        {isBusy && spinnerPlacement === 'end' && <Spinner size={spinnerSize} />}
+      </Comp>
+    );
+  }
+);
+Button.displayName = 'Button';
 
 export { Button, buttonVariants };

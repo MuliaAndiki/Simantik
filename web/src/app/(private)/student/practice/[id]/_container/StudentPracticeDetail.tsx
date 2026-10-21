@@ -15,6 +15,7 @@ import type {
   QuestionAnswerValue,
   QuestionPaletteStatus,
 } from '@/types/ui';
+import { buildStimulusQuestionMap, getStimulusKey } from '@/utils/stimulus.util';
 import { parseMatrixOptions, parseWacanaQuestion } from '@/utils/wacana';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -23,21 +24,72 @@ function isUUID(value: string): boolean {
   return UUID_REGEX.test(value);
 }
 
-function mapApiQuestionType(typeIdStr: string): PracticeQuestionType {
-  const t = (typeIdStr || '').toLowerCase();
-  if (t.includes('kompleks') || t.includes('mcma') || t.includes('complex'))
+export type QuestionTypeMap = Map<string, { code: string; name: string }>;
+
+function mapApiQuestionType(
+  q: QuestionAdminResponse | QuestionStudentResponse,
+  typeMap?: QuestionTypeMap
+): PracticeQuestionType {
+  // 1. Cek langsung dari response backend (jika ada relasi type preloaded)
+  const code = (q.question_type_code || '').toLowerCase();
+  const name = (q.question_type_name || '').toLowerCase();
+  if (code.includes('complex') || code.includes('mcma') || name.includes('kompleks')) {
     return 'pilihan-ganda-kompleks';
-  if (t.includes('benar') || t.includes('salah')) return 'benar-salah';
-  if (t.includes('tepat') && t.includes('tidak')) return 'tepat-tidak-tepat';
-  if (t.includes('setuju') && t.includes('tidak')) return 'setuju-tidak-setuju';
+  }
+  if (code === 'true_false' || name.includes('benar') || name.includes('salah')) {
+    return 'benar-salah';
+  }
+
+  // 2. Cek via mapping dari master question types (lookup UUID id)
+  const rawId = (q.question_type_id || '').toLowerCase();
+  const meta = typeMap?.get(rawId);
+  if (meta) {
+    if (
+      meta.code.includes('complex') ||
+      meta.code.includes('mcma') ||
+      meta.name.includes('kompleks')
+    ) {
+      return 'pilihan-ganda-kompleks';
+    }
+    if (meta.code === 'true_false' || meta.name.includes('benar') || meta.name.includes('salah')) {
+      return 'benar-salah';
+    }
+  }
+
+  // 3. Fallback jika string question_type_id berupa label tipe
+  if (rawId.includes('kompleks') || rawId.includes('mcma') || rawId.includes('complex')) {
+    return 'pilihan-ganda-kompleks';
+  }
+  if (rawId.includes('benar') || rawId.includes('salah')) return 'benar-salah';
+  if (rawId.includes('tepat') && rawId.includes('tidak')) return 'tepat-tidak-tepat';
+  if (rawId.includes('setuju') && rawId.includes('tidak')) return 'setuju-tidak-setuju';
+
+  // 4. Deteksi heuristik jika ada lebih dari satu opsi kunci jawaban benar (admin preview)
+  const correctCount = (q.options || []).filter((opt) => (opt as any).is_correct === true).length;
+  if (correctCount > 1) {
+    return 'pilihan-ganda-kompleks';
+  }
+
+  // 5. Deteksi heuristik dari teks/instruksi pertanyaan jika tipe tersimpan secara default di DB
+  const rawText = (q.question_text || '').toLowerCase();
+  if (
+    rawText.includes('jawaban benar lebih dari satu') ||
+    rawText.includes('jawaban lebih dari satu') ||
+    rawText.includes('pilihan ganda kompleks') ||
+    rawText.includes('pilihlah lebih dari satu') ||
+    rawText.includes('pilih lebih dari satu') ||
+    rawText.includes('dapat memilih lebih dari satu')
+  ) {
+    return 'pilihan-ganda-kompleks';
+  }
+
   return 'pilihan-ganda';
 }
 
-import { buildStimulusQuestionMap, getStimulusKey } from '@/utils/stimulus.util';
-
 function transformApiQuestions(
   apiQuestions: (QuestionAdminResponse | QuestionStudentResponse)[] | undefined,
-  competencyName: string
+  competencyName: string,
+  typeMap?: QuestionTypeMap
 ): PracticeQuestionItem[] {
   if (!apiQuestions || apiQuestions.length === 0) {
     return [];
@@ -86,7 +138,7 @@ function transformApiQuestions(
       id: q.id,
       questionNumber: idx + 1,
       competencyBadge: compBadge,
-      type: mapApiQuestionType(q.question_type_id),
+      type: mapApiQuestionType(q, typeMap),
       instruction:
         'Petunjuk: Baca pertanyaan dengan teliti, lalu pilih opsi jawaban yang paling tepat.',
       questionText: parsed.bodyHtml,
@@ -166,13 +218,27 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
     'MENEMUKAN INFORMASI TERSURAT'
   ).toUpperCase();
 
-  // 4. Questions dataset: prioritize package questions, then competency questions, fallback to defaults
+  // 4. Question Types Master Query
+  const questionTypesQuery = question.query.types();
+
+  const typeMap = useMemo<QuestionTypeMap>(() => {
+    const map = new Map<string, { code: string; name: string }>();
+    for (const qt of questionTypesQuery.data ?? []) {
+      map.set(qt.id.toLowerCase(), {
+        code: (qt.code || '').toLowerCase(),
+        name: (qt.name || '').toLowerCase(),
+      });
+    }
+    return map;
+  }, [questionTypesQuery.data]);
+
+  // 5. Questions dataset: prioritize package questions, then competency questions, fallback to defaults
   const questions: PracticeQuestionItem[] = useMemo(() => {
     if (practicePackage?.questions && practicePackage.questions.length > 0) {
-      return transformApiQuestions(practicePackage.questions, competencyName);
+      return transformApiQuestions(practicePackage.questions, competencyName, typeMap);
     }
-    return transformApiQuestions(questionsPage?.questions, competencyName);
-  }, [practicePackage?.questions, questionsPage?.questions, competencyName]);
+    return transformApiQuestions(questionsPage?.questions, competencyName, typeMap);
+  }, [practicePackage?.questions, questionsPage?.questions, competencyName, typeMap]);
 
   const totalQuestions = questions.length;
 
@@ -584,6 +650,7 @@ function StudentPracticeSessionContent({ packageId }: StudentPracticeDetailProps
       onWarningDismiss={handleWarningDismiss}
       isConfirmModalOpen={isConfirmModalOpen}
       confirmModalType={confirmModalType}
+      isSubmitting={submitPracticeMutation.isPending || autoSubmitPracticeMutation.isPending}
       onConfirmModalCancel={handleConfirmModalCancel}
       onConfirmModalProceed={handleConfirmModalProceed}
     />

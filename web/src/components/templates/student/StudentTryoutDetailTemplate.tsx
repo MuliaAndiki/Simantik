@@ -154,6 +154,7 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
         isOpen={isPreStartModalOpen}
         isChecked={isPreStartChecked}
         totalQuestions={totalQuestions}
+        isSubmitting={isSubmitting}
         onCheckChange={onPreStartCheckChange}
         onConfirm={onPreStartConfirm}
         onClose={onPreStartClose}
@@ -173,6 +174,7 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
         answeredCount={answeredCount}
         totalQuestions={totalQuestions}
         remainingTimeFormatted={formattedTime}
+        isSubmitting={isSubmitting}
         onCancel={onConfirmModalCancel}
         onConfirm={onConfirmModalProceed}
       />

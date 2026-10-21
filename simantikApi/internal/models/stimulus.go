@@ -30,3 +30,7 @@ func (s *Stimulus) BeforeCreate(tx *gorm.DB) error {
 	}
 	return nil
 }
+
+func (Stimulus) TableName() string {
+	return "stimulus"
+}

@@ -160,9 +160,10 @@ export function ProfilePersonalInfoCard({
           <Button
             type="submit"
             disabled={isSubmitting || !isDirty}
+            isLoading={isSubmitting}
             className="h-11 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white font-semibold text-sm px-6 gap-2 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
           >
-            <Check className="size-4 stroke-[2.5]" />
+            {!isSubmitting && <Check className="size-4 stroke-[2.5]" />}
             <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
           </Button>
 

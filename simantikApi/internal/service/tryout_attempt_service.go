@@ -452,6 +452,8 @@ func (s *tryoutAttemptService) GetAttemptQuestion(ctx context.Context, attemptID
 	}
 	if q.Type != nil {
 		studentQ.QuestionTypeID = q.Type.ID.String()
+		studentQ.QuestionTypeCode = string(q.Type.Code)
+		studentQ.QuestionTypeName = q.Type.Name
 	}
 
 	return &dto.AttemptQuestionResponse{

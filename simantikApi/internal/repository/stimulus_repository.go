@@ -108,7 +108,7 @@ func (r *stimulusRepository) FindPackagesUsingStimulus(ctx context.Context, stim
 	var refs []StimulusPackageRef
 	err := r.db.WithContext(ctx).Raw(`
 		SELECT package_kind AS kind, package_id
-		FROM stimuli
+		FROM stimulus
 		WHERE id = ? AND package_id IS NOT NULL AND package_kind IS NOT NULL
 		UNION
 		SELECT 'tryout' AS kind, tq.tryout_id AS package_id

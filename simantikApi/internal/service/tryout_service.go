@@ -379,6 +379,8 @@ func (s *tryoutService) mapQuestionToAdminResponse(q *models.Question) *dto.Ques
 		Options:         options,
 		Competencies:    competencies,
 		Explanation:     explanation,
+		StimulusID:      q.StimulusID,
+		Stimulus:        dto.StimulusRefFromQuestion(q),
 		CreatedAt:       q.CreatedAt,
 		UpdatedAt:       q.UpdatedAt,
 	}

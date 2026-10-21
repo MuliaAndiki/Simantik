@@ -7,7 +7,6 @@ import {
   EyeOff,
   FileText,
   Info,
-  Loader2,
   Send,
   ShieldCheck,
   Star,
@@ -21,6 +20,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  Spinner,
 } from '@/components/atoms';
 import type {
   ActionConfirmModalProps,
@@ -550,7 +550,7 @@ export function ActionConfirmDialog({
               confirmButtonClass
             )}
           >
-            {isPending ? <Loader2 className="size-4 shrink-0 animate-spin" /> : finalConfirmIcon}
+            {isPending ? <Spinner size="sm" /> : finalConfirmIcon}
             <span>{finalConfirmText}</span>
           </button>
         </div>

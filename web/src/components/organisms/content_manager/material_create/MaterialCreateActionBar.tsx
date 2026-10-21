@@ -1,5 +1,6 @@
-import { Bookmark, Loader2, Send } from 'lucide-react';
+import { Bookmark, Send } from 'lucide-react';
 import React from 'react';
+import { Spinner } from '@/components/atoms';
 import { cn } from '@/utils/classname';
 
 export interface MaterialCreateActionBarProps {
@@ -7,6 +8,7 @@ export interface MaterialCreateActionBarProps {
   onSaveDraft?: () => void;
   onSubmitReview?: () => void;
   isSubmitting?: boolean;
+  isSavingDraft?: boolean;
   className?: string;
 }
 
@@ -15,6 +17,7 @@ export const MaterialCreateActionBar: React.FC<MaterialCreateActionBarProps> = (
   onSaveDraft,
   onSubmitReview,
   isSubmitting = false,
+  isSavingDraft = false,
   className,
 }) => {
   return (
@@ -28,7 +31,7 @@ export const MaterialCreateActionBar: React.FC<MaterialCreateActionBarProps> = (
       <button
         type="button"
         onClick={onCancel}
-        disabled={isSubmitting}
+        disabled={isSubmitting || isSavingDraft}
         className="px-6 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl transition cursor-pointer disabled:opacity-50"
       >
         Batal
@@ -40,11 +43,11 @@ export const MaterialCreateActionBar: React.FC<MaterialCreateActionBarProps> = (
         <button
           type="button"
           onClick={onSaveDraft}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSavingDraft}
           className="px-5 py-2.5 bg-[#EBF5FE] hover:bg-[#DDF0FD] text-sky-700 font-bold text-xs sm:text-sm rounded-xl flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
         >
-          <Bookmark className="w-4 h-4" />
-          <span>Simpan Draft</span>
+          {isSavingDraft ? <Spinner size="xs" /> : <Bookmark className="w-4 h-4" />}
+          <span>{isSavingDraft ? 'Menyimpan...' : 'Simpan Draft'}</span>
         </button>
 
         {/* Simpan & Ajukan Review */}
@@ -54,11 +57,7 @@ export const MaterialCreateActionBar: React.FC<MaterialCreateActionBarProps> = (
           disabled={isSubmitting}
           className="px-6 py-2.5 bg-[#F59E0B] hover:bg-[#E08D03] active:scale-[0.99] text-white font-bold text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow-xs transition cursor-pointer disabled:opacity-50"
         >
-          {isSubmitting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Send className="w-4 h-4" />
-          )}
+          {isSubmitting ? <Spinner size="xs" /> : <Send className="w-4 h-4" />}
           <span>Simpan &amp; Ajukan Review</span>
         </button>
       </div>

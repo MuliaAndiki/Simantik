@@ -36,10 +36,10 @@ const createDefaultVariant = (
   },
   questionText: '',
   options: [
-    { id: '1', label: 'A', text: '', sublabel: 'Pernyataan wacana eksplisit' },
-    { id: '2', label: 'B', text: '', sublabel: 'Pernyataan pengecoh inferensial' },
-    { id: '3', label: 'C', text: '', sublabel: 'Pernyataan kontradiktif' },
-    { id: '4', label: 'D', text: '', sublabel: 'Pernyataan generalisasi bias' },
+    { id: '1', label: 'A', text: '' },
+    { id: '2', label: 'B', text: '' },
+    { id: '3', label: 'C', text: '' },
+    { id: '4', label: 'D', text: '' },
   ],
   correctOptionLabel: 'A',
   correctOptionLabels: ['A', 'B'],
@@ -84,14 +84,21 @@ const mapApiToVariantForm = (
   let hasStimulus = false;
   let stimulusTitle = '';
   let stimulusContent = '';
+  const stimulusId: string | null = apiQ.stimulus?.id || apiQ.stimulus_id || null;
   let questionText = apiQ.question_text || '';
 
-  const stimulusMatch = questionText.match(/^\[WACANA:\s*(.*?)\]\n([\s\S]*?)\n\n([\s\S]*)$/);
-  if (stimulusMatch) {
+  if (apiQ.stimulus) {
     hasStimulus = true;
-    stimulusTitle = stimulusMatch[1] || '';
-    stimulusContent = stimulusMatch[2] || '';
-    questionText = stimulusMatch[3] || '';
+    stimulusTitle = apiQ.stimulus.title || '';
+    stimulusContent = apiQ.stimulus.content || '';
+  } else {
+    const stimulusMatch = questionText.match(/^\[WACANA:\s*(.*?)\]\n([\s\S]*?)\n\n([\s\S]*)$/);
+    if (stimulusMatch) {
+      hasStimulus = true;
+      stimulusTitle = stimulusMatch[1] || '';
+      stimulusContent = stimulusMatch[2] || '';
+      questionText = stimulusMatch[3] || '';
+    }
   }
 
   const options = apiQ.options || [];
@@ -180,6 +187,7 @@ const mapApiToVariantForm = (
       title: stimulusTitle,
       content: stimulusContent,
       source: '',
+      stimulusId,
     },
     questionText,
     options: choiceOptions,
@@ -189,6 +197,22 @@ const mapApiToVariantForm = (
     explanation: apiQ.explanation?.explanation || '',
     answeringTips: apiQ.explanation?.answering_tips || '',
   };
+};
+
+const hasMeaningfulTryoutDraft = (form: TryoutPackageEditorForm): boolean => {
+  if (form.title?.trim()) return true;
+  if (form.questions.length > 1) return true;
+  const q0 = form.questions[0];
+  if (!q0) return false;
+  for (const lvl of [1, 2, 3, 4, 5] as TryoutDifficultyLevel[]) {
+    const v = q0.variants[lvl];
+    if (v?.questionText?.trim()) return true;
+    if (v?.explanation?.trim()) return true;
+    if (v?.stimulus?.hasStimulus && (v.stimulus.title?.trim() || v.stimulus.content?.trim()))
+      return true;
+    if (v?.options?.some((o) => o.text?.trim())) return true;
+  }
+  return false;
 };
 
 export const TryoutQuestionContainer: React.FC = () => {
@@ -211,25 +235,73 @@ export const TryoutQuestionContainer: React.FC = () => {
   const updateTryoutMutation = api.tryout.mutate.update();
   const syncQuestionsMutation = api.tryout.mutate.syncQuestions();
 
+  const draftStorageKey = useMemo(
+    () => (tryoutId ? `simantik_draft_tryout_${tryoutId}` : null),
+    [tryoutId]
+  );
+  const isDraftRestoredRef = React.useRef<boolean>(false);
+  const isInitialMountRef = React.useRef<boolean>(true);
+
   // State: Tryout Form
-  const [packageForm, setPackageForm] = useState<TryoutPackageEditorForm>({
-    id: tryoutId,
-    title: '',
-    jenjang: 'sma',
-    description: '',
-    duration_minutes: 75,
-    status: 'DRAFT',
-    questions: [createDefaultAdaptiveQuestion(1)],
-    activeQuestionIndex: 0,
+  const [packageForm, setPackageForm] = useState<TryoutPackageEditorForm>(() => {
+    if (typeof window !== 'undefined' && tryoutId) {
+      try {
+        const raw = window.localStorage.getItem(`simantik_draft_tryout_${tryoutId}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.questions) && hasMeaningfulTryoutDraft(parsed)) {
+            isDraftRestoredRef.current = true;
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn('Gagal memulihkan draf lokal tryout:', e);
+      }
+    }
+    return {
+      id: tryoutId,
+      title: '',
+      jenjang: 'sma',
+      description: '',
+      duration_minutes: 75,
+      status: 'DRAFT',
+      questions: [createDefaultAdaptiveQuestion(1)],
+      activeQuestionIndex: 0,
+    };
   });
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Toast pemberitahuan draf dipulihkan
+  useEffect(() => {
+    if (isDraftRestoredRef.current) {
+      ns.alert.toast({
+        title: 'Draf Dipulihkan',
+        message: 'Perubahan soal tryout yang belum tersimpan telah dipulihkan otomatis.',
+        icon: 'info',
+      });
+    }
+  }, []);
 
   // Sync state when tryout detail arrives
   useEffect(() => {
     if (tryoutDetailQuery.data) {
       const t = tryoutDetailQuery.data;
       const durationMinutes = t.duration_seconds ? Math.round(t.duration_seconds / 60) : 75;
+
+      // Jika user sudah memiliki draf lokal yang dipulihkan, jangan timpa soal yang sedang mereka edit
+      if (isDraftRestoredRef.current) {
+        setPackageForm((prev) => ({
+          ...prev,
+          id: t.id,
+          title: prev.title || t.title || '',
+          jenjang: prev.jenjang || (t.jenjang as SchoolLevel) || 'sma',
+          duration_minutes: prev.duration_minutes || durationMinutes,
+          description: prev.description || t.description || '',
+          status: (t.status || 'DRAFT').toUpperCase() as typeof prev.status,
+        }));
+        return;
+      }
 
       const loadedQuestions: QuestionAdminResponse[] = t.questions || [];
       let mappedAdaptiveQuestions: TryoutAdaptiveQuestionItemForm[] = [];
@@ -278,6 +350,41 @@ export const TryoutQuestionContainer: React.FC = () => {
       }));
     }
   }, [tryoutDetailQuery.data]);
+
+  // Debounced auto-save draf ke localStorage
+  useEffect(() => {
+    if (!draftStorageKey || typeof window === 'undefined') return;
+
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      return;
+    }
+
+    const handler = setTimeout(() => {
+      try {
+        if (hasMeaningfulTryoutDraft(packageForm)) {
+          window.localStorage.setItem(draftStorageKey, JSON.stringify(packageForm));
+        }
+      } catch (e) {
+        console.warn('Gagal menyimpan draf tryout ke localStorage:', e);
+      }
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [packageForm, draftStorageKey]);
+
+  // Beforeunload listener agar browser mengonfirmasi bila ada draf yang belum disimpan
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasMeaningfulTryoutDraft(packageForm)) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [packageForm]);
 
   const activeQuestion =
     packageForm.questions[packageForm.activeQuestionIndex] || packageForm.questions[0];
@@ -568,7 +675,7 @@ export const TryoutQuestionContainer: React.FC = () => {
       content: s.content,
       questionCount: s.question_count,
       levelsCovered: s.levels_covered ?? [],
-      isFull: s.question_count >= 3,
+      isFull: false,
     }));
   }, [stimuliQuery.data]);
 
@@ -581,7 +688,7 @@ export const TryoutQuestionContainer: React.FC = () => {
       return;
     }
     const opt = sharedStimulusOptions.find((o) => o.id === id);
-    if (!opt || opt.isFull) return;
+    if (!opt) return;
     updateActiveVariant((prev) => ({
       ...prev,
       stimulus: {
@@ -873,6 +980,16 @@ export const TryoutQuestionContainer: React.FC = () => {
           body: { questions: questionsPayload },
         });
       }
+
+      // Bersihkan draf lokal karena paket sudah berhasil disimpan
+      if (draftStorageKey && typeof window !== 'undefined') {
+        try {
+          window.localStorage.removeItem(draftStorageKey);
+        } catch {
+          // Ignore
+        }
+      }
+      isDraftRestoredRef.current = false;
 
       router.push(`${basePath}/tryouts`);
     } catch {

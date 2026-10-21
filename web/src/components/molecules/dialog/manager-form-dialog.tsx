@@ -130,7 +130,7 @@ export function ManagerDialogActions({
       </Button>
       <Button
         type="submit"
-        disabled={isSubmitting}
+        isLoading={isSubmitting}
         className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#134653] hover:bg-[#0E343E] text-white font-semibold text-sm shadow-xs transition cursor-pointer"
       >
         {isSubmitting ? 'Menyimpan...' : submitLabel}
@@ -176,10 +176,11 @@ export function AmberDialogActions({
 
       <Button
         type="submit"
-        disabled={isSubmitting || submitDisabled}
+        disabled={submitDisabled}
+        isLoading={isSubmitting}
         className="flex-1 h-11 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white text-sm font-semibold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
       >
-        <Check className="size-4 stroke-[2.5]" />
+        {!isSubmitting && <Check className="size-4 stroke-[2.5]" />}
         <span>{isSubmitting ? submittingLabel : submitLabel}</span>
       </Button>
     </div>

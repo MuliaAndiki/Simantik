@@ -82,11 +82,13 @@ func (r *practiceRepository) FindPackageByIDWithQuestions(ctx context.Context, i
 	err := r.db.WithContext(ctx).
 		Preload("Competency").
 		Preload("Questions").
+		Preload("Questions.Type").
 		Preload("Questions.Options", func(db *gorm.DB) *gorm.DB {
 			return db.Order("display_order ASC")
 		}).
 		Preload("Questions.Competencies").
 		Preload("Questions.Explanation").
+		Preload("Questions.Stimulus").
 		First(&pkg, "id = ?", id).Error
 	if err != nil {
 		return nil, err

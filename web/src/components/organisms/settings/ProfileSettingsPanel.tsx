@@ -58,9 +58,11 @@ export const ProfileSettingsPanel: React.FC<ProfileSettingsPanelProps> = ({
         <Button
           type="submit"
           disabled={isSaving}
+          isLoading={isSaving}
+          loadingText="Menyimpan..."
           className="mt-2 h-10 px-5 rounded-xl font-bold text-xs bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 border-0 shadow-2xs cursor-pointer transition-transform active:scale-98 disabled:opacity-60"
         >
-          {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
+          Simpan Perubahan
         </Button>
       </form>
     </div>

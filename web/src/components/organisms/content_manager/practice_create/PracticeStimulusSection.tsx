@@ -391,24 +391,17 @@ export const PracticeStimulusSection: React.FC<PracticeStimulusSectionProps> = (
                         <div className="flex items-center gap-2 p-3">
                           <button
                             type="button"
-                            disabled={isFull && !isSelected}
                             onClick={() => onSelectSharedStimulus(isSelected ? null : opt.id)}
-                            className="flex-1 min-w-0 text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 min-w-0 text-left cursor-pointer"
                           >
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-xs font-bold text-slate-900 truncate">
                                 {opt.title}
                               </span>
 
-                              {isFull ? (
-                                <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full shrink-0">
-                                  Sudah Penuh (3/3 soal)
-                                </span>
-                              ) : (
-                                <span className="text-[10px] font-semibold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full shrink-0">
-                                  Digunakan oleh {opt.questionCount} soal
-                                </span>
-                              )}
+                              <span className="text-[10px] font-semibold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full shrink-0">
+                                Digunakan oleh {opt.questionCount} soal
+                              </span>
                             </div>
 
                             {/* Peringatan kepemilikan paket jika dari paket lain */}
@@ -523,7 +516,7 @@ export const PracticeStimulusSection: React.FC<PracticeStimulusSectionProps> = (
               {/* Form Input Judul Bacaan */}
               <div className="space-y-1">
                 <label className="block text-[11px] font-bold text-slate-700">
-                  Judul Wacana / Teks Bacaan (Opsional)
+                  Judul Wacana / Teks Bacaan
                 </label>
                 <input
                   type="text"
@@ -545,7 +538,7 @@ export const PracticeStimulusSection: React.FC<PracticeStimulusSectionProps> = (
                     value={stimulus.content}
                     readOnly={isLinked}
                     variant="compact"
-                    minHeight="160px"
+                    minHeight="1400px"
                     onChange={(val) => onStimulusChange('content', val)}
                     onUploadImage={onUploadImage}
                     onDeleteImage={onDeleteImage}
@@ -556,7 +549,7 @@ export const PracticeStimulusSection: React.FC<PracticeStimulusSectionProps> = (
               {/* Form Input Sumber Referensi Bacaan */}
               <div className="space-y-1">
                 <label className="block text-[11px] font-bold text-slate-700">
-                  Sumber / Referensi Wacana (Opsional)
+                  Sumber / Referensi Wacana
                 </label>
                 <input
                   type="text"

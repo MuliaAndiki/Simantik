@@ -384,17 +384,27 @@ func (s *questionService) mapQuestionAdminResponse(q *models.Question) *dto.Ques
 		}
 	}
 
+	var typeCode, typeName string
+	if q.Type != nil {
+		typeCode = string(q.Type.Code)
+		typeName = q.Type.Name
+	}
+
 	return &dto.QuestionAdminResponse{
-		ID:              q.ID.String(),
-		QuestionTypeID:  q.QuestionTypeID.String(),
-		QuestionText:    q.QuestionText,
-		DifficultyLevel: q.DifficultyLevel,
-		Status:          string(q.Status),
-		Options:         opts,
-		Competencies:    comps,
-		Explanation:     expl,
-		CreatedAt:       q.CreatedAt,
-		UpdatedAt:       q.UpdatedAt,
+		ID:               q.ID.String(),
+		QuestionTypeID:   q.QuestionTypeID.String(),
+		QuestionTypeCode: typeCode,
+		QuestionTypeName: typeName,
+		QuestionText:     q.QuestionText,
+		DifficultyLevel:  q.DifficultyLevel,
+		Status:           string(q.Status),
+		Options:          opts,
+		Competencies:     comps,
+		Explanation:      expl,
+		StimulusID:       q.StimulusID,
+		Stimulus:         dto.StimulusRefFromQuestion(q),
+		CreatedAt:        q.CreatedAt,
+		UpdatedAt:        q.UpdatedAt,
 	}
 }
 
@@ -414,13 +424,21 @@ func (s *questionService) mapQuestionStudentResponse(q *models.Question) *dto.Qu
 		comps[i] = *s.mapCompetencyResponse(&c)
 	}
 
+	var typeCode, typeName string
+	if q.Type != nil {
+		typeCode = string(q.Type.Code)
+		typeName = q.Type.Name
+	}
+
 	return &dto.QuestionStudentResponse{
-		ID:              q.ID.String(),
-		QuestionTypeID:  q.QuestionTypeID.String(),
-		QuestionText:    q.QuestionText,
-		DifficultyLevel: q.DifficultyLevel,
-		Options:         opts,
-		Competencies:    comps,
-		Stimulus:        dto.StimulusRefFromQuestion(q),
+		ID:               q.ID.String(),
+		QuestionTypeID:   q.QuestionTypeID.String(),
+		QuestionTypeCode: typeCode,
+		QuestionTypeName: typeName,
+		QuestionText:     q.QuestionText,
+		DifficultyLevel:  q.DifficultyLevel,
+		Options:          opts,
+		Competencies:     comps,
+		Stimulus:         dto.StimulusRefFromQuestion(q),
 	}
 }

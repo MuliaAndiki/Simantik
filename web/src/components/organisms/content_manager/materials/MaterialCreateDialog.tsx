@@ -165,9 +165,10 @@ export function MaterialCreateDialog({
         <Button
           type="submit"
           disabled={isSubmitting || !form.title || !form.label || !form.description}
+          isLoading={isSubmitting}
           className="flex-1 h-11 rounded-xl bg-[#0E7490] hover:bg-[#155e75] text-white text-sm font-semibold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
         >
-          <Check className="size-4 stroke-[2.5]" />
+          {!isSubmitting && <Check className="size-4 stroke-[2.5]" />}
           <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Modul'}</span>
         </Button>
       </div>

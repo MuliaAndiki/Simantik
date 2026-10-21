@@ -250,15 +250,17 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
             type="button"
             onClick={onNext}
             disabled={isSubmitting || isNextDisabled}
+            isLoading={isSubmitting}
             title={isNextDisabled ? 'Pilih jawaban dulu sebelum lanjut' : undefined}
             className="flex-1 sm:flex-none h-11 px-6 rounded-full bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs cursor-pointer border-0 transition-transform active:scale-95"
           >
             <span>{isLastQuestion ? 'Selesai & Kumpulkan' : 'Lanjut'}</span>
-            {isLastQuestion ? (
-              <Check className="w-4 h-4 stroke-[3]" aria-hidden="true" />
-            ) : (
-              <ArrowRight className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
-            )}
+            {!isSubmitting &&
+              (isLastQuestion ? (
+                <Check className="w-4 h-4 stroke-[3]" aria-hidden="true" />
+              ) : (
+                <ArrowRight className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+              ))}
           </Button>
         </div>
       </div>

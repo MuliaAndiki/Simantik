@@ -63,6 +63,7 @@ func (r *tryoutRepository) FindByIDWithQuestions(ctx context.Context, id uuid.UU
 		Preload("Questions.Type").
 		Preload("Questions.Explanation").
 		Preload("Questions.Competencies").
+		Preload("Questions.Stimulus").
 		First(&tryout, "id = ?", id).Error
 	if err != nil {
 		return nil, err
