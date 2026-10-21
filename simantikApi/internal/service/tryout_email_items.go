@@ -127,11 +127,20 @@ func BuildEmailQuestionItem(
 		return item, false
 	}
 
-	title, stimulus, body := ParseEmailWacana(q.QuestionText)
-	item.StimulusTitle = title
-	item.StimulusHTML = stimulus
-	item.BodyHTML = body
-	item.QuestionText = body
+	// Relasi stimulus diutamakan (soal tertaut menyimpan teks polos);
+	// fallback ke marker embedded lama.
+	if q.Stimulus != nil {
+		item.StimulusTitle = q.Stimulus.Title
+		item.StimulusHTML = q.Stimulus.Content
+		item.BodyHTML = strings.TrimSpace(q.QuestionText)
+		item.QuestionText = item.BodyHTML
+	} else {
+		title, stimulus, body := ParseEmailWacana(q.QuestionText)
+		item.StimulusTitle = title
+		item.StimulusHTML = stimulus
+		item.BodyHTML = body
+		item.QuestionText = body
+	}
 
 	variant := DetectEmailVariant(q.Options)
 	item.QuestionType = variant

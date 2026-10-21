@@ -1,7 +1,8 @@
 'use client';
 
-import { Heart, Loader2, Send, Star, X } from 'lucide-react';
+import { Heart, Send, Star, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { Spinner } from '@/components/atoms';
 import { cn } from '@/utils/classname';
 
 export interface TestimonialSubmitModalProps {
@@ -209,7 +210,7 @@ export function TestimonialSubmitModal({
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Spinner size="xs" />
                     <span>Mengirim...</span>
                   </>
                 ) : (

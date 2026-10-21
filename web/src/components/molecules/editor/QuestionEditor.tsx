@@ -1,7 +1,8 @@
 'use client';
 
-import { Bold, Image as ImageIcon, Italic, Loader2, Trash2 } from 'lucide-react';
+import { Bold, Image as ImageIcon, Italic, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Spinner } from '@/components/atoms';
 import { cn } from '@/utils/classname';
 
 export interface QuestionEditorProps {
@@ -209,7 +210,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
           >
             {isUploading ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-600" />
+                <Spinner size="xs" className="text-cyan-600" />
                 <span>Mengunggah...</span>
               </>
             ) : (

@@ -10,6 +10,7 @@ export interface PracticeConfirmModalProps {
   unansweredCount?: number;
   flaggedCount?: number;
   totalQuestions?: number;
+  isSubmitting?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -21,6 +22,7 @@ export const PracticeConfirmModal: React.FC<PracticeConfirmModalProps> = ({
   unansweredCount = 0,
   flaggedCount = 0,
   totalQuestions = 10,
+  isSubmitting = false,
   onCancel,
   onConfirm,
 }) => {
@@ -109,6 +111,7 @@ export const PracticeConfirmModal: React.FC<PracticeConfirmModalProps> = ({
             <Button
               type="button"
               onClick={onConfirm}
+              isLoading={isSubmitting}
               className="h-11 rounded-2xl font-bold text-slate-900 bg-[#F5B731] hover:bg-[#E5A721] text-sm cursor-pointer shadow-xs border-0"
             >
               Ya, Kumpulkan

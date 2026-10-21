@@ -47,15 +47,43 @@ function formatSecondsToDigital(totalSeconds: number): string {
 
 function mapApiToTryoutQuestion(apiQ: QuestionStudentResponse, qNum: number): TryoutQuestionItem {
   let qType: TryoutQuestionType = 'pilihan-ganda';
+  const code = (apiQ.question_type_code || '').toLowerCase();
+  const name = (apiQ.question_type_name || '').toLowerCase();
   const typeStr = (apiQ.question_type_id || '').toLowerCase();
-  if (typeStr.includes('kompleks') || typeStr.includes('mcma') || typeStr.includes('complex')) {
+
+  if (
+    code.includes('complex') ||
+    code.includes('mcma') ||
+    name.includes('kompleks') ||
+    typeStr.includes('kompleks') ||
+    typeStr.includes('mcma') ||
+    typeStr.includes('complex')
+  ) {
     qType = 'pilihan-ganda-kompleks';
-  } else if (typeStr.includes('benar') || typeStr.includes('salah')) {
+  } else if (
+    code === 'true_false' ||
+    name.includes('benar') ||
+    name.includes('salah') ||
+    typeStr.includes('benar') ||
+    typeStr.includes('salah')
+  ) {
     qType = 'benar-salah';
   } else if (typeStr.includes('tepat')) {
     qType = 'tepat-tidak-tepat';
   } else if (typeStr.includes('setuju')) {
     qType = 'setuju-tidak-setuju';
+  } else {
+    const rawText = (apiQ.question_text || '').toLowerCase();
+    if (
+      rawText.includes('jawaban benar lebih dari satu') ||
+      rawText.includes('jawaban lebih dari satu') ||
+      rawText.includes('pilihan ganda kompleks') ||
+      rawText.includes('pilihlah lebih dari satu') ||
+      rawText.includes('pilih lebih dari satu') ||
+      rawText.includes('dapat memilih lebih dari satu')
+    ) {
+      qType = 'pilihan-ganda-kompleks';
+    }
   }
 
   const options: TryoutChoiceOption[] = (apiQ.options || []).map((o, idx) => ({
@@ -66,9 +94,12 @@ function mapApiToTryoutQuestion(apiQ: QuestionStudentResponse, qNum: number): Tr
   }));
 
   const parsed = parseWacanaQuestion(apiQ.question_text);
-  const stimulus = parsed.hasStimulus
-    ? { title: parsed.stimulusTitle, content: parsed.stimulusHtml }
-    : undefined;
+  // Relasi stimulus diutamakan; fallback ke marker embedded lama.
+  const stimulus =
+    apiQ.stimulus ??
+    (parsed.hasStimulus
+      ? { title: parsed.stimulusTitle, content: parsed.stimulusHtml }
+      : undefined);
 
   // Opsi bertanda `[KUNCI: ...]` = soal matriks, bukan pilihan ganda.
   const matrix = parseMatrixOptions(apiQ.options);
@@ -518,7 +549,13 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
       question={activeQuestion}
       currentAnswer={currentAnswer}
       isLastQuestion={isLastQuestion}
-      isSubmitting={isQuestionLoading || submitAnswerMutation.isPending}
+      isSubmitting={
+        isQuestionLoading ||
+        submitAnswerMutation.isPending ||
+        startAttemptMutation.isPending ||
+        completeAttemptMutation.isPending ||
+        autoSubmitAttemptMutation.isPending
+      }
       onSelectSingleChoice={handleSelectSingleChoice}
       onToggleComplexChoice={handleToggleComplexChoice}
       onSelectMatrixChoice={handleSelectMatrixChoice}

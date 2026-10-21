@@ -15,7 +15,6 @@ import type {
   PracticeStatusType,
 } from '@/types/ui/practice-manager.types';
 import {
-  countByStatus,
   downloadTextFile,
   formatDateTimeId,
   formatItemNumber,
@@ -78,8 +77,10 @@ export const PracticeListContainer: React.FC = () => {
     offset: (filters.page - 1) * filters.perPage,
   });
 
-  // Query for global stats calculation
-  const allPackagesQuery = api.practice.query.packages({ limit: 100 });
+  // Stats via tiny limit:1 count queries (total dari respons, tanpa 100 objek penuh).
+  const totalCountQuery = api.practice.query.packages({ limit: 1 });
+  const publishedCountQuery = api.practice.query.packages({ status: 'published', limit: 1 });
+  const archivedCountQuery = api.practice.query.packages({ status: 'archived', limit: 1 });
 
   // Query for Competencies list
   const competenciesQuery = api.question.query.competencies({ limit: 100 });
@@ -132,18 +133,19 @@ export const PracticeListContainer: React.FC = () => {
     });
   }, [packagesQuery.data, filters.page, filters.perPage, filters.quota]);
 
-  // Statistics calculation
+  // Statistics calculation (dari total server, tanpa memuat 100 objek).
   const stats = useMemo<PracticeStats>(() => {
-    const list = allPackagesQuery.data?.packages ?? [];
-    const counts = countByStatus(list, (item) => item.status);
+    const total = totalCountQuery.data?.total ?? 0;
+    const published = publishedCountQuery.data?.total ?? 0;
+    const unpublished = archivedCountQuery.data?.total ?? 0;
 
     return {
-      totalPackages: allPackagesQuery.data?.total ?? counts.total,
-      draftCount: counts.draft,
-      publishedCount: counts.published,
-      unpublishedCount: counts.unpublished,
+      totalPackages: total,
+      draftCount: Math.max(0, total - published - unpublished),
+      publishedCount: published,
+      unpublishedCount: unpublished,
     };
-  }, [allPackagesQuery.data]);
+  }, [totalCountQuery.data, publishedCountQuery.data, archivedCountQuery.data]);
 
   const totalItems = packagesQuery.data?.total ?? packages.length;
 
@@ -181,7 +183,9 @@ export const PracticeListContainer: React.FC = () => {
     try {
       await Promise.all([
         packagesQuery.refetch(),
-        allPackagesQuery.refetch(),
+        totalCountQuery.refetch(),
+        publishedCountQuery.refetch(),
+        archivedCountQuery.refetch(),
         competenciesQuery.refetch(),
       ]);
     } finally {

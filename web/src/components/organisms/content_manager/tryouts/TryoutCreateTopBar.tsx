@@ -1,6 +1,7 @@
 import { Bookmark, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import type React from 'react';
+import { Spinner } from '@/components/atoms';
 
 export interface TryoutCreateTopBarProps {
   status: 'DRAFT' | 'PUBLISHED' | 'UNPUBLISHED';
@@ -57,7 +58,11 @@ export const TryoutCreateTopBar: React.FC<TryoutCreateTopBarProps> = ({
             disabled={isSubmitting}
             className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm rounded-xl shadow-2xs transition cursor-pointer disabled:opacity-50"
           >
-            <Bookmark className="w-4 h-4 text-slate-500" />
+            {isSubmitting ? (
+              <Spinner size="xs" className="text-slate-500" />
+            ) : (
+              <Bookmark className="w-4 h-4 text-slate-500" />
+            )}
             <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Draft'}</span>
           </button>
         </div>

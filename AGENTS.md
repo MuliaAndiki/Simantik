@@ -11,6 +11,7 @@ Always run commands inside the respective subdirectory (`simantikApi/` or `web/`
 - **Run all tests**: `go test ./...` or `go test -v -race ./...`
 - **Run single test**: `go test -v -run TestAuthService_Register_Success ./tests/service/...`
 - **Vet**: `go vet ./...`
+- **Lint**: `golangci-lint run ./...` (auto-fix: `golangci-lint run --fix ./...`)
 
 ### Frontend (`web/`)
 Uses **Bun** as runtime and package manager (do not use npm, yarn, or pnpm):

@@ -71,6 +71,13 @@ var (
 	ErrAttemptNotCompleted = errors.New("attempt is not completed yet")
 )
 
+// Stimulus errors.
+var (
+	ErrStimulusNotFound    = errors.New("stimulus not found")
+	ErrStimulusFull        = errors.New("stimulus already has the maximum of 3 questions")
+	ErrStimulusUsedElsewhere = errors.New("stimulus already used in another package")
+)
+
 // Recommendation and Learning errors.
 var (
 	ErrRecommendationNotFound = errors.New("recommendation not found")

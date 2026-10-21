@@ -60,6 +60,7 @@ type QuestionReviewResponse struct {
 	ResponseTimeSeconds int                    `json:"response_time_seconds"`
 	Explanation         string                 `json:"explanation,omitempty"`
 	AnsweringTips       string                 `json:"answering_tips,omitempty"`
+	Stimulus            *StimulusRefResponse   `json:"stimulus,omitempty"`
 }
 
 // AttemptReviewResponse exposes pedagogical feedback, scoring breakdown, and full explanations.

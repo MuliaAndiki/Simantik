@@ -318,9 +318,10 @@ func (r *materialRepository) GetMaterialStudentActivities(ctx context.Context, m
 		baseQuery = baseQuery.Where("users.full_name ILIKE ? OR users.email ILIKE ?", like, like)
 	}
 
-	if filter.Status == "accessed" {
+	switch filter.Status {
+	case "accessed":
 		baseQuery = baseQuery.Where("learning_progress.id IS NOT NULL")
-	} else if filter.Status == "unaccessed" {
+	case "unaccessed":
 		baseQuery = baseQuery.Where("learning_progress.id IS NULL")
 	}
 

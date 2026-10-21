@@ -194,6 +194,9 @@ func (h *TryoutHandler) AddQuestions(c *fiber.Ctx) error {
 		if errors.Is(err, service.ErrTryoutNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
 		}
+		if errors.Is(err, service.ErrStimulusUsedElsewhere) {
+			return utils.Error(c, fiber.StatusConflict, err.Error(), err)
+		}
 		return utils.Error(c, fiber.StatusInternalServerError, "failed to add questions", err)
 	}
 
@@ -224,6 +227,9 @@ func (h *TryoutHandler) SyncQuestions(c *fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, service.ErrTryoutNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
+		}
+		if errors.Is(err, service.ErrStimulusUsedElsewhere) {
+			return utils.Error(c, fiber.StatusConflict, err.Error(), err)
 		}
 		return utils.Error(c, fiber.StatusInternalServerError, "failed to sync questions", err)
 	}

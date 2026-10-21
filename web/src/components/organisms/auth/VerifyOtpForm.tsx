@@ -3,6 +3,7 @@
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
+import { Spinner } from '@/components/atoms/loading/Spinner';
 import { AuthSecurityNotice } from '@/components/molecules/auth/AuthSecurityNotice';
 import { FormField } from '@/components/molecules/auth/FormField';
 import { OtpInput } from '@/components/molecules/auth/OtpInput';
@@ -78,8 +79,9 @@ export function VerifyOtpForm({
         disabled={loading || values.otp.length < 6}
         className="w-full h-12 rounded-xl bg-[#F5C242] hover:bg-[#E8B534] active:bg-[#DBA726] text-slate-900 font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-2xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
+        {loading && <Spinner size="sm" className="text-slate-900" />}
         <span>{loading ? 'Memverifikasi...' : 'Verifikasi'}</span>
-        <ArrowRight className="w-4 h-4" />
+        {!loading && <ArrowRight className="w-4 h-4" />}
       </button>
 
       {/* Resend OTP info / timer */}
@@ -97,9 +99,10 @@ export function VerifyOtpForm({
             type="button"
             onClick={handleResend}
             disabled={resendLoading || loading}
-            className="font-bold text-teal-600 hover:text-teal-700 hover:underline transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 font-bold text-teal-600 hover:text-teal-700 hover:underline transition-colors cursor-pointer disabled:opacity-60"
           >
-            {resendLoading ? 'Mengirim ulang...' : 'Kirim ulang kode OTP sekarang'}
+            {resendLoading && <Spinner size="xs" className="text-teal-600" />}
+            <span>{resendLoading ? 'Mengirim ulang...' : 'Kirim ulang kode OTP sekarang'}</span>
           </button>
         )}
       </div>

@@ -220,6 +220,9 @@ func (h *PracticeHandler) AddQuestions(c *fiber.Ctx) error {
 		if errors.Is(err, service.ErrPracticePackageNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
 		}
+		if errors.Is(err, service.ErrStimulusUsedElsewhere) {
+			return utils.Error(c, fiber.StatusConflict, err.Error(), err)
+		}
 		return utils.Error(c, fiber.StatusInternalServerError, "failed to add questions to package", err)
 	}
 

@@ -11,6 +11,7 @@ import {
   PracticeQuestionPaletteCard,
   PracticeStemSection,
   PracticeStimulusSection,
+  type SharedStimulusPickerProps,
 } from '@/components/organisms/content_manager/practice_create';
 import type { PracticeQuestionType } from '@/types/ui/practice.types';
 import type {
@@ -19,7 +20,7 @@ import type {
   QuestionStimulusForm,
 } from '@/types/ui/practice-question-editor.types';
 
-export interface PracticeCreateTemplateProps {
+export interface PracticeCreateTemplateProps extends SharedStimulusPickerProps {
   packageForm: PracticePackageEditorForm;
   activeQuestion: QuestionEditorItemForm;
   competencies: PracticeManagerCompetencyOption[];
@@ -73,6 +74,16 @@ export const PracticeCreateTemplate: React.FC<PracticeCreateTemplateProps> = ({
   onQuestionTypeChange,
   onStimulusChange,
   onToggleStimulus,
+  sharedStimuli,
+  isLoadingSharedStimuli,
+  stimulusSearch,
+  onStimulusSearchChange,
+  onSelectSharedStimulus,
+  onSaveSharedStimulus,
+  isSavingSharedStimulus,
+  hasMoreSharedStimuli,
+  onLoadMoreSharedStimuli,
+  onDeleteSharedStimulus,
   onQuestionTextChange,
   onSingleChoiceOptionChange,
   onSelectSingleChoiceCorrect,
@@ -148,6 +159,16 @@ export const PracticeCreateTemplate: React.FC<PracticeCreateTemplateProps> = ({
             onToggleStimulus={onToggleStimulus}
             onUploadImage={onUploadImage}
             onDeleteImage={onDeleteImage}
+            sharedStimuli={sharedStimuli}
+            isLoadingSharedStimuli={isLoadingSharedStimuli}
+            stimulusSearch={stimulusSearch}
+            onStimulusSearchChange={onStimulusSearchChange}
+            onSelectSharedStimulus={onSelectSharedStimulus}
+            onSaveSharedStimulus={onSaveSharedStimulus}
+            isSavingSharedStimulus={isSavingSharedStimulus}
+            hasMoreSharedStimuli={hasMoreSharedStimuli}
+            onLoadMoreSharedStimuli={onLoadMoreSharedStimuli}
+            onDeleteSharedStimulus={onDeleteSharedStimulus}
           />
 
           {/* Section 2: Pertanyaan (Stem) */}

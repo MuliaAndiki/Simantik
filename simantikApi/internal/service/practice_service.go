@@ -48,9 +48,11 @@ type practiceService struct {
 	evaluationRepo repository.EvaluationRepository
 	resolver       *JenjangResolver
 	recService     RecommendationService
+	stimulusRepo   repository.StimulusRepository
 }
 
 // NewPracticeService constructs a PracticeService with required dependencies.
+// Optional trailing args: repository.StimulusRepository (per-package stimulus scope).
 func NewPracticeService(
 	db *gorm.DB,
 	practiceRepo repository.PracticeRepository,
@@ -58,8 +60,9 @@ func NewPracticeService(
 	evaluationRepo repository.EvaluationRepository,
 	resolver *JenjangResolver,
 	recService RecommendationService,
+	optional ...interface{},
 ) PracticeService {
-	return &practiceService{
+	s := &practiceService{
 		db:             db,
 		practiceRepo:   practiceRepo,
 		questionRepo:   questionRepo,
@@ -67,6 +70,12 @@ func NewPracticeService(
 		resolver:       resolver,
 		recService:     recService,
 	}
+	for _, opt := range optional {
+		if repo, ok := opt.(repository.StimulusRepository); ok {
+			s.stimulusRepo = repo
+		}
+	}
+	return s
 }
 
 // ─── Package Management ──────────────────────────────────────────────────────
@@ -103,7 +112,7 @@ func (s *practiceService) GetPackage(ctx context.Context, id uuid.UUID, isAdmin 
 		return nil, ErrPracticePackageNotFound
 	}
 
-	return s.mapToPackageDetailResponse(pkg), nil
+	return s.mapToPackageDetailResponse(pkg, isAdmin), nil
 }
 
 func (s *practiceService) GetPracticePackageResults(ctx context.Context, packageID uuid.UUID, filter dto.ListPracticeResultFilter) (*dto.PracticePackageResultsResponse, error) {
@@ -241,6 +250,10 @@ func (s *practiceService) AddQuestionsToPackage(ctx context.Context, packageID u
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrPracticePackageNotFound
 		}
+		return nil, err
+	}
+
+	if err := EnsureQuestionsPackageScope(ctx, s.questionRepo, s.stimulusRepo, "practice", packageID, req.QuestionIDs); err != nil {
 		return nil, err
 	}
 
@@ -416,7 +429,7 @@ func (s *practiceService) GetAttemptState(ctx context.Context, attemptID, userID
 	if attempt.Package != nil {
 		questions = make([]dto.QuestionStudentResponse, len(attempt.Package.Questions))
 		for i, q := range attempt.Package.Questions {
-			questions[i] = s.mapQuestionStudentResponse(&q)
+			questions[i] = s.mapQuestionStudentResponse(&q, false)
 		}
 	}
 
@@ -940,6 +953,7 @@ func (s *practiceService) GetPracticeResult(ctx context.Context, attemptID, user
 				Score:            score,
 				Explanation:      explanation,
 				AnsweringTips:    answeringTips,
+				Stimulus:         dto.StimulusRefFromQuestion(&q),
 			}
 		}
 	} else if len(answers) > 0 {
@@ -992,6 +1006,7 @@ func (s *practiceService) GetPracticeResult(ctx context.Context, attemptID, user
 				Score:            score,
 				Explanation:      explanation,
 				AnsweringTips:    answeringTips,
+				Stimulus:         dto.StimulusRefFromQuestion(ans.Question),
 			}
 		}
 	}
@@ -1124,12 +1139,12 @@ func (s *practiceService) mapToPackageResponse(p *models.PracticePackage) *dto.P
 	}
 }
 
-func (s *practiceService) mapToPackageDetailResponse(p *models.PracticePackage) *dto.PracticePackageDetailResponse {
+func (s *practiceService) mapToPackageDetailResponse(p *models.PracticePackage, isAdmin bool) *dto.PracticePackageDetailResponse {
 	summary := s.mapToPackageResponse(p)
 
 	questions := make([]dto.QuestionStudentResponse, len(p.Questions))
 	for i, q := range p.Questions {
-		questions[i] = s.mapQuestionStudentResponse(&q)
+		questions[i] = s.mapQuestionStudentResponse(&q, isAdmin)
 	}
 
 	return &dto.PracticePackageDetailResponse{
@@ -1138,7 +1153,7 @@ func (s *practiceService) mapToPackageDetailResponse(p *models.PracticePackage) 
 	}
 }
 
-func (s *practiceService) mapQuestionStudentResponse(q *models.Question) dto.QuestionStudentResponse {
+func (s *practiceService) mapQuestionStudentResponse(q *models.Question, isAdmin bool) dto.QuestionStudentResponse {
 	opts := make([]dto.QuestionOptionStudentResponse, len(q.Options))
 	for i, o := range q.Options {
 		opts[i] = dto.QuestionOptionStudentResponse{
@@ -1146,6 +1161,10 @@ func (s *practiceService) mapQuestionStudentResponse(q *models.Question) dto.Que
 			OptionLabel:  o.OptionLabel,
 			OptionText:   o.OptionText,
 			DisplayOrder: o.DisplayOrder,
+		}
+		if isAdmin {
+			isCorrect := o.IsCorrect
+			opts[i].IsCorrect = &isCorrect
 		}
 	}
 
@@ -1160,12 +1179,32 @@ func (s *practiceService) mapQuestionStudentResponse(q *models.Question) dto.Que
 		}
 	}
 
-	return dto.QuestionStudentResponse{
-		ID:              q.ID.String(),
-		QuestionTypeID:  q.QuestionTypeID.String(),
-		QuestionText:    q.QuestionText,
-		DifficultyLevel: q.DifficultyLevel,
-		Options:         opts,
-		Competencies:    comps,
+	var typeCode, typeName string
+	if q.Type != nil {
+		typeCode = string(q.Type.Code)
+		typeName = q.Type.Name
 	}
+
+	res := dto.QuestionStudentResponse{
+		ID:               q.ID.String(),
+		QuestionTypeID:   q.QuestionTypeID.String(),
+		QuestionTypeCode: typeCode,
+		QuestionTypeName: typeName,
+		QuestionText:     q.QuestionText,
+		DifficultyLevel:  q.DifficultyLevel,
+		Options:          opts,
+		Competencies:     comps,
+		Stimulus:         dto.StimulusRefFromQuestion(q),
+	}
+
+	if isAdmin && q.Explanation != nil {
+		res.Explanation = &dto.QuestionExplanationResponse{
+			ID:            q.Explanation.ID.String(),
+			QuestionID:    q.Explanation.QuestionID.String(),
+			Explanation:   q.Explanation.Explanation,
+			AnsweringTips: q.Explanation.AnsweringTips,
+		}
+	}
+
+	return res
 }

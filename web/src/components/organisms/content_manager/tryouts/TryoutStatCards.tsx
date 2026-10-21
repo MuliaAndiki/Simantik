@@ -1,5 +1,5 @@
 import { CalendarClock, EyeOff, FileCheck2, ShieldCheck } from 'lucide-react';
-import type React from 'react';
+import React from 'react';
 import { StatGrid } from '@/components/molecules/stat';
 import type { TryoutStats } from '@/types/ui/tryout-manager.types';
 
@@ -7,7 +7,7 @@ export interface TryoutStatCardsProps {
   stats: TryoutStats;
 }
 
-export const TryoutStatCards: React.FC<TryoutStatCardsProps> = ({ stats }) => {
+export const TryoutStatCards: React.FC<TryoutStatCardsProps> = React.memo(({ stats }) => {
   return (
     <StatGrid
       items={[
@@ -46,6 +46,8 @@ export const TryoutStatCards: React.FC<TryoutStatCardsProps> = ({ stats }) => {
       ]}
     />
   );
-};
+});
+
+TryoutStatCards.displayName = 'TryoutStatCards';
 
 export default TryoutStatCards;

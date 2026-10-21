@@ -8,6 +8,7 @@ export interface TryoutPreStartModalProps {
   isChecked: boolean;
   durationMinutes?: number;
   totalQuestions?: number;
+  isSubmitting?: boolean;
   onCheckChange: (checked: boolean) => void;
   onConfirm: () => void;
   onClose: () => void;
@@ -18,6 +19,7 @@ export const TryoutPreStartModal: React.FC<TryoutPreStartModalProps> = ({
   isChecked,
   durationMinutes = 90,
   totalQuestions = 30,
+  isSubmitting = false,
   onCheckChange,
   onConfirm,
   onClose,
@@ -120,12 +122,13 @@ export const TryoutPreStartModal: React.FC<TryoutPreStartModalProps> = ({
 
         <Button
           type="button"
-          disabled={!isChecked}
+          disabled={!isChecked || isSubmitting}
+          isLoading={isSubmitting}
           onClick={onConfirm}
           className="w-full sm:w-auto h-11 px-6 rounded-full font-black text-slate-900 text-xs bg-[#F5B731] hover:bg-[#E5A721] disabled:opacity-40 disabled:cursor-not-allowed shadow-xs flex items-center justify-center gap-2 border-0 cursor-pointer transition-transform active:scale-95"
         >
           <span>Mulai Tryout Sekarang</span>
-          <ArrowRight className="w-4 h-4 stroke-[3]" aria-hidden="true" />
+          {!isSubmitting && <ArrowRight className="w-4 h-4 stroke-[3]" aria-hidden="true" />}
         </Button>
       </div>
     </ExamDialogShell>

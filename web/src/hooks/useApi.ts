@@ -9,6 +9,7 @@ import { useQuestion } from './useService/question/useQuestion';
 import { useRecommendation } from './useService/recommendation/useRecommendation';
 import { useReporting } from './useService/reporting/useReporting';
 import { useSchool } from './useService/school/useSchool';
+import { useStimulus } from './useService/stimulus/useStimulus';
 import { useTryout } from './useService/tryout/useTryout';
 import { useUser } from './useService/user/useUser';
 
@@ -25,6 +26,7 @@ export function useApi() {
     recommendation: useRecommendation(),
     reporting: useReporting(),
     school: useSchool(),
+    stimulus: useStimulus(),
     tryout: useTryout(),
     user: useUser(),
   };

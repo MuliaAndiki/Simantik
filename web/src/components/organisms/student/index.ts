@@ -36,6 +36,7 @@ export * from './questions/ComplexMultipleChoiceQuestion';
 export * from './questions/MatrixCategoryQuestion';
 export * from './questions/SingleChoiceQuestion';
 export * from './RecommendationBanner';
+export * from './StimulusRereadCard';
 export * from './StudentDashboardFooter';
 export * from './StudentHeroBanner';
 export * from './TryoutCompletionCard';

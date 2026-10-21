@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -149,12 +150,38 @@ func (m *mockQuestionRepo) PublishQuestionsByIDs(ctx context.Context, ids []uuid
 	return m.UpdateStatusByIDs(ctx, ids, models.ContentStatusPublished, updatedByID)
 }
 
+func (m *mockQuestionRepo) ListEmbeddedStimulusQuestions(_ context.Context, _, _ int) ([]models.Question, error) {
+	var out []models.Question
+	for _, q := range m.questions {
+		if q.StimulusID == nil && strings.HasPrefix(q.QuestionText, "[WACANA:") {
+			out = append(out, *q)
+		}
+	}
+	return out, nil
+}
+
+func (m *mockQuestionRepo) SetStimulusID(_ context.Context, questionID uuid.UUID, stimulusID *uuid.UUID) error {
+	if q, ok := m.questions[questionID]; ok {
+		q.StimulusID = stimulusID
+		return nil
+	}
+	return gorm.ErrRecordNotFound
+}
+
+func (m *mockQuestionRepo) StripWacanaMarker(_ context.Context, questionID uuid.UUID, bareText string) error {
+	if q, ok := m.questions[questionID]; ok {
+		q.QuestionText = bareText
+		return nil
+	}
+	return gorm.ErrRecordNotFound
+}
+
 // Tests
 
 func TestQuestionService_CompetencyCRUD(t *testing.T) {
 	compRepo := newMockCompetencyRepo()
 	qRepo := newMockQuestionRepo()
-	srv := service.NewQuestionService(compRepo, qRepo, nil)
+	srv := service.NewQuestionService(compRepo, qRepo, nil, nil)
 
 	ctx := context.Background()
 	adminID := uuid.New()
@@ -224,7 +251,7 @@ func TestQuestionService_CompetencyCRUD(t *testing.T) {
 func TestQuestionService_CreateAndGetQuestion(t *testing.T) {
 	compRepo := newMockCompetencyRepo()
 	qRepo := newMockQuestionRepo()
-	srv := service.NewQuestionService(compRepo, qRepo, nil)
+	srv := service.NewQuestionService(compRepo, qRepo, nil, nil)
 
 	ctx := context.Background()
 	adminID := uuid.New()
@@ -281,7 +308,7 @@ func TestQuestionService_CreateAndGetQuestion(t *testing.T) {
 func TestQuestionService_StatusTransition(t *testing.T) {
 	compRepo := newMockCompetencyRepo()
 	qRepo := newMockQuestionRepo()
-	srv := service.NewQuestionService(compRepo, qRepo, nil)
+	srv := service.NewQuestionService(compRepo, qRepo, nil, nil)
 
 	ctx := context.Background()
 	adminID := uuid.New()

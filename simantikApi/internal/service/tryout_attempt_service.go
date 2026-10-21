@@ -440,6 +440,7 @@ func (s *tryoutAttemptService) GetAttemptQuestion(ctx context.Context, attemptID
 		QuestionText:    q.QuestionText,
 		DifficultyLevel: q.DifficultyLevel,
 		Options:         make([]dto.QuestionOptionStudentResponse, len(opts)),
+		Stimulus:        dto.StimulusRefFromQuestion(q),
 	}
 	for i, o := range opts {
 		studentQ.Options[i] = dto.QuestionOptionStudentResponse{
@@ -451,6 +452,8 @@ func (s *tryoutAttemptService) GetAttemptQuestion(ctx context.Context, attemptID
 	}
 	if q.Type != nil {
 		studentQ.QuestionTypeID = q.Type.ID.String()
+		studentQ.QuestionTypeCode = string(q.Type.Code)
+		studentQ.QuestionTypeName = q.Type.Name
 	}
 
 	return &dto.AttemptQuestionResponse{
@@ -926,7 +929,7 @@ func (s *tryoutAttemptService) sendTryoutResultEmailAsync(attemptID, userID uuid
 		}
 	}
 
-	timeTakenMin := int(timeTakenSec / 60)
+	timeTakenMin := timeTakenSec / 60
 	if timeTakenMin < 1 && timeTakenSec > 0 {
 		timeTakenMin = 1
 	}

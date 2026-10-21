@@ -281,13 +281,18 @@
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* Smooth transitions */
-* {
+/* Smooth transitions for interactive elements */
+a,
+button,
+input,
+select,
+textarea,
+[role="button"] {
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease,
-    opacity 0.2s ease;
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
 }
 
 /* Number input spinners */

@@ -1,5 +1,5 @@
 import { BadgeCheck, EyeOff, FileEdit, Layers } from 'lucide-react';
-import type React from 'react';
+import React from 'react';
 import { StatGrid } from '@/components/molecules/stat';
 import type { PracticeStats } from '@/types/ui/practice-manager.types';
 
@@ -7,7 +7,7 @@ export interface PracticeStatCardsProps {
   stats: PracticeStats;
 }
 
-export const PracticeStatCards: React.FC<PracticeStatCardsProps> = ({ stats }) => {
+export const PracticeStatCards: React.FC<PracticeStatCardsProps> = React.memo(({ stats }) => {
   return (
     <StatGrid
       items={[
@@ -46,6 +46,8 @@ export const PracticeStatCards: React.FC<PracticeStatCardsProps> = ({ stats }) =
       ]}
     />
   );
-};
+});
+
+PracticeStatCards.displayName = 'PracticeStatCards';
 
 export default PracticeStatCards;

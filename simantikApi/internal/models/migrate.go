@@ -23,6 +23,7 @@ func AllModels() []interface{} {
 		&MaterialAttachment{},
 		&LearningProgress{},
 		&QuestionType{},
+		&Stimulus{},
 		&Question{},
 		&QuestionOption{},
 		&QuestionCompetency{},

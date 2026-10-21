@@ -30,16 +30,18 @@ type QuestionService interface {
 }
 
 type questionService struct {
-	compRepo repository.CompetencyRepository
-	qRepo    repository.QuestionRepository
-	db       *gorm.DB
+	compRepo     repository.CompetencyRepository
+	qRepo        repository.QuestionRepository
+	stimulusRepo repository.StimulusRepository
+	db           *gorm.DB
 }
 
-func NewQuestionService(compRepo repository.CompetencyRepository, qRepo repository.QuestionRepository, db *gorm.DB) QuestionService {
+func NewQuestionService(compRepo repository.CompetencyRepository, qRepo repository.QuestionRepository, stimulusRepo repository.StimulusRepository, db *gorm.DB) QuestionService {
 	return &questionService{
-		compRepo: compRepo,
-		qRepo:    qRepo,
-		db:       db,
+		compRepo:     compRepo,
+		qRepo:        qRepo,
+		stimulusRepo: stimulusRepo,
+		db:           db,
 	}
 }
 
@@ -171,6 +173,14 @@ func (s *questionService) CreateQuestion(ctx context.Context, req dto.CreateQues
 		DifficultyLevel: req.DifficultyLevel,
 		Status:          "draft",
 		CreatedBy:       createdByID,
+		StimulusID:      req.StimulusID,
+	}
+
+	// Shared stimulus link at creation (same max-3 cap as the link endpoint).
+	if req.StimulusID != nil {
+		if err := ensureStimulusCapacity(ctx, s.stimulusRepo, *req.StimulusID); err != nil {
+			return nil, err
+		}
 	}
 
 	if s.db != nil {
@@ -374,17 +384,27 @@ func (s *questionService) mapQuestionAdminResponse(q *models.Question) *dto.Ques
 		}
 	}
 
+	var typeCode, typeName string
+	if q.Type != nil {
+		typeCode = string(q.Type.Code)
+		typeName = q.Type.Name
+	}
+
 	return &dto.QuestionAdminResponse{
-		ID:              q.ID.String(),
-		QuestionTypeID:  q.QuestionTypeID.String(),
-		QuestionText:    q.QuestionText,
-		DifficultyLevel: q.DifficultyLevel,
-		Status:          string(q.Status),
-		Options:         opts,
-		Competencies:    comps,
-		Explanation:     expl,
-		CreatedAt:       q.CreatedAt,
-		UpdatedAt:       q.UpdatedAt,
+		ID:               q.ID.String(),
+		QuestionTypeID:   q.QuestionTypeID.String(),
+		QuestionTypeCode: typeCode,
+		QuestionTypeName: typeName,
+		QuestionText:     q.QuestionText,
+		DifficultyLevel:  q.DifficultyLevel,
+		Status:           string(q.Status),
+		Options:          opts,
+		Competencies:     comps,
+		Explanation:      expl,
+		StimulusID:       q.StimulusID,
+		Stimulus:         dto.StimulusRefFromQuestion(q),
+		CreatedAt:        q.CreatedAt,
+		UpdatedAt:        q.UpdatedAt,
 	}
 }
 
@@ -404,12 +424,21 @@ func (s *questionService) mapQuestionStudentResponse(q *models.Question) *dto.Qu
 		comps[i] = *s.mapCompetencyResponse(&c)
 	}
 
+	var typeCode, typeName string
+	if q.Type != nil {
+		typeCode = string(q.Type.Code)
+		typeName = q.Type.Name
+	}
+
 	return &dto.QuestionStudentResponse{
-		ID:              q.ID.String(),
-		QuestionTypeID:  q.QuestionTypeID.String(),
-		QuestionText:    q.QuestionText,
-		DifficultyLevel: q.DifficultyLevel,
-		Options:         opts,
-		Competencies:    comps,
+		ID:               q.ID.String(),
+		QuestionTypeID:   q.QuestionTypeID.String(),
+		QuestionTypeCode: typeCode,
+		QuestionTypeName: typeName,
+		QuestionText:     q.QuestionText,
+		DifficultyLevel:  q.DifficultyLevel,
+		Options:          opts,
+		Competencies:     comps,
+		Stimulus:         dto.StimulusRefFromQuestion(q),
 	}
 }

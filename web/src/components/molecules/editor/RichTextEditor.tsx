@@ -17,7 +17,6 @@ import {
   Link2,
   List,
   ListOrdered,
-  Loader2,
   Maximize2,
   Minimize2,
   Minus,
@@ -32,6 +31,7 @@ import {
   Underline,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Spinner } from '@/components/atoms';
 import { cn } from '@/utils/classname';
 
 export interface RichTextEditorProps {
@@ -679,11 +679,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             onMouseDown={(e) => e.preventDefault()}
             className="p-1.5 rounded-lg hover:bg-slate-200/70 text-slate-600 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isUploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <ImageIcon className="w-4 h-4" />
-            )}
+            {isUploading ? <Spinner size="xs" /> : <ImageIcon className="w-4 h-4" />}
           </button>
           <input
             type="file"

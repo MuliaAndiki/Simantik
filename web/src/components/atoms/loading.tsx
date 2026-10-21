@@ -84,3 +84,4 @@ export function TableLoader({ label = 'Memuat data...', className }: TableLoader
 }
 
 export * from './loading/PublicPageLoader';
+export * from './loading/Spinner';

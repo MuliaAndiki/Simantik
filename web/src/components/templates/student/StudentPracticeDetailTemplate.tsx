@@ -1,4 +1,5 @@
 import React from 'react';
+import { Spinner } from '@/components/atoms/loading/Spinner';
 import { PracticeConfirmModal } from '@/components/organisms/student/PracticeConfirmModal';
 import { PracticePreStartModal } from '@/components/organisms/student/PracticePreStartModal';
 import { PracticeProctoringWarningModal } from '@/components/organisms/student/PracticeProctoringWarningModal';
@@ -11,6 +12,7 @@ import { PracticeQuestionStimulus } from '@/components/organisms/student/Practic
 import { ComplexMultipleChoiceQuestion } from '@/components/organisms/student/questions/ComplexMultipleChoiceQuestion';
 import { MatrixCategoryQuestion } from '@/components/organisms/student/questions/MatrixCategoryQuestion';
 import { SingleChoiceQuestion } from '@/components/organisms/student/questions/SingleChoiceQuestion';
+import { StimulusRereadCard } from '@/components/organisms/student/StimulusRereadCard';
 import { StudentDashboardFooter } from '@/components/organisms/student/StudentDashboardFooter';
 import type {
   ChoiceOption,
@@ -63,6 +65,7 @@ export interface StudentPracticeDetailTemplateProps {
   // Confirmation modal (exit or submit)
   isConfirmModalOpen: boolean;
   confirmModalType: 'exit' | 'submit';
+  isSubmitting?: boolean;
   onConfirmModalCancel: () => void;
   onConfirmModalProceed: () => void;
 }
@@ -75,6 +78,7 @@ export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTempla
   isFlagged,
   onToggleFlag,
   onExit,
+  isSubmitting = false,
   currentQuestion,
   currentAnswer,
   feedback,
@@ -127,7 +131,11 @@ export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTempla
         <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 sm:p-7 shadow-sm space-y-6">
           {/* Optional Stimulus */}
           {currentQuestion.stimulus && (
-            <PracticeQuestionStimulus stimulus={currentQuestion.stimulus} />
+            <PracticeQuestionStimulus
+              stimulus={currentQuestion.stimulus}
+              questionNumber={currentQuestion.questionNumber}
+              relatedQuestionNumbers={currentQuestion.relatedQuestionNumbers}
+            />
           )}
 
           {/* Question Body Depending on Type */}
@@ -283,36 +291,45 @@ export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTempla
                 <button
                   type="button"
                   onClick={onSubmit}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 text-xs sm:text-sm font-bold transition cursor-pointer shadow-sm"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 text-xs sm:text-sm font-bold transition cursor-pointer shadow-sm disabled:opacity-60"
                 >
-                  <span> Kumpulkan</span>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14 5l7 7m0 0l-7 7m7-7H3"
-                    />
-                  </svg>
+                  {isSubmitting && <Spinner size="sm" className="text-slate-900" />}
+                  <span>{isSubmitting ? 'Mengumpulkan...' : 'Kumpulkan'}</span>
+                  {!isSubmitting && (
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
+                      />
+                    </svg>
+                  )}
                 </button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right: Question Palette */}
-        <div className="lg:col-span-4">
+        {/* Right: Question Palette + Stimulus re-read */}
+        <div className="lg:col-span-4 flex flex-col gap-6">
           <PracticeQuestionPalette
             totalQuestions={totalQuestions}
             items={paletteItems}
             currentIndex={currentIndex}
             onSelectQuestion={onSelectQuestionNumber}
+          />
+          <StimulusRereadCard
+            stimulus={currentQuestion.stimulus}
+            questionNumber={currentQuestion.questionNumber}
+            relatedQuestionNumbers={currentQuestion.relatedQuestionNumbers}
           />
         </div>
       </div>
@@ -339,6 +356,7 @@ export const StudentPracticeDetailTemplate: React.FC<StudentPracticeDetailTempla
         flaggedCount={flaggedCount}
         unansweredCount={unansweredCount}
         totalQuestions={totalQuestions}
+        isSubmitting={isSubmitting}
         onCancel={onConfirmModalCancel}
         onConfirm={onConfirmModalProceed}
       />

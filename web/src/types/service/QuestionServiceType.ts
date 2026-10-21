@@ -112,6 +112,7 @@ export interface QuestionOptionStudentResponse {
   id: string;
   option_label: string;
   option_text: string;
+  is_correct?: boolean;
   display_order: number;
 }
 
@@ -154,6 +155,7 @@ export interface CreateQuestionRequest {
   options: CreateQuestionOptionRequest[];
   competency_ids?: string[];
   explanation?: CreateQuestionExplanationRequest | null;
+  stimulus_id?: string | null;
 }
 
 /**
@@ -196,12 +198,16 @@ export interface ListQuestionFilter {
 export interface QuestionAdminResponse {
   id: string;
   question_type_id: string;
+  question_type_code?: string;
+  question_type_name?: string;
   question_text: string;
   difficulty_level: number;
   status: string;
   options: QuestionOptionAdminResponse[];
   competencies: CompetencyResponse[];
   explanation?: QuestionExplanationResponse;
+  stimulus_id?: string | null;
+  stimulus?: { id: string; title: string; content: string } | null;
   created_at: string;
   updated_at: string;
 }
@@ -213,10 +219,15 @@ export interface QuestionAdminResponse {
 export interface QuestionStudentResponse {
   id: string;
   question_type_id: string;
+  question_type_code?: string;
+  question_type_name?: string;
   question_text: string;
   difficulty_level: number;
   options: QuestionOptionStudentResponse[];
   competencies: CompetencyResponse[];
+  /** Shared reading passage (relasi stimulus, null = soal mandiri). */
+  stimulus?: { id: string; title: string; content: string } | null;
+  explanation?: QuestionExplanationResponse;
 }
 
 /**
