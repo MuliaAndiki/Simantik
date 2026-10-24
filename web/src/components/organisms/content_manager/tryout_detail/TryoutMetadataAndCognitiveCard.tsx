@@ -136,7 +136,7 @@ export const TryoutMetadataAndCognitiveCard: React.FC<TryoutMetadataAndCognitive
               </div>
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900">
-                  Distribusi Bank Soal (Tingkat Kognitif)
+                  Distribusi Bank Soal
                 </h2>
                 <p className="text-[11px] text-slate-400 font-medium">
                   Alokasi kuota adaptif taksonomi C1–C5
@@ -190,9 +190,7 @@ export const TryoutMetadataAndCognitiveCard: React.FC<TryoutMetadataAndCognitive
               </div>
               <div className="mt-1">
                 <p className="text-base font-black text-emerald-900">{cb.c1_count}</p>
-                <p className="text-[10px] font-semibold text-emerald-700 leading-tight">
-                  Mengingat
-                </p>
+                <p className="text-[10px] font-semibold text-emerald-700 leading-tight">Level 1</p>
               </div>
             </div>
 
@@ -204,7 +202,7 @@ export const TryoutMetadataAndCognitiveCard: React.FC<TryoutMetadataAndCognitive
               </div>
               <div className="mt-1">
                 <p className="text-base font-black text-blue-900">{cb.c2_count}</p>
-                <p className="text-[10px] font-semibold text-blue-700 leading-tight">Memahami</p>
+                <p className="text-[10px] font-semibold text-blue-700 leading-tight">Level 2</p>
               </div>
             </div>
 
@@ -216,9 +214,7 @@ export const TryoutMetadataAndCognitiveCard: React.FC<TryoutMetadataAndCognitive
               </div>
               <div className="mt-1">
                 <p className="text-base font-black text-amber-900">{cb.c3_count}</p>
-                <p className="text-[10px] font-semibold text-amber-700 leading-tight">
-                  Mengaplikasikan
-                </p>
+                <p className="text-[10px] font-semibold text-amber-700 leading-tight">Level 3</p>
               </div>
             </div>
 
@@ -230,9 +226,7 @@ export const TryoutMetadataAndCognitiveCard: React.FC<TryoutMetadataAndCognitive
               </div>
               <div className="mt-1">
                 <p className="text-base font-black text-violet-900">{cb.c4_count}</p>
-                <p className="text-[10px] font-semibold text-violet-700 leading-tight">
-                  Menganalisis
-                </p>
+                <p className="text-[10px] font-semibold text-violet-700 leading-tight">Level 4</p>
               </div>
             </div>
 
@@ -244,9 +238,7 @@ export const TryoutMetadataAndCognitiveCard: React.FC<TryoutMetadataAndCognitive
               </div>
               <div className="mt-1">
                 <p className="text-base font-black text-rose-900">{cb.c5_count}</p>
-                <p className="text-[10px] font-semibold text-rose-700 leading-tight">
-                  Mengevaluasi
-                </p>
+                <p className="text-[10px] font-semibold text-rose-700 leading-tight">Level 5</p>
               </div>
             </div>
           </div>

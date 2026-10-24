@@ -358,7 +358,7 @@ export const PracticeResultQuestionDetail: React.FC<PracticeResultQuestionDetail
               {studentSelectedOpt ? (
                 <span>
                   {studentSelectedOpt.option_label || 'Pilihan'}.{' '}
-                  <RichHtml html={studentSelectedOpt.option_text} className="inline" />
+                  <RichHtml html={studentSelectedOpt.option_text} as="span" className="inline" />
                 </span>
               ) : (
                 <span className="text-slate-400 italic">Tidak Dijawab</span>
@@ -387,7 +387,7 @@ export const PracticeResultQuestionDetail: React.FC<PracticeResultQuestionDetail
               {officialCorrectOpt ? (
                 <span>
                   {officialCorrectOpt.option_label || 'Pilihan'}.{' '}
-                  <RichHtml html={officialCorrectOpt.option_text} className="inline" />
+                  <RichHtml html={officialCorrectOpt.option_text} as="span" className="inline" />
                 </span>
               ) : (
                 <span className="text-slate-500">Tersedia pada pedoman penilaian</span>

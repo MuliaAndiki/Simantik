@@ -289,9 +289,9 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
                     >
                       {opt.id}
                     </span>
-                    <span className="leading-relaxed">
+                    <div className="leading-relaxed">
                       <RichHtml html={opt.text} />
-                    </span>
+                    </div>
                   </div>
 
                   {/* Right status badge */}
@@ -348,9 +348,9 @@ export const PracticeResultReviewCard: React.FC<PracticeResultReviewCardProps> =
                       <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
                     )}
                   </span>
-                  <span className="leading-relaxed">
+                  <div className="leading-relaxed">
                     <RichHtml html={opt.text} />
-                  </span>
+                  </div>
                 </div>
 
                 {opt.tagText && (

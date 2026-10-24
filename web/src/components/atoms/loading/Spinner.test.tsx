@@ -44,4 +44,16 @@ describe('Button Component with Loading State', () => {
     );
     expect(endButton.props.spinnerPlacement).toBe('end');
   });
+
+  it('renders correctly with asChild without throwing React.Children.only error', async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const html = renderToStaticMarkup(
+      <Button asChild className="custom-link">
+        <a href="/dashboard">Ke Dashboard</a>
+      </Button>
+    );
+    expect(html).toContain('href="/dashboard"');
+    expect(html).toContain('Ke Dashboard');
+    expect(html).toContain('custom-link');
+  });
 });

@@ -78,9 +78,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(buttonVariants({ variant, size, className }), isBusy && 'cursor-wait')}
         {...props}
       >
-        {isBusy && spinnerPlacement === 'start' && <Spinner size={spinnerSize} />}
-        {isBusy && loadingText !== undefined ? loadingText : children}
-        {isBusy && spinnerPlacement === 'end' && <Spinner size={spinnerSize} />}
+        {asChild ? (
+          children
+        ) : (
+          <>
+            {isBusy && spinnerPlacement === 'start' && <Spinner size={spinnerSize} />}
+            {isBusy && loadingText !== undefined ? loadingText : children}
+            {isBusy && spinnerPlacement === 'end' && <Spinner size={spinnerSize} />}
+          </>
+        )}
       </Comp>
     );
   }
