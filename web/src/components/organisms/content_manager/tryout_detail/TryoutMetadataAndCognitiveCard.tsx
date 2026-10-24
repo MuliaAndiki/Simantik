@@ -103,10 +103,11 @@ export const TryoutMetadataAndCognitiveCard: React.FC<TryoutMetadataAndCognitive
                 Status Akses
               </p>
               <span
-                className={`inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isPublished
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-slate-100 text-slate-600 border border-slate-200'
-                  }`}
+                className={`inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                  isPublished
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-slate-100 text-slate-600 border border-slate-200'
+                }`}
               >
                 <CheckCircle2 className="w-3 h-3" />
                 <span>{isPublished ? 'Publikasi Aktif' : 'Draft Tertutup'}</span>
@@ -189,9 +190,7 @@ export const TryoutMetadataAndCognitiveCard: React.FC<TryoutMetadataAndCognitive
               </div>
               <div className="mt-1">
                 <p className="text-base font-black text-emerald-900">{cb.c1_count}</p>
-                <p className="text-[10px] font-semibold text-emerald-700 leading-tight">
-                  Level 1
-                </p>
+                <p className="text-[10px] font-semibold text-emerald-700 leading-tight">Level 1</p>
               </div>
             </div>
 
@@ -227,9 +226,7 @@ export const TryoutMetadataAndCognitiveCard: React.FC<TryoutMetadataAndCognitive
               </div>
               <div className="mt-1">
                 <p className="text-base font-black text-violet-900">{cb.c4_count}</p>
-                <p className="text-[10px] font-semibold text-violet-700 leading-tight">
-                  Level 4
-                </p>
+                <p className="text-[10px] font-semibold text-violet-700 leading-tight">Level 4</p>
               </div>
             </div>
 

@@ -33,6 +33,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Spinner } from '@/components/atoms';
 import { cn } from '@/utils/classname';
+import { isHtml } from '@/utils/wacana';
 
 export interface RichTextEditorProps {
   value?: string;
@@ -120,6 +121,66 @@ function countWords(html: string): number {
   return text.split(' ').filter(Boolean).length;
 }
 
+/**
+ * Mengubah teks polos multi-baris menjadi elemen paragraf HTML (<p>...</p>).
+ * Baris baru ganda (\n\n+) dipecah menjadi paragraf terpisah,
+ * sedangkan baris baru tunggal di dalam satu paragraf dikonversi menjadi <br />.
+ */
+export function formatTextToParagraphHtml(text: string): string {
+  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const paragraphs = normalized
+    .split(/\n\s*\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  if (paragraphs.length === 0) return '';
+
+  return paragraphs
+    .map((p) => {
+      const escaped = p.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const withBreaks = escaped.replace(/\n/g, '<br />');
+      return `<p>${withBreaks}</p>`;
+    })
+    .join('');
+}
+
+/**
+ * Membersihkan konten HTML yang disalin (dari Word, Google Docs, atau website lain)
+ * agar tidak membawa inline style yang merusak jarak paragraf atau tata letak editor.
+ */
+export function cleanPastedHtml(rawHtml: string, rawText: string): string {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(rawHtml, 'text/html');
+
+    // Hapus script, style, meta, link yang tidak diinginkan
+    doc.querySelectorAll('script, style, meta, link, noscript').forEach((el) => el.remove());
+
+    const hasBlocks = doc.body.querySelector(
+      'p, h1, h2, h3, h4, h5, h6, ul, ol, table, blockquote, div'
+    );
+
+    if (hasBlocks) {
+      doc.querySelectorAll('*').forEach((el) => {
+        el.removeAttribute('style');
+        el.removeAttribute('dir');
+        if (el.className && typeof el.className === 'string' && el.className.includes('Mso')) {
+          el.removeAttribute('class');
+        }
+      });
+      return doc.body.innerHTML;
+    }
+
+    if (rawText?.includes('\n')) {
+      return formatTextToParagraphHtml(rawText);
+    }
+
+    return doc.body.innerHTML;
+  } catch {
+    return formatTextToParagraphHtml(rawText);
+  }
+}
+
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   value,
   onChange,
@@ -135,7 +196,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState<number>(16);
   const [fontFamily, setFontFamily] = useState<string>('Poppins');
-  const [headingStyle, setHeadingStyle] = useState<string>('Teks Normal');
+  const [headingStyle, setHeadingStyle] = useState<string>('Paragraf (Teks Normal)');
   const [wordCount, setWordCount] = useState<number>(384);
   const [scale, setScale] = useState<number>(100);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -157,7 +218,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Sync initial content
   useEffect(() => {
     if (editorRef.current) {
-      const nextHtml = value !== undefined ? value : DEFAULT_DOCUMENT_HTML;
+      let nextHtml = value !== undefined ? value : DEFAULT_DOCUMENT_HTML;
+      // Bila nilai awal adalah teks polos dengan baris baru (bukan HTML), ubah otomatis menjadi paragraf
+      if (nextHtml && !isHtml(nextHtml) && nextHtml.includes('\n')) {
+        nextHtml = formatTextToParagraphHtml(nextHtml);
+      }
+
       if (editorRef.current.innerHTML !== nextHtml) {
         isReplacingContentRef.current = true;
         editorRef.current.innerHTML = nextHtml;
@@ -261,6 +327,63 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     editorRef.current?.focus();
     handleInput();
   };
+
+  // Pastikan separator paragraf default browser adalah tag <p>
+  useEffect(() => {
+    try {
+      document.execCommand('defaultParagraphSeparator', false, 'p');
+    } catch {
+      // Abaikan jika tidak didukung
+    }
+  }, []);
+
+  const handleFocus = useCallback(() => {
+    try {
+      document.execCommand('defaultParagraphSeparator', false, 'p');
+    } catch {
+      // Abaikan
+    }
+  }, []);
+
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLDivElement>) => {
+      if (readOnly) return;
+      e.preventDefault();
+
+      const clipboardData = e.clipboardData;
+      const rawHtml = clipboardData.getData('text/html');
+      const rawText = clipboardData.getData('text/plain');
+
+      let contentToInsert = '';
+
+      if (rawHtml) {
+        contentToInsert = cleanPastedHtml(rawHtml, rawText);
+      } else if (rawText) {
+        if (rawText.includes('\n')) {
+          contentToInsert = formatTextToParagraphHtml(rawText);
+        } else {
+          contentToInsert = rawText;
+        }
+      }
+
+      if (!contentToInsert) return;
+
+      // Jika teks sebaris tanpa tag HTML, sisipkan sebagai teks pada posisi kursor
+      if (
+        !contentToInsert.includes('<p>') &&
+        !contentToInsert.includes('<br') &&
+        !contentToInsert.includes('<div') &&
+        !contentToInsert.includes('<h')
+      ) {
+        document.execCommand('insertText', false, rawText || contentToInsert);
+      } else {
+        document.execCommand('insertHTML', false, contentToInsert);
+      }
+
+      handleInput();
+    },
+    [readOnly, handleInput]
+  );
 
   const handleHeadingChange = (format: string) => {
     setHeadingStyle(format);
@@ -482,7 +605,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             onChange={(e) => handleHeadingChange(e.target.value)}
             className="text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 cursor-pointer appearance-none pr-7 focus:outline-none focus:ring-1 focus:ring-sky-500"
           >
-            <option value="Teks Normal">Teks Normal</option>
+            <option value="Paragraf (Teks Normal)">Paragraf (Teks Normal)</option>
             <option value="H1">Judul Besar (H1)</option>
             <option value="H2">Sub-Judul (H2)</option>
             <option value="H3">Heading 3 (H3)</option>
@@ -766,10 +889,20 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             contentEditable={!readOnly}
             onInput={handleInput}
             onClick={handleEditorClick}
+            onPaste={handlePaste}
+            onFocus={handleFocus}
             suppressContentEditableWarning
+            style={minHeight && !minHeight.startsWith('min-h-') ? { minHeight } : undefined}
             className={cn(
-              'prose prose-slate max-w-none focus:outline-none text-xs sm:text-sm leading-relaxed text-slate-800 empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none',
-              minHeight || 'min-h-[120px]'
+              'prose prose-slate max-w-none focus:outline-none text-xs sm:text-sm leading-relaxed text-slate-800',
+              '[&_p]:mb-3.5 [&_p]:leading-relaxed [&_p:last-child]:mb-0',
+              '[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3.5',
+              '[&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-3',
+              '[&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2.5',
+              '[&_blockquote]:border-l-4 [&_blockquote]:border-sky-500 [&_blockquote]:pl-4 [&_blockquote]:my-3 [&_blockquote]:italic [&_blockquote]:text-slate-600',
+              '[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2',
+              'empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none',
+              minHeight?.startsWith('min-h-') ? minHeight : 'min-h-[140px]'
             )}
             data-placeholder={placeholder}
           />
@@ -788,10 +921,20 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               contentEditable={!readOnly}
               onInput={handleInput}
               onClick={handleEditorClick}
+              onPaste={handlePaste}
+              onFocus={handleFocus}
               suppressContentEditableWarning
+              style={minHeight && !minHeight.startsWith('min-h-') ? { minHeight } : undefined}
               className={cn(
-                'prose prose-slate max-w-none focus:outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none',
-                minHeight || 'min-h-[500px]'
+                'prose prose-slate max-w-none focus:outline-none',
+                '[&_p]:mb-4 [&_p]:leading-relaxed [&_p:last-child]:mb-0',
+                '[&_h1]:text-2xl sm:text-3xl [&_h1]:font-bold [&_h1]:my-4',
+                '[&_h2]:text-xl sm:text-2xl [&_h2]:font-bold [&_h2]:my-3.5',
+                '[&_h3]:text-lg sm:text-xl [&_h3]:font-bold [&_h3]:my-3',
+                '[&_blockquote]:border-l-4 [&_blockquote]:border-sky-500 [&_blockquote]:pl-4 [&_blockquote]:my-3.5 [&_blockquote]:italic [&_blockquote]:text-slate-600',
+                '[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-3',
+                'empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none',
+                minHeight?.startsWith('min-h-') ? minHeight : 'min-h-[500px]'
               )}
               data-placeholder={placeholder}
             />

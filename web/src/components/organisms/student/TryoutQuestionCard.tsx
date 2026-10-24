@@ -16,6 +16,7 @@ export interface TryoutQuestionCardProps {
   currentAnswer?: TryoutAnswerValue;
   isLastQuestion?: boolean;
   isSubmitting?: boolean;
+  isLoadingQuestion?: boolean;
   onSelectSingleChoice: (optionId: string) => void;
   onToggleComplexChoice: (optionId: string) => void;
   onSelectMatrixChoice: (statementId: string, value: string) => void;
@@ -29,6 +30,7 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
   currentAnswer,
   isLastQuestion = false,
   isSubmitting = false,
+  isLoadingQuestion = false,
   onSelectSingleChoice,
   onToggleComplexChoice,
   onSelectMatrixChoice,
@@ -64,11 +66,25 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
 
         {/* Primary Question Prompt */}
         <div className="text-base sm:text-lg md:text-xl font-bold text-slate-900 leading-snug">
-          <RichHtml html={question.questionText} />
+          {isLoadingQuestion ? (
+            <div className="space-y-3 animate-pulse py-1">
+              <div className="h-6 bg-slate-200 rounded-xl w-3/4" />
+              <div className="h-4 bg-slate-100 rounded-lg w-1/2" />
+            </div>
+          ) : (
+            <RichHtml html={question.questionText} />
+          )}
         </div>
 
         {/* 2. Interactive Answer Options */}
         <div className="space-y-3 pt-1">
+          {isLoadingQuestion && (
+            <div className="space-y-3 animate-pulse">
+              <div className="h-14 bg-slate-100 rounded-2xl w-full border border-slate-200/60" />
+              <div className="h-14 bg-slate-100 rounded-2xl w-full border border-slate-200/60" />
+              <div className="h-14 bg-slate-100 rounded-2xl w-full border border-slate-200/60" />
+            </div>
+          )}
           {/* A. Pilihan Ganda Kompleks (Multi-Select Checkboxes with Subtitle Description) */}
           {question.type === 'pilihan-ganda-kompleks' &&
             question.options?.map((option: TryoutChoiceOption) => {
@@ -100,13 +116,13 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
 
                   {/* Option Title & Description Subtitle */}
                   <div className="flex-1">
-                    <p className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+                    <div className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
                       <RichHtml html={option.title} />
-                    </p>
+                    </div>
                     {option.description && (
-                      <p className="text-xs sm:text-sm text-slate-500 font-normal leading-relaxed mt-1">
+                      <div className="text-xs sm:text-sm text-slate-500 font-normal leading-relaxed mt-1">
                         <RichHtml html={option.description} />
-                      </p>
+                      </div>
                     )}
                   </div>
                 </button>
@@ -148,9 +164,9 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
                   <div className="flex-1 text-xs sm:text-sm md:text-base font-medium text-slate-900 leading-snug">
                     <RichHtml html={option.title} />
                     {option.description && (
-                      <p className="text-xs text-slate-500 font-normal mt-0.5">
+                      <div className="text-xs text-slate-500 font-normal mt-0.5">
                         <RichHtml html={option.description} />
-                      </p>
+                      </div>
                     )}
                   </div>
                 </button>
@@ -194,9 +210,9 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
                   key={stmt.id}
                   className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
-                  <p className="text-xs sm:text-sm font-medium text-slate-900 flex-1 leading-snug">
+                  <div className="text-xs sm:text-sm font-medium text-slate-900 flex-1 leading-snug">
                     <RichHtml html={stmt.statement} />
-                  </p>
+                  </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
@@ -249,9 +265,15 @@ export const TryoutQuestionCard: React.FC<TryoutQuestionCardProps> = ({
           <Button
             type="button"
             onClick={onNext}
-            disabled={isSubmitting || isNextDisabled}
+            disabled={isSubmitting || isNextDisabled || isLoadingQuestion}
             isLoading={isSubmitting}
-            title={isNextDisabled ? 'Pilih jawaban dulu sebelum lanjut' : undefined}
+            title={
+              isLoadingQuestion
+                ? 'Memuat butir soal...'
+                : isNextDisabled
+                  ? 'Pilih jawaban dulu sebelum lanjut'
+                  : undefined
+            }
             className="flex-1 sm:flex-none h-11 px-6 rounded-full bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs cursor-pointer border-0 transition-transform active:scale-95"
           >
             <span>{isLastQuestion ? 'Selesai & Kumpulkan' : 'Lanjut'}</span>

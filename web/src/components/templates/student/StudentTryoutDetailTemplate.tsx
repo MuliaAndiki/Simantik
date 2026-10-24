@@ -26,6 +26,9 @@ export interface StudentTryoutDetailTemplateProps {
   currentAnswer?: TryoutAnswerValue;
   isLastQuestion?: boolean;
   isSubmitting?: boolean;
+  isLoadingQuestion?: boolean;
+  isStartSubmitting?: boolean;
+  isConfirmSubmitting?: boolean;
   onSelectSingleChoice: (optionId: string) => void;
   onToggleComplexChoice: (optionId: string) => void;
   onSelectMatrixChoice: (statementId: string, value: string) => void;
@@ -72,6 +75,9 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
   currentAnswer,
   isLastQuestion,
   isSubmitting,
+  isLoadingQuestion = false,
+  isStartSubmitting,
+  isConfirmSubmitting,
   onSelectSingleChoice,
   onToggleComplexChoice,
   onSelectMatrixChoice,
@@ -129,6 +135,7 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
             currentAnswer={currentAnswer}
             isLastQuestion={isLastQuestion}
             isSubmitting={isSubmitting}
+            isLoadingQuestion={isLoadingQuestion}
             onSelectSingleChoice={onSelectSingleChoice}
             onToggleComplexChoice={onToggleComplexChoice}
             onSelectMatrixChoice={onSelectMatrixChoice}
@@ -154,7 +161,7 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
         isOpen={isPreStartModalOpen}
         isChecked={isPreStartChecked}
         totalQuestions={totalQuestions}
-        isSubmitting={isSubmitting}
+        isSubmitting={isStartSubmitting ?? isSubmitting}
         onCheckChange={onPreStartCheckChange}
         onConfirm={onPreStartConfirm}
         onClose={onPreStartClose}
@@ -174,7 +181,7 @@ export const StudentTryoutDetailTemplate: React.FC<StudentTryoutDetailTemplatePr
         answeredCount={answeredCount}
         totalQuestions={totalQuestions}
         remainingTimeFormatted={formattedTime}
-        isSubmitting={isSubmitting}
+        isSubmitting={isConfirmSubmitting ?? isSubmitting}
         onCancel={onConfirmModalCancel}
         onConfirm={onConfirmModalProceed}
       />
