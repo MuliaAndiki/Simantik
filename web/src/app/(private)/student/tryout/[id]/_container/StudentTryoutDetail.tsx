@@ -231,6 +231,11 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
           const leftover = Math.max(0, res.data.duration_seconds - elapsed);
           setRemainingSeconds(leftover);
           setTotalDurationMinutes(Math.round(res.data.duration_seconds / 60));
+
+          if (leftover <= 0 || res.data.status === 'expired' || res.data.status === 'completed') {
+            handleFinalizeSubmissionRef.current?.(true, 'EXPIRED_TIME');
+            return;
+          }
         }
         if (res.data.current_question_number) {
           setCurrentQuestionNumber(res.data.current_question_number);
@@ -352,15 +357,20 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
     ]
   );
 
+  const handleFinalizeSubmissionRef = useRef(handleFinalizeSubmission);
+  useEffect(() => {
+    handleFinalizeSubmissionRef.current = handleFinalizeSubmission;
+  }, [handleFinalizeSubmission]);
+
   // 3. Timer Countdown Effect
   useEffect(() => {
-    if (isPreStartModalOpen) return;
+    if (isPreStartModalOpen || isTimeoutModalOpen) return;
 
     const timer = setInterval(() => {
       setRemainingSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleFinalizeSubmission(true, 'EXPIRED_TIME');
+          handleFinalizeSubmissionRef.current?.(true, 'EXPIRED_TIME');
           return 0;
         }
         return prev - 1;
@@ -368,7 +378,7 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isPreStartModalOpen, handleFinalizeSubmission]);
+  }, [isPreStartModalOpen, isTimeoutModalOpen]);
 
   // 4. Proctoring Anti-Cheating & Auto-Submit on Violations > 3
   useEffect(() => {
@@ -456,7 +466,7 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
     // Submit answer to backend to invoke Adaptive Engine
     if (targetAttemptId && isUUID(targetAttemptId)) {
       try {
-        await submitAnswerMutation.mutateAsync({
+        const submitRes = await submitAnswerMutation.mutateAsync({
           attemptId: targetAttemptId,
           body: {
             question_id: activeQuestion.id,
@@ -465,6 +475,12 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
             response_time_seconds: Math.round((Date.now() - questionStartTimeRef.current) / 1000),
           },
         });
+        if (
+          submitRes?.data?.remaining_seconds !== undefined &&
+          typeof submitRes.data.remaining_seconds === 'number'
+        ) {
+          setRemainingSeconds(Math.max(0, submitRes.data.remaining_seconds));
+        }
       } catch {
         // Continue progression smoothly
       }
@@ -491,6 +507,7 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
     isLastQuestion,
     totalQuestions,
     submitAnswerMutation,
+    ns.alert,
   ]);
 
   // Modal Handlers
@@ -537,6 +554,10 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
     });
   }, [totalQuestions, currentQuestionNumber, answeredNumbers]);
 
+  const isNextSubmitting = submitAnswerMutation.isPending;
+  const isFinalSubmitting =
+    completeAttemptMutation.isPending || autoSubmitAttemptMutation.isPending;
+
   return (
     <StudentTryoutDetailPage
       title="Tryout TKA Bahasa Indonesia #1"
@@ -549,13 +570,10 @@ function StudentTryoutSessionContent({ tryoutId }: StudentTryoutDetailProps) {
       question={activeQuestion}
       currentAnswer={currentAnswer}
       isLastQuestion={isLastQuestion}
-      isSubmitting={
-        isQuestionLoading ||
-        submitAnswerMutation.isPending ||
-        startAttemptMutation.isPending ||
-        completeAttemptMutation.isPending ||
-        autoSubmitAttemptMutation.isPending
-      }
+      isSubmitting={isLastQuestion ? isFinalSubmitting : isNextSubmitting}
+      isLoadingQuestion={isQuestionLoading}
+      isStartSubmitting={startAttemptMutation.isPending}
+      isConfirmSubmitting={isFinalSubmitting}
       onSelectSingleChoice={handleSelectSingleChoice}
       onToggleComplexChoice={handleToggleComplexChoice}
       onSelectMatrixChoice={handleSelectMatrixChoice}

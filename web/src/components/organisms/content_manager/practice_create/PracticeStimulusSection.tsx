@@ -331,7 +331,10 @@ export const PracticeStimulusSection: React.FC<PracticeStimulusSectionProps> = (
                       </button>
 
                       {isPreviewOpen && (
-                        <div className="mt-2 max-h-56 overflow-y-auto rounded-xl bg-white border border-teal-200 p-3.5 text-xs text-slate-800 leading-relaxed shadow-2xs">
+                        <div
+                          data-lenis-prevent
+                          className="mt-2 max-h-80 sm:max-h-96 overflow-y-auto overscroll-contain rounded-xl bg-white border border-teal-200 p-3.5 text-xs text-slate-800 leading-relaxed shadow-2xs scrollbar-thin scrollbar-thumb-teal-300"
+                        >
                           <RichHtml
                             html={stimulus.content || selectedSharedOption?.content || ''}
                           />
@@ -357,7 +360,10 @@ export const PracticeStimulusSection: React.FC<PracticeStimulusSectionProps> = (
               </div>
 
               {/* Daftar Bacaan di Bank */}
-              <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
+              <div
+                data-lenis-prevent
+                className="max-h-56 overflow-y-auto overscroll-contain space-y-2 pr-1 scrollbar-thin scrollbar-thumb-slate-300"
+              >
                 {isLoadingSharedStimuli && sharedStimuli.length === 0 ? (
                   <p className="text-xs text-slate-500 py-4 text-center">
                     Memuat daftar bacaan bersama...
@@ -397,10 +403,6 @@ export const PracticeStimulusSection: React.FC<PracticeStimulusSectionProps> = (
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-xs font-bold text-slate-900 truncate">
                                 {opt.title}
-                              </span>
-
-                              <span className="text-[10px] font-semibold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full shrink-0">
-                                Digunakan oleh {opt.questionCount} soal
                               </span>
                             </div>
 
@@ -467,7 +469,10 @@ export const PracticeStimulusSection: React.FC<PracticeStimulusSectionProps> = (
 
                         {/* Konten Pratinjau Lengkap */}
                         {isExpanded && (
-                          <div className="mx-3 mb-3 max-h-40 overflow-y-auto rounded-lg bg-slate-50 border border-slate-200/80 p-3 text-xs text-slate-700 leading-relaxed">
+                          <div
+                            data-lenis-prevent
+                            className="mx-3 mb-3 max-h-60 overflow-y-auto overscroll-contain rounded-lg bg-slate-50 border border-slate-200/80 p-3 text-xs text-slate-700 leading-relaxed scrollbar-thin scrollbar-thumb-slate-300"
+                          >
                             <RichHtml html={opt.content} />
                           </div>
                         )}
@@ -538,7 +543,7 @@ export const PracticeStimulusSection: React.FC<PracticeStimulusSectionProps> = (
                     value={stimulus.content}
                     readOnly={isLinked}
                     variant="compact"
-                    minHeight="1400px"
+                    minHeight="min-h-[320px]"
                     onChange={(val) => onStimulusChange('content', val)}
                     onUploadImage={onUploadImage}
                     onDeleteImage={onDeleteImage}

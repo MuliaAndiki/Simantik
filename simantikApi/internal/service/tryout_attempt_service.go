@@ -197,18 +197,24 @@ func (s *tryoutAttemptService) StartAttempt(ctx context.Context, tryoutID, userI
 		return nil, ErrTryoutNotAvailable
 	}
 
-	// Resume if there's already an active attempt
+	// Resume if there's already an active attempt (and not yet expired)
 	existing, err := s.attemptRepo.FindActiveAttempt(ctx, userID, tryoutID)
 	if err == nil && existing != nil {
-		return &dto.StartAttemptResponse{
-			AttemptID:             existing.ID,
-			TryoutID:              tryoutID,
-			TotalQuestions:        s.totalQuestions(ctx, tryoutID),
-			DurationSeconds:       tryout.DurationSeconds,
-			StartedAt:             existing.StartedAt,
-			Status:                string(existing.Status),
-			CurrentQuestionNumber: existing.CurrentQuestionNumber,
-		}, nil
+		deadline := existing.StartedAt.Add(time.Duration(tryout.DurationSeconds+30) * time.Second)
+		if time.Now().After(deadline) {
+			existing.Status = models.AttemptStatusExpired
+			_ = s.attemptRepo.UpdateAttempt(ctx, existing)
+		} else {
+			return &dto.StartAttemptResponse{
+				AttemptID:             existing.ID,
+				TryoutID:              tryoutID,
+				TotalQuestions:        s.totalQuestions(ctx, tryoutID),
+				DurationSeconds:       tryout.DurationSeconds,
+				StartedAt:             existing.StartedAt,
+				Status:                string(existing.Status),
+				CurrentQuestionNumber: existing.CurrentQuestionNumber,
+			}, nil
+		}
 	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}

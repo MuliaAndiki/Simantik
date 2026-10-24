@@ -139,12 +139,15 @@ export const PracticeQuestionStimulus: React.FC<PracticeQuestionStimulusProps> =
 
           {/* Format Isi Teks Lengkap (Rich Text / Paragraf) */}
           {hasContent && (
-            <div className="text-xs sm:text-sm text-slate-700 leading-relaxed space-y-2.5 max-h-[360px] sm:max-h-[440px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-teal-200">
+            <div
+              data-lenis-prevent
+              className="text-xs sm:text-sm text-slate-700 leading-relaxed space-y-2.5 max-h-[360px] sm:max-h-[440px] overflow-y-auto overscroll-contain pr-2 scrollbar-thin scrollbar-thumb-teal-200"
+            >
               {Array.isArray(rawContent) ? (
                 rawContent.map((p, i) => (
-                  <p key={`stimulus-p-${i}`} className="leading-relaxed">
+                  <div key={`stimulus-p-${i}`} className="leading-relaxed">
                     {isHtml(p) ? <RichHtml html={p} /> : p}
-                  </p>
+                  </div>
                 ))
               ) : (
                 <RichHtml html={rawContent} />

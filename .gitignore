@@ -8,3 +8,8 @@
 /web/.next/
 /docs
 Task.txt
+
+# Graphify
+graphify-out/cache/
+*.graphify_python
+graphify-out
