@@ -1,0 +1,53 @@
+# Dependencies & Package Managers
+node_modules/
+vendor/
+.bun/
+
+# Build Outputs & Temporary Files
+.next/
+dist/
+build/
+out/
+tmp/
+simantikApi/tmp/
+*.log
+build-errors.log
+
+# Test & Coverage Outputs
+coverage/
+*.out
+.cache/
+__snapshots__/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Git, IDE, and OS Metadata
+.git/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Graphify Internal Cache (prevents circular indexing)
+graphify-out/cache/
+
+# Binary, Locks, and Media Assets
+*.lock
+bun.lock
+bun.lockb
+go.sum
+docs/
+Task.txt
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.mp4
+*.pdf
+*.zip
+*.tar.gz
