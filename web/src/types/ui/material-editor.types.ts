@@ -1,3 +1,5 @@
+import type { PreviewDocumentStructure } from './material-manager.types';
+
 export interface MaterialMetadata {
   judulMateri: string;
   kategoriPembelajaran: string;
@@ -21,6 +23,7 @@ export interface MaterialEditorFormState {
   metadata: MaterialMetadata;
   content: string;
   objectives: LearningObjectiveItem[];
+  structureItems: PreviewDocumentStructure[];
   topics: RelevantTopicTag[];
   saveStatus: DocumentSaveStatus;
   wordCount: number;

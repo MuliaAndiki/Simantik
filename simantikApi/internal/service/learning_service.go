@@ -283,17 +283,19 @@ func (s *learningService) CreateMaterial(ctx context.Context, req dto.CreateMate
 	}
 
 	mat := models.Material{
-		ID:           uuid.New(),
-		ModuleID:     req.ModuleID,
-		CompetencyID: req.CompetencyID,
-		Title:        req.Title,
-		Description:  req.Description,
-		Content:      req.Content,
-		Type:         models.MaterialType(req.Type),
-		DisplayOrder: req.DisplayOrder,
-		Status:       models.ContentStatusDraft,
-		CreatedBy:    createdByID,
-		UpdatedBy:    &createdByID,
+		ID:                 uuid.New(),
+		ModuleID:           req.ModuleID,
+		CompetencyID:       req.CompetencyID,
+		Title:              req.Title,
+		Description:        req.Description,
+		Content:            req.Content,
+		LearningObjectives: req.LearningObjectives,
+		StructureItems:     req.StructureItems,
+		Type:               models.MaterialType(req.Type),
+		DisplayOrder:       req.DisplayOrder,
+		Status:             models.ContentStatusDraft,
+		CreatedBy:          createdByID,
+		UpdatedBy:          &createdByID,
 	}
 
 	if err := s.materialRepo.Create(ctx, &mat); err != nil {
@@ -354,6 +356,12 @@ func (s *learningService) UpdateMaterial(ctx context.Context, id uuid.UUID, req 
 	}
 	if req.Content != "" {
 		mat.Content = req.Content
+	}
+	if req.LearningObjectives != nil {
+		mat.LearningObjectives = *req.LearningObjectives
+	}
+	if req.StructureItems != nil {
+		mat.StructureItems = *req.StructureItems
 	}
 	if req.Type != "" {
 		mat.Type = models.MaterialType(req.Type)
@@ -560,18 +568,20 @@ func (s *learningService) mapToMaterialResponse(m *models.Material, isCompleted 
 	}
 
 	return &dto.MaterialResponse{
-		ID:             m.ID,
-		ModuleID:       m.ModuleID,
-		CompetencyID:   m.CompetencyID,
-		CompetencyName: compName,
-		Title:          m.Title,
-		Description:    m.Description,
-		Content:        m.Content,
-		Type:           string(m.Type),
-		DisplayOrder:   m.DisplayOrder,
-		Status:         string(m.Status),
-		IsCompleted:    isCompleted,
-		CreatedAt:      m.CreatedAt,
-		UpdatedAt:      m.UpdatedAt,
+		ID:                 m.ID,
+		ModuleID:           m.ModuleID,
+		CompetencyID:       m.CompetencyID,
+		CompetencyName:     compName,
+		Title:              m.Title,
+		Description:        m.Description,
+		Content:            m.Content,
+		LearningObjectives: m.LearningObjectives,
+		StructureItems:     m.StructureItems,
+		Type:               string(m.Type),
+		DisplayOrder:       m.DisplayOrder,
+		Status:             string(m.Status),
+		IsCompleted:        isCompleted,
+		CreatedAt:          m.CreatedAt,
+		UpdatedAt:          m.UpdatedAt,
 	}
 }

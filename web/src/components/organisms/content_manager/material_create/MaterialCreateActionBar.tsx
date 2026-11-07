@@ -49,17 +49,6 @@ export const MaterialCreateActionBar: React.FC<MaterialCreateActionBarProps> = (
           {isSavingDraft ? <Spinner size="xs" /> : <Bookmark className="w-4 h-4" />}
           <span>{isSavingDraft ? 'Menyimpan...' : 'Simpan Draft'}</span>
         </button>
-
-        {/* Simpan & Ajukan Review */}
-        <button
-          type="button"
-          onClick={onSubmitReview}
-          disabled={isSubmitting}
-          className="px-6 py-2.5 bg-[#F59E0B] hover:bg-[#E08D03] active:scale-[0.99] text-white font-bold text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow-xs transition cursor-pointer disabled:opacity-50"
-        >
-          {isSubmitting ? <Spinner size="xs" /> : <Send className="w-4 h-4" />}
-          <span>Simpan &amp; Ajukan Review</span>
-        </button>
       </div>
     </div>
   );

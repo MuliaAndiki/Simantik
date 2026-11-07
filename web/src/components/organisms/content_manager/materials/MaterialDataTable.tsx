@@ -19,6 +19,10 @@ import type { MaterialStatusType, ModuleItem } from '@/types/ui/material-manager
 interface MaterialDataTableProps {
   modules: ModuleItem[];
   selectedId: string;
+  selectedModuleIds?: string[];
+  onToggleModuleSelection?: (moduleId: string) => void;
+  onSelectAllModules?: () => void;
+  onDeselectAllModules?: () => void;
   onSelectModule: (item: ModuleItem) => void;
   onNavigateModule?: (item: ModuleItem) => void;
   onEditModule?: (item: ModuleItem) => void;
@@ -33,6 +37,10 @@ interface MaterialDataTableProps {
 export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
   modules,
   selectedId,
+  selectedModuleIds = [],
+  onToggleModuleSelection,
+  onSelectAllModules,
+  onDeselectAllModules,
   onSelectModule,
   onNavigateModule,
   onEditModule,
@@ -74,6 +82,23 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
         <table className="w-full text-left border-collapse min-w-[700px]">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] uppercase tracking-wider font-bold text-slate-400">
+              <th className="py-3 px-3 w-10 text-center">
+                <input
+                  type="checkbox"
+                  aria-label="Pilih semua modul di halaman ini"
+                  checked={
+                    modules.length > 0 && modules.every((m) => selectedModuleIds.includes(m.id))
+                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      onSelectAllModules?.();
+                    } else {
+                      onDeselectAllModules?.();
+                    }
+                  }}
+                  className="size-4 rounded text-teal-800 focus:ring-teal-700 border-slate-300 accent-[#0E7490] cursor-pointer"
+                />
+              </th>
               <th className="py-3 px-4 w-14 text-center">No</th>
               <th className="py-3 px-4">Judul Modul Pembelajaran</th>
               <th className="py-3 px-4 text-center">Jenjang</th>
@@ -86,23 +111,38 @@ export const MaterialDataTable: React.FC<MaterialDataTableProps> = ({
           <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
             {modules.length === 0 ? (
               <TableEmptyRow
-                colSpan={7}
+                colSpan={8}
                 message="Belum ada modul pembelajaran terdaftar. Silakan buat modul atau materi baru."
               />
             ) : (
               modules.map((item) => {
                 const isSelected = item.id === selectedId;
+                const isChecked = selectedModuleIds.includes(item.id);
 
                 return (
                   <tr
                     key={item.id}
                     onClick={() => onSelectModule(item)}
                     className={`transition-colors cursor-pointer group ${
-                      isSelected
-                        ? 'bg-[#F4FBFA] ring-1 ring-inset ring-[#0E7490]/20'
-                        : 'hover:bg-slate-50/70'
+                      isChecked
+                        ? 'bg-[#EAF6F8]/60 ring-1 ring-inset ring-teal-300/60'
+                        : isSelected
+                          ? 'bg-[#F4FBFA] ring-1 ring-inset ring-[#0E7490]/20'
+                          : 'hover:bg-slate-50/70'
                     }`}
                   >
+                    {/* Checkbox Selection */}
+                    <td className="py-3.5 px-3 text-center align-middle">
+                      <input
+                        type="checkbox"
+                        aria-label={`Pilih modul ${item.title}`}
+                        checked={isChecked}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => onToggleModuleSelection?.(item.id)}
+                        className="size-4 rounded text-teal-800 focus:ring-teal-700 border-slate-300 accent-[#0E7490] cursor-pointer"
+                      />
+                    </td>
+
                     {/* Number */}
                     <td className="py-3.5 px-4 text-center align-top">
                       {isSelected ? (

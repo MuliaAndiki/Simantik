@@ -5,6 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { MaterialListPage } from '@/components/page/private/content_manager/MaterialListPage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
+import { Api } from '@/services/props.service';
 import { TMode } from '@/types/app';
 import type { SchoolLevel } from '@/types/service';
 import type {
@@ -25,6 +26,15 @@ const EMPTY_MODULE_FORM: ModuleDialogForm = {
   status: 'DRAFT',
 };
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export const MaterialListContainer: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -42,6 +52,11 @@ export const MaterialListContainer: React.FC = () => {
   const [isModuleDialogOpen, setIsModuleDialogOpen] = useState<boolean>(false);
   const [dialogMode, setDialogMode] = useState<TMode>('create');
   const [moduleFormError, setModuleFormError] = useState<string | null>(null);
+
+  // Selection & Syllabus Export State
+  const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([]);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState<boolean>(false);
+  const [isExportingSyllabus, setIsExportingSyllabus] = useState<boolean>(false);
 
   const [filters, setFilters] = useState<MaterialFilterState>({
     search: '',
@@ -227,6 +242,33 @@ export const MaterialListContainer: React.FC = () => {
           })
         : 'Baru saja';
 
+      // Parse learning objectives from DB (stored as JSON array of strings or { id, text })
+      const parsedObjectives: string[] = (() => {
+        if (!m.learning_objectives) return [];
+        try {
+          const parsed = JSON.parse(m.learning_objectives);
+          if (Array.isArray(parsed)) {
+            return parsed
+              .map((item) => (typeof item === 'string' ? item : item.text || item.desc || ''))
+              .filter(Boolean);
+          }
+          return [];
+        } catch {
+          return [];
+        }
+      })();
+
+      // Parse structure items from DB (stored as JSON array of { label, text })
+      const parsedStructureItems: Array<{ label: string; text: string }> = (() => {
+        if (!m.structure_items) return [];
+        try {
+          const parsed = JSON.parse(m.structure_items);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      })();
+
       return {
         id: m.id,
         number: String(idx + 1).padStart(2, '0'),
@@ -237,29 +279,18 @@ export const MaterialListContainer: React.FC = () => {
         category: m.competency_name || 'Bahasa Indonesia',
         status,
         updatedAt,
-        learningObjectives: [
-          {
-            id: 1,
-            title: 'Capaian Pembelajaran:',
-            desc: m.description || 'Memahami materi terstruktur sesuai standar Diknas dan TKA.',
-          },
-        ],
+        learningObjectives: parsedObjectives.map((obj, i) => ({
+          id: i + 1,
+          title: `Tujuan ${i + 1}:`,
+          desc: obj,
+        })),
         previewDocument: {
           categoryBadge: (m.competency_name || 'MODUL PEMBELAJARAN').toUpperCase(),
           chapterInfo: `Unit ${m.display_order || 1}`,
           title: m.title,
           contentParagraph: m.content || m.description || 'Isi konten bahan ajar modul.',
           structureTitle: 'Struktur Modul Ajar:',
-          structureItems: [
-            {
-              label: '1. Pokok Bahasan:',
-              text: m.description || 'Uraian inti materi.',
-            },
-            {
-              label: '2. Pendalaman Materi:',
-              text: 'Konsep dasar dan analisis wacana komprehensif.',
-            },
-          ],
+          structureItems: parsedStructureItems,
           curatorTip: 'Gunakan panduan ini sebagai rujukan kurikulum dan latihan terpadu.',
         },
         auditInfo: {
@@ -384,17 +415,348 @@ export const MaterialListContainer: React.FC = () => {
     router.push(`${basePath}/materials/create?moduleId=${moduleId}`);
   };
 
+  const handleToggleModuleSelection = (moduleId: string) => {
+    setSelectedModuleIds((prev) =>
+      prev.includes(moduleId) ? prev.filter((id) => id !== moduleId) : [...prev, moduleId]
+    );
+  };
+
+  const handleSelectAllModules = () => {
+    setSelectedModuleIds(modules.map((m) => m.id));
+  };
+
+  const handleDeselectAllModules = () => {
+    setSelectedModuleIds([]);
+  };
+
   const handleExportSyllabus = () => {
-    const syllabusContent = `SILABUS MODUL DAN MATERI SIMANTIK\n\nTotal Modul: ${stats.totalMaterials}\nTanggal Unduh: ${new Date().toLocaleDateString('id-ID')}\n\nDaftar Modul:\n${modules.map((m, i) => `${i + 1}. ${m.title} (${m.materialsCount} Materi) - ${m.status}`).join('\n')}`;
-    const blob = new Blob([syllabusContent], {
-      type: 'text/plain;charset=utf-8',
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'Silabus-Modul-SIMANTIK.txt';
-    link.click();
-    URL.revokeObjectURL(url);
+    if (selectedModuleIds.length === 0 && modules.length > 0) {
+      setSelectedModuleIds(modules.map((m) => m.id));
+    }
+    setIsExportDialogOpen(true);
+  };
+
+  const fetchSelectedModulesData = async () => {
+    const selected = modules.filter((m) => selectedModuleIds.includes(m.id));
+    if (selected.length === 0) {
+      ns.alert.toast({
+        title: 'Peringatan',
+        message: 'Pilih setidaknya satu modul untuk diekspor ke silabus.',
+        icon: 'warning',
+      });
+      return null;
+    }
+
+    const data = await Promise.all(
+      selected.map(async (mod) => {
+        try {
+          const res = await Api.learning.ListMaterialsService({
+            module_id: mod.id,
+            limit: 100,
+          });
+          return {
+            module: mod,
+            materials: res.data?.materials || [],
+          };
+        } catch {
+          return {
+            module: mod,
+            materials: [],
+          };
+        }
+      })
+    );
+    return data;
+  };
+
+  const handleExportSyllabusTxt = async () => {
+    setIsExportingSyllabus(true);
+    try {
+      const data = await fetchSelectedModulesData();
+      if (!data) return;
+
+      const dateStr = new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+
+      let content =
+        '================================================================================\n';
+      content += '                    SILABUS MODUL PEMBELAJARAN SIMANTIK\n';
+      content +=
+        '================================================================================\n';
+      content += `Tanggal Unduh   : ${dateStr}\n`;
+      content += `Jumlah Modul    : ${data.length} Modul Terpilih\n\n`;
+
+      data.forEach((item, modIdx) => {
+        content +=
+          '--------------------------------------------------------------------------------\n';
+        content += `MODUL ${modIdx + 1}: ${item.module.title.toUpperCase()}\n`;
+        content +=
+          '--------------------------------------------------------------------------------\n';
+        content += `Label       : ${item.module.label}\n`;
+        content += `Jenjang     : ${item.module.jenjang.toUpperCase()}\n`;
+        content += `Status      : ${item.module.status}\n`;
+        content += `Deskripsi   : ${item.module.description}\n`;
+        content += `Total Materi: ${item.materials.length} Materi\n\n`;
+
+        if (item.materials.length === 0) {
+          content += '  (Belum ada materi pembelajaran pada modul ini)\n\n';
+        } else {
+          content += 'DAFTAR MATERI PEMBELAJARAN:\n';
+          item.materials.forEach((mat, matIdx) => {
+            content += `  ${matIdx + 1}. [${mat.display_order}] ${mat.title}\n`;
+            if (mat.description) {
+              content += `     Deskripsi: ${mat.description}\n`;
+            }
+
+            // Learning objectives
+            let objectives: string[] = [];
+            if (mat.learning_objectives) {
+              try {
+                const parsed = JSON.parse(mat.learning_objectives);
+                if (Array.isArray(parsed)) {
+                  objectives = parsed
+                    .map((item) => (typeof item === 'string' ? item : item.text || item.desc || ''))
+                    .filter(Boolean);
+                }
+              } catch {}
+            }
+            if (objectives.length > 0) {
+              content += '     Tujuan Pembelajaran:\n';
+              objectives.forEach((obj) => {
+                content += `       * ${obj}\n`;
+              });
+            }
+
+            // Structure items
+            let structures: Array<{ label: string; text: string }> = [];
+            if (mat.structure_items) {
+              try {
+                const parsed = JSON.parse(mat.structure_items);
+                if (Array.isArray(parsed)) structures = parsed;
+              } catch {}
+            }
+            if (structures.length > 0) {
+              content += '     Struktur Modul Ajar:\n';
+              structures.forEach((st) => {
+                content += `       * ${st.label} ${st.text}\n`;
+              });
+            }
+
+            content += '\n';
+          });
+        }
+        content += '\n';
+      });
+
+      content +=
+        '================================================================================\n';
+      content += '              © SIMANTIK - Sistem Manajemen Kurikulum Literasi\n';
+      content +=
+        '================================================================================\n';
+
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Silabus-SIMANTIK-${Date.now()}.txt`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setIsExportDialogOpen(false);
+    } finally {
+      setIsExportingSyllabus(false);
+    }
+  };
+
+  const handleExportSyllabusHtml = async () => {
+    setIsExportingSyllabus(true);
+    try {
+      const data = await fetchSelectedModulesData();
+      if (!data) return;
+
+      const dateStr = new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+
+      const modulesHtml = data
+        .map((item, modIdx) => {
+          const materialsHtml =
+            item.materials.length === 0
+              ? '<p class="empty-note">Belum ada materi terdaftar pada modul ini.</p>'
+              : item.materials
+                  .map((mat, matIdx) => {
+                    let objectives: string[] = [];
+                    if (mat.learning_objectives) {
+                      try {
+                        const parsed = JSON.parse(mat.learning_objectives);
+                        if (Array.isArray(parsed)) {
+                          objectives = parsed
+                            .map((item) =>
+                              typeof item === 'string' ? item : item.text || item.desc || ''
+                            )
+                            .filter(Boolean);
+                        }
+                      } catch {}
+                    }
+
+                    let structures: Array<{ label: string; text: string }> = [];
+                    if (mat.structure_items) {
+                      try {
+                        const parsed = JSON.parse(mat.structure_items);
+                        if (Array.isArray(parsed)) structures = parsed;
+                      } catch {}
+                    }
+
+                    const objectivesHtml =
+                      objectives.length > 0
+                        ? `
+                        <div class="meta-section">
+                          <div class="meta-title">Tujuan Pembelajaran:</div>
+                          <ul class="meta-list">
+                            ${objectives.map((o) => `<li>${escapeHtml(o)}</li>`).join('')}
+                          </ul>
+                        </div>
+                      `
+                        : '';
+
+                    const structuresHtml =
+                      structures.length > 0
+                        ? `
+                        <div class="meta-section">
+                          <div class="meta-title">Struktur Bahan Ajar:</div>
+                          <ul class="meta-list">
+                            ${structures
+                              .map(
+                                (s) =>
+                                  `<li><strong>${escapeHtml(s.label)}</strong> ${escapeHtml(s.text)}</li>`
+                              )
+                              .join('')}
+                          </ul>
+                        </div>
+                      `
+                        : '';
+
+                    return `
+                      <div class="material-card">
+                        <div class="material-header">
+                          <span class="material-num">${matIdx + 1}</span>
+                          <div>
+                            <div class="material-title">${escapeHtml(mat.title)}</div>
+                            ${mat.description ? `<div class="material-desc">${escapeHtml(mat.description)}</div>` : ''}
+                          </div>
+                        </div>
+                        ${objectivesHtml}
+                        ${structuresHtml}
+                      </div>
+                    `;
+                  })
+                  .join('');
+
+          return `
+            <div class="module-block">
+              <div class="module-banner">
+                <span class="module-index">MODUL ${modIdx + 1}</span>
+                <span class="badge ${item.module.status.toLowerCase()}">${escapeHtml(item.module.status)}</span>
+                <span class="badge jenjang">${escapeHtml(item.module.jenjang.toUpperCase())}</span>
+              </div>
+              <h2 class="module-title">${escapeHtml(item.module.title)}</h2>
+              <div class="module-label">${escapeHtml(item.module.label)}</div>
+              <p class="module-desc">${escapeHtml(item.module.description)}</p>
+              <div class="materials-wrapper">
+                <h3 class="materials-header">Daftar Bahan Ajar (${item.materials.length} Unit)</h3>
+                ${materialsHtml}
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+
+      const htmlDocument = `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Silabus Modul Pembelajaran SIMANTIK</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      background: #f8fafc;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .container { max-width: 820px; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    .header { border-bottom: 2px solid #0f766e; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .brand { font-size: 20px; font-weight: 900; color: #0f766e; letter-spacing: -0.5px; }
+    .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+    .date-info { text-align: right; font-size: 11px; color: #94a3b8; font-weight: 600; }
+    .module-block { margin-bottom: 32px; padding: 20px; background: #fdfefe; border: 1px solid #e2e8f0; border-radius: 10px; page-break-inside: avoid; }
+    .module-banner { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .module-index { font-size: 11px; font-weight: 800; color: #0f766e; letter-spacing: 0.5px; }
+    .badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; }
+    .badge.published { background: #dcfce7; color: #15803d; }
+    .badge.in_review { background: #fef3c7; color: #b45309; }
+    .badge.draft { background: #f1f5f9; color: #64748b; }
+    .badge.jenjang { background: #e0f2fe; color: #0369a1; }
+    .module-title { font-size: 18px; font-weight: 800; color: #0f172a; margin: 4px 0; }
+    .module-label { font-size: 12px; font-weight: 600; color: #0d9488; margin-bottom: 6px; }
+    .module-desc { font-size: 12px; color: #475569; margin: 0 0 16px 0; }
+    .materials-header { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #334155; margin-bottom: 12px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; }
+    .material-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+    .material-header { display: flex; align-items: flex-start; gap: 10px; }
+    .material-num { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: #0f766e; color: #fff; font-size: 11px; font-weight: 800; align-items: center; justify-content: center; shrink-0; }
+    .material-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+    .material-desc { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .meta-section { margin-top: 8px; padding-top: 6px; border-top: 1px solid #f1f5f9; font-size: 11px; }
+    .meta-title { font-weight: 700; color: #0f766e; margin-bottom: 3px; }
+    .meta-list { margin: 0; padding-left: 18px; color: #334155; }
+    .meta-list li { margin-bottom: 2px; }
+    .empty-note { font-size: 11px; font-style: italic; color: #94a3b8; }
+    .print-actions { text-align: center; margin-bottom: 20px; }
+    .print-btn { background: #0f766e; color: #fff; border: none; padding: 10px 24px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .print-btn:hover { background: #115e59; }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+      .print-actions { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-actions">
+    <button class="print-btn" onclick="window.print()">Cetak / Simpan sebagai PDF</button>
+  </div>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="brand">SIMANTIK • SISTEM MANAJEMEN KURIKULUM</div>
+        <div class="subtitle">Silabus Modul dan Bahan Ajar Literasi Terpadu</div>
+      </div>
+      <div class="date-info">
+        <div>Tanggal Dokumen: ${dateStr}</div>
+        <div>Total Modul: ${data.length} Modul Terpilih</div>
+      </div>
+    </div>
+    ${modulesHtml}
+  </div>
+</body>
+</html>`;
+
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlDocument);
+        printWindow.document.close();
+      }
+      setIsExportDialogOpen(false);
+    } finally {
+      setIsExportingSyllabus(false);
+    }
   };
 
   const handleDownloadModule = (item: MaterialItem) => {
@@ -458,6 +820,15 @@ export const MaterialListContainer: React.FC = () => {
       onCreateMaterialInModule={handleCreateMaterialInModule}
       onPageChange={handlePageChange}
       onRowsPerPageChange={handleRowsPerPageChange}
+      selectedModuleIds={selectedModuleIds}
+      onToggleModuleSelection={handleToggleModuleSelection}
+      onSelectAllModules={handleSelectAllModules}
+      onDeselectAllModules={handleDeselectAllModules}
+      isExportDialogOpen={isExportDialogOpen}
+      onExportDialogOpenChange={setIsExportDialogOpen}
+      onExportSyllabusHtml={handleExportSyllabusHtml}
+      onExportSyllabusTxt={handleExportSyllabusTxt}
+      isExportingSyllabus={isExportingSyllabus}
     />
   );
 };

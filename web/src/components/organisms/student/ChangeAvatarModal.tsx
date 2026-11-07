@@ -328,7 +328,7 @@ export function ChangeAvatarModal({
         submitDisabled={!canSubmit}
         isSubmitting={isSubmitting}
         submitLabel={activeTab === 'upload' ? 'Unggah & Simpan' : 'Simpan Foto'}
-        submittingLabel={activeTab === 'upload' ? 'Mengunggah ke R2...' : 'Menyimpan...'}
+        submittingLabel={activeTab === 'upload' ? 'Mengunggah' : 'Menyimpan...'}
         cancelClassName="border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium shadow-2xs"
       />
     </ManagerFormDialogShell>

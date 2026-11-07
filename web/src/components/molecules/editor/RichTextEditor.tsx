@@ -52,7 +52,7 @@ export interface RichTextEditorProps {
 }
 
 export const DEFAULT_DOCUMENT_HTML = `
-<div class="space-y-6 text-slate-800 leading-relaxed font-normal">
+<div class="space-y-6 text-slate-800 leading-relaxed font-normal break-words [overflow-wrap:anywhere] [word-break:break-word]">
   <div>
     <p class="text-xs font-bold text-sky-700 tracking-wider uppercase mb-2">
       MODUL PEMBELAJARAN TKA BAHASA INDONESIA
@@ -540,7 +540,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   return (
     <div
       className={cn(
-        'w-full bg-white rounded-3xl border border-slate-100 shadow-2xs overflow-hidden flex flex-col transition-all duration-300',
+        'w-full bg-white rounded-3xl border border-slate-100 shadow-2xs overflow-hidden flex flex-col transition-all duration-300 min-w-0',
         isFullscreen && 'fixed inset-0 z-50 rounded-none h-screen bg-slate-100',
         className
       )}
@@ -548,24 +548,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       {/* 1. Top Menubar Row */}
       {variant !== 'compact' && (
         <div className="flex items-center justify-between px-6 py-2.5 border-b border-slate-100 bg-white select-none">
-          <div className="flex items-center gap-5 text-xs font-semibold text-slate-600">
-            <button type="button" className="hover:text-slate-900 transition cursor-pointer">
-              Berkas
-            </button>
-            <button type="button" className="hover:text-slate-900 transition cursor-pointer">
-              Edit
-            </button>
-            <button type="button" className="hover:text-slate-900 transition cursor-pointer">
-              Sisipkan
-            </button>
-            <button type="button" className="hover:text-slate-900 transition cursor-pointer">
-              Format
-            </button>
-            <button type="button" className="hover:text-slate-900 transition cursor-pointer">
-              Alat
-            </button>
-          </div>
-
           {/* Cloud Sync Badge */}
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-bold">
             <Cloud className="w-3.5 h-3.5" />
@@ -881,7 +863,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
       {/* 3. Document Canvas Area */}
       {variant === 'compact' ? (
-        <div className="p-3 sm:p-4 bg-white overflow-auto">
+        <div className="p-3 sm:p-4 bg-white overflow-auto min-w-0 w-full">
           {/* biome-ignore lint/a11y/noStaticElementInteractions: editor contentEditable, klik hanya untuk seleksi gambar */}
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: editor contentEditable, keyboard ditangani native */}
           <div
@@ -894,13 +876,18 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             suppressContentEditableWarning
             style={minHeight && !minHeight.startsWith('min-h-') ? { minHeight } : undefined}
             className={cn(
-              'prose prose-slate max-w-none focus:outline-none text-xs sm:text-sm leading-relaxed text-slate-800',
+              'prose prose-slate max-w-none focus:outline-none text-xs sm:text-sm leading-relaxed text-slate-800 w-full min-w-0',
+              'break-words [overflow-wrap:anywhere] [word-break:break-word]',
+              '[&_*]:break-words [&_*]:[overflow-wrap:anywhere] [&_*]:[word-break:break-word]',
               '[&_p]:mb-3.5 [&_p]:leading-relaxed [&_p:last-child]:mb-0',
               '[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3.5',
               '[&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-3',
               '[&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2.5',
               '[&_blockquote]:border-l-4 [&_blockquote]:border-sky-500 [&_blockquote]:pl-4 [&_blockquote]:my-3 [&_blockquote]:italic [&_blockquote]:text-slate-600',
               '[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2',
+              '[&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:my-3',
+              '[&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_pre]:max-w-full',
+              '[&_table]:w-full [&_table]:max-w-full [&_table]:table-auto',
               'empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none',
               minHeight?.startsWith('min-h-') ? minHeight : 'min-h-[140px]'
             )}
@@ -908,11 +895,14 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           />
         </div>
       ) : (
-        <div className="flex-1 bg-[#F4F7FA] p-4 sm:p-8 md:p-10 overflow-auto flex justify-center items-start min-h-[560px]">
+        <div className="flex-1 bg-[#F4F7FA] p-4 sm:p-8 md:p-10 overflow-auto flex justify-center items-start min-h-[560px] min-w-0 w-full">
           {/* Document Paper Sheet */}
           <div
-            style={{ transform: `scale(${scale / 100})`, transformOrigin: 'top center' }}
-            className="w-full max-w-4xl bg-white rounded-2xl shadow-sm border border-slate-200/70 p-6 sm:p-12 md:p-16 min-h-[640px] focus:outline-none transition-transform duration-200"
+            style={{
+              transform: `scale(${scale / 100})`,
+              transformOrigin: 'top center',
+            }}
+            className="w-full max-w-4xl bg-white rounded-2xl shadow-sm border border-slate-200/70 p-6 sm:p-12 md:p-16 min-h-[640px] focus:outline-none transition-transform duration-200 min-w-0 break-words [overflow-wrap:anywhere] [word-break:break-word]"
           >
             {/* biome-ignore lint/a11y/noStaticElementInteractions: editor contentEditable, klik hanya untuk seleksi gambar */}
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: editor contentEditable, keyboard ditangani native */}
@@ -926,13 +916,18 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               suppressContentEditableWarning
               style={minHeight && !minHeight.startsWith('min-h-') ? { minHeight } : undefined}
               className={cn(
-                'prose prose-slate max-w-none focus:outline-none',
+                'prose prose-slate max-w-none focus:outline-none w-full min-w-0',
+                'break-words [overflow-wrap:anywhere] [word-break:break-word]',
+                '[&_*]:break-words [&_*]:[overflow-wrap:anywhere] [&_*]:[word-break:break-word]',
                 '[&_p]:mb-4 [&_p]:leading-relaxed [&_p:last-child]:mb-0',
                 '[&_h1]:text-2xl sm:text-3xl [&_h1]:font-bold [&_h1]:my-4',
                 '[&_h2]:text-xl sm:text-2xl [&_h2]:font-bold [&_h2]:my-3.5',
                 '[&_h3]:text-lg sm:text-xl [&_h3]:font-bold [&_h3]:my-3',
                 '[&_blockquote]:border-l-4 [&_blockquote]:border-sky-500 [&_blockquote]:pl-4 [&_blockquote]:my-3.5 [&_blockquote]:italic [&_blockquote]:text-slate-600',
                 '[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-3',
+                '[&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:my-4',
+                '[&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_pre]:max-w-full',
+                '[&_table]:w-full [&_table]:max-w-full [&_table]:table-auto',
                 'empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none',
                 minHeight?.startsWith('min-h-') ? minHeight : 'min-h-[500px]'
               )}

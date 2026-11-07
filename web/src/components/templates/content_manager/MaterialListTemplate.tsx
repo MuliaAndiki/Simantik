@@ -2,6 +2,7 @@ import { Download, Plus } from 'lucide-react';
 import React from 'react';
 import { TableLoader } from '@/components/atoms/loading';
 import {
+  ExportSyllabusDialog,
   MaterialDataTable,
   MaterialFilterBar,
   MaterialInspectorPanel,
@@ -56,6 +57,15 @@ export interface MaterialListTemplateProps {
   onCreateMaterialInModule?: (moduleId: string) => void;
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (rows: number) => void;
+  selectedModuleIds?: string[];
+  onToggleModuleSelection?: (moduleId: string) => void;
+  onSelectAllModules?: () => void;
+  onDeselectAllModules?: () => void;
+  isExportDialogOpen?: boolean;
+  onExportDialogOpenChange?: (open: boolean) => void;
+  onExportSyllabusHtml?: () => Promise<void> | void;
+  onExportSyllabusTxt?: () => Promise<void> | void;
+  isExportingSyllabus?: boolean;
 }
 
 export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
@@ -97,6 +107,15 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
   onCreateMaterialInModule,
   onPageChange,
   onRowsPerPageChange,
+  selectedModuleIds = [],
+  onToggleModuleSelection,
+  onSelectAllModules,
+  onDeselectAllModules,
+  isExportDialogOpen = false,
+  onExportDialogOpenChange,
+  onExportSyllabusHtml,
+  onExportSyllabusTxt,
+  isExportingSyllabus = false,
 }) => {
   return (
     <div className="w-full max-w-full mx-auto space-y-6">
@@ -135,7 +154,7 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
       {/* Summary Metric Cards */}
       <MaterialStatCards stats={stats} />
 
-      {/* Modal */}
+      {/* Modal Modul */}
       <MaterialCreateDialog
         open={isModuleDialogOpen}
         onOpenChange={onOpenDialogChange}
@@ -145,6 +164,22 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
         error={moduleFormError}
         onSubmit={onSubmitModule}
       />
+
+      {/* Export Syllabus Dialog */}
+      {onExportDialogOpenChange && onExportSyllabusHtml && onExportSyllabusTxt && (
+        <ExportSyllabusDialog
+          open={isExportDialogOpen}
+          onOpenChange={onExportDialogOpenChange}
+          modules={modules}
+          selectedModuleIds={selectedModuleIds}
+          onToggleModule={onToggleModuleSelection ?? (() => {})}
+          onSelectAll={onSelectAllModules ?? (() => {})}
+          onDeselectAll={onDeselectAllModules ?? (() => {})}
+          onExportHtml={onExportSyllabusHtml}
+          onExportTxt={onExportSyllabusTxt}
+          isExporting={isExportingSyllabus}
+        />
+      )}
 
       {/* Search & Filter Bar for Modules */}
       <MaterialFilterBar
@@ -174,6 +209,10 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
             <MaterialDataTable
               modules={modules}
               selectedId={selectedModuleId}
+              selectedModuleIds={selectedModuleIds}
+              onToggleModuleSelection={onToggleModuleSelection}
+              onSelectAllModules={onSelectAllModules}
+              onDeselectAllModules={onDeselectAllModules}
               onSelectModule={onSelectModule}
               onNavigateModule={onNavigateModule}
               onEditModule={onEditModule}

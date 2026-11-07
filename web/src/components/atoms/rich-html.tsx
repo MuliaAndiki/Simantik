@@ -16,7 +16,7 @@ export const RichHtml: React.FC<RichHtmlProps> = ({ html, className, as: Compone
     return (
       <Component
         className={cn(
-          'prose prose-slate prose-sm max-w-none break-words whitespace-pre-line leading-relaxed',
+          'prose prose-slate prose-sm max-w-none break-words [overflow-wrap:anywhere] [word-break:break-word] whitespace-pre-line leading-relaxed',
           className
         )}
       >
@@ -26,7 +26,10 @@ export const RichHtml: React.FC<RichHtmlProps> = ({ html, className, as: Compone
   }
   return (
     <Component
-      className={cn('prose prose-slate prose-sm max-w-none break-words', className)}
+      className={cn(
+        'prose prose-slate prose-sm max-w-none break-words [overflow-wrap:anywhere] [word-break:break-word]',
+        className
+      )}
       // biome-ignore lint/security/noDangerouslySetInnerHtml: rich text editor output, by design
       dangerouslySetInnerHTML={{ __html: html }}
     />

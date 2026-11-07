@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import React from 'react';
+import { RichHtml } from '@/components/atoms/rich-html';
 import type {
   InspectorViewMode,
   MaterialItem,
@@ -289,22 +290,30 @@ export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
             </span>
           </div>
 
-          <div className="space-y-2">
-            {material.learningObjectives.map((obj) => (
-              <div
-                key={obj.id}
-                className="p-3 rounded-xl bg-slate-50/70 border border-slate-100 flex items-start gap-2.5"
-              >
-                <div className="w-5 h-5 rounded-full bg-white border border-slate-200 text-slate-600 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                  {obj.id}
+          {material.learningObjectives.length === 0 ? (
+            <p className="text-xs text-slate-400 italic p-3 rounded-xl bg-slate-50 border border-slate-100">
+              Belum ada tujuan pembelajaran terdaftar.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {material.learningObjectives.map((obj) => (
+                <div
+                  key={obj.id}
+                  className="p-3 rounded-xl bg-slate-50/70 border border-slate-100 flex items-start gap-2.5"
+                >
+                  <div className="w-5 h-5 rounded-full bg-white border border-slate-200 text-slate-600 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    {obj.id}
+                  </div>
+                  <div className="text-xs text-slate-600 leading-relaxed">
+                    {obj.title ? (
+                      <strong className="text-slate-800 font-semibold">{obj.title} </strong>
+                    ) : null}
+                    {obj.desc}
+                  </div>
                 </div>
-                <div className="text-xs text-slate-600 leading-relaxed">
-                  <strong className="text-slate-800 font-semibold">{obj.title} </strong>
-                  {obj.desc}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 2. Pratinjau Dokumen Bahan Bacaan */}
@@ -338,26 +347,31 @@ export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
               {material.previewDocument.title}
             </h4>
 
-            <p className="text-xs text-slate-600 leading-relaxed text-justify">
-              {material.previewDocument.contentParagraph}
-            </p>
-
-            <div className="space-y-1.5 pt-1 border-t border-slate-100/80">
-              <p className="text-xs font-bold text-slate-800">
-                {material.previewDocument.structureTitle}
-              </p>
-              <ul className="space-y-1">
-                {material.previewDocument.structureItems.map((st) => (
-                  <li key={st.label} className="text-xs text-slate-600 flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-700 mt-1.5 shrink-0" />
-                    <span>
-                      <strong className="text-slate-700 font-semibold">{st.label} </strong>
-                      {st.text}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+            <div className="text-xs text-slate-700 leading-relaxed overflow-hidden">
+              <RichHtml html={material.previewDocument.contentParagraph} />
             </div>
+
+            {material.previewDocument.structureItems.length > 0 && (
+              <div className="space-y-1.5 pt-1 border-t border-slate-100/80">
+                <p className="text-xs font-bold text-slate-800">
+                  {material.previewDocument.structureTitle}
+                </p>
+                <ul className="space-y-1">
+                  {material.previewDocument.structureItems.map((st, i) => (
+                    <li
+                      key={`${st.label}-${i}`}
+                      className="text-xs text-slate-600 flex items-start gap-2"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-700 mt-1.5 shrink-0" />
+                      <span>
+                        <strong className="text-slate-700 font-semibold">{st.label} </strong>
+                        {st.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
 
