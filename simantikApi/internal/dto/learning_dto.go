@@ -94,7 +94,7 @@ type UpdateMaterialRequest struct {
 	StructureItems     *string    `json:"structure_items"`
 	Type               string     `json:"type" validate:"omitempty,oneof=text document video"`
 	DisplayOrder       int        `json:"display_order"`
-	Status             string     `json:"status" validate:"omitempty,oneof=draft published archived"`
+	Status             string     `json:"status" validate:"omitempty,oneof=draft published archived review in_review"`
 }
 
 type MaterialResponse struct {

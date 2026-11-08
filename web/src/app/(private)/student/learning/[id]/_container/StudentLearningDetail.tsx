@@ -63,6 +63,22 @@ export default function StudentLearningDetailContainer({
     };
   }, [material, competencyMap]);
 
+  // Parse learning objectives from DB if available
+  const objectivesList = useMemo(() => {
+    if (!material?.learning_objectives) return [];
+    try {
+      const parsed = JSON.parse(material.learning_objectives);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((item) => (typeof item === 'string' ? item : item.text || item.desc || ''))
+          .filter(Boolean);
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }, [material?.learning_objectives]);
+
   // Prepare related materials list (excluding the active material)
   const relatedMaterials: RelatedMaterialItem[] = useMemo(() => {
     if (!materialsPage?.materials) {
@@ -140,8 +156,12 @@ export default function StudentLearningDetailContainer({
         competencyCode: currentCompetency.code,
         illustrationSrc: '/illustrations/student-learning.jpg',
       }}
+      objectivesProps={{
+        objectives: objectivesList,
+      }}
       contentProps={{
         content: material?.content,
+        isLoading: isMaterialLoading,
       }}
       ctaProps={{
         title: 'Sudah memahami materi ini?',

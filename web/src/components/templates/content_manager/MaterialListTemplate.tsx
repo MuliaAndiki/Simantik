@@ -14,6 +14,7 @@ import type {
   MaterialFilterState,
   MaterialItem,
   MaterialStats,
+  MaterialStatusType,
   ModuleDialogForm,
   ModuleItem,
 } from '@/types/ui/material-manager.types';
@@ -66,6 +67,8 @@ export interface MaterialListTemplateProps {
   onExportSyllabusHtml?: () => Promise<void> | void;
   onExportSyllabusTxt?: () => Promise<void> | void;
   isExportingSyllabus?: boolean;
+  onChangeMaterialStatus?: (material: MaterialItem, newStatus: MaterialStatusType) => void;
+  updatingMaterialId?: string | null;
 }
 
 export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
@@ -116,6 +119,8 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
   onExportSyllabusHtml,
   onExportSyllabusTxt,
   isExportingSyllabus = false,
+  onChangeMaterialStatus,
+  updatingMaterialId,
 }) => {
   return (
     <div className="w-full max-w-full mx-auto space-y-6">
@@ -241,6 +246,8 @@ export const MaterialListTemplate: React.FC<MaterialListTemplateProps> = ({
               onViewActivities={onViewActivities}
               onDownload={onDownloadModule}
               onCreateMaterialInModule={onCreateMaterialInModule}
+              onChangeStatus={onChangeMaterialStatus}
+              updatingMaterialId={updatingMaterialId}
             />
           </div>
         )}

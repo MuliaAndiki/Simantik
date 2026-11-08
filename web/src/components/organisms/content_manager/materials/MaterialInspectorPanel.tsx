@@ -1,10 +1,13 @@
 import {
   ArrowLeft,
   BookOpen,
+  Check,
+  ChevronDown,
   ChevronRight,
   Download,
   FileText,
   Lightbulb,
+  Loader2,
   Pencil,
   Plus,
   Target,
@@ -12,6 +15,13 @@ import {
   X,
 } from 'lucide-react';
 import React from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/atoms/dropdown-menu';
 import { RichHtml } from '@/components/atoms/rich-html';
 import type {
   InspectorViewMode,
@@ -19,8 +29,9 @@ import type {
   MaterialStatusType,
   ModuleItem,
 } from '@/types/ui/material-manager.types';
+import { cn } from '@/utils/classname';
 
-interface MaterialInspectorPanelProps {
+export interface MaterialInspectorPanelProps {
   viewMode?: InspectorViewMode;
   selectedModule: ModuleItem | null;
   moduleMaterials: MaterialItem[];
@@ -32,7 +43,49 @@ interface MaterialInspectorPanelProps {
   onDownload: (material: MaterialItem) => void;
   onViewActivities?: (material: MaterialItem) => void;
   onCreateMaterialInModule?: (moduleId: string) => void;
+  onChangeStatus?: (material: MaterialItem, newStatus: MaterialStatusType) => void;
+  updatingMaterialId?: string | null;
 }
+
+const STATUS_CONFIG: Record<
+  MaterialStatusType,
+  {
+    label: string;
+    description: string;
+    pillClass: string;
+    dotClass: string;
+    borderClass: string;
+  }
+> = {
+  PUBLISHED: {
+    label: 'Published',
+    description: 'Materi tayang dan dapat diakses oleh siswa',
+    pillClass: 'bg-[#E8F8F3] text-[#059669]',
+    dotClass: 'bg-[#10B981]',
+    borderClass: 'border-[#10B981]/30 hover:border-[#10B981]/60',
+  },
+  IN_REVIEW: {
+    label: 'In Review',
+    description: 'Menunggu peninjauan konten kurikulum',
+    pillClass: 'bg-[#FEF7EB] text-[#D97706]',
+    dotClass: 'bg-[#F5B731]',
+    borderClass: 'border-[#F5B731]/30 hover:border-[#F5B731]/60',
+  },
+  DRAFT: {
+    label: 'Draft',
+    description: 'Tersimpan sebagai draf internal tim',
+    pillClass: 'bg-[#F1F5F9] text-[#64748B]',
+    dotClass: 'bg-[#94A3B8]',
+    borderClass: 'border-[#94A3B8]/30 hover:border-[#94A3B8]/60',
+  },
+  ARCHIVED: {
+    label: 'Archived',
+    description: 'Diarsipkan dan disembunyikan dari kurikulum',
+    pillClass: 'bg-zinc-100 text-zinc-600',
+    dotClass: 'bg-zinc-400',
+    borderClass: 'border-zinc-300 hover:border-zinc-400',
+  },
+};
 
 export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
   viewMode = 'module_materials',
@@ -46,33 +99,104 @@ export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
   onDownload,
   onViewActivities,
   onCreateMaterialInModule,
+  onChangeStatus,
+  updatingMaterialId,
 }) => {
-  const renderStatusBadge = (status: MaterialStatusType) => {
-    switch (status) {
-      case 'PUBLISHED':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E8F8F3] text-[#059669]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
-            Published
-          </span>
-        );
-      case 'IN_REVIEW':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FEF7EB] text-[#D97706]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#F5B731]" />
-            In Review
-          </span>
-        );
-      case 'DRAFT':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F1F5F9] text-[#64748B]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#94A3B8]" />
-            Draft
-          </span>
-        );
-      default:
-        return null;
+  const renderStatusDropdown = (item: MaterialItem, isDetailView = false) => {
+    const config = STATUS_CONFIG[item.status] || STATUS_CONFIG.DRAFT;
+    const isCurrentlyUpdating = updatingMaterialId === item.id;
+
+    if (!onChangeStatus) {
+      return (
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-full font-bold select-none border',
+            isDetailView ? 'px-2.5 py-1 text-xs' : 'px-2 py-0.5 text-[10px]',
+            config.pillClass,
+            config.borderClass
+          )}
+        >
+          <span className={cn('w-1.5 h-1.5 rounded-full', config.dotClass)} />
+          {config.label}
+        </span>
+      );
     }
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            disabled={isCurrentlyUpdating}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full font-bold transition-all cursor-pointer shadow-2xs border select-none',
+              isDetailView ? 'px-3 py-1 text-xs' : 'px-2 py-0.5 text-[10px]',
+              config.pillClass,
+              config.borderClass,
+              isCurrentlyUpdating && 'opacity-60 cursor-wait'
+            )}
+            title="Klik untuk mengubah status materi"
+          >
+            {isCurrentlyUpdating ? (
+              <Loader2 className="w-3 h-3 animate-spin shrink-0" />
+            ) : (
+              <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', config.dotClass)} />
+            )}
+            <span>{config.label}</span>
+            <ChevronDown className="w-3 h-3 opacity-60 shrink-0" />
+          </button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent
+          align={isDetailView ? 'start' : 'end'}
+          className="w-56 p-1.5 bg-white rounded-xl shadow-xl border border-slate-200 z-50"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+            Ubah Status Materi
+          </div>
+          <DropdownMenuSeparator className="my-1 border-slate-100" />
+
+          {(['PUBLISHED', 'IN_REVIEW', 'DRAFT', 'ARCHIVED'] as MaterialStatusType[]).map(
+            (statusKey) => {
+              const optConfig = STATUS_CONFIG[statusKey];
+              const isSelected = item.status === statusKey;
+
+              return (
+                <DropdownMenuItem
+                  key={statusKey}
+                  disabled={isCurrentlyUpdating || isSelected}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isSelected) {
+                      onChangeStatus(item, statusKey);
+                    }
+                  }}
+                  className={cn(
+                    'flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-xs cursor-pointer transition',
+                    isSelected
+                      ? 'bg-slate-50 font-bold text-slate-900 cursor-default'
+                      : 'hover:bg-slate-100 text-slate-700 font-medium'
+                  )}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={cn('w-2 h-2 rounded-full shrink-0', optConfig.dotClass)} />
+                    <div className="min-w-0">
+                      <div className="leading-tight">{optConfig.label}</div>
+                      <div className="text-[10px] text-slate-400 font-normal truncate mt-0.5">
+                        {optConfig.description}
+                      </div>
+                    </div>
+                  </div>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-teal-700 shrink-0 ml-1" />}
+                </DropdownMenuItem>
+              );
+            }
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
   };
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -156,10 +280,16 @@ export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
               </div>
             ) : (
               moduleMaterials.map((item, index) => (
-                <button
-                  type="button"
+                <div
                   key={item.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onSelectMaterial(item)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      onSelectMaterial(item);
+                    }
+                  }}
                   className="w-full text-left p-3.5 rounded-xl border border-slate-200/80 hover:border-[#0E7490]/60 bg-white hover:bg-[#F4FBFA] transition-all cursor-pointer shadow-2xs group flex items-start justify-between gap-3"
                 >
                   <div className="space-y-1 min-w-0 flex-1">
@@ -170,7 +300,7 @@ export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
                       <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">
                         {item.code}
                       </span>
-                      {renderStatusBadge(item.status)}
+                      {renderStatusDropdown(item, false)}
                     </div>
                     <h4 className="font-bold text-xs sm:text-sm text-slate-800 group-hover:text-[#0E7490] transition leading-snug line-clamp-2">
                       {item.title}
@@ -183,7 +313,7 @@ export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
                   <div className="self-center p-1 rounded-lg text-slate-400 group-hover:text-[#0E7490] group-hover:bg-cyan-50 transition shrink-0">
                     <ChevronRight className="w-4 h-4" />
                   </div>
-                </button>
+                </div>
               ))
             )}
           </div>
@@ -240,7 +370,7 @@ export const MaterialInspectorPanel: React.FC<MaterialInspectorPanelProps> = ({
               <span className="px-2.5 py-1 rounded-full bg-[#EAF6F8] text-[#0E7490] text-xs font-bold uppercase tracking-wider">
                 {material.category}
               </span>
-              {renderStatusBadge(material.status)}
+              {renderStatusDropdown(material, true)}
             </div>
 
             <div className="flex items-center gap-2">

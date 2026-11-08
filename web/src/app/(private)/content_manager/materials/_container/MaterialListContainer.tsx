@@ -57,6 +57,7 @@ export const MaterialListContainer: React.FC = () => {
   const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([]);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState<boolean>(false);
   const [isExportingSyllabus, setIsExportingSyllabus] = useState<boolean>(false);
+  const [updatingMaterialId, setUpdatingMaterialId] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<MaterialFilterState>({
     search: '',
@@ -100,6 +101,7 @@ export const MaterialListContainer: React.FC = () => {
   const updateModuleMutation = api.learning.mutate.updateModule();
   const updateModuleStatusMutation = api.learning.mutate.updateModuleStatus();
   const deleteModuleMutation = api.learning.mutate.deleteModule();
+  const updateMaterialStatusMutation = api.learning.mutate.updateMaterialStatus();
 
   const handleModuleFormChange = <K extends keyof ModuleDialogForm>(
     field: K,
@@ -200,7 +202,13 @@ export const MaterialListContainer: React.FC = () => {
     return list.map((m, idx) => {
       const rawStatus = (m.status || 'draft').toUpperCase();
       const status: MaterialStatusType =
-        rawStatus === 'PUBLISHED' ? 'PUBLISHED' : rawStatus === 'IN_REVIEW' ? 'IN_REVIEW' : 'DRAFT';
+        rawStatus === 'PUBLISHED'
+          ? 'PUBLISHED'
+          : rawStatus === 'IN_REVIEW' || rawStatus === 'REVIEW'
+            ? 'IN_REVIEW'
+            : rawStatus === 'ARCHIVED'
+              ? 'ARCHIVED'
+              : 'DRAFT';
 
       const updatedAt = m.updated_at
         ? new Date(m.updated_at).toLocaleDateString('id-ID', {
@@ -231,7 +239,13 @@ export const MaterialListContainer: React.FC = () => {
     return rawList.map((m, idx) => {
       const rawStatus = (m.status || 'draft').toUpperCase();
       const status: MaterialStatusType =
-        rawStatus === 'PUBLISHED' ? 'PUBLISHED' : rawStatus === 'IN_REVIEW' ? 'IN_REVIEW' : 'DRAFT';
+        rawStatus === 'PUBLISHED'
+          ? 'PUBLISHED'
+          : rawStatus === 'IN_REVIEW' || rawStatus === 'REVIEW'
+            ? 'IN_REVIEW'
+            : rawStatus === 'ARCHIVED'
+              ? 'ARCHIVED'
+              : 'DRAFT';
 
       const code = `MAT-${m.id.slice(0, 4).toUpperCase()}-${String(m.display_order || idx + 1).padStart(3, '0')}`;
       const updatedAt = m.updated_at
@@ -413,6 +427,48 @@ export const MaterialListContainer: React.FC = () => {
 
   const handleCreateMaterialInModule = (moduleId: string) => {
     router.push(`${basePath}/materials/create?moduleId=${moduleId}`);
+  };
+
+  const handleChangeMaterialStatus = async (
+    material: MaterialItem,
+    newStatus: MaterialStatusType
+  ) => {
+    const apiStatus =
+      newStatus === 'PUBLISHED'
+        ? 'published'
+        : newStatus === 'IN_REVIEW'
+          ? 'review'
+          : newStatus === 'ARCHIVED'
+            ? 'archived'
+            : 'draft';
+
+    setUpdatingMaterialId(material.id);
+    try {
+      await updateMaterialStatusMutation.mutateAsync({
+        id: material.id,
+        status: apiStatus,
+      });
+
+      ns.alert.toast({
+        title: 'Status Materi Diperbarui',
+        message: `Status materi "${material.title}" berhasil diubah menjadi ${newStatus}.`,
+        icon: 'success',
+      });
+
+      if (selectedModuleId) {
+        await moduleMaterialsQuery.refetch();
+      }
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error ? err.message : 'Terjadi kesalahan saat memperbarui status materi.';
+      ns.alert.toast({
+        title: 'Gagal Memperbarui Status',
+        message: errorMsg,
+        icon: 'error',
+      });
+    } finally {
+      setUpdatingMaterialId(null);
+    }
   };
 
   const handleToggleModuleSelection = (moduleId: string) => {
@@ -829,6 +885,8 @@ export const MaterialListContainer: React.FC = () => {
       onExportSyllabusHtml={handleExportSyllabusHtml}
       onExportSyllabusTxt={handleExportSyllabusTxt}
       isExportingSyllabus={isExportingSyllabus}
+      onChangeMaterialStatus={handleChangeMaterialStatus}
+      updatingMaterialId={updatingMaterialId}
     />
   );
 };

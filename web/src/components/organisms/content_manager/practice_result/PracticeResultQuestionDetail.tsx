@@ -113,17 +113,24 @@ export const PracticeResultQuestionDetail: React.FC<PracticeResultQuestionDetail
       })
     : [];
 
-  // Find student selected option and official correct option
-  const studentSelectedOpt = review.options.find(
-    (opt) =>
+  // Helper deteksi pilihan siswa
+  const isOptionUserSelected = (opt: {
+    id?: string;
+    option_label?: string;
+    is_selected?: boolean;
+  }) =>
+    Boolean(
       opt.is_selected ||
-      (review.selected_option_id &&
-        opt.id?.toLowerCase() === review.selected_option_id?.toLowerCase()) ||
-      review.answer_data?.toLowerCase().includes(opt.id?.toLowerCase()) ||
-      (opt.option_label && review.answer_data === opt.option_label)
-  );
+        (review.selected_option_id &&
+          opt.id &&
+          opt.id.toLowerCase() === review.selected_option_id.toLowerCase()) ||
+        (opt.id && review.answer_data?.toLowerCase().includes(opt.id.toLowerCase())) ||
+        (opt.option_label && review.answer_data === opt.option_label)
+    );
 
-  const officialCorrectOpt = review.options.find((opt) => opt.is_correct);
+  // Daftar opsi yang dipilih siswa & daftar kunci jawaban resmi
+  const studentSelectedOptions = (review.options || []).filter(isOptionUserSelected);
+  const officialCorrectOptions = (review.options || []).filter((opt) => opt.is_correct);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-7 space-y-6">
@@ -228,12 +235,7 @@ export const PracticeResultQuestionDetail: React.FC<PracticeResultQuestionDetail
         <div className="space-y-2.5">
           {review.options.map((opt, optIdx) => {
             const optLabel = opt.option_label || String.fromCharCode(65 + optIdx);
-            const isUserSelected =
-              opt.is_selected ||
-              (review.selected_option_id &&
-                opt.id?.toLowerCase() === review.selected_option_id?.toLowerCase()) ||
-              review.answer_data?.toLowerCase().includes(opt.id?.toLowerCase()) ||
-              (opt.option_label && review.answer_data === opt.option_label);
+            const isUserSelected = isOptionUserSelected(opt);
 
             const isOptionCorrect = opt.is_correct;
 
@@ -322,20 +324,228 @@ export const PracticeResultQuestionDetail: React.FC<PracticeResultQuestionDetail
         </div>
       )}
 
-      {/* 5. Side-by-Side Response Comparison (2 columns) */}
+      {/* 5. Side-by-Side Response Comparison (2 columns mapped by question type) */}
       {isMatrix ? (
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80">
-          <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-            RINGKASAN MATRIKS
-          </span>
-          <p className="text-xs sm:text-sm font-bold text-slate-900 leading-snug mt-1.5">
-            {matrixRows.filter((r) => r.isCorrect).length} dari {matrixRows.length} pernyataan
-            dijawab tepat.
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Jawaban Siswa Card - Matrix */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                  JAWABAN SISWA
+                </span>
+                <span className="text-[11px] font-semibold text-slate-400">
+                  ({matrixRows.filter((r) => r.isCorrect).length}/{matrixRows.length} tepat)
+                </span>
+              </div>
+              {isCorrect ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                  <Check className="w-3 h-3 stroke-[2.5]" />
+                  <span>Benar</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">
+                  <X className="w-3 h-3 stroke-[2.5]" />
+                  <span>Salah</span>
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              {matrixRows.map((row, idx) => (
+                <div
+                  key={row.id || idx}
+                  className="p-3 rounded-xl border bg-white border-slate-200/80 flex items-start justify-between gap-3 text-xs sm:text-sm"
+                >
+                  <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                    <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                      {idx + 1}
+                    </span>
+                    <div className="text-slate-800 font-medium leading-relaxed">
+                      <RichHtml html={row.statement} />
+                    </div>
+                  </div>
+                  <span
+                    className={`shrink-0 px-2.5 py-1 rounded-lg font-bold text-xs flex items-center gap-1 ${
+                      row.isCorrect
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        : 'bg-rose-50 text-rose-800 border border-rose-200'
+                    }`}
+                  >
+                    {row.isCorrect ? (
+                      <Check className="w-3 h-3 stroke-[2.5]" />
+                    ) : (
+                      <X className="w-3 h-3 stroke-[2.5]" />
+                    )}
+                    <span>{row.userChoice}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium pt-1">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <span>Tercatat pada lembar pengerjaan siswa</span>
+            </div>
+          </div>
+
+          {/* Kunci Jawaban Resmi Card - Matrix */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#F4FBFA] border border-[#0E7490]/25 space-y-3">
+            <div className="flex items-center justify-between gap-2 border-b border-[#0E7490]/15 pb-2.5">
+              <span className="text-xs font-bold text-[#0E7490] uppercase tracking-wider">
+                KUNCI JAWABAN RESMI
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#134653] text-white">
+                <CheckCircle2 className="w-3 h-3" />
+                <span>Kunci Jawaban</span>
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {matrixRows.map((row, idx) => (
+                <div
+                  key={row.id || idx}
+                  className="p-3 rounded-xl border bg-white border-[#0E7490]/20 flex items-start justify-between gap-3 text-xs sm:text-sm shadow-2xs"
+                >
+                  <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                    <span className="w-5 h-5 rounded-md bg-[#EAF6F8] text-[#0E7490] font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                      {idx + 1}
+                    </span>
+                    <div className="text-slate-800 font-medium leading-relaxed">
+                      <RichHtml html={row.statement} />
+                    </div>
+                  </div>
+                  <span className="shrink-0 px-2.5 py-1 rounded-lg font-bold text-xs bg-[#134653] text-white">
+                    {row.validKey}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[11px] text-[#0E7490] font-medium pt-1">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Validasi Tim Kurikulum Literasi SIMANTIK</span>
+            </div>
+          </div>
+        </div>
+      ) : isMcma ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Jawaban Siswa Card - MCMA (Pilihan Ganda Kompleks) */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                  JAWABAN SISWA
+                </span>
+                {studentSelectedOptions.length > 0 && (
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    ({studentSelectedOptions.length} opsi dipilih)
+                  </span>
+                )}
+              </div>
+              {isCorrect ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 w-fit">
+                  <Check className="w-3 h-3 stroke-[2.5]" />
+                  <span>Benar</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 w-fit">
+                  <X className="w-3 h-3 stroke-[2.5]" />
+                  <span>Salah</span>
+                </span>
+              )}
+            </div>
+
+            {studentSelectedOptions.length > 0 ? (
+              <div className="space-y-2.5">
+                <div className="text-xs font-bold text-slate-700">
+                  Opsi {studentSelectedOptions.map((o) => o.option_label).join(', ')}
+                </div>
+                {studentSelectedOptions.map((opt) => (
+                  <div
+                    key={opt.id}
+                    className={`p-3 rounded-xl border flex items-start gap-3 transition ${
+                      opt.is_correct
+                        ? 'bg-[#E8F8F3]/70 border-emerald-300 text-emerald-950'
+                        : 'bg-[#FEF2F2]/70 border-rose-300 text-rose-950'
+                    }`}
+                  >
+                    <span
+                      className={`w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 ${
+                        opt.is_correct ? 'bg-[#059669] text-white' : 'bg-[#DC2626] text-white'
+                      }`}
+                    >
+                      {opt.option_label}
+                    </span>
+                    <div className="flex-1 text-xs sm:text-sm font-medium leading-relaxed">
+                      <RichHtml html={opt.option_text} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-2 text-slate-400 italic text-xs sm:text-sm">Tidak Dijawab</div>
+            )}
+
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium pt-1">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <span>Tercatat pada lembar pengerjaan siswa</span>
+            </div>
+          </div>
+
+          {/* Kunci Jawaban Resmi Card - MCMA (Pilihan Ganda Kompleks) */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#F4FBFA] border border-[#0E7490]/25 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#0E7490]/15 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-[#0E7490] uppercase tracking-wider">
+                  KUNCI JAWABAN RESMI
+                </span>
+                {officialCorrectOptions.length > 0 && (
+                  <span className="text-[11px] font-semibold text-[#0E7490]/70">
+                    ({officialCorrectOptions.length} kunci tepat)
+                  </span>
+                )}
+              </div>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#134653] text-white w-fit">
+                <CheckCircle2 className="w-3 h-3" />
+                <span>Kunci Jawaban</span>
+              </span>
+            </div>
+
+            {officialCorrectOptions.length > 0 ? (
+              <div className="space-y-2.5">
+                <div className="text-xs font-bold text-[#0E7490]">
+                  Opsi {officialCorrectOptions.map((o) => o.option_label).join(', ')}
+                </div>
+                {officialCorrectOptions.map((opt) => (
+                  <div
+                    key={opt.id}
+                    className="p-3 rounded-xl border bg-white border-[#0E7490]/25 text-slate-900 flex items-start gap-3 shadow-2xs"
+                  >
+                    <span className="w-6 h-6 rounded-lg text-xs font-bold bg-[#134653] text-white flex items-center justify-center shrink-0 mt-0.5">
+                      {opt.option_label}
+                    </span>
+                    <div className="flex-1 text-xs sm:text-sm font-medium leading-relaxed">
+                      <RichHtml html={opt.option_text} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-2 text-slate-500 text-xs sm:text-sm">
+                Tersedia pada pedoman penilaian
+              </div>
+            )}
+
+            <div className="flex items-center gap-1.5 text-[11px] text-[#0E7490] font-medium pt-1">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Validasi Tim Kurikulum Literasi SIMANTIK</span>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Jawaban Siswa Card */}
+          {/* Jawaban Siswa Card - Single Choice */}
           <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
             <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
               <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
@@ -354,16 +564,35 @@ export const PracticeResultQuestionDetail: React.FC<PracticeResultQuestionDetail
               )}
             </div>
 
-            <div className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
-              {studentSelectedOpt ? (
-                <span>
-                  {studentSelectedOpt.option_label || 'Pilihan'}.{' '}
-                  <RichHtml html={studentSelectedOpt.option_text} as="span" className="inline" />
-                </span>
-              ) : (
-                <span className="text-slate-400 italic">Tidak Dijawab</span>
-              )}
-            </div>
+            {studentSelectedOptions.length > 0 ? (
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-slate-700">
+                  Opsi {studentSelectedOptions[0].option_label}
+                </div>
+                <div
+                  className={`p-3 rounded-xl border flex items-start gap-3 ${
+                    studentSelectedOptions[0].is_correct
+                      ? 'bg-[#E8F8F3]/70 border-emerald-300 text-emerald-950'
+                      : 'bg-[#FEF2F2]/70 border-rose-300 text-rose-950'
+                  }`}
+                >
+                  <span
+                    className={`w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 ${
+                      studentSelectedOptions[0].is_correct
+                        ? 'bg-[#059669] text-white'
+                        : 'bg-[#DC2626] text-white'
+                    }`}
+                  >
+                    {studentSelectedOptions[0].option_label}
+                  </span>
+                  <div className="flex-1 text-xs sm:text-sm font-medium leading-relaxed">
+                    <RichHtml html={studentSelectedOptions[0].option_text} />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-2 text-slate-400 italic text-xs sm:text-sm">Tidak Dijawab</div>
+            )}
 
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium pt-1">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
@@ -371,7 +600,7 @@ export const PracticeResultQuestionDetail: React.FC<PracticeResultQuestionDetail
             </div>
           </div>
 
-          {/* Kunci Jawaban Resmi Card */}
+          {/* Kunci Jawaban Resmi Card - Single Choice */}
           <div className="p-4 sm:p-5 rounded-2xl bg-[#F4FBFA] border border-[#0E7490]/25 space-y-3">
             <div className="flex items-center justify-between gap-2 border-b border-[#0E7490]/15 pb-2.5">
               <span className="text-xs font-bold text-[#0E7490] uppercase tracking-wider">
@@ -383,16 +612,25 @@ export const PracticeResultQuestionDetail: React.FC<PracticeResultQuestionDetail
               </span>
             </div>
 
-            <div className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
-              {officialCorrectOpt ? (
-                <span>
-                  {officialCorrectOpt.option_label || 'Pilihan'}.{' '}
-                  <RichHtml html={officialCorrectOpt.option_text} as="span" className="inline" />
-                </span>
-              ) : (
-                <span className="text-slate-500">Tersedia pada pedoman penilaian</span>
-              )}
-            </div>
+            {officialCorrectOptions.length > 0 ? (
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-[#0E7490]">
+                  Opsi {officialCorrectOptions[0].option_label}
+                </div>
+                <div className="p-3 rounded-xl border bg-white border-[#0E7490]/25 text-slate-900 flex items-start gap-3 shadow-2xs">
+                  <span className="w-6 h-6 rounded-lg text-xs font-bold bg-[#134653] text-white flex items-center justify-center shrink-0 mt-0.5">
+                    {officialCorrectOptions[0].option_label}
+                  </span>
+                  <div className="flex-1 text-xs sm:text-sm font-medium leading-relaxed">
+                    <RichHtml html={officialCorrectOptions[0].option_text} />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-2 text-slate-500 text-xs sm:text-sm">
+                Tersedia pada pedoman penilaian
+              </div>
+            )}
 
             <div className="flex items-center gap-1.5 text-[11px] text-[#0E7490] font-medium pt-1">
               <ShieldCheck className="w-3.5 h-3.5" />

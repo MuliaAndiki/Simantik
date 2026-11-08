@@ -20,6 +20,8 @@ export const MaterialCreateActionBar: React.FC<MaterialCreateActionBarProps> = (
   isSavingDraft = false,
   className,
 }) => {
+  const isBusy = isSubmitting || isSavingDraft;
+
   return (
     <div
       className={cn(
@@ -31,7 +33,7 @@ export const MaterialCreateActionBar: React.FC<MaterialCreateActionBarProps> = (
       <button
         type="button"
         onClick={onCancel}
-        disabled={isSubmitting || isSavingDraft}
+        disabled={isBusy}
         className="px-6 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl transition cursor-pointer disabled:opacity-50"
       >
         Batal
@@ -43,11 +45,11 @@ export const MaterialCreateActionBar: React.FC<MaterialCreateActionBarProps> = (
         <button
           type="button"
           onClick={onSaveDraft}
-          disabled={isSubmitting || isSavingDraft}
+          disabled={isBusy}
           className="px-5 py-2.5 bg-[#EBF5FE] hover:bg-[#DDF0FD] text-sky-700 font-bold text-xs sm:text-sm rounded-xl flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
         >
-          {isSavingDraft ? <Spinner size="xs" /> : <Bookmark className="w-4 h-4" />}
-          <span>{isSavingDraft ? 'Menyimpan...' : 'Simpan Draft'}</span>
+          {isBusy ? <Spinner size="xs" /> : <Bookmark className="w-4 h-4" />}
+          <span>{isBusy ? 'Menyimpan...' : 'Simpan Draft'}</span>
         </button>
       </div>
     </div>
