@@ -3,7 +3,7 @@ import Image from 'next/image';
 import type { FeaturedVideoTutorial } from '@/types/ui';
 
 export interface TutorialFeaturedSpotlightProps {
-  featured: FeaturedVideoTutorial;
+  featured?: FeaturedVideoTutorial | null;
   onPlayVideo?: (id: string) => void;
 }
 
@@ -11,6 +11,7 @@ export function TutorialFeaturedSpotlight({
   featured,
   onPlayVideo,
 }: TutorialFeaturedSpotlightProps) {
+  if (!featured) return null;
   return (
     <div className="p-6 sm:p-8 rounded-[32px] bg-linear-to-tr from-cyan-50/90 via-sky-50/50 to-white border border-cyan-200/90 shadow-sm text-left">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">

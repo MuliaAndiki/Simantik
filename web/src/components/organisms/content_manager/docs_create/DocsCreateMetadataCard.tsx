@@ -1,4 +1,5 @@
 import React from 'react';
+import { CategoryCreatableCombobox } from '@/components/molecules/input/CategoryCreatableCombobox';
 import type { ContentStatus } from '@/types/model';
 import type { CreateDocumentationRequest } from '@/types/service';
 
@@ -12,6 +13,7 @@ const DOCS_STATUS_OPTIONS: { value: ContentStatus; label: string }[] = [
 interface DocsCreateMetadataCardProps {
   form: CreateDocumentationRequest;
   isEditMode: boolean;
+  categories?: string[];
   onChange: <K extends keyof CreateDocumentationRequest>(
     field: K,
     value: CreateDocumentationRequest[K]
@@ -21,6 +23,7 @@ interface DocsCreateMetadataCardProps {
 export const DocsCreateMetadataCard: React.FC<DocsCreateMetadataCardProps> = ({
   form,
   isEditMode,
+  categories = [],
   onChange,
 }) => {
   return (
@@ -56,12 +59,11 @@ export const DocsCreateMetadataCard: React.FC<DocsCreateMetadataCardProps> = ({
           <label className="block text-xs font-bold text-slate-700">
             Kategori <span className="text-rose-500">*</span>
           </label>
-          <input
-            type="text"
+          <CategoryCreatableCombobox
             value={form.category}
-            onChange={(e) => onChange('category', e.target.value)}
-            placeholder="Contoh: Panduan, Bantuan, Kebijakan"
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-cyan-600 focus:bg-white transition"
+            onChange={(val) => onChange('category', val)}
+            categories={categories}
+            placeholder="Pilih atau ketik kategori baru..."
           />
         </div>
 

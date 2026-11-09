@@ -30,11 +30,6 @@ export function DocHeroSearch({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
           {/* Left Column: Title & Search Bar */}
           <div className="lg:col-span-7 space-y-6 text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-50 border border-cyan-200 text-teal-800 text-xs font-bold shadow-2xs">
-              <Sparkles className="w-3.5 h-3.5 text-teal-700" />
-              <span>Pusat Pengetahuan &amp; Panduan Resmi</span>
-            </div>
-
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
               Documentation <span className="text-[#F5B731]">SIMANTIK</span>
             </h1>

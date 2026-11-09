@@ -36,6 +36,7 @@ type ContentService interface {
 	DeleteDocumentation(ctx context.Context, id uuid.UUID) error
 	ListDocumentationAdmin(ctx context.Context, filter dto.ListDocumentationFilter) (*dto.PaginatedDocumentationResponse, error)
 	ListDocumentationPublic(ctx context.Context, filter dto.ListDocumentationFilter) (*dto.PaginatedDocumentationResponse, error)
+	GetDocumentationCategories(ctx context.Context) ([]string, error)
 
 	// Tutorials
 	CreateTutorial(ctx context.Context, req dto.CreateTutorialRequest, authorID uuid.UUID) (*dto.TutorialResponse, error)
@@ -46,6 +47,7 @@ type ContentService interface {
 	DeleteTutorial(ctx context.Context, id uuid.UUID) error
 	ListTutorialAdmin(ctx context.Context, filter dto.ListTutorialFilter) (*dto.PaginatedTutorialsResponse, error)
 	ListTutorialPublic(ctx context.Context, filter dto.ListTutorialFilter) (*dto.PaginatedTutorialsResponse, error)
+	GetTutorialCategories(ctx context.Context) ([]string, error)
 
 	// Testimonials
 	CreateTestimonial(ctx context.Context, req dto.CreateTestimonialRequest, userID *uuid.UUID) (*dto.TestimonialResponse, error)
@@ -858,4 +860,56 @@ func mapTestimonialToResponse(t *models.Testimonial) *dto.TestimonialResponse {
 		CreatedAt:  t.CreatedAt,
 		UpdatedAt:  t.UpdatedAt,
 	}
+}
+
+var defaultDocsCategories = []string{
+	"Panduan Pengguna",
+	"Pedoman Asesmen",
+	"Teknis & Fitur",
+	"Kebijakan & Ketentuan",
+	"Bantuan Umum",
+}
+
+var defaultTutorialCategories = []string{
+	"Pengenalan Portal",
+	"Latihan Soal",
+	"Tryout Adaptif",
+	"Analisis Diagnostik",
+	"Tips & Trik",
+}
+
+func (s *contentService) GetDocumentationCategories(ctx context.Context) ([]string, error) {
+	cats, err := s.docRepo.GetDistinctCategories(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return mergeCategories(cats, defaultDocsCategories), nil
+}
+
+func (s *contentService) GetTutorialCategories(ctx context.Context) ([]string, error) {
+	cats, err := s.tutorialRepo.GetDistinctCategories(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return mergeCategories(cats, defaultTutorialCategories), nil
+}
+
+func mergeCategories(fromDB []string, defaults []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+	for _, c := range fromDB {
+		trimmed := strings.TrimSpace(c)
+		if trimmed != "" && !seen[strings.ToLower(trimmed)] {
+			seen[strings.ToLower(trimmed)] = true
+			result = append(result, trimmed)
+		}
+	}
+	for _, d := range defaults {
+		trimmed := strings.TrimSpace(d)
+		if trimmed != "" && !seen[strings.ToLower(trimmed)] {
+			seen[strings.ToLower(trimmed)] = true
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }

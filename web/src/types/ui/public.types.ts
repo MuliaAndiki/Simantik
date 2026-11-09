@@ -43,8 +43,17 @@ export interface ValuePropItem {
   id: string;
   title: string;
   description: string;
-  iconName: 'compass' | 'check-circle' | 'bar-chart' | 'lightbulb';
-  colorTheme: 'teal' | 'cyan' | 'blue' | 'amber';
+  iconName:
+    | 'compass'
+    | 'check-circle'
+    | 'bar-chart'
+    | 'lightbulb'
+    | 'shield-check'
+    | 'laptop'
+    | 'award'
+    | 'target'
+    | 'file-text';
+  colorTheme: 'teal' | 'cyan' | 'blue' | 'amber' | 'emerald';
 }
 
 export interface LearningCycleStep {
@@ -128,6 +137,45 @@ export interface LandingNewsItem {
   imageUrl?: string;
 }
 
+export interface NewsDetailArticleItem {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  content: string;
+  tag: string;
+  date: string;
+  imageUrl?: string;
+  readTimeMinutes?: number;
+  author?: string;
+}
+
+export interface TeamMemberItem {
+  id: string | number;
+  name: string;
+  role: string;
+  institution: string;
+  tag: string;
+  imageSrc: string;
+}
+
+export interface VideoTutorialHighlight {
+  title: string;
+  description: string;
+  duration: string;
+  thumbnailUrl: string;
+  features: string[];
+}
+
+export interface DocumentationHighlightItem {
+  id: string;
+  title: string;
+  category: string;
+  date: string;
+  imageUrl: string;
+  slug: string;
+}
+
 export interface LandingPageData {
   heroStudent: HeroStudentMockup;
   valueProps: ValuePropItem[];
@@ -137,6 +185,10 @@ export interface LandingPageData {
   diagnostics: LandingDiagnosticsData;
   recommendation: LandingRecommendationData;
   news: LandingNewsItem[];
+  teamMembers?: TeamMemberItem[];
+  videoTutorial?: VideoTutorialHighlight;
+  documentationHighlights?: DocumentationHighlightItem[];
+  testimonials?: UserTestimonialItem[];
 }
 
 // ============================================================================
@@ -154,6 +206,7 @@ export interface DocArticleItem {
   title: string;
   slug: string;
   excerpt: string;
+  content?: string;
   category: string;
   categoryColorClass?: string;
   readTimeMinutes: number;
@@ -204,7 +257,7 @@ export interface VideoTutorialItem {
 export interface TutorialsPageData {
   popularKeywords: string[];
   categories: TutorialCategoryItem[];
-  featuredVideo: FeaturedVideoTutorial;
+  featuredVideo?: FeaturedVideoTutorial | null;
   videos: VideoTutorialItem[];
 }
 
@@ -246,6 +299,6 @@ export interface UserTestimonialItem {
 
 export interface TestimonialsPageData {
   impactMetrics: ImpactMetricItem[];
-  featuredSpotlight: FeaturedSpotlightTestimonial;
+  featuredSpotlight?: FeaturedSpotlightTestimonial | null;
   testimonials: UserTestimonialItem[];
 }

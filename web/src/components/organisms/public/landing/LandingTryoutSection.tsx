@@ -25,14 +25,15 @@ export function LandingTryoutSection({ packages }: LandingTryoutSectionProps) {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-left">
           <div className="space-y-2 max-w-2xl">
             <span className="text-[11px] font-bold text-teal-800 uppercase tracking-wider block">
-              Simulasi Ujian Adaptif
+              Tryout Adaptif & Simulasi Mandiri
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Uji Kemampuanmu
+              Ujian Simulasi dengan Sistem Cerdas
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed">
-              Kerjakan tryout adaptif dengan timer riil untuk mengetahui kesiapan akademis dan
-              mendapatkan diagnosis akurat.
+              Tingkat kesulitan soal otomatis berubah menyesuaikan dengan kemampuan siswa saat ujian
+              berlangsung. Jawaban benar akan menghadirkan soal menantang, sementara kesulitan akan
+              disesuaikan.
             </p>
           </div>
 

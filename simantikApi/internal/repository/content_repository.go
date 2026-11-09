@@ -105,6 +105,7 @@ type DocumentationRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, filter dto.ListDocumentationFilter) ([]models.Documentation, int64, error)
 	ListPublished(ctx context.Context, filter dto.ListDocumentationFilter) ([]models.Documentation, int64, error)
+	GetDistinctCategories(ctx context.Context) ([]string, error)
 }
 
 type documentationRepository struct {
@@ -183,6 +184,19 @@ func (r *documentationRepository) ListPublished(ctx context.Context, filter dto.
 	return r.List(ctx, filter)
 }
 
+func (r *documentationRepository) GetDistinctCategories(ctx context.Context) ([]string, error) {
+	var categories []string
+	err := r.db.WithContext(ctx).Model(&models.Documentation{}).
+		Distinct("category").
+		Where("category != ''").
+		Order("category ASC").
+		Pluck("category", &categories).Error
+	if err != nil {
+		return nil, err
+	}
+	return categories, nil
+}
+
 // ─── Tutorial Repository ─────────────────────────────────────────────────────
 
 type TutorialRepository interface {
@@ -193,6 +207,7 @@ type TutorialRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, filter dto.ListTutorialFilter) ([]models.Tutorial, int64, error)
 	ListPublished(ctx context.Context, filter dto.ListTutorialFilter) ([]models.Tutorial, int64, error)
+	GetDistinctCategories(ctx context.Context) ([]string, error)
 }
 
 type tutorialRepository struct {
@@ -269,6 +284,19 @@ func (r *tutorialRepository) List(ctx context.Context, filter dto.ListTutorialFi
 func (r *tutorialRepository) ListPublished(ctx context.Context, filter dto.ListTutorialFilter) ([]models.Tutorial, int64, error) {
 	filter.Status = string(models.ContentStatusPublished)
 	return r.List(ctx, filter)
+}
+
+func (r *tutorialRepository) GetDistinctCategories(ctx context.Context) ([]string, error) {
+	var categories []string
+	err := r.db.WithContext(ctx).Model(&models.Tutorial{}).
+		Distinct("category").
+		Where("category != ''").
+		Order("category ASC").
+		Pluck("category", &categories).Error
+	if err != nil {
+		return nil, err
+	}
+	return categories, nil
 }
 
 // ─── Testimonial Repository ──────────────────────────────────────────────────

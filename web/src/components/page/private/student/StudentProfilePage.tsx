@@ -10,6 +10,7 @@ export interface StudentProfilePageProps {
   schoolName: string;
   onSchoolNameChange?: (val: string) => void;
   schoolOptions?: ProfileSchoolOption[];
+  selectedSchoolId?: string;
   onSelectSchoolId?: (schoolId: string) => void;
   roleName?: string;
   avatarSrc?: string;
@@ -47,6 +48,7 @@ export function StudentProfilePage({
   schoolName,
   onSchoolNameChange,
   schoolOptions,
+  selectedSchoolId,
   onSelectSchoolId,
   roleName = 'Siswa',
   avatarSrc = '/avatars/1.png',
@@ -84,6 +86,7 @@ export function StudentProfilePage({
         schoolName,
         onSchoolNameChange,
         schoolOptions,
+        selectedSchoolId,
         onSelectSchoolId,
         onSubmit: onSubmitPersonalInfo,
         onReset: onResetPersonalInfo,

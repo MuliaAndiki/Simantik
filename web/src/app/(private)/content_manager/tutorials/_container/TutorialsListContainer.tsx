@@ -35,8 +35,11 @@ const TutorialsListContainer = () => {
   const tutorials = tutorialsQuery.data?.tutorials ?? [];
   const totalItems = tutorialsQuery.data?.total ?? 0;
 
+  const categoriesQuery = api.content.query.cmsTutorialCategories();
+  const allCategories = categoriesQuery.data ?? [];
+
   const categoryOptions = useMemo(() => {
-    const distinct = new Set<string>();
+    const distinct = new Set<string>(allCategories);
     for (const item of tutorials) {
       if (item.category?.trim()) distinct.add(item.category.trim());
     }
@@ -46,7 +49,7 @@ const TutorialsListContainer = () => {
         .sort()
         .map((cat) => ({ value: cat, label: cat })),
     ];
-  }, [tutorials]);
+  }, [allCategories, tutorials]);
 
   const stats = useMemo<TutorialStats>(() => {
     let published = 0;

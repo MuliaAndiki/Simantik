@@ -2,6 +2,7 @@ import '@/styles/globals.css';
 
 import { Poppins } from 'next/font/google';
 
+import { JsonLd } from '@/components/atoms/seo/JsonLd';
 import { metadata, siteConfig } from './metadata';
 import { AppProviders } from './providers';
 
@@ -17,6 +18,9 @@ export { metadata };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang={siteConfig.locale} className={poppins.variable} suppressHydrationWarning>
+      <head>
+        <JsonLd />
+      </head>
       <body className="font-sans antialiased">
         <AppProviders>{children}</AppProviders>
       </body>
