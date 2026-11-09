@@ -9,10 +9,13 @@ import {
   ShieldCheck,
   Sparkles,
   Zap,
-} from 'lucide-react';
-import Link from 'next/link';
-import { ScribbleSparkle, ScribbleUnderline } from '@/components/atoms/doodles/ScribbleDoodles';
-import type { HeroStudentMockup } from '@/types/ui';
+} from "lucide-react";
+import Link from "next/link";
+import {
+  ScribbleSparkle,
+  ScribbleUnderline,
+} from "@/components/atoms/doodles/ScribbleDoodles";
+import type { HeroStudentMockup } from "@/types/ui";
 
 export interface LandingHeroSectionProps {
   student: HeroStudentMockup;
@@ -32,25 +35,27 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
           {/* Left Column: Value Copy & CTAs */}
           <div className="lg:col-span-7 space-y-6 text-left">
             {/* Top Pill Tag */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-50 border border-teal-200/80 text-teal-800 text-xs font-bold shadow-2xs">
-              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-              <span>SIMANTIK • Simulasi Mandiri Tes Kemampuan Akademik</span>
-            </div>
             {/* Main Headline with Animated Scribble Underline */}
             <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-900 tracking-tight leading-[1.18] relative">
-              Latihan Membaca, Kuasai Soal, dan Raih Skor Maksimal di{' '}
+              Latihan Membaca, Kuasai Soal, dan Raih Skor Maksimal di{" "}
               <span className="relative inline-block text-teal-700 bg-linear-to-r from-teal-700 to-emerald-600 bg-clip-text text-transparent">
                 TKA Bahasa Indonesia
-                <ScribbleUnderline variant="wavy" color="#0D9488" delayMs={200} />
+                <ScribbleUnderline
+                  variant="wavy"
+                  color="#0D9488"
+                  delayMs={200}
+                />
               </span>
             </h1>
 
             {/* Subtitle Description */}
             <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed max-w-2xl">
-              SIMANTIK adalah aplikasi berbasis web yang dibuat khusus untuk membantu siswa SMA
-              mempersiapkan diri menghadapi Tes Kemampuan Akademik (TKA) Bahasa Indonesia. Aplikasi
-              ini fokus melatih kemampuan membaca berbagai jenis teks agar siswa bisa belajar dan
-              berlatih soal secara mandiri, lebih percaya diri, dan siap menghadapi ujian seleksi.
+              SIMANTIK adalah aplikasi berbasis web yang dibuat khusus untuk
+              membantu siswa SMA mempersiapkan diri menghadapi Tes Kemampuan
+              Akademik (TKA) Bahasa Indonesia. Aplikasi ini fokus melatih
+              kemampuan membaca berbagai jenis teks agar siswa bisa belajar dan
+              berlatih soal secara mandiri, lebih percaya diri, dan siap
+              menghadapi ujian seleksi.
             </p>
 
             {/* Action Buttons */}
@@ -99,8 +104,12 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
                     {student.avatarInitials}
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900 leading-tight">{student.name}</div>
-                    <div className="text-[11px] text-slate-500">{student.school}</div>
+                    <div className="font-bold text-slate-900 leading-tight">
+                      {student.name}
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      {student.school}
+                    </div>
                   </div>
                 </div>
 
@@ -120,7 +129,9 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
                     <span className="text-3xl font-black text-amber-400">
                       {student.averageScore}
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">/{student.maxScore}</span>
+                    <span className="text-xs text-slate-400 font-medium">
+                      /{student.maxScore}
+                    </span>
                   </div>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-400">
@@ -143,7 +154,9 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
                       </div>
                       <span
                         className={
-                          comp.isAlert ? 'font-black text-rose-600' : 'font-bold text-slate-700'
+                          comp.isAlert
+                            ? "font-black text-rose-600"
+                            : "font-bold text-slate-700"
                         }
                       >
                         {comp.scorePercent}%
@@ -154,8 +167,8 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
                       <div
                         className={
                           comp.isAlert
-                            ? 'h-full rounded-full bg-rose-500'
-                            : 'h-full rounded-full bg-teal-600'
+                            ? "h-full rounded-full bg-rose-500"
+                            : "h-full rounded-full bg-teal-600"
                         }
                         style={{ width: `${comp.scorePercent}%` }}
                       />
@@ -191,7 +204,10 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
               {/* Bottom Verified Badge */}
               <div className="text-center pt-1 text-[11px] font-semibold text-slate-500 flex items-center justify-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
-                <span>Tryout Selesai: {student.verifiedQuestionsCount} Soal Terverifikasi</span>
+                <span>
+                  Tryout Selesai: {student.verifiedQuestionsCount} Soal
+                  Terverifikasi
+                </span>
               </div>
             </div>
           </div>
