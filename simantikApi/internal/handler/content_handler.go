@@ -656,3 +656,21 @@ func (h *ContentHandler) DeleteTestimonial(c *fiber.Ctx) error {
 
 	return utils.OK(c, "testimonial deleted successfully", nil)
 }
+
+// GetDocumentationCategories handles GET /api/v1/cms/documentation/categories and GET /api/v1/documentation/categories.
+func (h *ContentHandler) GetDocumentationCategories(c *fiber.Ctx) error {
+	categories, err := h.contentService.GetDocumentationCategories(c.UserContext())
+	if err != nil {
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to get documentation categories", err)
+	}
+	return utils.Success(c, "documentation categories retrieved successfully", categories)
+}
+
+// GetTutorialCategories handles GET /api/v1/cms/tutorials/categories and GET /api/v1/tutorials/categories.
+func (h *ContentHandler) GetTutorialCategories(c *fiber.Ctx) error {
+	categories, err := h.contentService.GetTutorialCategories(c.UserContext())
+	if err != nil {
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to get tutorial categories", err)
+	}
+	return utils.Success(c, "tutorial categories retrieved successfully", categories)
+}

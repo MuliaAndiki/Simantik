@@ -24,6 +24,11 @@ export const NAV_ITEMS = [
     href: '/testimonials',
     match: (p: string) => p.startsWith('/testimonials'),
   },
+  {
+    label: 'Berita',
+    href: '/news',
+    match: (p: string) => p.startsWith('/news'),
+  },
 ];
 
 export default function AppHeader({ className }: AppHeaderProps) {

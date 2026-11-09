@@ -25,6 +25,7 @@ func RegisterContentRoutes(api fiber.Router, cfg *config.Config, h *handler.Cont
 	cms.Delete("/news/:id", adminOnly, h.DeleteNews)
 
 	// Documentation CMS
+	cms.Get("/documentation/categories", h.GetDocumentationCategories)
 	cms.Post("/documentation", h.CreateDocumentation)
 	cms.Get("/documentation", h.ListDocumentationAdmin)
 	cms.Get("/documentation/:id", h.GetDocumentationByID)
@@ -38,6 +39,7 @@ func RegisterContentRoutes(api fiber.Router, cfg *config.Config, h *handler.Cont
 	cms.Delete("/testimonials/:id", adminOnly, h.DeleteTestimonial)
 
 	// Tutorials CMS
+	cms.Get("/tutorials/categories", h.GetTutorialCategories)
 	cms.Post("/tutorials", h.CreateTutorial)
 	cms.Get("/tutorials", h.ListTutorialsAdmin)
 	cms.Get("/tutorials/:id", h.GetTutorialByID)
@@ -51,10 +53,12 @@ func RegisterContentRoutes(api fiber.Router, cfg *config.Config, h *handler.Cont
 	api.Get("/news/:slug", h.GetNewsBySlug)
 
 	// Public Documentation
+	api.Get("/documentation/categories", h.GetDocumentationCategories)
 	api.Get("/documentation", h.ListDocumentationPublic)
 	api.Get("/documentation/:slug", h.GetDocumentationBySlug)
 
 	// Public Tutorials
+	api.Get("/tutorials/categories", h.GetTutorialCategories)
 	api.Get("/tutorials", h.ListTutorialsPublic)
 	api.Get("/tutorials/:slug", h.GetTutorialBySlug)
 

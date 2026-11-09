@@ -15,14 +15,14 @@ export function LandingModulesSection({ modules }: LandingModulesSectionProps) {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-left">
           <div className="space-y-2 max-w-2xl">
             <span className="text-[11px] font-bold text-teal-800 uppercase tracking-wider block">
-              Modul Pembelajaran Mandiri
+              Materi dan Trik Menjawab
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Belajar Sesuai Kebutuhanmu
+              Panduan Ringkas & Trik Cepat Menjawab Soal
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed">
-              Temukan materi interaktif yang dirancang untuk mengasah pemahaman fondasional dan
-              logika aplikatif.
+              Berisi panduan ringkas dan cara cepat (trik) untuk mengenali dan menjawab berbagai
+              tipe soal bacaan dengan tepat dan efisien.
             </p>
           </div>
 

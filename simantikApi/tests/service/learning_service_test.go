@@ -536,3 +536,62 @@ func TestLearningService_GetMaterialStudentActivities(t *testing.T) {
 	}
 }
 
+func TestLearningService_CreateAndUpdateMaterialWithObjectivesAndStructure(t *testing.T) {
+	ctx := context.Background()
+	modRepo := newMockModuleRepo()
+	matRepo := newMockMaterialRepo()
+	progRepo := newMockProgressRepo(modRepo, matRepo)
+	svc := service.NewLearningService(modRepo, matRepo, progRepo)
+
+	adminID := uuid.New()
+	mod, err := svc.CreateModule(ctx, dto.CreateLearningModuleRequest{
+		Title:   "Modul Bahasa Indonesia",
+		Jenjang: "sma",
+	}, adminID)
+	if err != nil {
+		t.Fatalf("CreateModule failed: %v", err)
+	}
+
+	objectivesJSON := `[{"id":"1","text":"Mampu menganalisis teks eksplanasi"}]`
+	structureJSON := `[{"label":"1. Pokok Bahasan:","text":"Kaidah teks eksplanasi"}]`
+
+	mat, err := svc.CreateMaterial(ctx, dto.CreateMaterialRequest{
+		ModuleID:           mod.ID,
+		Title:              "Materi Teks Eksplanasi",
+		Content:            "<p>Isi eksplanasi</p>",
+		Type:               "document",
+		LearningObjectives: objectivesJSON,
+		StructureItems:     structureJSON,
+	}, adminID)
+	if err != nil {
+		t.Fatalf("CreateMaterial failed: %v", err)
+	}
+
+	if mat.LearningObjectives != objectivesJSON {
+		t.Errorf("expected objectives %s, got %s", objectivesJSON, mat.LearningObjectives)
+	}
+	if mat.StructureItems != structureJSON {
+		t.Errorf("expected structure %s, got %s", structureJSON, mat.StructureItems)
+	}
+
+	// Test Update
+	updatedObjectives := `[{"id":"1","text":"Mampu menyusun teks eksplanasi"},{"id":"2","text":"Menganalisis sebab-akibat"}]`
+	updatedStructure := `[{"label":"1. Pokok Bahasan:","text":"Struktur sebab-akibat"},{"label":"2. Pendalaman Materi:","text":"Analisis kronologi"}]`
+
+	updatedMat, err := svc.UpdateMaterial(ctx, mat.ID, dto.UpdateMaterialRequest{
+		LearningObjectives: &updatedObjectives,
+		StructureItems:     &updatedStructure,
+	}, adminID)
+	if err != nil {
+		t.Fatalf("UpdateMaterial failed: %v", err)
+	}
+
+	if updatedMat.LearningObjectives != updatedObjectives {
+		t.Errorf("expected updated objectives %s, got %s", updatedObjectives, updatedMat.LearningObjectives)
+	}
+	if updatedMat.StructureItems != updatedStructure {
+		t.Errorf("expected updated structure %s, got %s", updatedStructure, updatedMat.StructureItems)
+	}
+}
+
+

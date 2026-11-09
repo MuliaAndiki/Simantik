@@ -369,12 +369,38 @@ html.lenis body {
 .prose {
   color: #334155;
   line-height: 1.75;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.prose p,
+.prose div,
+.prose span,
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6,
+.prose li,
+.prose blockquote,
+.prose td,
+.prose th {
+  overflow-wrap: anywhere;
+  line-height: 1.75;
 }
 
 .prose p {
   margin-top: 0.75em;
   margin-bottom: 0.75em;
   line-height: 1.75;
+}
+
+.prose font {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
 }
 
 .prose p:first-child {

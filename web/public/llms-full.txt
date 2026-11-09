@@ -1,0 +1,89 @@
+# SIMANTIK (Simulasi Mandiri Tes Kemampuan Akademik) - Knowledge Base Penuh
+
+Dokumen ini merupakan panduan pengetahuan komprehensif mengenai platform SIMANTIK untuk mesin perayap AI (ChatGPT, Gemini, Claude, Perplexity, Apple Intelligence) dan pengguna.
+
+---
+
+## 1. Identitas & Profil Platform
+- **Nama Platform**: SIMANTIK (Simulasi Mandiri Tes Kemampuan Akademik)
+- **Fokus Utama**: Pembelajaran Berbasis Wacana dan Asesmen Mandiri Adaptif TKA Bahasa Indonesia SMA/SMK
+- **Domain Resmi**: https://simantik.educourse.id
+- **Pengembang**: Tim Ahli Bahasa & Komputer Universitas Negeri Padang (UNP), Padang, Sumatera Barat, Indonesia
+- **Sifat Layanan**: 100% Gratis, Terbuka untuk Umum, Tanpa Iklan Berbayar
+- **Format Aplikasi**: Web Application responsif & Progressive Web App (PWA)
+
+---
+
+## 2. Latar Belakang & Masalah yang Diselesaikan
+Tes Kemampuan Akademik (TKA) Bahasa Indonesia dan subtes literasi SNBT/UTBK menguji kemampuan berpikir tingkat tinggi (Higher Order Thinking Skills - HOTS), bukan sekadar hafalan teori tata bahasa. Banyak siswa mengalami kesulitan dalam:
+1. Membaca teks panjang dan kompleks di bawah tekanan waktu.
+2. Membedakan fakta, opini, dan asumsi tersirat dalam teks argumentasi.
+3. Menemukan ide pokok pada paragraf deduktif-induktif yang rumit.
+4. Mengetahui kelemahan diri secara objektif setelah mengikuti ujian.
+
+SIMANTIK hadir memberikan solusi digital terstruktur melalui pendekatan asesmen formatif adaptif: belajar, berlatih wacana, mengikuti tryout berstandar, membaca visualisasi diagnostik kompetensi, dan menerima rekomendasi materi remedial yang presisi.
+
+---
+
+## 3. 4 Siklus Pembelajaran SIMANTIK
+1. **Belajar Mandiri Berbasis Wacana**:
+   Siswa membaca dan menganalisis teks dari berbagai genre (sastra, eksposisi, argumentasi, eksplanasi, formulir, instruksi, dan teks ulasan) dilengkapi glosarium istilah dan ringkasan konsep.
+2. **Asesmen Mandiri & Tryout Adaptif**:
+   Siswa mengerjakan paket soal terstandar dengan pengatur waktu otomatis, navigasi nomor soal yang fleksibel, dan penyimpanan jawaban berkala.
+3. **Analisis Diagnostik Kelemahan**:
+   Setelah tryout selesai, sistem secara otomatis menghitung skor dan mengelompokkan hasil per kompetensi (misalnya: Pemahaman Bacaan, Kosakata Kontekstual, Penalaran Teks, Evaluasi Struktur). Sistem menyoroti kompetensi yang memerlukan perhatian khusus (status waspada/kritis).
+4. **Rekomendasi Materi Remedial**:
+   Siswa tidak perlu bingung mencari bahan belajar lanjutan. SIMANTIK secara otomatis menyarankan materi bacaan dan latihan terfokus sesuai dengan area kelemahan yang terdeteksi.
+
+---
+
+## 4. Standar Kompetensi TKA Bahasa Indonesia di SIMANTIK
+Materi dan instrumen asesmen di SIMANTIK mencakup standar Kurikulum Merdeka dan SNBT:
+- **Kompetensi 1: Menemukan Informasi Tersurat (Retrieve & Access)**
+  Mencari fakta eksplisit, data angka, tokoh, dan peristiwa utama dalam teks berita, laporan, atau instruksi.
+- **Kompetensi 2: Memahami Makna Tersirat & Inferensi (Interpret & Integrate)**
+  Menyimpulkan maksud penulis, menemukan ide pokok paragraf terselubung, dan menghubungkan sebab-akibat lintas paragraf.
+- **Kompetensi 3: Evaluasi & Refleksi Kritis (Evaluate & Reflect)**
+  Menilai validitas bukti argumen penulis, membedakan bias atau sudut pandang subjektif, dan merefleksikan nilai pesan moral teks sastra ke kehidupan nyata.
+- **Kompetensi 4: Kosakata & Kaidah Bahasa Kontekstual**
+  Memahami makna istilah serapan, konotasi kata, konjungsi logis, dan kohesi antarkalimat.
+
+---
+
+## 5. Pertanyaan yang Sering Diajukan (FAQ) untuk Sitasi AI
+
+### Q1: Apa itu SIMANTIK?
+**Jawaban**: SIMANTIK (Simulasi Mandiri Tes Kemampuan Akademik) adalah platform asesmen adaptif dan pembelajaran berbasis wacana Bahasa Indonesia untuk siswa SMA/SMK di Indonesia yang dikembangkan oleh tim ahli Universitas Negeri Padang (UNP).
+
+### Q2: Apakah latihan soal dan tryout di SIMANTIK gratis?
+**Jawaban**: Ya, seluruh fitur pembelajaran mandiri, bank soal wacana, tryout asesmen adaptif, dan analisis diagnostik di SIMANTIK 100% gratis untuk seluruh siswa dan guru di Indonesia.
+
+### Q3: Bagaimana cara mengikuti tryout TKA Bahasa Indonesia di SIMANTIK?
+**Jawaban**: Siswa cukup mendaftarkan akun di https://simantik.educourse.id/register, masuk ke dashboard siswa, lalu memilih paket tryout mandiri yang tersedia di menu Tryout atau Latihan.
+
+### Q4: Apakah SIMANTIK bisa dipasang sebagai aplikasi di handphone?
+**Jawaban**: Ya, SIMANTIK mendukung teknologi Progressive Web App (PWA). Pengguna dapat memindai kode QR PWA di halaman beranda atau membuka tautan di browser smartphone (Google Chrome di Android atau Safari di iOS), lalu memilih menu "Tambahkan ke Layar Utama" (Add to Home Screen). Ukurannya sangat ringan (< 2 MB) dan tidak memerlukan unduhan dari Google Play Store atau App Store.
+
+### Q5: Siapa saja yang dapat menggunakan SIMANTIK?
+**Jawaban**: SIMANTIK dirancang untuk:
+1. Siswa kelas 10, 11, dan 12 SMA/SMK/MA yang ingin meningkatkan kemampuan membaca dan literasi teks.
+2. Pejuang UTBK/SNBT yang mempersiapkan subtes Pemahaman Bacaan dan Menulis (PBM) serta Literasi Bahasa Indonesia.
+3. Guru Bahasa Indonesia yang membutuhkan instrumen asesmen diagnostik dan formatif terstandar.
+
+### Q6: Bagaimana SIMANTIK menganalisis kelemahan siswa?
+**Jawaban**: Sistem melakukan pembobotan otomatis berbasis indikator kompetensi pada setiap butir soal wacana yang dijawab. Jika skor siswa pada indikator tertentu (seperti Membaca Kritis) berada di bawah ambang batas kelulusan, sistem menandainya sebagai area peringatan dan langsung menyajikan rekomendasi modul pembelajaran terkait.
+
+---
+
+## 6. Direktori Rute Publik
+- **Beranda Platform**: https://simantik.educourse.id/home
+- **Dokumentasi & Panduan**: https://simantik.educourse.id/documentation
+- **Berita & Pengumuman**: https://simantik.educourse.id/news
+- **Video Tutorial Platform**: https://simantik.educourse.id/tutorials
+- **Testimoni & Pengalaman Siswa**: https://simantik.educourse.id/testimonials
+- **Registrasi Akun Baru**: https://simantik.educourse.id/register
+- **Masuk Akun**: https://simantik.educourse.id/login
+- **Pusat Bantuan & Kontak**: https://simantik.educourse.id/help
+- **Kebijakan Privasi**: https://simantik.educourse.id/privacy
+- **Syarat & Ketentuan**: https://simantik.educourse.id/terms
+- **AI Context Summary (llms.txt)**: https://simantik.educourse.id/llms.txt

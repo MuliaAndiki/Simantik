@@ -15,6 +15,7 @@ export interface ProfilePersonalInfoCardProps {
   schoolName: string;
   onSchoolNameChange?: (val: string) => void;
   schoolOptions?: ProfileSchoolOption[];
+  selectedSchoolId?: string;
   onSelectSchoolId?: (schoolId: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onReset: () => void;
@@ -31,6 +32,7 @@ export function ProfilePersonalInfoCard({
   schoolName,
   onSchoolNameChange,
   schoolOptions,
+  selectedSchoolId,
   onSelectSchoolId,
   onSubmit,
   onReset,
@@ -123,14 +125,16 @@ export function ProfilePersonalInfoCard({
               <select
                 id="profile-school"
                 value={
+                  selectedSchoolId ||
                   schoolOptions.find(
                     (s) => s.name.toLowerCase() === (schoolName ?? '').toLowerCase()
-                  )?.id ?? ''
+                  )?.id ||
+                  ''
                 }
                 onChange={(e) => onSelectSchoolId(e.target.value)}
                 className="w-full h-11 rounded-xl border border-gray-200 bg-white px-3 pr-10 text-sm text-gray-900 focus:outline-hidden focus:ring-2 focus:ring-teal-500/30 transition-all appearance-none cursor-pointer"
               >
-                <option value={schoolName} disabled>
+                <option value="" disabled>
                   Pilih asal sekolah
                 </option>
                 {schoolOptions.map((opt) => (

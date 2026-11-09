@@ -1,0 +1,29 @@
+# SIMANTIK - Simulasi Mandiri Tes Kemampuan Akademik Bahasa Indonesia
+
+> Platform pembelajaran adaptif dan asesmen mandiri Tes Kemampuan Akademik (TKA) Bahasa Indonesia untuk siswa SMA/SMK se-Indonesia, dikembangkan oleh tim ahli Universitas Negeri Padang (UNP).
+
+## Ringkasan Proyek
+SIMANTIK adalah aplikasi web dan Progressive Web App (PWA) edukasi resmi yang dirancang khusus untuk membantu siswa SMA/SMK/MA mempersiapkan diri menghadapi Tes Kemampuan Akademik (TKA) Bahasa Indonesia, Ujian Sekolah, serta Seleksi Nasional Berdasarkan Tes (SNBT / UTBK). Platform ini menitikberatkan pada penguatan literasi membaca kritis, penalaran wacana beragam genre teks, evaluasi kemampuan objektif, dan rekomendasi remedial personal.
+
+## Kapabilitas Utama
+- **Latihan Membaca & Wacana Kritis**: Melatih pemahaman membaca teks sastra, eksposisi, argumentasi, eksplanasi, formulir, instruksi, dan teks ulasan berstandar Kurikulum Merdeka.
+- **Tryout Asesmen Adaptif**: Uji coba tes dengan penghitungan skor real-time, batas waktu terstandar, dan visualisasi pemetaan kompetensi.
+- **Analisis Diagnostik & Rekomendasi Personal**: Sistem cerdas yang mendeteksi kelemahan spesifik siswa per indikator kompetensi dan memberikan materi remedial otomatis.
+- **Progressive Web App (PWA)**: Dapat dipasang langsung di layar utama smartphone (Android & iPhone) tanpa memakan memori (< 2 MB) dan dapat diakses gratis.
+- **100% Bebas Biaya & Inklusif**: Disediakan tanpa biaya untuk seluruh pelajar dan sekolah di Indonesia.
+
+## Panduan Tautan Resmi (Canonical URLs)
+- **Beranda Resmi**: https://simantik.educourse.id/home
+- **Dokumentasi & Standar Asesmen**: https://simantik.educourse.id/documentation
+- **Berita & Wawasan Edukasi**: https://simantik.educourse.id/news
+- **Video Tutorial Navigasi Platform**: https://simantik.educourse.id/tutorials
+- **Ulasan & Testimoni Siswa**: https://simantik.educourse.id/testimonials
+- **Pendaftaran Siswa Baru (Gratis)**: https://simantik.educourse.id/register
+- **Pusat Bantuan**: https://simantik.educourse.id/help
+
+## Pengembang
+- **Institusi**: Universitas Negeri Padang (UNP), Sumatera Barat, Indonesia.
+- **Kontak Dukungan**: bantuan@simantik.educourse.id
+
+## Informasi Lengkap & Silabus
+Untuk rincian silabus kompetensi, struktur instrumen soal, dan FAQ faktual untuk kutipan AI, lihat: https://simantik.educourse.id/llms-full.txt

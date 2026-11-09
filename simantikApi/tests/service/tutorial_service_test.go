@@ -79,6 +79,18 @@ func (m *mockTutorialRepo) ListPublished(ctx context.Context, filter dto.ListTut
 	return m.List(ctx, filter)
 }
 
+func (m *mockTutorialRepo) GetDistinctCategories(ctx context.Context) ([]string, error) {
+	seen := make(map[string]bool)
+	var cats []string
+	for _, t := range m.items {
+		if t.Category != "" && !seen[t.Category] {
+			seen[t.Category] = true
+			cats = append(cats, t.Category)
+		}
+	}
+	return cats, nil
+}
+
 func newTutorialTestService() service.ContentService {
 	return service.NewContentService(newMockNewsRepo(), newMockDocRepo(), newMockTestimonialRepo(), newMockTutorialRepo())
 }
@@ -167,5 +179,35 @@ func TestContentService_Tutorial_DuplicateSlugRejected(t *testing.T) {
 	}, authorID)
 	if err != service.ErrTutorialSlugExists {
 		t.Errorf("expected ErrTutorialSlugExists, got %v", err)
+	}
+}
+
+func TestContentService_GetTutorialCategories(t *testing.T) {
+	svc := newTutorialTestService()
+	authorID := uuid.New()
+
+	_, err := svc.CreateTutorial(context.Background(), dto.CreateTutorialRequest{
+		Title:      "Video Bedah Soal Wacana",
+		YoutubeURL: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+		Category:   "Bedah Soal",
+	}, authorID)
+	if err != nil {
+		t.Fatalf("failed to create tutorial: %v", err)
+	}
+
+	categories, err := svc.GetTutorialCategories(context.Background())
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	found := false
+	for _, c := range categories {
+		if c == "Bedah Soal" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected 'Bedah Soal' to be in categories, got %v", categories)
 	}
 }

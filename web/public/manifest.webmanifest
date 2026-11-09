@@ -1,14 +1,14 @@
 {
-  "name": "",
-  "short_name": "",
-  "description": "",
-  "start_url": "/",
+  "name": "SIMANTIK - Platform Pembelajaran & Asesmen TKA",
+  "short_name": "SIMANTIK",
+  "description": "Platform Pembelajaran dan Asesmen Mandiri TKA Bahasa Indonesia SMA/SMK",
+  "start_url": "/home",
   "scope": "/",
-  "display": "",
-  "orientation": "",
-  "theme_color": "",
-  "background_color": "",
-  "categories": [""],
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#134653",
+  "background_color": "#ffffff",
+  "categories": ["education"],
   "icons": [
     {
       "src": "/favicon/favicon-16x16.png",

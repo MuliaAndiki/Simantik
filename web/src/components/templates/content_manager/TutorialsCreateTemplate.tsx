@@ -9,6 +9,7 @@ export interface TutorialsCreateTemplateProps {
   form: TutorialsCreateFormState;
   isEditMode: boolean;
   isSubmitting: boolean;
+  categories?: string[];
   onFormChange: <K extends keyof TutorialsCreateFormState>(
     field: K,
     value: TutorialsCreateFormState[K]
@@ -22,6 +23,7 @@ const TutorialsCreateTemplate: React.FC<TutorialsCreateTemplateProps> = ({
   form,
   isEditMode,
   isSubmitting,
+  categories = [],
   onFormChange,
   onCancel,
   onSaveDraft,
@@ -38,7 +40,12 @@ const TutorialsCreateTemplate: React.FC<TutorialsCreateTemplateProps> = ({
         </p>
       </div>
 
-      <TutorialsCreateMetadataCard form={form} isEditMode={isEditMode} onChange={onFormChange} />
+      <TutorialsCreateMetadataCard
+        form={form}
+        isEditMode={isEditMode}
+        categories={categories}
+        onChange={onFormChange}
+      />
 
       <div className="sticky bottom-4 z-30 pt-2">
         <NewsCreateActionBar

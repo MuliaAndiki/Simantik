@@ -32,21 +32,25 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
           {/* Left Column: Value Copy & CTAs */}
           <div className="lg:col-span-7 space-y-6 text-left">
             {/* Top Pill Tag */}
-
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-50 border border-teal-200/80 text-teal-800 text-xs font-bold shadow-2xs">
+              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+              <span>SIMANTIK • Simulasi Mandiri Tes Kemampuan Akademik</span>
+            </div>
             {/* Main Headline with Animated Scribble Underline */}
-            <h1 className="text-3xl sm:text-4xl lg:text-[46px] font-black text-slate-900 tracking-tight leading-[1.18] relative">
-              Belajar Lebih Terarah, Uji Kemampuan, dan{' '}
+            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-900 tracking-tight leading-[1.18] relative">
+              Latihan Membaca, Kuasai Soal, dan Raih Skor Maksimal di{' '}
               <span className="relative inline-block text-teal-700 bg-linear-to-r from-teal-700 to-emerald-600 bg-clip-text text-transparent">
-                Tingkatkan Kompetensimu
+                TKA Bahasa Indonesia
                 <ScribbleUnderline variant="wavy" color="#0D9488" delayMs={200} />
               </span>
             </h1>
 
             {/* Subtitle Description */}
             <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed max-w-2xl">
-              SIMANTIK membimbingmu memahami materi, mengukur kesiapan belajar dengan asesmen
-              terstandar, serta memperoleh rekomendasi materi presisi untuk memperbaiki kelemahan
-              secara terukur.
+              SIMANTIK adalah aplikasi berbasis web yang dibuat khusus untuk membantu siswa SMA
+              mempersiapkan diri menghadapi Tes Kemampuan Akademik (TKA) Bahasa Indonesia. Aplikasi
+              ini fokus melatih kemampuan membaca berbagai jenis teks agar siswa bisa belajar dan
+              berlatih soal secara mandiri, lebih percaya diri, dan siap menghadapi ujian seleksi.
             </p>
 
             {/* Action Buttons */}
@@ -55,15 +59,16 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
                 href="/register"
                 className="h-12 px-7 rounded-full bg-[#F5B731] hover:bg-[#E5A721] text-slate-900 font-black text-sm shadow-xs flex items-center justify-center gap-2 transition-transform active:scale-95 border-0"
               >
-                <span>Mulai Belajar</span>
+                <span>Mulai Belajar Mandiri</span>
                 <ChevronRight className="w-4 h-4 stroke-[3]" />
               </Link>
 
               <Link
-                href="/login"
+                href="#video-panduan"
                 className="h-12 px-7 rounded-full bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200/90 font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-2xs"
               >
-                <span>Lihat Tryout</span>
+                <Play className="w-4 h-4 text-teal-600 fill-teal-600" />
+                <span>Video Panduan</span>
               </Link>
             </div>
 
@@ -71,15 +76,15 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
             <div className="flex flex-wrap items-center gap-5 pt-3 text-xs font-semibold text-slate-600">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-                <span>100% Gratis</span>
+                <span>Gratis Sepenuhnya</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-                <span>Tanpa Biaya Tersembunyi</span>
+                <span>Akses Bebas di Semua Perangkat</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-                <span>Akses Multi-Device</span>
+                <span>Disusun Tim Ahli Bahasa & Komputer UNP</span>
               </div>
             </div>
           </div>

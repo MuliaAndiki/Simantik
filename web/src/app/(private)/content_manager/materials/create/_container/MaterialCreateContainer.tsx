@@ -6,7 +6,12 @@ import { DEFAULT_DOCUMENT_HTML } from '@/components/molecules/editor';
 import { MaterialCreatePage } from '@/components/page/private/content_manager/MaterialCreatePage';
 import { useApi } from '@/hooks/useApi';
 import { useAppNameSpace } from '@/hooks/useAppNameSpace';
-import type { LearningObjectiveItem, MaterialMetadata, RelevantTopicTag } from '@/types/ui';
+import type {
+  LearningObjectiveItem,
+  MaterialMetadata,
+  PreviewDocumentStructure,
+  RelevantTopicTag,
+} from '@/types/ui';
 import { deleteObject, uploadAvatar } from '@/utils/r2-utils';
 
 const INITIAL_METADATA: MaterialMetadata = {
@@ -30,6 +35,7 @@ export function MaterialCreateContainer() {
   const [metadata, setMetadata] = useState<MaterialMetadata>(INITIAL_METADATA);
   const [content, setContent] = useState<string>(DEFAULT_DOCUMENT_HTML);
   const [objectives, setObjectives] = useState<LearningObjectiveItem[]>([]);
+  const [structureItems, setStructureItems] = useState<PreviewDocumentStructure[]>([]);
   const [topics, setTopics] = useState<RelevantTopicTag[]>([]);
   const [isAddingTopic, setIsAddingTopic] = useState<boolean>(false);
   const [newTopicInput, setNewTopicInput] = useState<string>('');
@@ -50,6 +56,38 @@ export function MaterialCreateContainer() {
         idDokumen: `DOC-${existingMaterial.id.slice(0, 8).toUpperCase()}`,
       });
       setContent(existingMaterial.content || DEFAULT_DOCUMENT_HTML);
+
+      if (existingMaterial.learning_objectives) {
+        try {
+          const parsed = JSON.parse(existingMaterial.learning_objectives);
+          if (Array.isArray(parsed)) {
+            setObjectives(
+              parsed.map((item, idx) => ({
+                id: String(item.id || idx + 1),
+                text: item.text || item.desc || (typeof item === 'string' ? item : ''),
+              }))
+            );
+          }
+        } catch {
+          setObjectives([]);
+        }
+      }
+
+      if (existingMaterial.structure_items) {
+        try {
+          const parsed = JSON.parse(existingMaterial.structure_items);
+          if (Array.isArray(parsed)) {
+            setStructureItems(
+              parsed.map((item, idx) => ({
+                label: item.label || `${idx + 1}. Pokok Bahasan:`,
+                text: item.text || item.desc || (typeof item === 'string' ? item : ''),
+              }))
+            );
+          }
+        } catch {
+          setStructureItems([]);
+        }
+      }
     }
   }, [existingMaterial]);
 
@@ -88,6 +126,22 @@ export function MaterialCreateContainer() {
       label,
     };
     setTopics((prev) => [...prev, newTag]);
+  };
+
+  const handleAddObjective = (text: string) => {
+    setObjectives((prev) => [...prev, { id: String(Date.now()), text }]);
+  };
+
+  const handleRemoveObjective = (id: string) => {
+    setObjectives((prev) => prev.filter((o) => o.id !== id));
+  };
+
+  const handleAddStructureItem = (label: string, text: string) => {
+    setStructureItems((prev) => [...prev, { label, text }]);
+  };
+
+  const handleRemoveStructureItem = (index: number) => {
+    setStructureItems((prev) => prev.filter((_, idx) => idx !== index));
   };
 
   const handleStartAddTopic = () => setIsAddingTopic(true);
@@ -159,6 +213,8 @@ export function MaterialCreateContainer() {
             title: metadata.judulMateri.trim(),
             description: metadata.deskripsiRingkas.trim() || undefined,
             content,
+            learning_objectives: JSON.stringify(objectives),
+            structure_items: JSON.stringify(structureItems),
             competency_id: matchedCompetency?.id,
             type: 'document',
             status: isReview ? 'in_review' : 'draft',
@@ -229,6 +285,8 @@ export function MaterialCreateContainer() {
         title: metadata.judulMateri.trim(),
         description: metadata.deskripsiRingkas.trim() || undefined,
         content,
+        learning_objectives: JSON.stringify(objectives),
+        structure_items: JSON.stringify(structureItems),
         type: 'document',
         display_order: 1,
       },
@@ -278,6 +336,7 @@ export function MaterialCreateContainer() {
       categories={categories}
       content={content}
       objectives={objectives}
+      structureItems={structureItems}
       topics={topics}
       isAddingTopic={isAddingTopic}
       newTopicInput={newTopicInput}
@@ -289,6 +348,10 @@ export function MaterialCreateContainer() {
       onContentChange={handleContentChange}
       onUploadImage={handleUploadImage}
       onDeleteImage={handleDeleteImage}
+      onAddObjective={handleAddObjective}
+      onRemoveObjective={handleRemoveObjective}
+      onAddStructureItem={handleAddStructureItem}
+      onRemoveStructureItem={handleRemoveStructureItem}
       onAddTopic={handleAddTopic}
       onRemoveTopic={handleRemoveTopic}
       onCancel={handleCancel}

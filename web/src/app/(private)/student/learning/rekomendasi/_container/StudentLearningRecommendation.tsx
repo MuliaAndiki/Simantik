@@ -19,10 +19,6 @@ export default function StudentLearningRecommendation() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-2">
-        <Sparkles className="size-6 text-teal-600" />
-        <h1 className="text-2xl font-black text-slate-900">Rekomendasi Belajar</h1>
-      </div>
       <div>
         <p className="text-sm text-slate-600 mb-6">
           Sistem analitik cerdas kami telah menyiapkan rekomendasi berdasarkan hasil tryout dan

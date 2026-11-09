@@ -140,6 +140,18 @@ func (m *mockDocRepo) ListPublished(ctx context.Context, filter dto.ListDocument
 	return m.List(ctx, filter)
 }
 
+func (m *mockDocRepo) GetDistinctCategories(ctx context.Context) ([]string, error) {
+	seen := make(map[string]bool)
+	var cats []string
+	for _, d := range m.items {
+		if d.Category != "" && !seen[d.Category] {
+			seen[d.Category] = true
+			cats = append(cats, d.Category)
+		}
+	}
+	return cats, nil
+}
+
 type mockTestimonialRepo struct {
 	items map[uuid.UUID]*models.Testimonial
 }
@@ -345,5 +357,36 @@ func TestContentService_Testimonials(t *testing.T) {
 	}
 	if pubListAfter.Total != 1 {
 		t.Errorf("expected 1 approved testimonial, got %d", pubListAfter.Total)
+	}
+}
+
+func TestContentService_GetDocumentationCategories(t *testing.T) {
+	docRepo := newMockDocRepo()
+	svc := service.NewContentService(newMockNewsRepo(), docRepo, newMockTestimonialRepo(), newMockTutorialRepo())
+
+	authorID := uuid.New()
+	_, err := svc.CreateDocumentation(context.Background(), dto.CreateDocumentationRequest{
+		Title:    "Panduan Tryout",
+		Content:  "Isi panduan...",
+		Category: "Pedoman Khusus",
+	}, authorID)
+	if err != nil {
+		t.Fatalf("failed to create doc: %v", err)
+	}
+
+	categories, err := svc.GetDocumentationCategories(context.Background())
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	found := false
+	for _, c := range categories {
+		if c == "Pedoman Khusus" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected 'Pedoman Khusus' to be in categories, got %v", categories)
 	}
 }

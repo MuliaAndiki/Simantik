@@ -34,7 +34,7 @@ export function ForgotPasswordForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
       {/* Email / Username Input */}
-      <FormField id="email" label="Email / Username" error={errors?.email} required>
+      <FormField id="email" label="Email" error={errors?.email} required>
         <AuthInput
           id="email"
           type="email"

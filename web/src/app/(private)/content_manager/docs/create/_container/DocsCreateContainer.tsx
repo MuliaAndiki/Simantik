@@ -33,6 +33,8 @@ const DocsCreateContainer = () => {
     { enabled: !!editId }
   );
 
+  const { data: categories = [] } = api.content.query.cmsDocumentationCategories();
+
   const createDocMutation = api.content.mutate.createDocumentation();
   const updateDocMutation = api.content.mutate.updateDocumentation();
 
@@ -137,6 +139,7 @@ const DocsCreateContainer = () => {
       form={formCreateDoc}
       isEditMode={!!editId}
       isSubmitting={isSubmitting}
+      categories={categories}
       onFormChange={handleFormChange}
       onContentChange={handleContentChange}
       onUploadContentImage={handleUploadContentImage}

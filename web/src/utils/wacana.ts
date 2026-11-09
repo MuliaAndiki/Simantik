@@ -26,6 +26,35 @@ export function isHtml(value?: string | null): boolean {
   return /<\/?[a-z][\s\S]*>/i.test(value);
 }
 
+/**
+ * Membersihkan konten HTML yang disalin dari Microsoft Word atau editor eksternal
+ * yang membawa inline style rusak seperti `line-height: 1.15px;` (menyebabkan teks bertumpuk),
+ * tag <font face="..."> kuno, atau wrapper list tunggal <ol><li>...</li></ol>.
+ */
+export function sanitizeRichHtml(html?: string | null): string {
+  if (!html) return '';
+  let cleaned = html;
+
+  // 1. Hapus nilai line-height rusak berukuran piksel kecil (< 12px seperti 1.15px)
+  cleaned = cleaned.replace(/line-height:\s*([0-9.]+px);?/gi, (_match, val) => {
+    const num = Number.parseFloat(val);
+    return num < 12 ? '' : _match;
+  });
+
+  // 2. Hapus tag <font> bawaan Word sambil mempertahankan teks di dalamnya
+  cleaned = cleaned.replace(/<\/?font[^>]*>/gi, '');
+
+  // 3. Lepas wrapper list tunggal jika opsi terbungkus <ol type="A"><li>...</li></ol>
+  cleaned = cleaned.replace(/^<ol[^>]*>\s*<li[^>]*>([\s\S]*?)<\/li>\s*<\/ol>$/i, '$1');
+  cleaned = cleaned.replace(/^<ul[^>]*>\s*<li[^>]*>([\s\S]*?)<\/li>\s*<\/ul>$/i, '$1');
+
+  // 4. Hapus inline style background-image atau margin Word yang tidak diperlukan
+  cleaned = cleaned.replace(/\s*style="[^"]*background-image:[^"]*"/gi, '');
+  cleaned = cleaned.replace(/\s*style="[^"]*margin-bottom:\s*0in[^"]*"/gi, '');
+
+  return cleaned.trim();
+}
+
 export function normalizeWacanaKey(value?: string | null): string {
   return (value ?? '').toUpperCase().replace(/\s+/g, '_');
 }

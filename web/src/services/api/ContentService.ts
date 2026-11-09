@@ -162,6 +162,15 @@ class ContentService {
     });
   }
 
+  public async GetDocumentationCategoriesService(): Promise<TResponse<string[]>> {
+    const res = await getHttp().GetResponse<string[]>(
+      EndpointEntry.content.cmsDocumentationCategories
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
   // CMS Tutorials
   public async CreateTutorialService(
     payload: CreateTutorialRequest
@@ -226,6 +235,13 @@ class ContentService {
 
   public async DeleteTutorialService(id: string): Promise<TResponse<null>> {
     const res = await getHttp().DeleteResponse<null>(EndpointEntry.content.cmsTutorialDetail(id));
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async GetTutorialCategoriesService(): Promise<TResponse<string[]>> {
+    const res = await getHttp().GetResponse<string[]>(EndpointEntry.content.cmsTutorialCategories);
     return toServiceResponse(res, {
       message: res.message,
     });

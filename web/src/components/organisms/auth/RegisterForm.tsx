@@ -39,7 +39,7 @@ export function RegisterForm({
         />
       </FormField>
 
-      <FormField id="email" label="Email / Username" error={errors?.email} required>
+      <FormField id="email" label="Email" error={errors?.email} required>
         <Input
           id="email"
           type="email"
