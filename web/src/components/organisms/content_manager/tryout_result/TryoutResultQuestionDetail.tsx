@@ -45,7 +45,12 @@ const COGNITIVE_BADGE_MAP: Record<
     text: 'text-emerald-700',
     border: 'border-emerald-200',
   },
-  2: { label: 'C2 - Memahami', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+  2: {
+    label: 'C2 - Memahami',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
+  },
   3: {
     label: 'C3 - Mengaplikasikan',
     bg: 'bg-amber-50',
@@ -138,9 +143,19 @@ export const TryoutResultQuestionDetail: React.FC<TryoutResultQuestionDetailProp
       })
     : [];
 
+  // Helper deteksi pilihan siswa
+  const isOptionUserSelected = (opt: { id?: string; is_selected?: boolean }) =>
+    Boolean(
+      opt.is_selected ||
+        (question.selected_option_id &&
+          opt.id &&
+          opt.id.toLowerCase() === question.selected_option_id.toLowerCase()) ||
+        (opt.id && Boolean(question.answer_data?.toLowerCase().includes(opt.id.toLowerCase())))
+    );
+
   // Comparison labels
-  const studentPickedOption = (question.options || []).find((o) => o.is_selected);
-  const correctOption = (question.options || []).find((o) => o.is_correct);
+  const studentPickedOptions = (question.options || []).filter(isOptionUserSelected);
+  const correctOptions = (question.options || []).filter((o) => o.is_correct);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden space-y-6">
@@ -341,13 +356,9 @@ export const TryoutResultQuestionDetail: React.FC<TryoutResultQuestionDetailProp
                 Pilihan Siswa
               </p>
               <p className="mt-1 font-bold text-slate-800 text-sm">
-                {studentPickedOption ? (
-                  <span
-                    className={
-                      studentPickedOption.is_correct ? 'text-emerald-700' : 'text-rose-700'
-                    }
-                  >
-                    Opsi {studentPickedOption.option_label || 'Pilihan'}
+                {studentPickedOptions.length > 0 ? (
+                  <span className={isCorrect ? 'text-emerald-700' : 'text-rose-700'}>
+                    Opsi {studentPickedOptions.map((o) => o.option_label || 'Pilihan').join(', ')}
                   </span>
                 ) : (
                   <span className="text-slate-400">Tidak Dijawab</span>
@@ -360,7 +371,9 @@ export const TryoutResultQuestionDetail: React.FC<TryoutResultQuestionDetailProp
                 Kunci Jawaban Resmi
               </p>
               <p className="mt-1 font-bold text-emerald-700 text-sm">
-                Opsi {correctOption?.option_label || 'Kunci'}
+                {correctOptions.length > 0
+                  ? `Opsi ${correctOptions.map((o) => o.option_label || 'Kunci').join(', ')}`
+                  : 'Tersedia pada pedoman penilaian'}
               </p>
             </div>
 

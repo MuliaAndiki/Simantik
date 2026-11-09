@@ -344,7 +344,7 @@ export function ActionConfirmDialog({
       'bg-sky-50 border-sky-200/90 text-sky-600 dark:bg-sky-950/40 dark:border-sky-800 dark:text-sky-400';
     defaultIcon = <Info className="size-5" />;
     confirmButtonClass = 'bg-primary hover:bg-primary/90 text-white font-medium shadow-xs';
-    defaultConfirmIcon = <Info className="size-4 shrink-0" />;
+
     defaultConfirmText = 'Mengerti';
   }
 

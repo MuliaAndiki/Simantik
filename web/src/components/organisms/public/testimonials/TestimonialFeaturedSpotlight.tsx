@@ -12,10 +12,11 @@ import Image from 'next/image';
 import type { FeaturedSpotlightTestimonial } from '@/types/ui';
 
 export interface TestimonialFeaturedSpotlightProps {
-  spotlight: FeaturedSpotlightTestimonial;
+  spotlight?: FeaturedSpotlightTestimonial | null;
 }
 
 export function TestimonialFeaturedSpotlight({ spotlight }: TestimonialFeaturedSpotlightProps) {
+  if (!spotlight) return null;
   return (
     <div className="p-6 sm:p-10 rounded-[36px] bg-linear-to-tr from-amber-50/70 via-orange-50/40 to-white border border-amber-200/80 shadow-sm text-left">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">

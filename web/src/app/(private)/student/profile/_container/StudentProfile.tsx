@@ -48,21 +48,31 @@ export default function StudentProfile() {
   );
   const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
 
-  // Synchronize initial data once fetched
-  useEffect(() => {
-    if (userProfile) {
-      if (userProfile.fullName) {
-        setFullName(userProfile.fullName);
-      }
-    }
-  }, [userProfile]);
-
   const schoolOptions: ProfileSchoolOption[] = useMemo(() => {
     return (schoolsResponse?.schools ?? []).map((s) => ({
       id: s.id,
       name: s.nama,
     }));
   }, [schoolsResponse]);
+
+  // Synchronize initial data once fetched
+  useEffect(() => {
+    if (userProfile) {
+      if (userProfile.fullName) {
+        setFullName(userProfile.fullName);
+      }
+      const initialSchool = userProfile.studentProfile?.school;
+      if (initialSchool) {
+        setSchoolName(initialSchool);
+        const match = schoolOptions.find(
+          (s) => s.name.toLowerCase() === initialSchool.toLowerCase()
+        );
+        if (match) {
+          setSelectedSchoolId(match.id);
+        }
+      }
+    }
+  }, [userProfile, schoolOptions]);
 
   const handleFullNameChange = (val: string) => {
     setFullName(val);
@@ -85,8 +95,10 @@ export default function StudentProfile() {
 
   const handleResetPersonalInfo = () => {
     setFullName(userProfile?.fullName ?? '');
-    setSchoolName('');
-    setSelectedSchoolId('');
+    const initialSchool = userProfile?.studentProfile?.school ?? '';
+    setSchoolName(initialSchool);
+    const match = schoolOptions.find((s) => s.name.toLowerCase() === initialSchool.toLowerCase());
+    setSelectedSchoolId(match?.id ?? '');
     setIsDirty(false);
   };
 
@@ -98,7 +110,9 @@ export default function StudentProfile() {
       }
 
       if (selectedSchoolId) {
-        await updateMySchoolMutation.mutateAsync({ schoolId: selectedSchoolId });
+        await updateMySchoolMutation.mutateAsync({
+          schoolId: selectedSchoolId,
+        });
       }
 
       setIsDirty(false);
@@ -246,6 +260,7 @@ export default function StudentProfile() {
       schoolName={schoolName}
       onSchoolNameChange={handleSchoolNameChange}
       schoolOptions={schoolOptions}
+      selectedSchoolId={selectedSchoolId}
       onSelectSchoolId={handleSelectSchoolId}
       roleName={roleName}
       avatarSrc={avatarSrc}

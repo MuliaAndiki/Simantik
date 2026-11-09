@@ -49,6 +49,8 @@ const TutorialsCreateContainer = () => {
   const { data: existingTutorial, isLoading: isTutorialLoading } =
     api.content.query.cmsTutorialDetail(editId || '', { enabled: !!editId });
 
+  const { data: categories = [] } = api.content.query.cmsTutorialCategories();
+
   const createTutorialMutation = api.content.mutate.createTutorial();
   const updateTutorialMutation = api.content.mutate.updateTutorial();
 
@@ -152,6 +154,7 @@ const TutorialsCreateContainer = () => {
       form={formCreateTutorial}
       isEditMode={!!editId}
       isSubmitting={isSubmitting}
+      categories={categories}
       onFormChange={handleFormChange}
       onCancel={handleCancel}
       onSaveDraft={handleSaveDraft}

@@ -38,35 +38,43 @@ export const DEFAULT_LANDING_DATA: LandingPageData = {
   valueProps: [
     {
       id: 'prop-1',
-      title: 'Belajar Terarah',
+      title: 'Gratis Sepenuhnya',
       description:
-        'Materi kurikulum disusun sistematis agar alur belajarmu tidak membingungkan dan mudah dipahami bertahap.',
-      iconName: 'compass',
+        'Seluruh fitur belajar dan ujian di aplikasi ini bisa digunakan tanpa biaya apa pun.',
+      iconName: 'shield-check',
       colorTheme: 'teal',
     },
     {
       id: 'prop-2',
-      title: 'Uji Kemampuan',
+      title: 'Bebas Akses di Berbagai Perangkat',
       description:
-        'Uji pemahamanmu secara berkala lewat ribuan bank soal tryout standar asesmen nasional terkini.',
-      iconName: 'check-circle',
+        'Aplikasi ini bisa dibuka dengan lancar dari HP, tablet, maupun laptop/komputer, sehingga siswa bisa belajar kapan saja dan di mana saja.',
+      iconName: 'laptop',
       colorTheme: 'cyan',
     },
     {
       id: 'prop-3',
-      title: 'Analisis Performa',
+      title: 'Disusun oleh Ahli',
       description:
-        'Bukan hanya nilai akhir, pahami indikator kelemahan topik dan statistik ketepatan waktu pengerjaanmu.',
-      iconName: 'bar-chart',
+        'Soal dan sistemnya dibuat langsung oleh tim ahli bahasa dan ahli komputer, sehingga kualitas ujiannya sangat terjamin dan mirip dengan ujian aslinya.',
+      iconName: 'award',
       colorTheme: 'blue',
     },
     {
       id: 'prop-4',
-      title: 'Rekomendasi Personal',
+      title: 'Penilaian Lebih Akurat',
       description:
-        'Sistem cerdas SIMANTIK memilihkan modul latihan yang relevan tepat pada materi yang belum kamu kuasai.',
-      iconName: 'lightbulb',
+        'Berkat sistem ujian yang menyesuaikan kemampuan (adaptif), nilai yang didapatkan benar-benar menggambarkan kemampuan asli siswa.',
+      iconName: 'target',
       colorTheme: 'amber',
+    },
+    {
+      id: 'prop-5',
+      title: 'Umpan Balik yang Jelas',
+      description:
+        'Nilai akhir tidak hanya berupa angka, tetapi disertai catatan jelas mengenai apa saja yang masih menjadi kelemahan siswa agar bisa segera diperbaiki.',
+      iconName: 'file-text',
+      colorTheme: 'emerald',
     },
   ],
   learningCycle: [
@@ -234,38 +242,83 @@ export const DEFAULT_LANDING_DATA: LandingPageData = {
       saveHref: '/login',
     },
   },
-  news: [
+  news: [],
+  teamMembers: [
     {
-      id: 'news-1',
-      tag: 'Tips & Trik',
-      date: '12 Maret 2026',
-      title: 'Strategi Efektif Menyelesaikan Soal Numerasi dalam 60 Detik',
-      excerpt:
-        'Pelajari trik dekonstruksi soal panjang, eliminasi cepat opsi distractor, serta optimasi manajemen waktu saat menghadapi soal data grafik.',
-      slug: 'strategi-efektif-soal-numerasi-60-detik',
-      imageUrl: '/illustrations/student-learning.jpg',
+      id: 'team-1',
+      name: 'Dr. Afnita, M.Pd.',
+      role: 'Dosen PBSI UNP',
+      institution: 'Universitas Negeri Padang',
+      tag: 'Dosen Ahli Bahasa',
+      imageSrc:
+        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
     },
     {
-      id: 'news-2',
-      tag: 'Kebijakan',
-      date: '8 Maret 2026',
-      title: 'Panduan Asesmen Kemampuan Akademik Terbaru 2026',
-      excerpt:
-        'Membedah kisi-kisi standar soal baru, proporsi pembobotan penalaran kognitif, dan tips adaptasi terhadap format soal stimulus teks ganda.',
-      slug: 'panduan-asesmen-kemampuan-akademik-terbaru-2026',
-      imageUrl: '/illustrations/student-evaluation.jpg',
+      id: 'team-2',
+      name: 'Dr. Amril Amir, M.Pd.',
+      role: 'Dosen PBSI UNP',
+      institution: 'Universitas Negeri Padang',
+      tag: 'Dosen Ahli Bahasa',
+      imageSrc:
+        'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80',
     },
     {
-      id: 'news-3',
-      tag: 'Studi Efektif',
-      date: '3 Maret 2026',
-      title: 'Membangun Konsistensi Belajar dengan Metode Siklus Tertutup',
-      excerpt:
-        'Riset membuktikan evaluasi mingguan dengan rekomendasi terarah meningkatkan retensi materi hingga 3x lipat dibanding sistem kebut semalam.',
-      slug: 'membangun-konsistensi-belajar-metode-siklus-tertutup',
-      imageUrl: '/illustrations/student-recommendation.jpg',
+      id: 'team-3',
+      name: 'Dr. Tressyalina, M.Pd.',
+      role: 'Dosen PBSI UNP',
+      institution: 'Universitas Negeri Padang',
+      tag: 'Dosen Ahli Bahasa',
+      imageSrc:
+        'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      id: 'team-4',
+      name: 'Faiza Nurrahmah, M.Pd.',
+      role: 'Mahasiswa S-3 Ilmu Keguruan Bahasa',
+      institution: 'Universitas Negeri Padang',
+      tag: 'Riset Pembelajaran',
+      imageSrc:
+        'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      id: 'team-5',
+      name: 'Imam Andhika, M.Kom.',
+      role: 'Tim Perancang Web-App SIMANTIK',
+      institution: 'Sistem Informasi & Rekayasa Perangkat Lunak',
+      tag: 'Perancang Sistem',
+      imageSrc:
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      id: 'team-6',
+      name: 'Mulia Andiki',
+      role: 'Tim Perancang Web-App SIMANTIK',
+      institution: 'Pengembang Fullstack & Arsitektur Cloud',
+      tag: 'Perancang Sistem',
+      imageSrc:
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      id: 'team-7',
+      name: 'Nurul Adfi Sabila',
+      role: 'Mahasiswa S-1 PBSI UNP',
+      institution: 'Universitas Negeri Padang',
+      tag: 'Pengembangan Konten',
+      imageSrc:
+        'https://images.unsplash.com/photo-1534751516642-a171edd25218?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      id: 'team-8',
+      name: 'Indah Permata Sari',
+      role: 'Mahasiswa S-1 PBSI UNP',
+      institution: 'Universitas Negeri Padang',
+      tag: 'Pengembangan Konten',
+      imageSrc:
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80',
     },
   ],
+  videoTutorial: undefined,
+  documentationHighlights: [],
 };
 
 // ============================================================================
@@ -275,87 +328,14 @@ export const DEFAULT_LANDING_DATA: LandingPageData = {
 export const DEFAULT_DOCUMENTATION_DATA: DocumentationPageData = {
   popularKeywords: ['Pengerjaan Tryout', 'Reset Password', 'Format Soal MCMA'],
   categories: [
-    { id: 'all', label: 'Semua', count: 24 },
-    { id: 'guide', label: 'Panduan Penggunaan', count: 6 },
-    { id: 'account', label: 'Akun', count: 4 },
-    { id: 'practice', label: 'Latihan', count: 5 },
-    { id: 'tryout', label: 'Tryout', count: 5 },
-    { id: 'features', label: 'Fitur SIMANTIK', count: 4 },
+    { id: 'all', label: 'Semua', count: 0 },
+    { id: 'guide', label: 'Panduan Penggunaan', count: 0 },
+    { id: 'account', label: 'Akun', count: 0 },
+    { id: 'practice', label: 'Latihan', count: 0 },
+    { id: 'tryout', label: 'Tryout', count: 0 },
+    { id: 'features', label: 'Fitur SIMANTIK', count: 0 },
   ],
-  articles: [
-    {
-      id: 'doc-1',
-      title: 'Cara Menggunakan SIMANTIK',
-      slug: 'cara-menggunakan-simantik',
-      excerpt:
-        'Pelajari cara navigasi modul materi, latihan soal terarah, dan alur simulasi ujian nasional Bahasa Indonesia dengan optimal di perangkat apa pun.',
-      category: 'Panduan Penggunaan',
-      categoryColorClass: 'bg-cyan-50 text-teal-800 border-cyan-200',
-      readTimeMinutes: 4,
-      publishedDate: '21 Sep 2026',
-      href: '/help',
-    },
-    {
-      id: 'doc-2',
-      title: 'Panduan Mengikuti Latihan',
-      slug: 'panduan-mengikuti-latihan',
-      excerpt:
-        'Ketahui langkah-langkah mengerjakan latihan Bahasa Indonesia, aturan anti-curang otomatis, pelacakan waktu butir, dan review pembahasan.',
-      category: 'Latihan',
-      categoryColorClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-      readTimeMinutes: 5,
-      publishedDate: '20 Sep 2026',
-      href: '/help',
-    },
-    {
-      id: 'doc-3',
-      title: 'Panduan Mengikuti Tryout',
-      slug: 'panduan-mengikuti-tryout',
-      excerpt:
-        'Pelajari cara mengikuti simulasi tryout berbatas waktu di SIMANTIK dengan matriks 150 butir kognitif C1–C5 dan pembobotan skor standar.',
-      category: 'Tryout',
-      categoryColorClass: 'bg-amber-50 text-amber-800 border-amber-200',
-      readTimeMinutes: 6,
-      publishedDate: '19 Sep 2026',
-      href: '/help',
-    },
-    {
-      id: 'doc-4',
-      title: 'Pengaturan Akun & Keamanan Siswa',
-      slug: 'pengaturan-akun-keamanan-siswa',
-      excerpt:
-        'Panduan verifikasi email OTP, aktivasi Google Auth, ganti kata sandi berkala, serta tips menjaga kerahasiaan identitas digital saat ujian.',
-      category: 'Akun',
-      categoryColorClass: 'bg-slate-100 text-slate-800 border-slate-200',
-      readTimeMinutes: 3,
-      publishedDate: '18 Sep 2026',
-      href: '/help',
-    },
-    {
-      id: 'doc-5',
-      title: 'Sistem Pengacakan Bank Soal Cerdas',
-      slug: 'sistem-pengacakan-bank-soal-cerdas',
-      excerpt:
-        'Penjelasan algoritma cerdas pemilihan butir soal adaptif berbasis capaian Kurikulum Merdeka dan pemetaan tingkat kemahiran.',
-      category: 'Fitur SIMANTIK',
-      categoryColorClass: 'bg-sky-50 text-sky-800 border-sky-200',
-      readTimeMinutes: 5,
-      publishedDate: '15 Sep 2026',
-      href: '/help',
-    },
-    {
-      id: 'doc-6',
-      title: 'Format Soal PGK & Benar–Salah',
-      slug: 'format-soal-pgk-benar-salah',
-      excerpt:
-        'Mengenal instrumen penilaian modern: Pilihan Ganda Kompleks (MCMA), penalaran stimulus wacana berantai, dan matriks evaluasi benar-salah.',
-      category: 'Latihan',
-      categoryColorClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-      readTimeMinutes: 4,
-      publishedDate: '12 Sep 2026',
-      href: '/help',
-    },
-  ],
+  articles: [],
 };
 
 // ============================================================================
@@ -370,84 +350,14 @@ export const DEFAULT_TUTORIALS_DATA: TutorialsPageData = {
     'Analisis IRT',
   ],
   categories: [
-    { id: 'all', label: 'Semua Tutorial', count: 12 },
-    { id: 'basics', label: 'Panduan Dasar', count: 4 },
-    { id: 'practice', label: 'Latihan Mandiri', count: 3 },
-    { id: 'tryout', label: 'Simulasi Tryout', count: 3 },
-    { id: 'account', label: 'Akun & Profil', count: 2 },
+    { id: 'all', label: 'Semua Tutorial', count: 0 },
+    { id: 'basics', label: 'Panduan Dasar', count: 0 },
+    { id: 'practice', label: 'Latihan Mandiri', count: 0 },
+    { id: 'tryout', label: 'Simulasi Tryout', count: 0 },
+    { id: 'account', label: 'Akun & Profil', count: 0 },
   ],
-  featuredVideo: {
-    id: 'feat-vid-1',
-    title: 'Cara Menggunakan SIMANTIK dari Awal',
-    description:
-      'Panduan komprehensif eksplorasi beranda siswa, memilih modul capaian Kurikulum Merdeka, dan navigasi bank soal tanpa hambatan teknis.',
-    moduleInfo: 'PANDUAN DASAR • Modul 01 / Orientasi',
-    duration: '04:25 Menit',
-    badgeLabel: 'Video Terpopuler',
-    videoQuality: 'Resolusi Full HD',
-    languageTrack: 'Teks Bahasa Indonesia',
-    featureCheckpoints: [
-      'Tersedia Video HD • Langkah Bernomor Terstruktur',
-      'Termasuk Pengaturan Mode Ujian & Ukuran Huruf Soal',
-    ],
-    thumbnailUrl: '/illustrations/student-learning.jpg',
-  },
-  videos: [
-    {
-      id: 'vid-1',
-      title: 'Cara Menggunakan SIMANTIK',
-      description:
-        'Panduan dasar menggunakan fitur utama SIMANTIK, aktivasi akun, dan navigasi menu belajar.',
-      category: 'Panduan Dasar',
-      duration: '03:15',
-      thumbnailUrl: '/illustrations/student-learning.jpg',
-    },
-    {
-      id: 'vid-2',
-      title: 'Cara Mengikuti Latihan',
-      description:
-        'Panduan menggunakan fitur latihan Bahasa Indonesia, jenis instrumen soal MCMA, dan pembahasan.',
-      category: 'Latihan Mandiri',
-      duration: '05:40',
-      thumbnailUrl: '/illustrations/student-evaluation.jpg',
-    },
-    {
-      id: 'vid-3',
-      title: 'Cara Mengikuti Tryout',
-      description:
-        'Panduan mengikuti tryout dari awal sampai selesai, manajemen alokasi waktu 120 menit, dan sistem anti-curang.',
-      category: 'Simulasi Tryout',
-      duration: '06:10',
-      thumbnailUrl: '/illustrations/student-recommendation.jpg',
-    },
-    {
-      id: 'vid-4',
-      title: 'Menjawab Soal Tipe Benar / Salah',
-      description:
-        'Teknik menganalisis stimulus wacana panjang dan menandai matriks evaluasi benar-salah secara presisi.',
-      category: 'Latihan Mandiri',
-      duration: '02:50',
-      thumbnailUrl: '/illustrations/student-learning.jpg',
-    },
-    {
-      id: 'vid-5',
-      title: 'Membaca Rapor Skor IRT & Analisis...',
-      description:
-        'Memahami persentil nasional, diagnosis sub-kompetensi morfologi dan penalaran wacana pasca-ujian.',
-      category: 'Evaluasi & Rapor',
-      duration: '04:15',
-      thumbnailUrl: '/illustrations/student-evaluation.jpg',
-    },
-    {
-      id: 'vid-6',
-      title: 'Sinkronisasi NISN & Keamanan Sandi',
-      description:
-        'Cara menghubungkan akun dengan data sekolah Dapodik dan verifikasi keamanan akun secara berkala.',
-      category: 'Akun & Profil',
-      duration: '03:00',
-      thumbnailUrl: '/illustrations/student-recommendation.jpg',
-    },
-  ],
+  featuredVideo: null,
+  videos: [],
 };
 
 // ============================================================================
@@ -472,92 +382,6 @@ export const DEFAULT_TESTIMONIALS_DATA: TestimonialsPageData = {
       sublabel: 'Se-Indonesia',
     },
   ],
-  featuredSpotlight: {
-    name: 'Anindya Putri Rahmadani',
-    role: 'Siswa Kelas XII SMA • Peraih Skor Tertinggi Simulasi TKA 2026',
-    school: 'SMAN 1 Jakarta',
-    province: 'Provinsi DKI Jakarta',
-    academicTarget: 'Fakultas Hukum Universitas Indonesia',
-    quote:
-      '“SIMANTIK membantu saya lebih terbiasa mengerjakan berbagai jenis soal Bahasa Indonesia. Analisis mendalam per sub–topik membuat persiapan TKA terasa seperti permainan strategi yang terarah, bukan beban hafalan!”',
-    badges: ['Top Scorer Tryout Nasional #1', 'Siswa Aktif Terakreditasi • DKI Jakarta'],
-    tryoutCompletedCount: 48,
-    calibratedScore: 780,
-    maxScore: 800,
-    avatarUrl: '/avatars/1.png',
-  },
-  testimonials: [
-    {
-      id: 'testi-1',
-      authorName: 'Arya Satria',
-      authorRole: 'Siswa SMA',
-      school: 'SMAN 5 Surabaya',
-      province: 'Jawa Timur',
-      quote:
-        '“Latihan format MCMA kompleks di SIMANTIK membuat saya terbiasa membaca opsi jawaban kritis yang mirip-mirip tapi beda nuansa makna.”',
-      categoryTag: 'Siswa SMA',
-      avatarUrl: '/avatars/2.png',
-      rating: 5,
-    },
-    {
-      id: 'testi-2',
-      authorName: 'Hendra Wijaya, S.Pd.',
-      authorRole: 'Guru Bahasa Indonesia SMA Al-Azhar',
-      school: 'SMA Al-Azhar',
-      province: 'DKI Jakarta',
-      quote:
-        '“Bank soal di SIMANTIK sangat kontekstual dan sesuai standar Asesmen Nasional. Siswa kami jadi terbiasa dengan model bacaan sains, sosial, dan sastra.”',
-      categoryTag: 'Guru & Pembimbing',
-      avatarUrl: '/avatars/3.png',
-      rating: 5,
-    },
-    {
-      id: 'testi-3',
-      authorName: 'Bima Danuarta',
-      authorRole: 'Siswa SMK',
-      school: 'SMKN 2 Bandung',
-      province: 'Jawa Barat',
-      quote:
-        '“Saya siswa SMK kejuruan teknologi yang awalnya kurang pede dengan tes literasi. Berkat penjelasan konsep di tiap pembahasan, skor saya melonjak drastis.”',
-      categoryTag: 'Siswa SMK',
-      avatarUrl: '/avatars/4.png',
-      rating: 5,
-    },
-    {
-      id: 'testi-4',
-      authorName: 'Siti Aisyah',
-      authorRole: 'Siswa SMA',
-      school: 'SMAN 1 Denpasar',
-      province: 'Bali',
-      quote:
-        '“Sistem peringatan tab dan timer adaptif bikin mental ujian terbentuk. Jadi pas tryout resmi serentak di lab komputer sekolah sama sekali tidak panik.”',
-      categoryTag: 'Siswa SMA',
-      avatarUrl: '/avatars/5.png',
-      rating: 5,
-    },
-    {
-      id: 'testi-5',
-      authorName: 'Nurul Hikmah, M.Pd.',
-      authorRole: 'Koordinator Kurikulum Nasional',
-      school: 'Konsultan Pendidikan',
-      province: 'DKI Jakarta',
-      quote:
-        '“Fitur pembagian pilar pemahaman tekstual, inferensial, dan evaluasi sangat membantu guru mendiagnosis kekurangan masing-masing murid.”',
-      categoryTag: 'Guru & Konsultan',
-      avatarUrl: '/avatars/6.png',
-      rating: 5,
-    },
-    {
-      id: 'testi-6',
-      authorName: 'Fikri Pratama',
-      authorRole: 'Mahasiswa Sastra Indonesia UI',
-      school: 'Alumni SMAN 8 Jakarta',
-      province: 'DKI Jakarta',
-      quote:
-        '“Kunci lolos seleksi PTN impian saya ada di konsistensi latihan soal inferensial SIMANTIK tiap hari. Sangat direkomendasikan untuk pejuang SNBT & TKA!”',
-      categoryTag: 'Alumni TKA Berprestasi',
-      avatarUrl: '/avatars/7.png',
-      rating: 5,
-    },
-  ],
+  featuredSpotlight: null,
+  testimonials: [],
 };

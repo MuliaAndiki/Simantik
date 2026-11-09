@@ -57,9 +57,11 @@ type Material struct {
 	ModuleID     uuid.UUID      `gorm:"type:uuid;not null;index" json:"moduleId"`
 	CompetencyID *uuid.UUID     `gorm:"type:uuid;index" json:"competencyId"` // linked competency for recommendation
 	Title        string         `gorm:"type:varchar(255);not null" json:"title"`
-	Description  string         `gorm:"type:text" json:"description"`
-	Content      string         `gorm:"type:text;not null" json:"content"`
-	Type         MaterialType   `gorm:"type:varchar(20);not null;default:'text'" json:"type"`
+	Description        string         `gorm:"type:text" json:"description"`
+	Content            string         `gorm:"type:text;not null" json:"content"`
+	LearningObjectives string         `gorm:"type:jsonb;default:'[]'" json:"learningObjectives"`
+	StructureItems     string         `gorm:"type:jsonb;default:'[]'" json:"structureItems"`
+	Type               MaterialType   `gorm:"type:varchar(20);not null;default:'text'" json:"type"`
 	DisplayOrder int            `gorm:"not null;default:0" json:"displayOrder"`
 	Status       ContentStatus  `gorm:"type:varchar(20);not null;default:'draft'" json:"status"`
 	CreatedBy    uuid.UUID      `gorm:"type:uuid;not null;index" json:"createdBy"`

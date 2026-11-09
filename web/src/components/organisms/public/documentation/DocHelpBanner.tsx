@@ -10,11 +10,6 @@ export function DocHelpBanner() {
 
         {/* Text */}
         <div className="space-y-3 max-w-2xl relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-900/80 border border-teal-500/40 text-teal-300 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Dukungan Siswa &amp; Guru 24/7</span>
-          </div>
-
           <h3 className="text-2xl sm:text-3xl font-black tracking-tight leading-snug">
             Masih memiliki pertanyaan seputar ujian atau kendala teknis?
           </h3>

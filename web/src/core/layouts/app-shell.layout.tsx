@@ -46,7 +46,6 @@ export function AppShell({ children }: AppShellProps) {
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  <NotificationDropdown />
                   <ProfileDropdown />
                 </div>
               </div>

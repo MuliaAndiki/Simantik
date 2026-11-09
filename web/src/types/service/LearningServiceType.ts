@@ -109,6 +109,8 @@ export interface CreateMaterialRequest {
   title: string;
   description?: string;
   content: string;
+  learning_objectives?: string;
+  structure_items?: string;
   type: MaterialType | string;
   display_order?: number;
 }
@@ -122,6 +124,8 @@ export interface UpdateMaterialRequest {
   title?: string;
   description?: string;
   content?: string;
+  learning_objectives?: string;
+  structure_items?: string;
   type?: MaterialType | string;
   display_order?: number;
   status?: ContentStatus | string;
@@ -139,6 +143,8 @@ export interface MaterialResponse {
   title: string;
   description: string;
   content: string;
+  learning_objectives?: string;
+  structure_items?: string;
   type: string;
   display_order: number;
   status: string;

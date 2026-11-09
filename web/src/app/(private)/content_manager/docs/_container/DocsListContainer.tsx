@@ -35,8 +35,11 @@ const DocsListContainer = () => {
   const docs = docsQuery.data?.documentation ?? [];
   const totalItems = docsQuery.data?.total ?? 0;
 
+  const categoriesQuery = api.content.query.cmsDocumentationCategories();
+  const allCategories = categoriesQuery.data ?? [];
+
   const categoryOptions = useMemo(() => {
-    const distinct = new Set<string>();
+    const distinct = new Set<string>(allCategories);
     for (const item of docs) {
       if (item.category?.trim()) distinct.add(item.category.trim());
     }
@@ -46,7 +49,7 @@ const DocsListContainer = () => {
         .sort()
         .map((cat) => ({ value: cat, label: cat })),
     ];
-  }, [docs]);
+  }, [allCategories, docs]);
 
   const stats = useMemo<DocsStats>(() => {
     let published = 0;

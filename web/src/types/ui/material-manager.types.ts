@@ -1,6 +1,6 @@
 import type { CreateLearningModuleRequest, SchoolLevel } from '@/types/service';
 
-export type MaterialStatusType = 'PUBLISHED' | 'IN_REVIEW' | 'DRAFT';
+export type MaterialStatusType = 'PUBLISHED' | 'IN_REVIEW' | 'DRAFT' | 'ARCHIVED';
 
 export type InspectorViewMode = 'module_materials' | 'material_detail';
 
@@ -31,6 +31,11 @@ export const MODULE_STATUS_OPTIONS = [
     value: 'DRAFT',
     label: 'Draft',
     color: 'bg-[#94A3B8]',
+  },
+  {
+    value: 'ARCHIVED',
+    label: 'Archived',
+    color: 'bg-zinc-400',
   },
 ] satisfies {
   value: MaterialStatusType;

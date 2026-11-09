@@ -13,14 +13,15 @@ export function LandingDiagnosticsSection({ diagnostics }: LandingDiagnosticsSec
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <span className="text-[11px] font-bold text-teal-800 uppercase tracking-wider block">
-            Analisis Diagnostik Mendalam
+            Rapor Evaluasi & Pembahasan Mendalam
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Pahami Perkembanganmu
+            Pahami Kekuatan & Area yang Perlu Diperbaiki
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed">
-            Hasil asesmen tidak hanya menyajikan angka mentah, tetapi mengurai kompetensi spesifik
-            yang sudah kamu kuasai dan area yang membutuhkan atensi segera.
+            Setelah selesai try out, dapatkan rincian hasil belajar yang memberi tahu bagian mana
+            yang sudah dikuasai dan apa yang perlu dipelajari lagi. Hasil evaluasi otomatis
+            dikirimkan ke email siswa dalam bentuk dokumen PDF.
           </p>
         </div>
 

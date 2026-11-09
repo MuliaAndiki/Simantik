@@ -1,4 +1,5 @@
 import React from 'react';
+import { CategoryCreatableCombobox } from '@/components/molecules/input/CategoryCreatableCombobox';
 import type { ContentStatus } from '@/types/model';
 
 const TUTORIAL_STATUS_OPTIONS: { value: ContentStatus; label: string }[] = [
@@ -21,6 +22,7 @@ export interface TutorialsCreateFormState {
 interface TutorialsCreateMetadataCardProps {
   form: TutorialsCreateFormState;
   isEditMode: boolean;
+  categories?: string[];
   onChange: <K extends keyof TutorialsCreateFormState>(
     field: K,
     value: TutorialsCreateFormState[K]
@@ -50,6 +52,7 @@ const inputClass =
 export const TutorialsCreateMetadataCard: React.FC<TutorialsCreateMetadataCardProps> = ({
   form,
   isEditMode,
+  categories = [],
   onChange,
 }) => {
   const embedUrl = toEmbedUrl(form.youtube_url ?? '');
@@ -129,12 +132,11 @@ export const TutorialsCreateMetadataCard: React.FC<TutorialsCreateMetadataCardPr
           <label className="block text-xs font-bold text-slate-700">
             Kategori <span className="text-rose-500">*</span>
           </label>
-          <input
-            type="text"
+          <CategoryCreatableCombobox
             value={form.category}
-            onChange={(e) => onChange('category', e.target.value)}
-            placeholder="Contoh: Panduan, Bantuan"
-            className={inputClass}
+            onChange={(val) => onChange('category', val)}
+            categories={categories}
+            placeholder="Pilih atau ketik kategori baru..."
           />
         </div>
 

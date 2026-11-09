@@ -74,39 +74,45 @@ type PaginatedModulesResponse struct {
 // ─── Material DTOs ───────────────────────────────────────────────────────────
 
 type CreateMaterialRequest struct {
-	ModuleID     uuid.UUID  `json:"module_id" validate:"required"`
-	CompetencyID *uuid.UUID `json:"competency_id"`
-	Title        string     `json:"title" validate:"required,min=3,max=255"`
-	Description  string     `json:"description"`
-	Content      string     `json:"content" validate:"required"`
-	Type         string     `json:"type" validate:"required,oneof=text document video"`
-	DisplayOrder int        `json:"display_order"`
+	ModuleID           uuid.UUID  `json:"module_id" validate:"required"`
+	CompetencyID       *uuid.UUID `json:"competency_id"`
+	Title              string     `json:"title" validate:"required,min=3,max=255"`
+	Description        string     `json:"description"`
+	Content            string     `json:"content" validate:"required"`
+	LearningObjectives string     `json:"learning_objectives"`
+	StructureItems     string     `json:"structure_items"`
+	Type               string     `json:"type" validate:"required,oneof=text document video"`
+	DisplayOrder       int        `json:"display_order"`
 }
 
 type UpdateMaterialRequest struct {
-	CompetencyID *uuid.UUID `json:"competency_id"`
-	Title        string     `json:"title" validate:"omitempty,min=3,max=255"`
-	Description  string     `json:"description"`
-	Content      string     `json:"content"`
-	Type         string     `json:"type" validate:"omitempty,oneof=text document video"`
-	DisplayOrder int        `json:"display_order"`
-	Status       string     `json:"status" validate:"omitempty,oneof=draft published archived"`
+	CompetencyID       *uuid.UUID `json:"competency_id"`
+	Title              string     `json:"title" validate:"omitempty,min=3,max=255"`
+	Description        string     `json:"description"`
+	Content            string     `json:"content"`
+	LearningObjectives *string    `json:"learning_objectives"`
+	StructureItems     *string    `json:"structure_items"`
+	Type               string     `json:"type" validate:"omitempty,oneof=text document video"`
+	DisplayOrder       int        `json:"display_order"`
+	Status             string     `json:"status" validate:"omitempty,oneof=draft published archived review in_review"`
 }
 
 type MaterialResponse struct {
-	ID             uuid.UUID  `json:"id"`
-	ModuleID       uuid.UUID  `json:"module_id"`
-	CompetencyID   *uuid.UUID `json:"competency_id,omitempty"`
-	CompetencyName string     `json:"competency_name,omitempty"`
-	Title          string     `json:"title"`
-	Description    string     `json:"description"`
-	Content        string     `json:"content"`
-	Type           string     `json:"type"`
-	DisplayOrder   int        `json:"display_order"`
-	Status         string     `json:"status"`
-	IsCompleted    bool       `json:"is_completed"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
+	ID                 uuid.UUID  `json:"id"`
+	ModuleID           uuid.UUID  `json:"module_id"`
+	CompetencyID       *uuid.UUID `json:"competency_id,omitempty"`
+	CompetencyName     string     `json:"competency_name,omitempty"`
+	Title              string     `json:"title"`
+	Description        string     `json:"description"`
+	Content            string     `json:"content"`
+	LearningObjectives string     `json:"learning_objectives"`
+	StructureItems     string     `json:"structure_items"`
+	Type               string     `json:"type"`
+	DisplayOrder       int        `json:"display_order"`
+	Status             string     `json:"status"`
+	IsCompleted        bool       `json:"is_completed"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 type ListMaterialFilter struct {

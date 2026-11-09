@@ -10,6 +10,7 @@ export interface DocsCreateTemplateProps {
   form: CreateDocumentationRequest;
   isEditMode: boolean;
   isSubmitting: boolean;
+  categories?: string[];
   onFormChange: <K extends keyof CreateDocumentationRequest>(
     field: K,
     value: CreateDocumentationRequest[K]
@@ -26,6 +27,7 @@ const DocsCreateTemplate: React.FC<DocsCreateTemplateProps> = ({
   form,
   isEditMode,
   isSubmitting,
+  categories = [],
   onFormChange,
   onContentChange,
   onUploadContentImage,
@@ -45,7 +47,12 @@ const DocsCreateTemplate: React.FC<DocsCreateTemplateProps> = ({
         </p>
       </div>
 
-      <DocsCreateMetadataCard form={form} isEditMode={isEditMode} onChange={onFormChange} />
+      <DocsCreateMetadataCard
+        form={form}
+        isEditMode={isEditMode}
+        categories={categories}
+        onChange={onFormChange}
+      />
 
       <NewsCreateEditorCard
         content={form.content}

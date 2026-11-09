@@ -106,8 +106,10 @@ export const queryKey = {
     cmsNewsDetail: (id: string) => ['content', 'cmsNewsDetail', id] as const,
     cmsDocumentation: (query?: Record<string, any>) =>
       ['content', 'cmsDocumentation', query] as const,
+    cmsDocumentationCategories: () => ['content', 'cmsDocumentationCategories'] as const,
     cmsDocumentationDetail: (id: string) => ['content', 'cmsDocumentationDetail', id] as const,
     cmsTutorials: (query?: Record<string, any>) => ['content', 'cmsTutorials', query] as const,
+    cmsTutorialCategories: () => ['content', 'cmsTutorialCategories'] as const,
     cmsTutorialDetail: (id: string) => ['content', 'cmsTutorialDetail', id] as const,
     cmsTestimonials: (query?: Record<string, any>) =>
       ['content', 'cmsTestimonials', query] as const,

@@ -107,7 +107,7 @@ func (h *LearningHandler) UpdateModuleStatus(c *fiber.Ctx) error {
 	}
 
 	type statusReq struct {
-		Status string `json:"status" validate:"required,oneof=draft published archived"`
+		Status string `json:"status" validate:"required,oneof=draft published archived review in_review"`
 	}
 	var req statusReq
 	if err := c.BodyParser(&req); err != nil {
@@ -117,12 +117,17 @@ func (h *LearningHandler) UpdateModuleStatus(c *fiber.Ctx) error {
 		return utils.ValidationError(c, errs)
 	}
 
+	status := req.Status
+	if status == "in_review" {
+		status = "review"
+	}
+
 	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
 	if !ok {
 		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
 	}
 
-	res, err := h.learnService.UpdateModuleStatus(c.UserContext(), id, req.Status, userID)
+	res, err := h.learnService.UpdateModuleStatus(c.UserContext(), id, status, userID)
 	if err != nil {
 		if errors.Is(err, service.ErrModuleNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)
@@ -271,7 +276,7 @@ func (h *LearningHandler) UpdateMaterialStatus(c *fiber.Ctx) error {
 	}
 
 	type statusReq struct {
-		Status string `json:"status" validate:"required,oneof=draft published archived"`
+		Status string `json:"status" validate:"required,oneof=draft published archived review in_review"`
 	}
 	var req statusReq
 	if err := c.BodyParser(&req); err != nil {
@@ -281,12 +286,17 @@ func (h *LearningHandler) UpdateMaterialStatus(c *fiber.Ctx) error {
 		return utils.ValidationError(c, errs)
 	}
 
+	status := req.Status
+	if status == "in_review" {
+		status = "review"
+	}
+
 	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
 	if !ok {
 		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
 	}
 
-	res, err := h.learnService.UpdateMaterialStatus(c.UserContext(), id, req.Status, userID)
+	res, err := h.learnService.UpdateMaterialStatus(c.UserContext(), id, status, userID)
 	if err != nil {
 		if errors.Is(err, service.ErrMaterialNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, err.Error(), err)

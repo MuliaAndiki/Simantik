@@ -1,18 +1,28 @@
 import React from 'react';
 import { MaterialCreateTemplate } from '@/components/templates/content_manager';
-import type { LearningObjectiveItem, MaterialMetadata, RelevantTopicTag } from '@/types/ui';
+import type {
+  LearningObjectiveItem,
+  MaterialMetadata,
+  PreviewDocumentStructure,
+  RelevantTopicTag,
+} from '@/types/ui';
 
 export interface MaterialCreatePageProps {
   metadata?: MaterialMetadata;
   categories?: string[];
   content?: string;
   objectives?: LearningObjectiveItem[];
+  structureItems?: PreviewDocumentStructure[];
   topics?: RelevantTopicTag[];
   onMetadataChange?: (next: Partial<MaterialMetadata>) => void;
   onContentChange?: (content: string) => void;
   onWordCountChange?: (count: number) => void;
   onUploadImage?: (file: File) => Promise<string>;
   onDeleteImage?: (url: string) => Promise<void>;
+  onAddObjective?: (text: string) => void;
+  onRemoveObjective?: (id: string) => void;
+  onAddStructureItem?: (label: string, text: string) => void;
+  onRemoveStructureItem?: (index: number) => void;
   onAddTopic?: (label: string) => void;
   onRemoveTopic?: (id: string) => void;
   isAddingTopic?: boolean;
@@ -33,12 +43,17 @@ export const MaterialCreatePage: React.FC<MaterialCreatePageProps> = ({
   categories,
   content,
   objectives,
+  structureItems,
   topics,
   onMetadataChange,
   onContentChange,
   onWordCountChange,
   onUploadImage,
   onDeleteImage,
+  onAddObjective,
+  onRemoveObjective,
+  onAddStructureItem,
+  onRemoveStructureItem,
   onAddTopic,
   onRemoveTopic,
   isAddingTopic,
@@ -70,6 +85,7 @@ export const MaterialCreatePage: React.FC<MaterialCreatePageProps> = ({
       }}
       objectivesProps={{
         objectives,
+        structureItems,
         topics,
         isAddingTopic,
         newTopicInput,
@@ -78,6 +94,10 @@ export const MaterialCreatePage: React.FC<MaterialCreatePageProps> = ({
         onCancelAddTopic,
         onConfirmAddTopic,
         onRemoveTopic,
+        onAddObjective,
+        onRemoveObjective,
+        onAddStructureItem,
+        onRemoveStructureItem,
       }}
       actionBarProps={{
         onCancel,

@@ -55,6 +55,18 @@ export function useCmsDocumentationDetail(id: string, options?: { enabled?: bool
   });
 }
 
+export function useCmsDocumentationCategories(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.content.cmsDocumentationCategories(),
+    queryFn: async () => {
+      const res = await Api.content.GetDocumentationCategoriesService();
+      return res.data ?? [];
+    },
+    enabled: options?.enabled ?? true,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useCmsTutorialList(query?: ListTutorialFilter, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKey.content.cmsTutorials(query),
@@ -74,6 +86,18 @@ export function useCmsTutorialDetail(id: string, options?: { enabled?: boolean }
       return res.data;
     },
     enabled: !!id && (options?.enabled ?? true),
+  });
+}
+
+export function useCmsTutorialCategories(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.content.cmsTutorialCategories(),
+    queryFn: async () => {
+      const res = await Api.content.GetTutorialCategoriesService();
+      return res.data ?? [];
+    },
+    enabled: options?.enabled ?? true,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

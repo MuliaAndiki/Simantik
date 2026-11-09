@@ -72,6 +72,11 @@ export default function AppFooter({ className, themeVariant = 'dark' }: AppFoote
                 </Link>
               </li>
               <li>
+                <Link href="/news" className="hover:text-amber-400 transition-colors">
+                  Warta &amp; Berita
+                </Link>
+              </li>
+              <li>
                 <Link href="/documentation" className="hover:text-amber-400 transition-colors">
                   Documentation Hub
                 </Link>
