@@ -5,8 +5,6 @@ export * from "./auth/OtpInput";
 export * from "./auth/PasswordField";
 export * from "./auth/SchoolSearchSelect";
 export * from "./auth/SocialLoginButton";
-export * from "./school/MySchoolSubmissionBanner";
-export * from "./school/SchoolFormFields";
 export * from "./CountdownTimer";
 export * from "./content-card";
 export * from "./dialog";

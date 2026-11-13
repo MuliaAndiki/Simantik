@@ -70,11 +70,6 @@ export default function StudentProfile() {
     [mySubmissionsResponse],
   );
 
-  const mySchoolSubmissions = useMemo(
-    () => mySubmissionsResponse ?? [],
-    [mySubmissionsResponse],
-  );
-
   const schoolOptions: ProfileSchoolOption[] = useMemo(() => {
     const optionMap = new Map<string, ProfileSchoolOption>();
     for (const item of schoolsResponse?.schools ?? []) {
