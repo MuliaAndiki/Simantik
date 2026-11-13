@@ -1,9 +1,20 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
-import sharp from 'sharp';
 import { SITE_BADGE, SITE_SHORT_NAME, SITE_SUBTITLE, SITE_TAGLINE } from '@/configs/site.config';
 import { resolveAbsoluteUrl } from '@/utils/seo-sitemap.util';
+
+type SharpFactory = typeof import('sharp')['default'];
+let sharpLoaderPromise: Promise<SharpFactory | null> | null = null;
+
+async function getSharp(): Promise<SharpFactory | null> {
+  if (!sharpLoaderPromise) {
+    sharpLoaderPromise = import('sharp')
+      .then((mod) => (mod.default ?? (mod as unknown as SharpFactory)) || null)
+      .catch(() => null);
+  }
+  return sharpLoaderPromise;
+}
 
 export const OG_IMAGE_SIZE = {
   width: 1200,
@@ -58,12 +69,27 @@ async function resolveSafeThumbnailDataUri(rawUrl?: string | null): Promise<stri
       return null;
     }
 
-    const pngBuffer = await sharp(Buffer.from(arrayBuffer))
-      .resize(400, 400, { fit: 'cover', position: 'center' })
-      .png({ quality: 85 })
-      .toBuffer();
+    const inputBuffer = Buffer.from(arrayBuffer);
+    const sharp = await getSharp();
+    if (sharp) {
+      const pngBuffer = await sharp(inputBuffer)
+        .resize(400, 400, { fit: 'cover', position: 'center' })
+        .png({ quality: 85 })
+        .toBuffer();
 
-    return `data:image/png;base64,${pngBuffer.toString('base64')}`;
+      return `data:image/png;base64,${pngBuffer.toString('base64')}`;
+    }
+
+    const contentType = response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase();
+    if (
+      contentType === 'image/png' ||
+      contentType === 'image/jpeg' ||
+      contentType === 'image/gif'
+    ) {
+      return `data:${contentType};base64,${inputBuffer.toString('base64')}`;
+    }
+
+    return null;
   } catch {
     return null;
   }
