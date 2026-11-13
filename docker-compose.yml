@@ -106,7 +106,7 @@ services:
       - HOSTNAME=0.0.0.0
       - INSTANCE_ID=simantik-web-1
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost}
-      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost}
+      - BACKEND_URL=${BACKEND_URL:-http://nginx}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000 || exit 1"]
       interval: 10s
@@ -132,7 +132,7 @@ services:
       - HOSTNAME=0.0.0.0
       - INSTANCE_ID=simantik-web-2
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost}
-      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost}
+      - BACKEND_URL=${BACKEND_URL:-http://nginx}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000 || exit 1"]
       interval: 10s

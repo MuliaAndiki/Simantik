@@ -17,8 +17,12 @@ func RegisterSchoolRoutes(api fiber.Router, cfg *config.Config, h *handler.Schoo
 	schools.Get("/:id", h.GetSchool)
 	schools.Post("/", h.CreateSchool)
 	schools.Patch("/:id", h.UpdateSchool)
+	schools.Patch("/:id/verify", h.VerifySchool)
+	schools.Patch("/:id/reject", h.RejectSchool)
 	schools.Delete("/:id", h.DeleteSchool)
 
-	api.Get("/schools", h.ListSchools)
-	api.Get("/schools/:id", h.GetSchool)
+	api.Get("/schools", h.ListPublicSchools)
+	api.Get("/schools/submissions/me", auth, h.ListMySubmissions)
+	api.Post("/schools/submissions", auth, h.ProposeSchool)
+	api.Get("/schools/:id", h.GetPublicSchool)
 }

@@ -5,6 +5,8 @@ import type {
   CreateSchoolRequest,
   ListSchoolFilter,
   PaginatedSchoolsResponse,
+  ProposeSchoolRequest,
+  RejectSchoolRequest,
   SchoolResponse,
   UpdateSchoolRequest,
 } from '@/types/service';
@@ -21,6 +23,23 @@ class SchoolService {
     return toServiceResponse(res, {
       message: res.message,
       statusCode: 201,
+    });
+  }
+
+  public async ProposeSchoolService(
+    payload: ProposeSchoolRequest
+  ): Promise<TResponse<SchoolResponse>> {
+    const res = await getHttp().PostResponse<SchoolResponse>(EndpointEntry.school.propose, payload);
+    return toServiceResponse(res, {
+      message: res.message,
+      statusCode: 201,
+    });
+  }
+
+  public async ListMySchoolSubmissionsService(): Promise<TResponse<SchoolResponse[]>> {
+    const res = await getHttp().GetResponse<SchoolResponse[]>(EndpointEntry.school.mySubmissions);
+    return toServiceResponse(res, {
+      message: res.message,
     });
   }
 
@@ -60,6 +79,26 @@ class SchoolService {
   ): Promise<TResponse<SchoolResponse>> {
     const res = await getHttp().PatchResponse<SchoolResponse>(
       EndpointEntry.school.update(id),
+      payload
+    );
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async VerifySchoolService(id: string): Promise<TResponse<SchoolResponse>> {
+    const res = await getHttp().PatchResponse<SchoolResponse>(EndpointEntry.school.verify(id));
+    return toServiceResponse(res, {
+      message: res.message,
+    });
+  }
+
+  public async RejectSchoolService(
+    id: string,
+    payload: RejectSchoolRequest
+  ): Promise<TResponse<SchoolResponse>> {
+    const res = await getHttp().PatchResponse<SchoolResponse>(
+      EndpointEntry.school.reject(id),
       payload
     );
     return toServiceResponse(res, {

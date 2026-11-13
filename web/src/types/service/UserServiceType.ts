@@ -71,6 +71,7 @@ export interface UserResponse {
   updatedAt: string;
 
   studentProfile?: {
+    schoolId?: string;
     school: string;
     grade: string;
     //

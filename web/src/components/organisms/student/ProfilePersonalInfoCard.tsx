@@ -1,7 +1,17 @@
-import { Check, GraduationCap, Info, Lock, Mail, RotateCcw, User } from 'lucide-react';
-import type * as React from 'react';
-import { Button, Card, Input } from '@/components/atoms';
-import { cn } from '@/utils/classname';
+import {
+  Check,
+  GraduationCap,
+  Lock,
+  Mail,
+  PlusCircle,
+  RotateCcw,
+  User,
+} from "lucide-react";
+import type * as React from "react";
+import { Button, Card, Input } from "@/components/atoms";
+import { MySchoolSubmissionBanner } from "@/components/molecules/school/MySchoolSubmissionBanner";
+import type { SchoolResponse } from "@/types/service";
+import { cn } from "@/utils/classname";
 
 export interface ProfileSchoolOption {
   id: string;
@@ -17,6 +27,9 @@ export interface ProfilePersonalInfoCardProps {
   schoolOptions?: ProfileSchoolOption[];
   selectedSchoolId?: string;
   onSelectSchoolId?: (schoolId: string) => void;
+  onOpenProposeSchool?: () => void;
+  mySchoolSubmissions?: SchoolResponse[];
+  onResubmitSchool?: (school: SchoolResponse) => void;
   onSubmit: (e: React.FormEvent) => void;
   onReset: () => void;
   isSubmitting?: boolean;
@@ -34,18 +47,21 @@ export function ProfilePersonalInfoCard({
   schoolOptions,
   selectedSchoolId,
   onSelectSchoolId,
+  onOpenProposeSchool,
+  mySchoolSubmissions,
+  onResubmitSchool,
   onSubmit,
   onReset,
   isSubmitting = false,
   isDirty = false,
-  versionCode = '2025.1-SIM',
+  versionCode = "2025.1-SIM",
   className,
 }: ProfilePersonalInfoCardProps) {
   return (
     <Card
       className={cn(
-        'p-6 sm:p-8 rounded-2xl md:rounded-3xl border border-gray-200/80 bg-white shadow-xs space-y-6',
-        className
+        "p-6 sm:p-8 rounded-2xl md:rounded-3xl border border-gray-200/80 bg-white shadow-xs space-y-6",
+        className,
       )}
     >
       {/* Header */}
@@ -127,9 +143,10 @@ export function ProfilePersonalInfoCard({
                 value={
                   selectedSchoolId ||
                   schoolOptions.find(
-                    (s) => s.name.toLowerCase() === (schoolName ?? '').toLowerCase()
+                    (s) =>
+                      s.name.toLowerCase() === (schoolName ?? "").toLowerCase(),
                   )?.id ||
-                  ''
+                  ""
                 }
                 onChange={(e) => onSelectSchoolId(e.target.value)}
                 className="w-full h-11 rounded-xl border border-gray-200 bg-white px-3 pr-10 text-sm text-gray-900 focus:outline-hidden focus:ring-2 focus:ring-teal-500/30 transition-all appearance-none cursor-pointer"
@@ -157,6 +174,54 @@ export function ProfilePersonalInfoCard({
               <GraduationCap className="size-4.5" />
             </div>
           </div>
+          {onOpenProposeSchool && (
+            <div className="flex items-center justify-between pt-1 text-xs text-slate-500">
+              <span>Sekolah tidak ada di daftar?</span>
+              <button
+                type="button"
+                onClick={onOpenProposeSchool}
+                className="inline-flex items-center gap-1 font-semibold text-teal-700 hover:text-teal-800 underline underline-offset-4 cursor-pointer"
+              >
+                <PlusCircle className="size-3.5" />
+                Ajukan Sekolah Baru
+              </button>
+            </div>
+          )}
+          {mySchoolSubmissions && mySchoolSubmissions.length > 0 && (
+            <div className="pt-1.5">
+              <MySchoolSubmissionBanner
+                submissions={mySchoolSubmissions}
+                onSelectSubmission={
+                  onSelectSchoolId ? (s) => onSelectSchoolId(s.id) : undefined
+                }
+                onResubmit={onResubmitSchool}
+              />
+            </div>
+          )}
+          {onOpenProposeSchool && (
+            <div className="flex items-center justify-between pt-1 text-xs text-slate-500">
+              <span>Sekolah tidak ada di daftar?</span>
+              <button
+                type="button"
+                onClick={onOpenProposeSchool}
+                className="inline-flex items-center gap-1 font-semibold text-teal-700 hover:text-teal-800 underline underline-offset-4 cursor-pointer"
+              >
+                <PlusCircle className="size-3.5" />
+                Ajukan Sekolah Baru
+              </button>
+            </div>
+          )}
+          {mySchoolSubmissions && mySchoolSubmissions.length > 0 && (
+            <div className="pt-1.5">
+              <MySchoolSubmissionBanner
+                submissions={mySchoolSubmissions}
+                onSelectSubmission={
+                  onSelectSchoolId ? (s) => onSelectSchoolId(s.id) : undefined
+                }
+                onResubmit={onResubmitSchool}
+              />
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -168,7 +233,7 @@ export function ProfilePersonalInfoCard({
             className="h-11 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white font-semibold text-sm px-6 gap-2 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
           >
             {!isSubmitting && <Check className="size-4 stroke-[2.5]" />}
-            <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
+            <span>{isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}</span>
           </Button>
 
           <Button

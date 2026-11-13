@@ -180,6 +180,17 @@ func (s *userService) UpdateMySchool(ctx context.Context, userID uuid.UUID, req 
 		return nil, ErrSchoolNotFound
 	}
 
+	status := school.VerificationStatus
+	if status == "" {
+		status = models.SchoolVerificationVerified
+	}
+	isOwnPending := status == models.SchoolVerificationPending &&
+		school.SubmittedByUserID != nil &&
+		*school.SubmittedByUserID == user.ID
+	if status != models.SchoolVerificationVerified && !isOwnPending {
+		return nil, ErrSchoolNotAllowed
+	}
+
 	profile, err := s.profileRepo.FindByUserID(ctx, user.ID)
 	if err == nil && profile != nil {
 		profile.SchoolID = &school.ID
@@ -314,7 +325,13 @@ func ToUserResponse(u *models.User) dto.UserResponse {
 
 	if u.StudentProfile != nil {
 		resp.HasSchool = u.StudentProfile.SchoolID != nil || u.StudentProfile.School != ""
+		var schoolIDStr *string
+		if u.StudentProfile.SchoolID != nil {
+			s := u.StudentProfile.SchoolID.String()
+			schoolIDStr = &s
+		}
 		resp.StudentProfile = &dto.StudentProfileResponse{
+			SchoolID:         schoolIDStr,
 			School:           u.StudentProfile.School,
 			Grade:            u.StudentProfile.Grade,
 			Jenjang:          u.StudentProfile.Jenjang,

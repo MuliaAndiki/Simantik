@@ -368,4 +368,21 @@ export function isItemActive(item: NavItem, pathname: string): boolean {
   return isMenuActive(item.url, pathname);
 }
 
-export const baseUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080'}${process.env.NEXT_PUBLIC_GATE_API || '/api'}${process.env.NEXT_PUBLIC_VERSION_API || '/v1'}`;
+/**
+ * Browser client calls always traverse the same-origin Next.js BFF proxy (`/bff/v1/*`)
+ * so internal API secrets (`NEXT_INTERNAL_API_SECRET`) never touch client bundles.
+ */
+export const baseUrl = '/bff/v1';
+
+/**
+ * Resolves the upstream Go backend origin strictly for Next.js server contexts
+ * (`bff/[...path]/route.ts` & `server-fetch.ts`).
+ */
+export function getServerBackendOrigin(): string {
+  const raw =
+    process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080';
+  return raw
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/api(\/v1)?$/, '');
+}

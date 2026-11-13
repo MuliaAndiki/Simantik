@@ -20,6 +20,7 @@ type RecentAttemptItem struct {
 
 // StudentProfileResponse represents student academic details.
 type StudentProfileResponse struct {
+	SchoolID         *string `json:"schoolId,omitempty"`
 	School           string  `json:"school"`
 	Grade            string  `json:"grade"`
 	Jenjang          *string `json:"jenjang,omitempty"`

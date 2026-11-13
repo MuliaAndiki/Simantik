@@ -45,8 +45,9 @@ jobs:
       NODE_ENV: "production"
       AUTH_SECRET_KEY: "simantik-ci-dummy-auth-secret-key-min-32-chars"
       NEXT_INTERNAL_API_SECRET: "simantik-ci-dummy-internal-api-secret"
+      BACKEND_URL: "http://localhost:8080"
+      R2_URL: "https://cdn.simantik.id"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
-      NEXT_PUBLIC_BACKEND_URL: "http://localhost:8080"
       NEXT_PUBLIC_BASEPATH: "/home"
 
     steps:

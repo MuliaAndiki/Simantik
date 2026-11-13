@@ -131,7 +131,7 @@ func main() {
 	contentService := service.NewContentService(newsRepo, docRepo, testRepo, tutorialRepo)
 	notificationService := service.NewNotificationService(notifRepo, emailSender)
 	reportingService := service.NewReportingService(reportingRepo, recommendationService)
-	schoolService := service.NewSchoolService(schoolRepo)
+	schoolService := service.NewSchoolService(schoolRepo, userRepo)
 	practiceService := service.NewPracticeService(db, practiceRepo, questionRepo, evaluationRepo, jenjangResolver, recommendationService, stimulusRepo)
 
 	// ─── 4. HTTP Handlers ──────────────────────────────────────────────────────

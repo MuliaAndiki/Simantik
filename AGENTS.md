@@ -52,7 +52,7 @@ From repo root:
 
 ## Key Integration Gotchas
 
-- **Shared Secret Gate**: All `/api/v1/*` routes require `X-Internal-Api-Key` or `X-API-Secret`. Frontend `NEXT_INTERNAL_API_SECRET` must match backend `API_SECRET`.
+- **Shared Secret Gate**: All `/api/v1/*` routes require `X-Internal-Api-Key` or `X-API-Secret`. Browser requests call the same-origin Next.js BFF proxy (`/bff/v1/*`), which injects `NEXT_INTERNAL_API_SECRET` server-side (never prefix this secret with `NEXT_PUBLIC_`). Frontend `NEXT_INTERNAL_API_SECRET` must match backend `API_SECRET`.
 - **Health Check Exemption**: `/health` is public (no API secret required) for load balancers and Docker health checks.
-- **Env Validation**: Frontend uses `@t3-oss/env-nextjs` in `src/configs/env.config.ts`. In CI or minimal test environments, export `SKIP_ENV_VALIDATION=true` or `CI=true`.
-- **Nginx Routing**: Reverse proxy routes `/api/` to backend instances and `/` to frontend instances.
+- **Env Validation**: Frontend uses `@t3-oss/env-nextjs` in `src/configs/env.config.ts`. Keep server-only variables (`BACKEND_URL`, `R2_URL`, `NEXT_INTERNAL_API_SECRET`) out of the `client` schema; only browser-safe configuration belongs in `NEXT_PUBLIC_*` (`Config` type on Vercel). In CI or minimal test environments, export `SKIP_ENV_VALIDATION=true` or `CI=true`.
+- **Nginx Routing**: Reverse proxy routes `/api/` to backend instances and `/` (including `/bff/*`) to frontend instances.

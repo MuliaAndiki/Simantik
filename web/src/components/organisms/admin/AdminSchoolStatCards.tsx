@@ -8,6 +8,9 @@ export interface AdminSchoolStatCardsProps {
   swasta: number;
   smaCount: number;
   smkCount: number;
+  pending?: number;
+  verified?: number;
+  rejected?: number;
   className?: string;
 }
 
@@ -17,6 +20,9 @@ export const AdminSchoolStatCards: React.FC<AdminSchoolStatCardsProps> = ({
   swasta,
   smaCount,
   smkCount,
+  pending = 0,
+  verified = 0,
+  rejected = 0,
   className,
 }) => {
   return (
@@ -28,32 +34,28 @@ export const AdminSchoolStatCards: React.FC<AdminSchoolStatCardsProps> = ({
           key: 'total',
           label: 'Total Terdaftar',
           value: total,
-          subtext: 'Seluruh jenjang sekolah',
+          subtext: `${negeri} Negeri • ${swasta} Swasta (${smaCount} SMA / ${smkCount} SMK)`,
         },
         {
-          key: 'negeri',
-          label: 'Sekolah Negeri',
-          value: negeri,
-          subtext: 'Status kepemilikan negeri',
+          key: 'pending',
+          label: 'Menunggu Verifikasi',
+          value: pending,
+          subtext: 'Pengajuan baru dari siswa',
+          valueClass: 'text-amber-600',
+        },
+        {
+          key: 'verified',
+          label: 'Terverifikasi',
+          value: verified,
+          subtext: 'Tampil di pencarian publik',
           valueClass: 'text-emerald-600',
         },
         {
-          key: 'swasta',
-          label: 'Sekolah Swasta',
-          value: swasta,
-          subtext: 'Status kepemilikan swasta',
-          valueClass: 'text-sky-600',
-        },
-        {
-          key: 'sma-smk',
-          label: 'SMA / SMK',
-          value: (
-            <>
-              {smaCount} <span className="text-sm font-semibold text-slate-400">/ {smkCount}</span>
-            </>
-          ),
-          subtext: 'Jenjang sekolah lanjutan',
-          valueClass: 'text-teal-700',
+          key: 'rejected',
+          label: 'Ditolak',
+          value: rejected,
+          subtext: 'Perlu perbaikan data pengaju',
+          valueClass: 'text-rose-600',
         },
       ]}
     />
