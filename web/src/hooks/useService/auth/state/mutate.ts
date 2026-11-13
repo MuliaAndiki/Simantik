@@ -18,6 +18,7 @@ import type {
   VerifyRegisterOTPRequest,
 } from '@/types/service';
 import { type AuthCacheContext, readAuthSnapshot } from '@/utils/cache/auth.cache';
+import { hasActiveSchoolSkipInStorage } from '@/utils/school-skip.util';
 import { setSessionCookies, shouldPersistSession } from '@/utils/session-cookie';
 
 const STUDENT_ROLE = 'student';
@@ -25,12 +26,14 @@ const SCHOOL_ONBOARDING_PATH = '/pilih-sekolah';
 
 /**
  * Routing pasca-login: pelajar yang belum punya sekolah diarahkan ke halaman
- * pemilihan sekolah; selain itu semua role diarahkan ke dashboard role-nya
- * (student → /home, admin/content_manager → /admin/dashboard).
+ * pemilihan sekolah (kecuali sedang dalam masa lewati 7 hari); selain itu semua role
+ * diarahkan ke dashboard role-nya (student → /home, admin/content_manager → /admin/dashboard).
  */
-function routeAfterAuth(user: { role: string; hasSchool: boolean } | null | undefined) {
+function routeAfterAuth(
+  user: { id?: string; role: string; hasSchool: boolean } | null | undefined
+) {
   if (!user) return;
-  if (user.role === STUDENT_ROLE && !user.hasSchool) {
+  if (user.role === STUDENT_ROLE && !user.hasSchool && !hasActiveSchoolSkipInStorage(user.id)) {
     window.location.assign(SCHOOL_ONBOARDING_PATH);
     return;
   }

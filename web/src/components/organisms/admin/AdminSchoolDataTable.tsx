@@ -1,4 +1,4 @@
-import { CheckCircle2, Edit2, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, Edit2, MapPin, Trash2, XCircle } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/atoms';
 import { TableEmptyRow, TableLoadingRow, TablePagination } from '@/components/molecules/table';
@@ -136,14 +136,28 @@ export const AdminSchoolDataTable: React.FC<AdminSchoolDataTableProps> = React.m
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-slate-600 max-w-xs truncate">
-                        {school.alamat ? (
-                          <span>
-                            {school.alamat}
-                            {school.kabupaten ? `, ${school.kabupaten}` : ''}
-                          </span>
-                        ) : (
-                          '-'
-                        )}
+                        <div className="space-y-1">
+                          {school.alamat ? (
+                            <span className="block truncate">
+                              {school.alamat}
+                              {school.kabupaten ? `, ${school.kabupaten}` : ''}
+                            </span>
+                          ) : (
+                            '-'
+                          )}
+                          {typeof school.latitude === 'number' &&
+                            typeof school.longitude === 'number' && (
+                              <a
+                                href={`https://www.openstreetmap.org/?mlat=${school.latitude}&mlon=${school.longitude}#map=17/${school.latitude}/${school.longitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] font-medium text-teal-600 hover:underline"
+                              >
+                                <MapPin className="h-3 w-3" />
+                                Lihat di Peta
+                              </a>
+                            )}
+                        </div>
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">

@@ -1,11 +1,8 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { TableLoader } from '@/components/atoms/loading';
-import type {
-  SchoolFormErrors,
-  SchoolFormState,
-} from '@/components/molecules/school/SchoolFormFields';
 import type { ChangePasswordForm } from '@/components/organisms/student/ChangePasswordModal';
 import type { ProfileSchoolOption } from '@/components/organisms/student/ProfilePersonalInfoCard';
 import { StudentProfilePage } from '@/components/page/private/student/StudentProfilePage';
@@ -13,11 +10,6 @@ import { useApi } from '@/hooks/useApi';
 import { useAlert } from '@/hooks/useService/useAlert/costum-alert';
 import type { SchoolResponse } from '@/types/service';
 import { uploadAvatar } from '@/utils/r2-utils';
-import {
-  buildSchoolProposalInitialForm,
-  EMPTY_SCHOOL_FORM,
-  validateProposeSchoolForm,
-} from '@/utils/school-proposal.util';
 
 const DEFAULT_AVATAR = '/avatars/1.png';
 
@@ -28,6 +20,7 @@ const EMPTY_CHANGE_PASSWORD_FORM: ChangePasswordForm = {
 };
 
 export default function StudentProfile() {
+  const router = useRouter();
   const { user, school } = useApi();
   const { toast } = useAlert();
 
@@ -39,7 +32,6 @@ export default function StudentProfile() {
   // 2. Mutations
   const updateProfileMutation = user.mutate.updateProfile();
   const updateMySchoolMutation = user.mutate.updateMySchool();
-  const proposeSchoolMutation = school.mutate.propose();
   const changePasswordMutation = user.mutate.changePassword();
   const updateAvatarMutation = user.mutate.updateAvatar();
 
@@ -53,9 +45,6 @@ export default function StudentProfile() {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isChangeAvatarOpen, setIsChangeAvatarOpen] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [isProposalOpen, setIsProposalOpen] = useState(false);
-  const [proposalForm, setProposalForm] = useState<SchoolFormState>(EMPTY_SCHOOL_FORM);
-  const [proposalErrors, setProposalErrors] = useState<SchoolFormErrors>({});
 
   // 5. Change password form state
   const [changePasswordForm, setChangePasswordForm] = useState<ChangePasswordForm>(
@@ -137,38 +126,10 @@ export default function StudentProfile() {
   };
 
   const handleOpenProposeSchool = (seed?: SchoolResponse) => {
-    setProposalForm(buildSchoolProposalInitialForm(seed));
-    setProposalErrors({});
-    setIsProposalOpen(true);
-  };
-
-  const handleProposalFieldChange = <K extends keyof SchoolFormState>(
-    field: K,
-    value: SchoolFormState[K]
-  ) => {
-    setProposalForm((prev) => ({ ...prev, [field]: value }));
-    setProposalErrors((prev) => ({ ...prev, [field]: undefined }));
-  };
-
-  const handleSubmitProposal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { data, errors } = validateProposeSchoolForm(proposalForm);
-    if (errors || !data) {
-      setProposalErrors(errors ?? {});
-      return;
-    }
-
-    try {
-      const res = await proposeSchoolMutation.mutateAsync(data);
-      if (res.data) {
-        setSelectedSchoolId(res.data.id);
-        setSchoolName(res.data.nama);
-        setIsDirty(true);
-      }
-      setIsProposalOpen(false);
-    } catch {
-      // Error toast ditangani oleh useAppMutation
-    }
+    const query = seed
+      ? `/pilih-sekolah/ajukan?resubmit=${encodeURIComponent(seed.id)}&returnTo=/student/profile`
+      : '/pilih-sekolah/ajukan?returnTo=/student/profile';
+    router.push(query);
   };
 
   const handleSubmitPersonalInfo = async (e: React.FormEvent) => {
@@ -334,13 +295,6 @@ export default function StudentProfile() {
       onOpenProposeSchool={() => handleOpenProposeSchool()}
       mySchoolSubmissions={mySchoolSubmissions}
       onResubmitSchool={(item) => handleOpenProposeSchool(item)}
-      isProposeSchoolOpen={isProposalOpen}
-      onOpenChangeProposeSchool={setIsProposalOpen}
-      proposeSchoolForm={proposalForm}
-      proposeSchoolErrors={proposalErrors}
-      onProposeSchoolFieldChange={handleProposalFieldChange}
-      onSubmitProposeSchool={handleSubmitProposal}
-      isSubmittingProposeSchool={proposeSchoolMutation.isPending}
       roleName={roleName}
       avatarSrc={avatarSrc}
       isVerified={true}

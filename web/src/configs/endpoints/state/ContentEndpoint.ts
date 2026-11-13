@@ -24,4 +24,5 @@ export const ContentEndpoint = {
   tutorialCategories: `${mountEntry.tutorials}/categories`,
   tutorialBySlug: (slug: string) => `${mountEntry.tutorials}/${slug}`,
   testimonials: `${mountEntry.testimonials}`,
+  myTestimonialStatus: `${mountEntry.testimonials}/me/status`,
 } as const;

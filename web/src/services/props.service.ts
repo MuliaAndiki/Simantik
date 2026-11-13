@@ -3,6 +3,7 @@ import AdminService from './api/AdminService';
 import AuthService from './api/AuthService';
 import ContentService from './api/ContentService';
 import EvaluationService from './api/EvaluationService';
+import GeoService from './api/GeoService';
 import LearningService from './api/LearningService';
 import NotificationService from './api/NotificationService';
 import PracticeService from './api/PracticeService';
@@ -20,6 +21,7 @@ const wrappedAdmin = WrapApi(AdminService);
 const wrappedQuestion = WrapApi(QuestionService);
 const wrappedTryout = WrapApi(TryoutService);
 const wrappedEvaluation = WrapApi(EvaluationService);
+const wrappedGeo = WrapApi(GeoService);
 const wrappedRecommendation = WrapApi(RecommendationService);
 const wrappedLearning = WrapApi(LearningService);
 const wrappedContent = WrapApi(ContentService);
@@ -36,6 +38,7 @@ export const Api = {
   question: wrappedQuestion,
   tryout: wrappedTryout,
   evaluation: wrappedEvaluation,
+  geo: wrappedGeo,
   recommendation: wrappedRecommendation,
   learning: wrappedLearning,
   content: wrappedContent,
@@ -51,6 +54,7 @@ export const Api = {
   Question: wrappedQuestion,
   Tryout: wrappedTryout,
   Evaluation: wrappedEvaluation,
+  Geo: wrappedGeo,
   Recommendation: wrappedRecommendation,
   Learning: wrappedLearning,
   Content: wrappedContent,

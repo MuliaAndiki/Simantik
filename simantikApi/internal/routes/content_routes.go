@@ -62,7 +62,8 @@ func RegisterContentRoutes(api fiber.Router, cfg *config.Config, h *handler.Cont
 	api.Get("/tutorials", h.ListTutorialsPublic)
 	api.Get("/tutorials/:slug", h.GetTutorialBySlug)
 
-	// Public Testimonials
+	// Public & Student Testimonials
 	api.Get("/testimonials", h.ListTestimonialsPublic)
-	api.Post("/testimonials", h.CreateTestimonial)
+	api.Post("/testimonials", middleware.OptionalJWTAuth(cfg.JWTSecret), h.CreateTestimonial)
+	api.Get("/testimonials/me/status", middleware.JWTAuth(cfg.JWTSecret), h.GetMyTestimonialStatus)
 }

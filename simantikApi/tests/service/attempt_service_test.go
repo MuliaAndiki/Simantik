@@ -187,6 +187,16 @@ func (m *mockTryoutAttemptRepo) ListByUserID(_ context.Context, userID uuid.UUID
 	return result, int64(len(result)), nil
 }
 
+func (m *mockTryoutAttemptRepo) CountCompletedByUser(_ context.Context, userID uuid.UUID) (int64, error) {
+	var count int64
+	for _, a := range m.attempts {
+		if a.UserID == userID && a.Status == models.AttemptStatusCompleted {
+			count++
+		}
+	}
+	return count, nil
+}
+
 // ─── Mock: TryoutRepository (shared with attempt tests) ──────────────────────
 
 type mockTryoutRepoForAttempt struct {

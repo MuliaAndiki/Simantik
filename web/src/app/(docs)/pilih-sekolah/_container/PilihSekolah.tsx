@@ -1,22 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { SchoolOption } from '@/components/molecules/auth/SchoolSearchSelect';
-import type {
-  SchoolFormErrors,
-  SchoolFormState,
-} from '@/components/molecules/school/SchoolFormFields';
 import { SchoolOnboardingPage } from '@/components/page/onboarding/SchoolOnboardingPage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
 import { useDebounce } from '@/hooks/useDebounce/useDebounce';
 import type { SchoolResponse } from '@/types/service';
-import {
-  buildSchoolProposalInitialForm,
-  EMPTY_SCHOOL_FORM,
-  validateProposeSchoolForm,
-} from '@/utils/school-proposal.util';
+import { markSchoolSkippedInStorage } from '@/utils/school-skip.util';
 import { getAccessToken } from '@/utils/session-cookie';
 
 const SCHOOL_SEARCH_DEBOUNCE_MS = 800;
@@ -36,19 +28,18 @@ export default function ContainerPilihSekolah() {
   const api = useApi();
   const ns = useAppNameSpace();
   const updateMySchool = api.user.mutate.updateMySchool();
-  const proposeSchool = api.school.mutate.propose();
 
+  const [hasAuth, setHasAuth] = useState(false);
   const [schoolSearch, setSchoolSearch] = useState('');
   const [selectedSchool, setSelectedSchool] = useState<SchoolOption | null>(null);
   const [error, setError] = useState<string>();
   const debouncedSearch = useDebounce(schoolSearch, SCHOOL_SEARCH_DEBOUNCE_MS);
 
-  // Proposal dialog state
-  const [isProposalOpen, setIsProposalOpen] = useState(false);
-  const [proposalForm, setProposalForm] = useState<SchoolFormState>(EMPTY_SCHOOL_FORM);
-  const [proposalErrors, setProposalErrors] = useState<SchoolFormErrors>({});
+  useEffect(() => {
+    setHasAuth(Boolean(getAccessToken()));
+  }, []);
 
-  const hasAuth = !!getAccessToken();
+  const meQuery = api.user.query.me({ enabled: hasAuth });
   const mySubmissionsQuery = api.school.query.mySubmissions({ enabled: hasAuth });
 
   const schoolQuery = api.school.query.listPublic({
@@ -70,7 +61,7 @@ export default function ContainerPilihSekolah() {
     setSelectedSchool(null);
   };
 
-  const handleOpenProposalDialog = (seed?: string | SchoolResponse) => {
+  const handleNavigateToProposal = (seed?: string | SchoolResponse) => {
     if (!getAccessToken()) {
       ns.alert.toast({
         title: 'Perlu Login',
@@ -81,37 +72,26 @@ export default function ContainerPilihSekolah() {
       return;
     }
 
-    setProposalForm(buildSchoolProposalInitialForm(seed));
-    setProposalErrors({});
-    setIsProposalOpen(true);
-  };
-
-  const handleProposalFieldChange = <K extends keyof SchoolFormState>(
-    field: K,
-    value: SchoolFormState[K]
-  ) => {
-    setProposalForm((prev) => ({ ...prev, [field]: value }));
-    setProposalErrors((prev) => ({ ...prev, [field]: undefined }));
-  };
-
-  const handleSubmitProposal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { data, errors } = validateProposeSchoolForm(proposalForm);
-    if (errors || !data) {
-      setProposalErrors(errors ?? {});
+    if (seed && typeof seed !== 'string') {
+      router.push(`/pilih-sekolah/ajukan?resubmit=${encodeURIComponent(seed.id)}`);
       return;
     }
 
-    try {
-      const res = await proposeSchool.mutateAsync(data);
-      if (res.data) {
-        setSelectedSchool(toSchoolOption(res.data));
-        setError(undefined);
-      }
-      setIsProposalOpen(false);
-    } catch {
-      // Error toast ditangani oleh useAppMutation
+    const qParam =
+      typeof seed === 'string' && seed.trim() ? `?q=${encodeURIComponent(seed.trim())}` : '';
+    router.push(`/pilih-sekolah/ajukan${qParam}`);
+  };
+
+  const handleSkip = () => {
+    if (!getAccessToken()) {
+      router.replace('/home');
+      return;
     }
+
+    if (meQuery.data?.id) {
+      markSchoolSkippedInStorage(meQuery.data.id);
+    }
+    router.replace('/home');
   };
 
   const handleSubmit = () => {
@@ -140,25 +120,17 @@ export default function ContainerPilihSekolah() {
       selectedSchool={selectedSchool}
       onSchoolSelect={handleSchoolSelect}
       onSchoolClear={handleSchoolClear}
-      onRequestNewSchool={handleOpenProposalDialog}
+      onRequestNewSchool={handleNavigateToProposal}
       mySubmissions={mySubmissionsQuery.data ?? undefined}
       onSelectSubmission={(school) => {
         if (school.verificationStatus === 'rejected') {
-          handleOpenProposalDialog(school);
+          handleNavigateToProposal(school);
           return;
         }
         handleSchoolSelect(toSchoolOption(school));
       }}
-      onResubmitSubmission={handleOpenProposalDialog}
-      proposalDialogProps={{
-        open: isProposalOpen,
-        onOpenChange: setIsProposalOpen,
-        formData: proposalForm,
-        errors: proposalErrors,
-        onChange: handleProposalFieldChange,
-        onSubmit: handleSubmitProposal,
-        isSubmitting: proposeSchool.isPending,
-      }}
+      onResubmitSubmission={handleNavigateToProposal}
+      onSkip={handleSkip}
       onSubmit={handleSubmit}
       loading={updateMySchool.isPending}
       error={error}

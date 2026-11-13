@@ -32,6 +32,9 @@ func (h *SchoolHandler) CreateSchool(c *fiber.Ctx) error {
 
 	res, err := h.schoolService.CreateSchool(c.UserContext(), req)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidCoordinates) {
+			return utils.Error(c, fiber.StatusBadRequest, "koordinat sekolah harus berada di wilayah Indonesia", err)
+		}
 		if errors.Is(err, service.ErrSchoolNPSNExists) {
 			return utils.Error(c, fiber.StatusConflict, "school NPSN already registered", err)
 		}
@@ -58,6 +61,9 @@ func (h *SchoolHandler) ProposeSchool(c *fiber.Ctx) error {
 
 	res, err := h.schoolService.ProposeSchool(c.UserContext(), userID, req)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidCoordinates) {
+			return utils.Error(c, fiber.StatusBadRequest, "koordinat sekolah harus berada di wilayah Indonesia", err)
+		}
 		if errors.Is(err, service.ErrSchoolNPSNExists) {
 			return utils.Error(c, fiber.StatusConflict, "NPSN sekolah sudah terdaftar di sistem", err)
 		}
@@ -168,6 +174,9 @@ func (h *SchoolHandler) UpdateSchool(c *fiber.Ctx) error {
 
 	res, err := h.schoolService.UpdateSchool(c.UserContext(), id, req)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidCoordinates) {
+			return utils.Error(c, fiber.StatusBadRequest, "koordinat sekolah harus berada di wilayah Indonesia", err)
+		}
 		if errors.Is(err, service.ErrSchoolNotFound) {
 			return utils.Error(c, fiber.StatusNotFound, "school not found", err)
 		}

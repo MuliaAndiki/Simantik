@@ -298,6 +298,18 @@ export interface PaginatedTestimonialsResponse {
   offset: number;
 }
 
+/**
+ * Authenticated student's eligibility status for submitting a testimonial
+ * Maps to backend: `dto.TestimonialMyStatusResponse`
+ */
+export interface TestimonialMyStatusResponse {
+  hasSubmitted: boolean;
+  completedTryouts: number;
+  requiredTryouts: number;
+  eligible: boolean;
+  lastSubmittedAt?: string;
+}
+
 // ============================================================================
 // Standard Wrapped Responses
 // ============================================================================

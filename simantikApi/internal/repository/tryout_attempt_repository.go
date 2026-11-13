@@ -39,6 +39,7 @@ type TryoutAttemptRepository interface {
 
 	FindActiveAttempt(ctx context.Context, userID, tryoutID uuid.UUID) (*models.TryoutAttempt, error)
 	ListByUserID(ctx context.Context, userID uuid.UUID, filter dto.MyAttemptsFilter) ([]models.TryoutAttempt, int64, error)
+	CountCompletedByUser(ctx context.Context, userID uuid.UUID) (int64, error)
 }
 
 type tryoutAttemptRepository struct {
@@ -268,4 +269,13 @@ func (r *tryoutAttemptRepository) ListByUserID(ctx context.Context, userID uuid.
 
 	err = query.Order("started_at desc").Find(&attempts).Error
 	return attempts, total, err
+}
+
+func (r *tryoutAttemptRepository) CountCompletedByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&models.TryoutAttempt{}).
+		Where("user_id = ? AND status = ?", userID, models.AttemptStatusCompleted).
+		Count(&count).Error
+	return count, err
 }

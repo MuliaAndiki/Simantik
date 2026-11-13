@@ -94,9 +94,10 @@ var (
 	ErrDocumentationSlugExists = errors.New("documentation slug already exists")
 	ErrTutorialNotFound        = errors.New("tutorial not found")
 	ErrTutorialSlugExists      = errors.New("tutorial slug already exists")
-	ErrInvalidYoutubeURL       = errors.New("invalid YouTube URL")
-	ErrTestimonialNotFound     = errors.New("testimonial not found")
-	ErrCannotChangeOwnRole     = errors.New("you cannot change your own role")
+	ErrInvalidYoutubeURL           = errors.New("invalid YouTube URL")
+	ErrTestimonialNotFound         = errors.New("testimonial not found")
+	ErrTestimonialAlreadySubmitted = errors.New("testimonial already submitted")
+	ErrCannotChangeOwnRole         = errors.New("you cannot change your own role")
 )
 
 // Notification errors.
@@ -104,10 +105,13 @@ var (
 	ErrNotificationNotFound = errors.New("notification not found")
 )
 
-// School errors.
+// School & Geo errors.
 var (
 	ErrSchoolNotFound      = errors.New("school not found")
 	ErrSchoolNPSNExists    = errors.New("school NPSN already registered")
 	ErrSchoolPendingExists = errors.New("school NPSN already submitted and awaiting admin verification")
 	ErrSchoolNotAllowed    = errors.New("school cannot be selected until verified by admin")
+	ErrInvalidCoordinates  = errors.New("school coordinates must be within Indonesia bounds")
+	ErrGeoUpstream         = errors.New("geocoding provider unavailable")
+	ErrGeoNotFound         = errors.New("location not found for coordinates")
 )
