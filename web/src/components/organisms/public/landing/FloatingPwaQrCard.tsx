@@ -22,10 +22,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/atoms/dialog';
+import { SITE_URL } from '@/configs/site.config';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 export function FloatingPwaQrCard() {
-  const [pwaUrl, setPwaUrl] = useState('https://simantik.educourse.id/home');
+  const [pwaUrl, setPwaUrl] = useState(`${SITE_URL}/home`);
   const [isMinimized, setIsMinimized] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSize, setModalSize] = useState(280);
