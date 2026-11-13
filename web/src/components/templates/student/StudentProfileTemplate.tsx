@@ -1,13 +1,13 @@
-import { ShieldCheck } from "lucide-react";
-import type * as React from "react";
+import { ShieldCheck } from 'lucide-react';
+import type * as React from 'react';
 import {
   ProfileHeroCard,
   type ProfileHeroCardProps,
-} from "@/components/molecules/student/ProfileHeroCard";
+} from '@/components/molecules/student/ProfileHeroCard';
 import {
   SchoolProposalDialog,
   type SchoolProposalDialogProps,
-} from "@/components/organisms/school/SchoolProposalDialog";
+} from '@/components/organisms/school/SchoolProposalDialog';
 import {
   ChangeAvatarModal,
   type ChangeAvatarModalProps,
@@ -20,8 +20,8 @@ import {
   ProfileSecurityCard,
   type ProfileSecurityCardProps,
   StudentDashboardFooter,
-} from "@/components/organisms/student";
-import { cn } from "@/utils/classname";
+} from '@/components/organisms/student';
+import { cn } from '@/utils/classname';
 
 export interface StudentProfileTemplateProps {
   heroProps: ProfileHeroCardProps;
@@ -45,12 +45,7 @@ export function StudentProfileTemplate({
   className,
 }: StudentProfileTemplateProps) {
   return (
-    <div
-      className={cn(
-        "w-full max-w-full mx-auto space-y-6 md:space-y-8 pb-6",
-        className,
-      )}
-    >
+    <div className={cn('w-full max-w-full mx-auto space-y-6 md:space-y-8 pb-6', className)}>
       {/* 1. Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
         <div className="space-y-1">
@@ -85,9 +80,7 @@ export function StudentProfileTemplate({
       {/* 4. Modals */}
       <ChangePasswordModal {...changePasswordModalProps} />
       <ChangeAvatarModal {...changeAvatarModalProps} />
-      {schoolProposalModalProps && (
-        <SchoolProposalDialog {...schoolProposalModalProps} />
-      )}
+      {schoolProposalModalProps && <SchoolProposalDialog {...schoolProposalModalProps} />}
 
       {/* 5. Unified Footer */}
       <StudentDashboardFooter />
