@@ -40,6 +40,9 @@ func (h *QuestionHandler) CreateCompetency(c *fiber.Ctx) error {
 
 	res, err := h.qService.CreateCompetency(c.UserContext(), req, userID)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidCompetencyName) {
+			return utils.Error(c, fiber.StatusBadRequest, err.Error(), err)
+		}
 		if errors.Is(err, service.ErrCompetencyCodeExists) {
 			return utils.Error(c, fiber.StatusConflict, err.Error(), err)
 		}

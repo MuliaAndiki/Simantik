@@ -75,12 +75,7 @@ func (r *questionRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&models.Question{}, "id = ?", id).Error
 }
 
-func (r *questionRepository) List(ctx context.Context, filter dto.ListQuestionFilter) ([]models.Question, int64, error) {
-	var questions []models.Question
-	var total int64
-
-	query := r.db.WithContext(ctx).Model(&models.Question{})
-
+func applyQuestionListFilter(query *gorm.DB, filter dto.ListQuestionFilter) *gorm.DB {
 	if filter.Search != "" {
 		searchTerm := "%" + strings.ToLower(filter.Search) + "%"
 		query = query.Where("LOWER(question_text) LIKE ?", searchTerm)
@@ -94,10 +89,20 @@ func (r *questionRepository) List(ctx context.Context, filter dto.ListQuestionFi
 	if filter.DifficultyLevel > 0 {
 		query = query.Where("difficulty_level = ?", filter.DifficultyLevel)
 	}
-	if filter.CompetencyID != "" {
+	if filter.CompetencyID == "uncategorized" {
+		query = query.Where("NOT EXISTS (SELECT 1 FROM question_competencies qc WHERE qc.question_id = questions.id)")
+	} else if filter.CompetencyID != "" {
 		query = query.Joins("JOIN question_competencies qc ON qc.question_id = questions.id").
 			Where("qc.competency_id = ?", filter.CompetencyID)
 	}
+	return query
+}
+
+func (r *questionRepository) List(ctx context.Context, filter dto.ListQuestionFilter) ([]models.Question, int64, error) {
+	var questions []models.Question
+	var total int64
+
+	query := applyQuestionListFilter(r.db.WithContext(ctx).Model(&models.Question{}), filter)
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -126,21 +131,8 @@ func (r *questionRepository) List(ctx context.Context, filter dto.ListQuestionFi
 
 func (r *questionRepository) CountByFilter(ctx context.Context, filter dto.ListQuestionFilter) (int64, error) {
 	var total int64
-	query := r.db.WithContext(ctx).Model(&models.Question{})
-
-	if filter.Status != "" {
-		query = query.Where("status = ?", filter.Status)
-	}
-	if filter.QuestionTypeID != "" {
-		query = query.Where("question_type_id = ?", filter.QuestionTypeID)
-	}
-	if filter.DifficultyLevel > 0 {
-		query = query.Where("difficulty_level = ?", filter.DifficultyLevel)
-	}
-	if filter.CompetencyID != "" {
-		query = query.Joins("JOIN question_competencies qc ON qc.question_id = questions.id").
-			Where("qc.competency_id = ?", filter.CompetencyID)
-	}
+	filter.Search = ""
+	query := applyQuestionListFilter(r.db.WithContext(ctx).Model(&models.Question{}), filter)
 
 	if err := query.Count(&total).Error; err != nil {
 		return 0, err

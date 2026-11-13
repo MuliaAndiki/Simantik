@@ -345,7 +345,13 @@ func (s *learningService) UpdateMaterial(ctx context.Context, id uuid.UUID, req 
 		return nil, err
 	}
 
-	if req.CompetencyID != nil {
+	if req.ClearCompetency {
+		mat.CompetencyID = nil
+		mat.Competency = nil
+	} else if req.CompetencyID != nil {
+		if mat.CompetencyID == nil || *mat.CompetencyID != *req.CompetencyID {
+			mat.Competency = nil
+		}
 		mat.CompetencyID = req.CompetencyID
 	}
 	if req.Title != "" {
@@ -376,6 +382,12 @@ func (s *learningService) UpdateMaterial(ctx context.Context, id uuid.UUID, req 
 
 	if err := s.materialRepo.Update(ctx, mat); err != nil {
 		return nil, err
+	}
+
+	if !req.ClearCompetency && req.CompetencyID != nil {
+		if refreshed, rErr := s.materialRepo.FindByID(ctx, id); rErr == nil && refreshed != nil {
+			mat = refreshed
+		}
 	}
 
 	return s.mapToMaterialResponse(mat, false), nil

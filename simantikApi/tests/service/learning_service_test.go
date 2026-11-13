@@ -594,4 +594,46 @@ func TestLearningService_CreateAndUpdateMaterialWithObjectivesAndStructure(t *te
 	}
 }
 
+func TestLearningService_ClearMaterialCompetency(t *testing.T) {
+	ctx := context.Background()
+	modRepo := newMockModuleRepo()
+	matRepo := newMockMaterialRepo()
+	progRepo := newMockProgressRepo(modRepo, matRepo)
+	svc := service.NewLearningService(modRepo, matRepo, progRepo)
+
+	adminID := uuid.New()
+	compID := uuid.New()
+
+	mod, _ := svc.CreateModule(ctx, dto.CreateLearningModuleRequest{
+		Title:   "Modul Uji Kompetensi",
+		Jenjang: "sma",
+	}, adminID)
+
+	mat, err := svc.CreateMaterial(ctx, dto.CreateMaterialRequest{
+		ModuleID:     mod.ID,
+		CompetencyID: &compID,
+		Title:        "Materi Terkait Kompetensi",
+		Content:      "<p>Konten</p>",
+		Type:         "text",
+	}, adminID)
+	if err != nil {
+		t.Fatalf("CreateMaterial failed: %v", err)
+	}
+
+	matRepo.materials[mat.ID].Competency = &models.Competency{ID: compID, Name: "Pemahaman Uji"}
+
+	cleared, err := svc.UpdateMaterial(ctx, mat.ID, dto.UpdateMaterialRequest{
+		ClearCompetency: true,
+	}, adminID)
+	if err != nil {
+		t.Fatalf("UpdateMaterial ClearCompetency failed: %v", err)
+	}
+	if cleared.CompetencyID != nil {
+		t.Errorf("expected nil competency_id after ClearCompetency, got %v", *cleared.CompetencyID)
+	}
+	if cleared.CompetencyName != "" {
+		t.Errorf("expected empty competency_name after ClearCompetency, got %q", cleared.CompetencyName)
+	}
+}
+
 

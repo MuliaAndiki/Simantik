@@ -18,11 +18,12 @@ type CreatePracticePackageRequest struct {
 
 // UpdatePracticePackageRequest payload for updating practice package metadata.
 type UpdatePracticePackageRequest struct {
-	Title        string     `json:"title" validate:"omitempty,min=3,max=200"`
-	Description  string     `json:"description" validate:"omitempty"`
-	CompetencyID *uuid.UUID `json:"competency_id" validate:"omitempty,uuid"`
-	Jenjang      string     `json:"jenjang" validate:"omitempty,oneof=sd smp sma smk"`
-	Status       string     `json:"status" validate:"omitempty,oneof=draft published archived"`
+	Title           string     `json:"title" validate:"omitempty,min=3,max=200"`
+	Description     string     `json:"description" validate:"omitempty"`
+	CompetencyID    *uuid.UUID `json:"competency_id" validate:"omitempty,uuid"`
+	ClearCompetency bool       `json:"clear_competency"`
+	Jenjang         string     `json:"jenjang" validate:"omitempty,oneof=sd smp sma smk"`
+	Status          string     `json:"status" validate:"omitempty,oneof=draft published archived"`
 }
 
 // AddPracticeQuestionsRequest payload for associating questions with a practice package.
@@ -32,12 +33,13 @@ type AddPracticeQuestionsRequest struct {
 
 // ListPracticePackageFilter filter parameters for listing practice packages.
 type ListPracticePackageFilter struct {
-	Search       string     `query:"search"`
-	Status       string     `query:"status"`
-	Jenjang      string     `query:"jenjang"`
-	CompetencyID *uuid.UUID `query:"competency_id"`
-	Limit        int        `query:"limit"`
-	Offset       int        `query:"offset"`
+	Search        string     `query:"search"`
+	Status        string     `query:"status"`
+	Jenjang       string     `query:"jenjang"`
+	CompetencyID  *uuid.UUID `query:"competency_id"`
+	Uncategorized bool       `query:"uncategorized"`
+	Limit         int        `query:"limit"`
+	Offset        int        `query:"offset"`
 }
 
 // PracticePackageResponse represents a practice package summary.

@@ -21,6 +21,7 @@ export interface ManagerFilterBarProps {
   searchPlaceholder: string;
   onSearchChange: (value: string) => void;
   selects: ManagerSelectConfig[];
+  extraFilters?: React.ReactNode;
   onRefresh?: () => void;
   isRefreshing?: boolean;
   counter?: string;
@@ -38,12 +39,13 @@ function optionLabel(opt: string | ManagerSelectOption): string {
 }
 
 // Filter bar generik content-manager (materials, practice, tryouts, news):
-// search + N native-select + refresh + counter opsional.
+// search + N native-select + custom filter opsional + refresh + counter opsional.
 export function ManagerFilterBar({
   search,
   searchPlaceholder,
   onSearchChange,
   selects,
+  extraFilters,
   onRefresh,
   isRefreshing = false,
   counter,
@@ -58,7 +60,7 @@ export function ManagerFilterBar({
         className
       )}
     >
-      <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+      <div className="flex flex-1 flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5">
         <div className={cn('relative flex-1 min-w-[220px]', searchWrapClassName)}>
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
@@ -92,6 +94,7 @@ export function ManagerFilterBar({
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           </div>
         ))}
+        {extraFilters}
       </div>
 
       {(onRefresh || counter) && (

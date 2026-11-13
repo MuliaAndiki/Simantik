@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"unicode"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -47,19 +50,33 @@ func NewQuestionService(compRepo repository.CompetencyRepository, qRepo reposito
 
 // Competency
 func (s *questionService) CreateCompetency(ctx context.Context, req dto.CreateCompetencyRequest, createdByID uuid.UUID) (*dto.CompetencyResponse, error) {
-	existing, err := s.compRepo.FindByCode(ctx, req.Code)
-	if err != nil {
-		return nil, err
+	name := strings.TrimSpace(req.Name)
+	if len([]rune(name)) < 2 {
+		return nil, ErrInvalidCompetencyName
 	}
-	if existing != nil {
-		return nil, ErrCompetencyCodeExists
+
+	code := strings.TrimSpace(req.Code)
+	if code == "" {
+		generated, err := s.generateUniqueCompetencyCode(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		code = generated
+	} else {
+		existing, err := s.compRepo.FindByCode(ctx, code)
+		if err != nil {
+			return nil, err
+		}
+		if existing != nil {
+			return nil, ErrCompetencyCodeExists
+		}
 	}
 
 	comp := &models.Competency{
-		Code:        req.Code,
-		Name:        req.Name,
-		Description: req.Description,
-		Status:      "active",
+		Code:        code,
+		Name:        name,
+		Description: strings.TrimSpace(req.Description),
+		Status:      models.CompetencyStatusActive,
 	}
 
 	if err := s.compRepo.Create(ctx, comp); err != nil {
@@ -67,6 +84,66 @@ func (s *questionService) CreateCompetency(ctx context.Context, req dto.CreateCo
 	}
 
 	return s.mapCompetencyResponse(comp), nil
+}
+
+// generateUniqueCompetencyCode derives an uppercase ASCII slug from name and resolves active code collisions.
+func (s *questionService) generateUniqueCompetencyCode(ctx context.Context, name string) (string, error) {
+	base := slugifyCompetencyCode(name)
+	if len(base) > 40 {
+		base = strings.TrimRight(base[:40], "_")
+		if base == "" {
+			base = "COMP"
+		}
+	}
+
+	candidate := base
+	for i := 2; i <= 50; i++ {
+		existing, err := s.compRepo.FindByCode(ctx, candidate)
+		if err != nil {
+			return "", err
+		}
+		if existing == nil {
+			return candidate, nil
+		}
+		suffix := fmt.Sprintf("_%d", i)
+		maxBase := 50 - len(suffix)
+		trimmedBase := base
+		if len(trimmedBase) > maxBase {
+			trimmedBase = strings.TrimRight(trimmedBase[:maxBase], "_")
+		}
+		candidate = trimmedBase + suffix
+	}
+
+	shortID := strings.ToUpper(uuid.NewString()[:6])
+	maxBase := 50 - 7
+	trimmedBase := base
+	if len(trimmedBase) > maxBase {
+		trimmedBase = strings.TrimRight(trimmedBase[:maxBase], "_")
+	}
+	return fmt.Sprintf("%s_%s", trimmedBase, shortID), nil
+}
+
+func slugifyCompetencyCode(name string) string {
+	var b strings.Builder
+	prevUnderscore := false
+	for _, r := range strings.ToUpper(strings.TrimSpace(name)) {
+		if (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			prevUnderscore = false
+			continue
+		}
+		if unicode.IsSpace(r) || r == '-' || r == '_' || r == '/' {
+			if !prevUnderscore && b.Len() > 0 {
+				b.WriteByte('_')
+				prevUnderscore = true
+			}
+		}
+	}
+	out := strings.Trim(b.String(), "_")
+	if out == "" {
+		return "COMP"
+	}
+	return out
 }
 
 func (s *questionService) GetCompetency(ctx context.Context, id uuid.UUID) (*dto.CompetencyResponse, error) {

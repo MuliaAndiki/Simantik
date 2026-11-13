@@ -327,3 +327,104 @@ func TestQuestionService_StatusTransition(t *testing.T) {
 		t.Errorf("expected published, got %s", res.Status)
 	}
 }
+
+func TestQuestionService_CreateCompetencyAutoCodeAndReuseAfterDelete(t *testing.T) {
+	compRepo := newMockCompetencyRepo()
+	qRepo := newMockQuestionRepo()
+	srv := service.NewQuestionService(compRepo, qRepo, nil, nil)
+
+	ctx := context.Background()
+	adminID := uuid.New()
+
+	// Invalid short name rejected
+	if _, err := srv.CreateCompetency(ctx, dto.CreateCompetencyRequest{Name: "A"}, adminID); err == nil {
+		t.Fatalf("expected error for too-short name, got nil")
+	}
+
+	// Auto-generate code when Code is omitted
+	first, err := srv.CreateCompetency(ctx, dto.CreateCompetencyRequest{
+		Name:        "Pemahaman Tekstual Lanjut",
+		Description: "Uji pemahaman mendalam",
+	}, adminID)
+	if err != nil {
+		t.Fatalf("unexpected error creating first competency: %v", err)
+	}
+	if first.Code != "PEMAHAMAN_TEKSTUAL_LANJUT" {
+		t.Errorf("expected auto code PEMAHAMAN_TEKSTUAL_LANJUT, got %s", first.Code)
+	}
+
+	// Second competency with same name resolves code collision with suffix _2
+	second, err := srv.CreateCompetency(ctx, dto.CreateCompetencyRequest{
+		Name: "Pemahaman Tekstual Lanjut",
+	}, adminID)
+	if err != nil {
+		t.Fatalf("unexpected error creating duplicate-named competency: %v", err)
+	}
+	if second.Code != "PEMAHAMAN_TEKSTUAL_LANJUT_2" {
+		t.Errorf("expected suffixed code PEMAHAMAN_TEKSTUAL_LANJUT_2, got %s", second.Code)
+	}
+
+	// Explicit duplicate active code returns conflict error
+	if _, err := srv.CreateCompetency(ctx, dto.CreateCompetencyRequest{
+		Code: first.Code,
+		Name: "Duplikat Eksplisit",
+	}, adminID); err != service.ErrCompetencyCodeExists {
+		t.Errorf("expected ErrCompetencyCodeExists, got %v", err)
+	}
+
+	// Delete first competency, then re-create with exact same code succeeds
+	if err := srv.DeleteCompetency(ctx, uuid.MustParse(first.ID)); err != nil {
+		t.Fatalf("unexpected delete error: %v", err)
+	}
+
+	recreated, err := srv.CreateCompetency(ctx, dto.CreateCompetencyRequest{
+		Code: first.Code,
+		Name: "Pemahaman Tekstual Pulih",
+	}, adminID)
+	if err != nil {
+		t.Fatalf("expected recreated code to succeed after delete, got %v", err)
+	}
+	if recreated.Code != first.Code {
+		t.Errorf("expected %s, got %s", first.Code, recreated.Code)
+	}
+}
+
+func TestQuestionService_UpdateQuestionClearsCompetencies(t *testing.T) {
+	compRepo := newMockCompetencyRepo()
+	qRepo := newMockQuestionRepo()
+	srv := service.NewQuestionService(compRepo, qRepo, nil, nil)
+
+	ctx := context.Background()
+	adminID := uuid.New()
+	compID := uuid.New()
+
+	created, err := srv.CreateQuestion(ctx, dto.CreateQuestionRequest{
+		QuestionTypeID:  uuid.New(),
+		QuestionText:    "Apa gagasan utama wacana tersebut?",
+		DifficultyLevel: 2,
+		Options: []dto.CreateQuestionOptionRequest{
+			{OptionLabel: "A", OptionText: "Opsi A", IsCorrect: true, DisplayOrder: 1},
+			{OptionLabel: "B", OptionText: "Opsi B", IsCorrect: false, DisplayOrder: 2},
+		},
+		CompetencyIDs: []uuid.UUID{compID},
+	}, adminID)
+	if err != nil {
+		t.Fatalf("create question failed: %v", err)
+	}
+	if len(created.Competencies) != 1 {
+		t.Fatalf("expected 1 competency initially, got %d", len(created.Competencies))
+	}
+
+	updated, err := srv.UpdateQuestion(ctx, uuid.MustParse(created.ID), dto.UpdateQuestionRequest{
+		QuestionText:    created.QuestionText,
+		DifficultyLevel: 2,
+		Status:          "draft",
+		CompetencyIDs:   []uuid.UUID{},
+	}, adminID)
+	if err != nil {
+		t.Fatalf("update question failed: %v", err)
+	}
+	if len(updated.Competencies) != 0 {
+		t.Errorf("expected 0 competencies after clearing, got %d", len(updated.Competencies))
+	}
+}

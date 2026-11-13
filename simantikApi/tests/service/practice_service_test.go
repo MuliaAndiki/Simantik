@@ -513,3 +513,36 @@ func TestPracticeService_GetPracticePackageResults(t *testing.T) {
 		t.Errorf("expected average score 85.0, got %f", res.AverageScore)
 	}
 }
+
+func TestPracticeService_ClearPackageCompetency(t *testing.T) {
+	repo := newMockPracticeRepo()
+	svc := service.NewPracticeService(nil, repo, nil, nil, nil, nil)
+	ctx := context.Background()
+
+	adminID := uuid.New()
+	compID := uuid.New()
+
+	pkg, err := svc.CreatePackage(ctx, dto.CreatePracticePackageRequest{
+		Title:        "Paket Dengan Kompetensi",
+		CompetencyID: &compID,
+		Jenjang:      "sma",
+	}, adminID)
+	if err != nil {
+		t.Fatalf("CreatePackage failed: %v", err)
+	}
+
+	repo.packages[pkg.ID].Competency = &models.Competency{ID: compID, Code: "COMP", Name: "Kompetensi Uji"}
+
+	updated, err := svc.UpdatePackage(ctx, pkg.ID, dto.UpdatePracticePackageRequest{
+		ClearCompetency: true,
+	}, adminID)
+	if err != nil {
+		t.Fatalf("UpdatePackage ClearCompetency failed: %v", err)
+	}
+	if updated.CompetencyID != nil {
+		t.Errorf("expected nil competency_id after ClearCompetency, got %v", *updated.CompetencyID)
+	}
+	if updated.CompetencyName != "" {
+		t.Errorf("expected empty competency_name after ClearCompetency, got %q", updated.CompetencyName)
+	}
+}

@@ -1,10 +1,10 @@
 import { Download, PlusCircle } from 'lucide-react';
 import type React from 'react';
 import { TableLoader } from '@/components/atoms/loading';
+import type { CompetencyDropdownActionProps } from '@/components/molecules/input/CompetencyCreatableSelect';
 import {
   PracticeCreateDialog,
   PracticeDataTable,
-  type PracticeManagerCompetencyOption,
   PracticeManagerFilterBar,
   PracticeStatCards,
 } from '@/components/organisms/content_manager/practice';
@@ -15,10 +15,9 @@ import type {
   PracticeStats,
 } from '@/types/ui/practice-manager.types';
 
-export interface PracticeListTemplateProps {
+export interface PracticeListTemplateProps extends CompetencyDropdownActionProps {
   stats: PracticeStats;
   packages: PracticePackageItem[];
-  competencies: PracticeManagerCompetencyOption[];
 
   filters: PracticeFilterState;
   totalItems: number;
@@ -56,6 +55,10 @@ export const PracticeListTemplate: React.FC<PracticeListTemplateProps> = ({
   stats,
   packages,
   competencies,
+  onCreateCompetency,
+  onRequestDeleteCompetency,
+  isCreatingCompetency = false,
+  deletingCompetencyId = null,
   filters,
   totalItems,
   isRefreshing = false,
@@ -129,6 +132,10 @@ export const PracticeListTemplate: React.FC<PracticeListTemplateProps> = ({
         mode={dialogMode}
         form={dialogForm}
         competencies={competencies}
+        onCreateCompetency={onCreateCompetency}
+        onRequestDeleteCompetency={onRequestDeleteCompetency}
+        isCreatingCompetency={isCreatingCompetency}
+        deletingCompetencyId={deletingCompetencyId}
         onChange={onDialogFormChange}
         error={dialogError}
         onSubmit={onSubmitDialog}
@@ -139,6 +146,10 @@ export const PracticeListTemplate: React.FC<PracticeListTemplateProps> = ({
       <PracticeManagerFilterBar
         filters={filters}
         competencies={competencies}
+        onCreateCompetency={onCreateCompetency}
+        onRequestDeleteCompetency={onRequestDeleteCompetency}
+        isCreatingCompetency={isCreatingCompetency}
+        deletingCompetencyId={deletingCompetencyId}
         onSearchChange={onSearchChange}
         onJenjangChange={onJenjangChange}
         onStatusChange={onStatusChange}
