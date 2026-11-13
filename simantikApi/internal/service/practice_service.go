@@ -142,7 +142,13 @@ func (s *practiceService) UpdatePackage(ctx context.Context, id uuid.UUID, req d
 	if req.Description != "" {
 		pkg.Description = req.Description
 	}
-	if req.CompetencyID != nil {
+	if req.ClearCompetency {
+		pkg.CompetencyID = nil
+		pkg.Competency = nil
+	} else if req.CompetencyID != nil {
+		if pkg.CompetencyID == nil || *pkg.CompetencyID != *req.CompetencyID {
+			pkg.Competency = nil
+		}
 		pkg.CompetencyID = req.CompetencyID
 	}
 	if req.Jenjang != "" {
@@ -161,6 +167,12 @@ func (s *practiceService) UpdatePackage(ctx context.Context, id uuid.UUID, req d
 	if req.Status != "" && s.questionRepo != nil {
 		if qIDs, err := s.practiceRepo.GetPackageQuestionIDs(ctx, pkg.ID); err == nil && len(qIDs) > 0 {
 			_ = s.questionRepo.UpdateStatusByIDs(ctx, qIDs, pkg.Status, updatedByID)
+		}
+	}
+
+	if !req.ClearCompetency && req.CompetencyID != nil {
+		if refreshed, rErr := s.practiceRepo.FindPackageByID(ctx, id); rErr == nil && refreshed != nil {
+			pkg = refreshed
 		}
 	}
 

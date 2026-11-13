@@ -2,6 +2,7 @@ import type { PreviewDocumentStructure } from './material-manager.types';
 
 export interface MaterialMetadata {
   judulMateri: string;
+  competencyId?: string;
   kategoriPembelajaran: string;
   deskripsiRingkas: string;
   idDokumen: string;

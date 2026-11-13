@@ -11,8 +11,8 @@ import (
 // Competency DTOs
 
 type CreateCompetencyRequest struct {
-	Code        string `json:"code" validate:"required"`
-	Name        string `json:"name" validate:"required"`
+	Code        string `json:"code" validate:"omitempty,max=50"`
+	Name        string `json:"name" validate:"required,min=2,max=150"`
 	Description string `json:"description"`
 }
 

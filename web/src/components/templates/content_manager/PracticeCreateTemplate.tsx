@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { PracticeManagerCompetencyOption } from '@/components/organisms/content_manager/practice';
+import type { CompetencyDropdownActionProps } from '@/components/molecules/input/CompetencyCreatableSelect';
 import {
   PracticeCreateTopBar,
   PracticeExplanationSection,
@@ -20,13 +20,15 @@ import type {
   QuestionStimulusForm,
 } from '@/types/ui/practice-question-editor.types';
 
-export interface PracticeCreateTemplateProps extends SharedStimulusPickerProps {
+export interface PracticeCreateTemplateProps
+  extends SharedStimulusPickerProps,
+    CompetencyDropdownActionProps {
   packageForm: PracticePackageEditorForm;
   activeQuestion: QuestionEditorItemForm;
-  competencies: PracticeManagerCompetencyOption[];
   isSubmitting?: boolean;
   onPackageTitleChange: (val: string) => void;
   onPackageCompetencyChange: (val: string) => void;
+  onQuestionCompetencyChange?: (val: string) => void;
   onPackageDescriptionChange: (val: string) => void;
   onSaveDraft: () => void;
   onSelectQuestion: (index: number) => void;
@@ -61,10 +63,15 @@ export interface PracticeCreateTemplateProps extends SharedStimulusPickerProps {
 export const PracticeCreateTemplate: React.FC<PracticeCreateTemplateProps> = ({
   packageForm,
   activeQuestion,
-  competencies,
+  competencies = [],
+  onCreateCompetency,
+  onRequestDeleteCompetency,
+  isCreatingCompetency = false,
+  deletingCompetencyId = null,
   isSubmitting = false,
   onPackageTitleChange,
   onPackageCompetencyChange,
+  onQuestionCompetencyChange,
   onPackageDescriptionChange,
   onSaveDraft,
   onSelectQuestion,
@@ -123,6 +130,10 @@ export const PracticeCreateTemplate: React.FC<PracticeCreateTemplateProps> = ({
         competencyId={packageForm.competency_id}
         description={packageForm.description}
         competencies={competencies}
+        onCreateCompetency={onCreateCompetency}
+        onRequestDeleteCompetency={onRequestDeleteCompetency}
+        isCreatingCompetency={isCreatingCompetency}
+        deletingCompetencyId={deletingCompetencyId}
         onTitleChange={onPackageTitleChange}
         onCompetencyChange={onPackageCompetencyChange}
         onDescriptionChange={onPackageDescriptionChange}
@@ -145,11 +156,18 @@ export const PracticeCreateTemplate: React.FC<PracticeCreateTemplateProps> = ({
 
         {/* Right Column: Active Question Form (8 cols on xl) */}
         <div className="xl:col-span-8 2xl:col-span-9 bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-7 shadow-2xs space-y-6">
-          {/* Question Header (Active Badge, Type Select) */}
+          {/* Question Header (Active Badge, Type Select, Competency) */}
           <PracticeQuestionEditorHeader
             questionNumber={activeQuestion.questionNumber}
             questionType={activeQuestion.questionType}
             onQuestionTypeChange={onQuestionTypeChange}
+            competencyId={activeQuestion.competencyId || ''}
+            onCompetencyChange={onQuestionCompetencyChange}
+            competencies={competencies}
+            onCreateCompetency={onCreateCompetency}
+            onRequestDeleteCompetency={onRequestDeleteCompetency}
+            isCreatingCompetency={isCreatingCompetency}
+            deletingCompetencyId={deletingCompetencyId}
           />
 
           {/* Section 1: Stimulus Wacana */}

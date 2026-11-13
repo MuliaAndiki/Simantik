@@ -19,7 +19,7 @@ export interface LearningDetailHeroBannerProps {
 export function LearningDetailHeroBanner({
   title,
   description,
-  competencyName = 'Pemahaman Tekstual',
+  competencyName = 'Umum',
   competencyCode,
   sourceBadge,
   syncStatusText,

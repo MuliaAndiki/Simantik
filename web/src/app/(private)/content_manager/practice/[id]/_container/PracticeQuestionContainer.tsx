@@ -6,6 +6,8 @@ import type { SharedStimulusOption } from '@/components/organisms/content_manage
 import { PracticeCreatePage } from '@/components/page/private/content_manager/PracticeCreatePage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
+import { useCompetencyDropdownActions } from '@/hooks/useService/question/useCompetencyDropdownActions';
+import Api from '@/services/props.service';
 import type { QuestionStudentResponse } from '@/types/service';
 import type { PracticeQuestionType } from '@/types/ui/practice.types';
 import type {
@@ -15,14 +17,17 @@ import type {
   QuestionMatrixStatementForm,
   QuestionStimulusForm,
 } from '@/types/ui/practice-question-editor.types';
+import { clearDeletedCompetencyFromQuestions, resetIdIfDeleted } from '@/utils/competency.util';
 import { deleteObject, uploadAvatar } from '@/utils/r2-utils';
 
 const createDefaultQuestion = (
   number: number,
-  type: PracticeQuestionType = 'pilihan-ganda'
+  type: PracticeQuestionType = 'pilihan-ganda',
+  competencyId = ''
 ): QuestionEditorItemForm => ({
   id: `q-${Date.now()}-${number}`,
   questionNumber: number,
+  competencyId,
   questionType: type,
   stimulus: {
     hasStimulus: false,
@@ -163,6 +168,7 @@ const mapApiQuestionToEditorForm = (
   return {
     id: q.id,
     questionNumber: idx + 1,
+    competencyId: q.competencies?.[0]?.id || '',
     questionType,
     stimulus: {
       hasStimulus,
@@ -205,7 +211,6 @@ export const PracticeQuestionContainer: React.FC = () => {
   const ns = useAppNameSpace();
 
   // Queries
-  const competenciesQuery = api.question.query.competencies({ limit: 100 });
   const questionTypesQuery = api.question.query.types();
   const packageDetailQuery = api.practice.query.packageDetail(packageId, {
     enabled: !!packageId,
@@ -214,13 +219,16 @@ export const PracticeQuestionContainer: React.FC = () => {
   // Mutations
   const updatePackageMutation = api.practice.mutate.updatePackage();
   const createQuestionMutation = api.question.mutate.create();
+  const updateQuestionMutation = api.question.mutate.update();
   const addQuestionsMutation = api.practice.mutate.addQuestions();
   const removeQuestionMutation = api.practice.mutate.removeQuestion();
 
   // Id soal yang sudah menempel di paket saat halaman dimuat.
-  // Save hanya create soal baru + detach soal yang dihapus editor,
+  // Save hanya create soal baru + update kompetensi soal lama yang berubah + detach soal dihapus,
   // agar soal lama tidak terduplikasi setiap kali menyimpan.
   const initialQuestionIdsRef = useRef<string[]>([]);
+  const initialQuestionCompetencyMapRef = useRef<Record<string, string>>({});
+  const hydratedPackageIdRef = useRef<string | null>(null);
   const draftStorageKey = useMemo(
     () => (packageId ? `simantik_draft_practice_${packageId}` : null),
     [packageId]
@@ -269,20 +277,39 @@ export const PracticeQuestionContainer: React.FC = () => {
     }
   }, []);
 
-  // Populate competencies
-  const competencies = useMemo(() => {
-    const list = competenciesQuery.data?.competencies ?? [];
-    return list.map((c) => ({
-      id: c.id,
-      name: c.name,
-    }));
-  }, [competenciesQuery.data]);
+  const {
+    competencies,
+    isCreatingCompetency,
+    deletingCompetencyId,
+    handleCreateCompetency,
+    handleRequestDeleteCompetency,
+  } = useCompetencyDropdownActions({
+    limit: 100,
+    onDeleted: (deletedId) => {
+      setPackageForm((prev) => ({
+        ...prev,
+        competency_id: resetIdIfDeleted(prev.competency_id, deletedId),
+        questions: clearDeletedCompetencyFromQuestions(prev.questions, deletedId),
+      }));
+    },
+  });
 
-  // Populate data when package details arrive
+  // Populate data once when package details arrive (avoid wiping unsaved edits on query refetch)
   useEffect(() => {
     if (packageDetailQuery.data) {
       const pkg = packageDetailQuery.data;
+      if (hydratedPackageIdRef.current === pkg.id) {
+        return;
+      }
+      hydratedPackageIdRef.current = pkg.id;
       initialQuestionIdsRef.current = (pkg.questions ?? []).map((q) => q.id).filter(Boolean);
+      const compMap: Record<string, string> = {};
+      for (const q of pkg.questions ?? []) {
+        if (q.id) {
+          compMap[q.id] = q.competencies?.[0]?.id || '';
+        }
+      }
+      initialQuestionCompetencyMapRef.current = compMap;
 
       // Jika user sudah memiliki draf lokal yang dipulihkan, jangan timpa soal yang sedang diedit
       if (isDraftRestoredRef.current) {
@@ -301,13 +328,13 @@ export const PracticeQuestionContainer: React.FC = () => {
       const loadedQuestions: QuestionEditorItemForm[] =
         pkg.questions && pkg.questions.length > 0
           ? pkg.questions.map((q, idx) => mapApiQuestionToEditorForm(q, idx))
-          : [createDefaultQuestion(1, 'pilihan-ganda')];
+          : [createDefaultQuestion(1, 'pilihan-ganda', pkg.competency_id || '')];
 
       setPackageForm((prev) => ({
         ...prev,
         id: pkg.id,
         title: pkg.title || prev.title,
-        competency_id: pkg.competency_id || prev.competency_id,
+        competency_id: pkg.competency_id ?? '',
         jenjang: (pkg.jenjang as typeof prev.jenjang) || prev.jenjang,
         description: pkg.description || prev.description,
         status: (pkg.status || 'DRAFT').toUpperCase() as typeof prev.status,
@@ -380,6 +407,10 @@ export const PracticeQuestionContainer: React.FC = () => {
     setPackageForm((prev) => ({ ...prev, competency_id }));
   };
 
+  const handleQuestionCompetencyChange = (competencyId: string) => {
+    updateActiveQuestion((prev) => ({ ...prev, competencyId }));
+  };
+
   const handlePackageDescriptionChange = (description: string) => {
     setPackageForm((prev) => ({ ...prev, description }));
   };
@@ -394,7 +425,11 @@ export const PracticeQuestionContainer: React.FC = () => {
   const handleAddQuestion = () => {
     setPackageForm((prev) => {
       const nextNumber = prev.questions.length + 1;
-      const newQuestion = createDefaultQuestion(nextNumber, 'pilihan-ganda');
+      const newQuestion = createDefaultQuestion(
+        nextNumber,
+        'pilihan-ganda',
+        prev.competency_id || ''
+      );
       return {
         ...prev,
         questions: [...prev.questions, newQuestion],
@@ -799,18 +834,43 @@ export const PracticeQuestionContainer: React.FC = () => {
             title: packageForm.title.trim(),
             description: packageForm.description.trim() || undefined,
             competency_id: packageForm.competency_id || null,
+            clear_competency: !packageForm.competency_id,
             jenjang: packageForm.jenjang || 'sma',
           },
         });
       }
 
-      // 2. Sinkronisasi soal: hanya soal baru yang di-create,
-      // soal lama yang dipertahankan dilewati, soal yang dihapus editor di-detach.
+      // 2. Sinkronisasi soal: update kompetensi soal lama jika berubah, create soal baru, detach soal dihapus.
       const initialIds = initialQuestionIdsRef.current;
       const validQuestions = packageForm.questions.filter((q) => q.questionText.trim().length > 0);
       const validIds = new Set(validQuestions.map((q) => q.id));
       const newQuestions = validQuestions.filter((q) => !initialIds.includes(q.id));
       const removedIds = initialIds.filter((id) => !validIds.has(id));
+      const existingChangedCompetency = validQuestions.filter(
+        (q) =>
+          initialIds.includes(q.id) &&
+          (q.competencyId || '') !== (initialQuestionCompetencyMapRef.current[q.id] || '')
+      );
+
+      for (const q of existingChangedCompetency) {
+        try {
+          const existingRes = await Api.question.GetQuestionService(q.id);
+          const existing = existingRes.data;
+          if (!existing) continue;
+          await updateQuestionMutation.mutateAsync({
+            id: q.id,
+            body: {
+              question_text: existing.question_text,
+              difficulty_level: existing.difficulty_level || 3,
+              status: existing.status || 'draft',
+              competency_ids: q.competencyId ? [q.competencyId] : [],
+            },
+          });
+          initialQuestionCompetencyMapRef.current[q.id] = q.competencyId || '';
+        } catch {
+          // Continue updating remaining questions
+        }
+      }
 
       const createdQuestionIds: string[] = [];
       const questionTypes = questionTypesQuery.data ?? [];
@@ -862,11 +922,12 @@ export const PracticeQuestionContainer: React.FC = () => {
               ? q.questionText
               : `[WACANA: ${q.stimulus.title || 'Wacana'}]\n${q.stimulus.content}\n\n${q.questionText}`;
 
+          const resolvedQuestionCompId = q.competencyId || packageForm.competency_id || '';
           const res = await createQuestionMutation.mutateAsync({
             question_type_id: targetTypeId,
             question_text: fullQuestionText,
             difficulty_level: 3,
-            competency_ids: packageForm.competency_id ? [packageForm.competency_id] : undefined,
+            competency_ids: resolvedQuestionCompId ? [resolvedQuestionCompId] : undefined,
             stimulus_id: q.stimulus.stimulusId || undefined,
             options: mappedOptions,
             explanation: q.explanation
@@ -968,9 +1029,14 @@ export const PracticeQuestionContainer: React.FC = () => {
       packageForm={packageForm}
       activeQuestion={activeQuestion}
       competencies={competencies}
+      onCreateCompetency={handleCreateCompetency}
+      onRequestDeleteCompetency={handleRequestDeleteCompetency}
+      isCreatingCompetency={isCreatingCompetency}
+      deletingCompetencyId={deletingCompetencyId}
       isSubmitting={isSubmitting}
       onPackageTitleChange={handlePackageTitleChange}
       onPackageCompetencyChange={handlePackageCompetencyChange}
+      onQuestionCompetencyChange={handleQuestionCompetencyChange}
       onPackageDescriptionChange={handlePackageDescriptionChange}
       onSaveDraft={handleSavePackage}
       onSelectQuestion={handleSelectQuestion}

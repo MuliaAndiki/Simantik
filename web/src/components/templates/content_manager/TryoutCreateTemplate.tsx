@@ -1,4 +1,5 @@
 import type React from 'react';
+import type { CompetencyDropdownActionProps } from '@/components/molecules/input/CompetencyCreatableSelect';
 import {
   PracticeExplanationSection,
   PracticeOptionComplexMultipleChoiceSection,
@@ -24,7 +25,9 @@ import type {
   TryoutPackageEditorForm,
 } from '@/types/ui/tryout-question-editor.types';
 
-export interface TryoutCreateTemplateProps extends SharedStimulusPickerProps {
+export interface TryoutCreateTemplateProps
+  extends SharedStimulusPickerProps,
+    CompetencyDropdownActionProps {
   packageForm: TryoutPackageEditorForm;
   activeQuestion: TryoutAdaptiveQuestionItemForm;
   isSubmitting?: boolean;
@@ -32,6 +35,7 @@ export interface TryoutCreateTemplateProps extends SharedStimulusPickerProps {
   onPackageDurationChange: (val: number) => void;
   onPackageJenjangChange: (val: SchoolLevel) => void;
   onPackageDescriptionChange: (val: string) => void;
+  onQuestionCompetencyChange?: (val: string) => void;
   onSaveDraft: () => void;
   onSelectQuestion: (index: number) => void;
   onAddQuestion: () => void;
@@ -65,11 +69,17 @@ export interface TryoutCreateTemplateProps extends SharedStimulusPickerProps {
 export const TryoutCreateTemplate: React.FC<TryoutCreateTemplateProps> = ({
   packageForm,
   activeQuestion,
+  competencies = [],
+  onCreateCompetency,
+  onRequestDeleteCompetency,
+  isCreatingCompetency = false,
+  deletingCompetencyId = null,
   isSubmitting = false,
   onPackageTitleChange,
   onPackageDurationChange,
   onPackageJenjangChange,
   onPackageDescriptionChange,
+  onQuestionCompetencyChange,
   onSaveDraft,
   onSelectQuestion,
   onAddQuestion,
@@ -160,6 +170,13 @@ export const TryoutCreateTemplate: React.FC<TryoutCreateTemplateProps> = ({
             questionNumber={activeQuestion.questionNumber}
             questionType={activeVariant.questionType}
             onQuestionTypeChange={onQuestionTypeChange}
+            competencyId={activeQuestion.competencyId || ''}
+            onCompetencyChange={onQuestionCompetencyChange}
+            competencies={competencies}
+            onCreateCompetency={onCreateCompetency}
+            onRequestDeleteCompetency={onRequestDeleteCompetency}
+            isCreatingCompetency={isCreatingCompetency}
+            deletingCompetencyId={deletingCompetencyId}
           />
 
           {/* Tryout Difficulty Level Tabs (C1 to C5) */}

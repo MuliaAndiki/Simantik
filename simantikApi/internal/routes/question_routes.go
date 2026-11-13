@@ -18,7 +18,7 @@ func RegisterQuestionRoutes(api fiber.Router, cfg *config.Config, h *handler.Que
 	comp.Post("/", adminOrCM, h.CreateCompetency)
 	comp.Get("/:id", h.GetCompetency)
 	comp.Patch("/:id", adminOrCM, h.UpdateCompetency)
-	comp.Delete("/:id", adminOnly, h.DeleteCompetency)
+	comp.Delete("/:id", adminOrCM, h.DeleteCompetency)
 
 	// Question types
 	api.Get("/question-types", auth, h.ListQuestionTypes)

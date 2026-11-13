@@ -1,4 +1,5 @@
-import React from 'react';
+import type React from 'react';
+import type { CompetencyDropdownActionProps } from '@/components/molecules/input/CompetencyCreatableSelect';
 import { MaterialCreateTemplate } from '@/components/templates/content_manager';
 import type {
   LearningObjectiveItem,
@@ -7,7 +8,7 @@ import type {
   RelevantTopicTag,
 } from '@/types/ui';
 
-export interface MaterialCreatePageProps {
+export interface MaterialCreatePageProps extends CompetencyDropdownActionProps {
   metadata?: MaterialMetadata;
   categories?: string[];
   content?: string;
@@ -41,6 +42,11 @@ export interface MaterialCreatePageProps {
 export const MaterialCreatePage: React.FC<MaterialCreatePageProps> = ({
   metadata,
   categories,
+  competencies,
+  onCreateCompetency,
+  onRequestDeleteCompetency,
+  isCreatingCompetency,
+  deletingCompetencyId,
   content,
   objectives,
   structureItems,
@@ -74,6 +80,11 @@ export const MaterialCreatePage: React.FC<MaterialCreatePageProps> = ({
       metadataProps={{
         metadata,
         categories,
+        competencies,
+        onCreateCompetency,
+        onRequestDeleteCompetency,
+        isCreatingCompetency,
+        deletingCompetencyId,
         onChange: onMetadataChange,
       }}
       editorProps={{

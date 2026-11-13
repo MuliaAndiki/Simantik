@@ -44,7 +44,7 @@ func (r *recommendationRepository) BulkCreate(ctx context.Context, recs []models
 func (r *recommendationRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Recommendation, error) {
 	var rec models.Recommendation
 	err := r.db.WithContext(ctx).
-		Preload("Competency").
+		Preload("Competency", preloadUnscopedCompetency).
 		Preload("Material").
 		First(&rec, "id = ?", id).Error
 	if err != nil {
@@ -78,7 +78,7 @@ func (r *recommendationRepository) ListByUserID(ctx context.Context, userID uuid
 	}
 
 	err := query.
-		Preload("Competency").
+		Preload("Competency", preloadUnscopedCompetency).
 		Preload("Material").
 		Order("CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END ASC, created_at DESC").
 		Find(&recs).Error
@@ -97,7 +97,7 @@ func (r *recommendationRepository) DeleteByEvaluationID(ctx context.Context, eva
 func (r *recommendationRepository) FindByEvaluationID(ctx context.Context, evalID uuid.UUID) ([]models.Recommendation, error) {
 	var recs []models.Recommendation
 	err := r.db.WithContext(ctx).
-		Preload("Competency").
+		Preload("Competency", preloadUnscopedCompetency).
 		Preload("Material").
 		Where("evaluation_id = ?", evalID).
 		Find(&recs).Error

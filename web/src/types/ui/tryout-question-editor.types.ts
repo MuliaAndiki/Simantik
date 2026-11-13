@@ -25,6 +25,7 @@ export interface TryoutQuestionVariantForm {
 export interface TryoutAdaptiveQuestionItemForm {
   id: string;
   questionNumber: number;
+  competencyId?: string;
   activeLevel: TryoutDifficultyLevel;
   variants: Record<TryoutDifficultyLevel, TryoutQuestionVariantForm>;
 }

@@ -12,10 +12,19 @@ import type {
 } from '@/types/service';
 import { type QuestionCacheContext, readQuestionSnapshot } from '@/utils/cache/question.cache';
 
+const COMPETENCY_INVALIDATE_KEYS = [
+  queryKey.questionRoot(),
+  queryKey.practiceRoot(),
+  queryKey.learningRoot(),
+  queryKey.tryoutRoot(),
+  queryKey.reportingRoot(),
+  queryKey.adminRoot(),
+];
+
 export function useCreateCompetency() {
   return useAppMutation<CompetencyResponse, CreateCompetencyRequest, QuestionCacheContext>({
     mutationFn: (body: CreateCompetencyRequest) => Api.question.CreateCompetencyService(body),
-    invalidateKeys: [queryKey.questionRoot()],
+    invalidateKeys: COMPETENCY_INVALIDATE_KEYS,
   });
 }
 
@@ -27,14 +36,14 @@ export function useUpdateCompetency() {
   >({
     mutationFn: ({ id, body }: { id: string; body: UpdateCompetencyRequest }) =>
       Api.question.UpdateCompetencyService(id, body),
-    invalidateKeys: [queryKey.questionRoot()],
+    invalidateKeys: COMPETENCY_INVALIDATE_KEYS,
   });
 }
 
 export function useDeleteCompetency() {
   return useAppMutation<null, string, QuestionCacheContext>({
     mutationFn: (id: string) => Api.question.DeleteCompetencyService(id),
-    invalidateKeys: [queryKey.questionRoot()],
+    invalidateKeys: COMPETENCY_INVALIDATE_KEYS,
   });
 }
 

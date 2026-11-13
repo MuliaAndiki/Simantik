@@ -9,7 +9,7 @@ import type { ApiResponse, CompetencyStatus, ContentStatus } from '../model';
  * Maps to backend: `dto.CreateCompetencyRequest`
  */
 export interface CreateCompetencyRequest {
-  code: string;
+  code?: string;
   name: string;
   description?: string;
 }

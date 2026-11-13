@@ -59,10 +59,11 @@ var (
 
 // Competency and Question errors.
 var (
-	ErrCompetencyNotFound   = errors.New("competency not found")
-	ErrCompetencyCodeExists = errors.New("competency code already exists")
-	ErrQuestionNotFound     = errors.New("question not found")
-	ErrQuestionTypeNotFound = errors.New("question type not found")
+	ErrCompetencyNotFound    = errors.New("competency not found")
+	ErrCompetencyCodeExists  = errors.New("competency code already exists")
+	ErrInvalidCompetencyName = errors.New("competency name must be at least 2 characters")
+	ErrQuestionNotFound      = errors.New("question not found")
+	ErrQuestionTypeNotFound  = errors.New("question type not found")
 )
 
 // Evaluation errors.

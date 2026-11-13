@@ -16,17 +16,19 @@ import {
   ManagerDialogActions,
   ManagerFormDialogShell,
 } from '@/components/molecules/dialog';
+import {
+  CompetencyCreatableSelect,
+  type CompetencyDropdownActionProps,
+} from '@/components/molecules/input/CompetencyCreatableSelect';
 import type { SchoolLevel } from '@/types/service';
 import { SCHOOL_LEVEL_OPTIONS } from '@/types/ui/material-manager.types';
 import type { PracticeDialogForm, PracticeStatusType } from '@/types/ui/practice-manager.types';
-import type { PracticeManagerCompetencyOption } from './PracticeFilterBar';
 
-export interface PracticeCreateDialogProps {
+export interface PracticeCreateDialogProps extends CompetencyDropdownActionProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode?: 'create' | 'edit';
   form: PracticeDialogForm;
-  competencies?: PracticeManagerCompetencyOption[];
 
   onChange: <K extends keyof PracticeDialogForm>(field: K, value: PracticeDialogForm[K]) => void;
   error?: string | null;
@@ -40,6 +42,10 @@ export const PracticeCreateDialog: React.FC<PracticeCreateDialogProps> = ({
   mode = 'create',
   form,
   competencies = [],
+  onCreateCompetency,
+  onRequestDeleteCompetency,
+  isCreatingCompetency = false,
+  deletingCompetencyId = null,
   onChange,
   error = null,
   onSubmit,
@@ -84,25 +90,19 @@ export const PracticeCreateDialog: React.FC<PracticeCreateDialogProps> = ({
       </DialogField>
 
       <DialogField label="Kompetensi / Subtes" htmlFor={compId}>
-        <Select
-          value={form.competency_id || 'none'}
-          onValueChange={(val) => onChange('competency_id', val === 'none' ? '' : val)}
-        >
-          <SelectTrigger
-            id={compId}
-            className="h-11 rounded-xl border-gray-200 bg-white text-sm focus:ring-cyan-500/30"
-          >
-            <SelectValue placeholder="Pilih Kompetensi" />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl border-gray-100 shadow-xl bg-white">
-            <SelectItem value="none">-- Umum / Tanpa Kompetensi Khusus --</SelectItem>
-            {competencies.map((comp) => (
-              <SelectItem key={comp.id} value={comp.id}>
-                {comp.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CompetencyCreatableSelect
+          id={compId}
+          value={form.competency_id || ''}
+          onChange={(val) => onChange('competency_id', val)}
+          competencies={competencies}
+          placeholder="Pilih Kompetensi"
+          noneLabel="-- Umum / Tanpa Kompetensi Khusus --"
+          onCreateCompetency={onCreateCompetency}
+          onRequestDeleteCompetency={onRequestDeleteCompetency}
+          isCreatingCompetency={isCreatingCompetency}
+          deletingCompetencyId={deletingCompetencyId}
+          triggerClassName="h-11 rounded-xl border-gray-200 bg-white text-sm"
+        />
       </DialogField>
 
       <DialogField

@@ -12,7 +12,7 @@ export interface MaterialActivityHeaderProps {
 
 export const MaterialActivityHeader: React.FC<MaterialActivityHeaderProps> = ({
   materialTitle,
-  competencyName = 'PEMAHAMAN TEKSTUAL',
+  competencyName = 'Umum',
   status,
   onBack,
   onExportData,

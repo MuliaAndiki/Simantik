@@ -32,10 +32,14 @@ func (r *evaluationRepository) Create(ctx context.Context, eval *models.Evaluati
 	return r.db.WithContext(ctx).Create(eval).Error
 }
 
+func preloadUnscopedCompetency(db *gorm.DB) *gorm.DB {
+	return db.Unscoped()
+}
+
 func (r *evaluationRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Evaluation, error) {
 	var eval models.Evaluation
 	err := r.db.WithContext(ctx).
-		Preload("CompetencyEvaluations.Competency").
+		Preload("CompetencyEvaluations.Competency", preloadUnscopedCompetency).
 		First(&eval, "id = ?", id).Error
 	if err != nil {
 		return nil, err
@@ -46,7 +50,7 @@ func (r *evaluationRepository) FindByID(ctx context.Context, id uuid.UUID) (*mod
 func (r *evaluationRepository) FindBySource(ctx context.Context, sourceType models.EvaluationSourceType, sourceID uuid.UUID) (*models.Evaluation, error) {
 	var eval models.Evaluation
 	err := r.db.WithContext(ctx).
-		Preload("CompetencyEvaluations.Competency").
+		Preload("CompetencyEvaluations.Competency", preloadUnscopedCompetency).
 		Where("source_type = ? AND source_id = ?", sourceType, sourceID).
 		Order("created_at DESC").
 		First(&eval).Error
@@ -83,7 +87,7 @@ func (r *evaluationRepository) ListByUserID(ctx context.Context, userID uuid.UUI
 	}
 
 	err := query.
-		Preload("CompetencyEvaluations.Competency").
+		Preload("CompetencyEvaluations.Competency", preloadUnscopedCompetency).
 		Order("created_at DESC").
 		Find(&evals).Error
 
@@ -93,7 +97,7 @@ func (r *evaluationRepository) ListByUserID(ctx context.Context, userID uuid.UUI
 func (r *evaluationRepository) GetCompetencyEvaluationsByUserID(ctx context.Context, userID uuid.UUID) ([]models.CompetencyEvaluation, error) {
 	var items []models.CompetencyEvaluation
 	err := r.db.WithContext(ctx).
-		Preload("Competency").
+		Preload("Competency", preloadUnscopedCompetency).
 		Where("user_id = ?", userID).
 		Order("created_at DESC").
 		Find(&items).Error

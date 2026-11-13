@@ -5,6 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { MaterialStudentActivityPage } from '@/components/page/private/content_manager/MaterialStudentActivityPage';
 import { useApi } from '@/hooks/useApi';
 import type { MaterialStudentActivityItem } from '@/types/service';
+import { resolveCompetencyName } from '@/utils/competency.util';
 
 export const MaterialStudentActivityContainer: React.FC = () => {
   const router = useRouter();
@@ -129,7 +130,9 @@ export const MaterialStudentActivityContainer: React.FC = () => {
     data?.material_title ||
     material?.title ||
     'Memahami Teks Eksplanasi: Ciri, Kaidah Kebahasaan, dan Struktur Analisis';
-  const competencyName = data?.competency_name || material?.competency_name || 'PEMAHAMAN TEKSTUAL';
+  const competencyName = resolveCompetencyName(
+    data?.competency_name || material?.competency_name
+  ).toUpperCase();
   const status = data?.status || material?.status || 'PUBLISHED';
   const totalStudents = data?.total_students ?? 0;
   const accessedStudents = data?.accessed_students ?? 0;
