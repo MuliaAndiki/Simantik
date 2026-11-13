@@ -26,6 +26,7 @@ type Handlers struct {
 	Reporting      *handler.ReportingHandler
 	System         *handler.SystemHandler
 	School         *handler.SchoolHandler
+	Geo            *handler.GeoHandler
 	Practice       *handler.PracticeHandler
 }
 
@@ -74,6 +75,9 @@ func Register(app *fiber.App, cfg *config.Config, h *Handlers) {
 	}
 	if h.School != nil {
 		RegisterSchoolRoutes(api, cfg, h.School)
+	}
+	if h.Geo != nil {
+		RegisterGeoRoutes(api, cfg, h.Geo)
 	}
 	if h.Practice != nil {
 		RegisterPracticeRoutes(api, cfg, h.Practice)

@@ -88,8 +88,14 @@ export const PracticeListContainer: React.FC = () => {
 
   // Stats via tiny limit:1 count queries (total dari respons, tanpa 100 objek penuh).
   const totalCountQuery = api.practice.query.packages({ limit: 1 });
-  const publishedCountQuery = api.practice.query.packages({ status: 'published', limit: 1 });
-  const archivedCountQuery = api.practice.query.packages({ status: 'archived', limit: 1 });
+  const publishedCountQuery = api.practice.query.packages({
+    status: 'published',
+    limit: 1,
+  });
+  const archivedCountQuery = api.practice.query.packages({
+    status: 'archived',
+    limit: 1,
+  });
 
   const {
     competencies,

@@ -25,6 +25,7 @@ import {
   useCmsTutorialCategories,
   useCmsTutorialDetail,
   useCmsTutorialList,
+  useMyTestimonialStatus,
   usePublicDocumentationBySlug,
   usePublicDocumentationList,
   usePublicNewsBySlug,
@@ -53,6 +54,7 @@ export const useContent = () => {
       tutorials: usePublicTutorialList,
       tutorialBySlug: usePublicTutorialBySlug,
       testimonials: usePublicTestimonialsList,
+      myTestimonialStatus: useMyTestimonialStatus,
     },
     mutate: {
       createNews: useCreateNews,

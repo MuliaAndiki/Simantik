@@ -127,6 +127,8 @@ export function SchoolListContainer() {
       provinsi: school.provinsi || '',
       kabupaten: school.kabupaten || '',
       kecamatan: school.kecamatan || '',
+      latitude: typeof school.latitude === 'number' ? school.latitude : null,
+      longitude: typeof school.longitude === 'number' ? school.longitude : null,
     });
     setIsDialogOpen(true);
   };
@@ -160,6 +162,8 @@ export function SchoolListContainer() {
           provinsi: formData.provinsi.trim() || undefined,
           kabupaten: formData.kabupaten.trim() || undefined,
           kecamatan: formData.kecamatan.trim() || undefined,
+          latitude: typeof formData.latitude === 'number' ? formData.latitude : undefined,
+          longitude: typeof formData.longitude === 'number' ? formData.longitude : undefined,
         };
         await createMutation.mutateAsync(payload);
       } else if (formData.id) {
@@ -174,6 +178,8 @@ export function SchoolListContainer() {
             provinsi: formData.provinsi.trim() || undefined,
             kabupaten: formData.kabupaten.trim() || undefined,
             kecamatan: formData.kecamatan.trim() || undefined,
+            latitude: typeof formData.latitude === 'number' ? formData.latitude : undefined,
+            longitude: typeof formData.longitude === 'number' ? formData.longitude : undefined,
           },
         });
       }

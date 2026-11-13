@@ -6,10 +6,6 @@ import {
   SchoolSearchSelect,
 } from '@/components/molecules/auth/SchoolSearchSelect';
 import { MySchoolSubmissionBanner } from '@/components/molecules/school/MySchoolSubmissionBanner';
-import {
-  SchoolProposalDialog,
-  type SchoolProposalDialogProps,
-} from '@/components/organisms/school/SchoolProposalDialog';
 import type { SchoolResponse } from '@/types/service';
 
 export interface SchoolOnboardingFormProps {
@@ -24,7 +20,7 @@ export interface SchoolOnboardingFormProps {
   mySubmissions?: SchoolResponse[];
   onSelectSubmission?: (school: SchoolResponse) => void;
   onResubmitSubmission?: (school: SchoolResponse) => void;
-  proposalDialogProps?: SchoolProposalDialogProps;
+  onSkip?: () => void;
   onSubmit: (e?: React.FormEvent) => void;
   loading?: boolean;
   error?: string;
@@ -42,7 +38,7 @@ export function SchoolOnboardingForm({
   mySubmissions,
   onSelectSubmission,
   onResubmitSubmission,
-  proposalDialogProps,
+  onSkip,
   onSubmit,
   loading = false,
   error,
@@ -53,41 +49,51 @@ export function SchoolOnboardingForm({
   };
 
   return (
-    <>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
-        {mySubmissions && mySubmissions.length > 0 && (
-          <MySchoolSubmissionBanner
-            submissions={mySubmissions}
-            onSelectSubmission={onSelectSubmission}
-            onResubmit={onResubmitSubmission}
-          />
-        )}
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
+      {mySubmissions && mySubmissions.length > 0 && (
+        <MySchoolSubmissionBanner
+          submissions={mySubmissions}
+          onSelectSubmission={onSelectSubmission}
+          onResubmit={onResubmitSubmission}
+        />
+      )}
 
-        <FormField id="school" label="Sekolah" error={error} required>
-          <SchoolSearchSelect
-            search={schoolSearch}
-            onSearchChange={onSchoolSearchChange}
-            schools={schoolOptions}
-            loading={schoolLoading}
-            selected={selectedSchool}
-            onSelect={onSchoolSelect}
-            onClear={onSchoolClear}
-            onRequestNewSchool={onRequestNewSchool}
-            disabled={loading}
-          />
-        </FormField>
+      <FormField id="school" label="Sekolah" error={error} required>
+        <SchoolSearchSelect
+          search={schoolSearch}
+          onSearchChange={onSchoolSearchChange}
+          schools={schoolOptions}
+          loading={schoolLoading}
+          selected={selectedSchool}
+          onSelect={onSchoolSelect}
+          onClear={onSchoolClear}
+          onRequestNewSchool={onRequestNewSchool}
+          disabled={loading}
+        />
+      </FormField>
 
+      <div className="flex flex-col gap-2 mt-2">
         <Button
           type="submit"
-          className="w-full h-12 rounded-sm mt-2"
+          className="w-full h-12 rounded-sm"
           disabled={!selectedSchool}
           isLoading={loading}
         >
           {loading ? 'Menyimpan...' : 'Simpan & Lanjutkan'}
         </Button>
-      </form>
 
-      {proposalDialogProps && <SchoolProposalDialog {...proposalDialogProps} />}
-    </>
+        {onSkip && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onSkip}
+            disabled={loading}
+            className="w-full h-10 rounded-sm text-xs font-medium text-slate-500 hover:text-slate-700"
+          >
+            Lewati dulu
+          </Button>
+        )}
+      </div>
+    </form>
   );
 }

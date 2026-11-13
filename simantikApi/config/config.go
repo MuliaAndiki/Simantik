@@ -64,6 +64,10 @@ type Config struct {
 	OtelServiceName string
 	OtelEndpoint    string
 	OtelInsecure    bool
+
+	// Geocoding (Nominatim)
+	NominatimBaseURL string
+	GeoUserAgent     string
 }
 
 // Load reads a local .env file (if present) and populates Config from the
@@ -115,6 +119,9 @@ func Load() *Config {
 		OtelServiceName: getEnv("OTEL_SERVICE_NAME", "simantik-api"),
 		OtelEndpoint:    getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "jaeger:4317"),
 		OtelInsecure:    getEnvBool("OTEL_INSECURE", true),
+
+		NominatimBaseURL: getEnv("NOMINATIM_BASE_URL", "https://nominatim.openstreetmap.org"),
+		GeoUserAgent:     getEnv("GEO_USER_AGENT", "SIMANTIK/1.0 (+https://simantik.id)"),
 	}
 }
 

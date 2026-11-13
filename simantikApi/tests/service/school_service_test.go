@@ -107,9 +107,10 @@ func (m *mockSchoolRepo) CountSummary(ctx context.Context) (*dto.SchoolVerificat
 		} else {
 			summary.Swasta++
 		}
-		if s.Level == models.SchoolLevelSMA {
+		switch s.Level {
+		case models.SchoolLevelSMA:
 			summary.SMACount++
-		} else if s.Level == models.SchoolLevelSMK {
+		case models.SchoolLevelSMK:
 			summary.SMKCount++
 		}
 	}
@@ -256,7 +257,8 @@ func TestSchoolService_Propose_Verify_Reject_Workflow(t *testing.T) {
 
 	svc := service.NewSchoolService(schoolRepo, userRepo)
 
-	// 1. Propose new school -> created as pending with submitter metadata
+	// 1. Propose new school -> created as pending with submitter metadata and coordinates
+	lat1, lng1 := -6.9175, 107.6191
 	proposed, err := svc.ProposeSchool(ctx, student.ID, dto.ProposeSchoolRequest{
 		NPSN:      "20200303",
 		Name:      "SMAN 99 Harapan",
@@ -265,6 +267,8 @@ func TestSchoolService_Propose_Verify_Reject_Workflow(t *testing.T) {
 		Address:   "Jl. Harapan No. 99",
 		Provinsi:  "Jawa Barat",
 		Kabupaten: "Kota Bandung",
+		Latitude:  &lat1,
+		Longitude: &lng1,
 	})
 	if err != nil {
 		t.Fatalf("propose failed: %v", err)
@@ -275,14 +279,19 @@ func TestSchoolService_Propose_Verify_Reject_Workflow(t *testing.T) {
 	if proposed.SubmittedByName != "Budi Santoso" || proposed.SubmittedByEmail != "budi@example.com" {
 		t.Fatalf("expected submitter metadata preserved, got name=%q email=%q", proposed.SubmittedByName, proposed.SubmittedByEmail)
 	}
+	if proposed.Latitude == nil || proposed.Longitude == nil || *proposed.Latitude != lat1 || *proposed.Longitude != lng1 {
+		t.Fatalf("expected coordinates (%v, %v), got (%v, %v)", lat1, lng1, proposed.Latitude, proposed.Longitude)
+	}
 
 	// 2. Duplicate NPSN while pending is blocked with ErrSchoolPendingExists
 	if _, err := svc.ProposeSchool(ctx, uuid.New(), dto.ProposeSchoolRequest{
-		NPSN:    "20200303",
-		Name:    "SMAN 99 Duplikat",
-		Level:   "sma",
-		Status:  "negeri",
-		Address: "Jl. Lain No. 1",
+		NPSN:      "20200303",
+		Name:      "SMAN 99 Duplikat",
+		Level:     "sma",
+		Status:    "negeri",
+		Address:   "Jl. Lain No. 1",
+		Latitude:  &lat1,
+		Longitude: &lng1,
 	}); err != service.ErrSchoolPendingExists {
 		t.Fatalf("expected ErrSchoolPendingExists, got %v", err)
 	}
@@ -316,19 +325,25 @@ func TestSchoolService_Propose_Verify_Reject_Workflow(t *testing.T) {
 		t.Fatalf("unexpected rejected payload: %+v", rejected)
 	}
 
-	// 6. Resubmit rejected NPSN updates record cleanly back to pending
+	// 6. Resubmit rejected NPSN updates record cleanly back to pending and updates coordinates
+	lat2, lng2 := -6.9025, 107.6188
 	resubmitted, err := svc.ProposeSchool(ctx, student.ID, dto.ProposeSchoolRequest{
-		NPSN:    "20200303",
-		Name:    "SMAN 99 Harapan Revisi",
-		Level:   "sma",
-		Status:  "negeri",
-		Address: "Jl. Harapan Baru No. 99",
+		NPSN:      "20200303",
+		Name:      "SMAN 99 Harapan Revisi",
+		Level:     "sma",
+		Status:    "negeri",
+		Address:   "Jl. Harapan Baru No. 99",
+		Latitude:  &lat2,
+		Longitude: &lng2,
 	})
 	if err != nil {
 		t.Fatalf("resubmit rejected school failed: %v", err)
 	}
 	if resubmitted.ID != proposed.ID || resubmitted.VerificationStatus != "pending" || resubmitted.RejectionReason != "" {
 		t.Fatalf("expected rejected school updated cleanly on resubmit, got %+v", resubmitted)
+	}
+	if resubmitted.Latitude == nil || resubmitted.Longitude == nil || *resubmitted.Latitude != lat2 || *resubmitted.Longitude != lng2 {
+		t.Fatalf("expected updated coordinates (%v, %v), got (%v, %v)", lat2, lng2, resubmitted.Latitude, resubmitted.Longitude)
 	}
 
 	// 7. Verify -> becomes visible in public list
@@ -343,5 +358,77 @@ func TestSchoolService_Propose_Verify_Reject_Workflow(t *testing.T) {
 	pubListAfter, err := svc.ListPublicSchools(ctx, dto.ListSchoolFilter{})
 	if err != nil || pubListAfter.Total != 1 || pubListAfter.Schools[0].ID != proposed.ID {
 		t.Fatalf("expected 1 public school after verify, got %+v, err=%v", pubListAfter, err)
+	}
+}
+
+func TestSchoolService_CoordinateValidation(t *testing.T) {
+	ctx := context.Background()
+	svc := newSchoolService()
+
+	outLat, outLng := 35.6762, 139.6503 // Tokyo — outside Indonesia bounds
+	if _, err := svc.ProposeSchool(ctx, uuid.New(), dto.ProposeSchoolRequest{
+		NPSN:      "20990001",
+		Name:      "School Outside ID",
+		Level:     "sma",
+		Status:    "negeri",
+		Address:   "Jl. Luar Batas No. 1",
+		Latitude:  &outLat,
+		Longitude: &outLng,
+	}); err != service.ErrInvalidCoordinates {
+		t.Fatalf("expected ErrInvalidCoordinates for outside Indonesia coordinates, got %v", err)
+	}
+
+	validLat := -6.2088
+	if _, err := svc.ProposeSchool(ctx, uuid.New(), dto.ProposeSchoolRequest{
+		NPSN:     "20990002",
+		Name:     "School Missing Lng",
+		Level:    "sma",
+		Status:   "negeri",
+		Address:  "Jl. Incomplete No. 1",
+		Latitude: &validLat,
+	}); err != service.ErrInvalidCoordinates {
+		t.Fatalf("expected ErrInvalidCoordinates when longitude missing, got %v", err)
+	}
+
+	// Admin CreateSchool rejects half coordinates or out-of-Indonesia coords when supplied
+	if _, err := svc.CreateSchool(ctx, dto.CreateSchoolRequest{
+		NPSN:      "20990003",
+		Name:      "Admin Outside ID",
+		Level:     "sma",
+		Status:    "negeri",
+		Address:   "Jl. Admin No. 1",
+		Latitude:  &outLat,
+		Longitude: &outLng,
+	}); err != service.ErrInvalidCoordinates {
+		t.Fatalf("expected ErrInvalidCoordinates for admin outside Indonesia, got %v", err)
+	}
+
+	// Admin CreateSchool accepts valid coords and UpdateSchool updates them
+	okLat, okLng := -6.1754, 106.8272
+	created, err := svc.CreateSchool(ctx, dto.CreateSchoolRequest{
+		NPSN:      "20990004",
+		Name:      "SMAN 1 Monas",
+		Level:     "sma",
+		Status:    "negeri",
+		Address:   "Jl. Medan Merdeka",
+		Latitude:  &okLat,
+		Longitude: &okLng,
+	})
+	if err != nil {
+		t.Fatalf("expected admin create with coords to succeed, got %v", err)
+	}
+	if created.Latitude == nil || *created.Latitude != okLat || created.Longitude == nil || *created.Longitude != okLng {
+		t.Fatalf("expected saved admin coordinates, got (%v, %v)", created.Latitude, created.Longitude)
+	}
+
+	newLat := -7.2575
+	updated, err := svc.UpdateSchool(ctx, created.ID, dto.UpdateSchoolRequest{
+		Latitude: &newLat,
+	})
+	if err != nil {
+		t.Fatalf("expected partial coordinate update with existing longitude to succeed, got %v", err)
+	}
+	if updated.Latitude == nil || *updated.Latitude != newLat || updated.Longitude == nil || *updated.Longitude != okLng {
+		t.Fatalf("expected updated latitude %v with preserved longitude %v, got (%v, %v)", newLat, okLng, updated.Latitude, updated.Longitude)
 	}
 }

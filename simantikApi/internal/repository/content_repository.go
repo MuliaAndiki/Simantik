@@ -304,6 +304,7 @@ func (r *tutorialRepository) GetDistinctCategories(ctx context.Context) ([]strin
 type TestimonialRepository interface {
 	Create(ctx context.Context, t *models.Testimonial) error
 	FindByID(ctx context.Context, id uuid.UUID) (*models.Testimonial, error)
+	FindLatestByUserID(ctx context.Context, userID uuid.UUID) (*models.Testimonial, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status models.TestimonialStatus) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, filter dto.ListTestimonialFilter) ([]models.Testimonial, int64, error)
@@ -325,6 +326,14 @@ func (r *testimonialRepository) Create(ctx context.Context, t *models.Testimonia
 func (r *testimonialRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Testimonial, error) {
 	var t models.Testimonial
 	if err := r.db.WithContext(ctx).First(&t, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+func (r *testimonialRepository) FindLatestByUserID(ctx context.Context, userID uuid.UUID) (*models.Testimonial, error) {
+	var t models.Testimonial
+	if err := r.db.WithContext(ctx).Unscoped().Where("user_id = ?", userID).Order("created_at DESC").First(&t).Error; err != nil {
 		return nil, err
 	}
 	return &t, nil

@@ -2,6 +2,7 @@ import { AdminEndpoint } from './state/AdminEndpoint';
 import { AuthEndpoint } from './state/AuthEndpoint';
 import { ContentEndpoint } from './state/ContentEndpoint';
 import { EvaluationEndpoint } from './state/EvaluationEndpoint';
+import { GeoEndpoint } from './state/GeoEndpoint';
 import { LearningEndpoint } from './state/LearningEndpoint';
 import { NotificationEndpoint } from './state/NotificationEndpoint';
 import { PracticeEndpoint } from './state/PracticeEndpoint';
@@ -18,6 +19,7 @@ export const EndpointEntry = {
   auth: AuthEndpoint,
   content: ContentEndpoint,
   evaluation: EvaluationEndpoint,
+  geo: GeoEndpoint,
   learning: LearningEndpoint,
   notification: NotificationEndpoint,
   practice: PracticeEndpoint,
