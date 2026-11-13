@@ -7,6 +7,7 @@ import {
   type ApiResponse,
   type ApiSuccessResponse,
 } from '@/api/types/response.types';
+import { getServerBackendOrigin } from '@/configs/app.config';
 import {
   APP_REFRESH_TOKEN_COOKIE_EXPIRES_IN,
   APP_SESSION_COOKIE_KEY,
@@ -16,9 +17,9 @@ import {
 import { EndpointEntry } from '@/configs/endpoints/EndpointEntry';
 import { Logger } from '@/utils/log';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-const API_GATE = process.env.NEXT_PUBLIC_GATE_API || '/api';
-const API_VERSION = process.env.NEXT_PUBLIC_VERSION_API || '/v1';
+const API_BASE_URL = getServerBackendOrigin();
+const API_GATE = process.env.API_GATE_PREFIX || process.env.NEXT_PUBLIC_GATE_API || '/api';
+const API_VERSION = process.env.API_VERSION_PREFIX || process.env.NEXT_PUBLIC_VERSION_API || '/v1';
 
 function joinUrl(...parts: string[]): string {
   return parts
@@ -72,7 +73,6 @@ async function clearTokens(): Promise<void> {
 function buildBaseHeaders(accessToken?: string): Record<string, string> {
   const internalApiKey =
     process.env.NEXT_INTERNAL_API_SECRET ||
-    process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ||
     process.env.INTERNAL_API_SECRET ||
     process.env.INTERNAL_API_KEY ||
     '';

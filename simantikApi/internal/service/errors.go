@@ -105,6 +105,8 @@ var (
 
 // School errors.
 var (
-	ErrSchoolNotFound   = errors.New("school not found")
-	ErrSchoolNPSNExists = errors.New("school NPSN already registered")
+	ErrSchoolNotFound      = errors.New("school not found")
+	ErrSchoolNPSNExists    = errors.New("school NPSN already registered")
+	ErrSchoolPendingExists = errors.New("school NPSN already submitted and awaiting admin verification")
+	ErrSchoolNotAllowed    = errors.New("school cannot be selected until verified by admin")
 )

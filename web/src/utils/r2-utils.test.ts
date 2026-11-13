@@ -4,28 +4,28 @@ import { extractR2KeyFromUrl, getR2PublicBaseUrl } from './r2-url.util';
 describe('r2-utils', () => {
   describe('getR2PublicBaseUrl', () => {
     it('cleans trailing slashes from domain url', () => {
-      const originalEnv = process.env.NEXT_PUBLIC_R2_URL;
+      const originalEnv = process.env.R2_URL;
       try {
-        process.env.NEXT_PUBLIC_R2_URL = 'https://simantik.id/';
-        expect(getR2PublicBaseUrl()).toBe('https://simantik.id');
+        process.env.R2_URL = 'https://cdn.simantik.id/';
+        expect(getR2PublicBaseUrl()).toBe('https://cdn.simantik.id');
 
-        process.env.NEXT_PUBLIC_R2_URL = 'https://simantik.id///';
-        expect(getR2PublicBaseUrl()).toBe('https://simantik.id');
+        process.env.R2_URL = 'https://cdn.simantik.id///';
+        expect(getR2PublicBaseUrl()).toBe('https://cdn.simantik.id');
 
-        process.env.NEXT_PUBLIC_R2_URL = 'https://simantik.id';
-        expect(getR2PublicBaseUrl()).toBe('https://simantik.id');
+        process.env.R2_URL = 'https://cdn.simantik.id';
+        expect(getR2PublicBaseUrl()).toBe('https://cdn.simantik.id');
       } finally {
-        process.env.NEXT_PUBLIC_R2_URL = originalEnv;
+        process.env.R2_URL = originalEnv;
       }
     });
 
     it('returns empty string when env is empty', () => {
-      const originalEnv = process.env.NEXT_PUBLIC_R2_URL;
+      const originalEnv = process.env.R2_URL;
       try {
-        process.env.NEXT_PUBLIC_R2_URL = '';
+        process.env.R2_URL = '';
         expect(getR2PublicBaseUrl()).toBe('');
       } finally {
-        process.env.NEXT_PUBLIC_R2_URL = originalEnv;
+        process.env.R2_URL = originalEnv;
       }
     });
   });

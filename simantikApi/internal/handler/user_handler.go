@@ -138,6 +138,9 @@ func (h *UserHandler) UpdateMySchool(c *fiber.Ctx) error {
 		if errors.Is(err, service.ErrSchoolNotFound) {
 			return utils.Error(c, fiber.StatusBadRequest, err.Error(), err)
 		}
+		if errors.Is(err, service.ErrSchoolNotAllowed) {
+			return utils.Error(c, fiber.StatusForbidden, "school must be verified by admin before selection", err)
+		}
 		if errors.Is(err, service.ErrInvalidRole) {
 			return utils.Error(c, fiber.StatusForbidden, "only students can set a school", err)
 		}

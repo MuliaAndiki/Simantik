@@ -141,6 +141,8 @@ export const queryKey = {
   schoolRoot: () => ['school'] as const,
   school: {
     list: (query?: Record<string, any>) => ['school', 'list', query] as const,
+    publicList: (query?: Record<string, any>) => ['school', 'publicList', query] as const,
+    mySubmissions: () => ['school', 'mySubmissions'] as const,
     detail: (id: string) => ['school', 'detail', id] as const,
   },
 } as const;
