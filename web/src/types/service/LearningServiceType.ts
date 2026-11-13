@@ -121,6 +121,7 @@ export interface CreateMaterialRequest {
  */
 export interface UpdateMaterialRequest {
   competency_id?: string | null;
+  clear_competency?: boolean;
   title?: string;
   description?: string;
   content?: string;
@@ -160,6 +161,7 @@ export interface MaterialResponse {
 export interface ListMaterialFilter {
   module_id?: string;
   competency_id?: string;
+  uncategorized?: boolean;
   status?: ContentStatus | string;
   search?: string;
   limit?: number;

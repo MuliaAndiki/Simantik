@@ -1,12 +1,13 @@
-import { ChevronDown } from 'lucide-react';
 import type React from 'react';
-import type { PracticeManagerCompetencyOption } from '../practice/PracticeFilterBar';
+import {
+  CompetencyCreatableSelect,
+  type CompetencyDropdownActionProps,
+} from '@/components/molecules/input/CompetencyCreatableSelect';
 
-export interface PracticePackageMetadataCardProps {
+export interface PracticePackageMetadataCardProps extends CompetencyDropdownActionProps {
   title: string;
   competencyId: string;
   description: string;
-  competencies: PracticeManagerCompetencyOption[];
   onTitleChange: (val: string) => void;
   onCompetencyChange: (val: string) => void;
   onDescriptionChange: (val: string) => void;
@@ -16,7 +17,11 @@ export const PracticePackageMetadataCard: React.FC<PracticePackageMetadataCardPr
   title,
   competencyId,
   description,
-  competencies,
+  competencies = [],
+  onCreateCompetency,
+  onRequestDeleteCompetency,
+  isCreatingCompetency = false,
+  deletingCompetencyId = null,
   onTitleChange,
   onCompetencyChange,
   onDescriptionChange,
@@ -44,23 +49,19 @@ export const PracticePackageMetadataCard: React.FC<PracticePackageMetadataCardPr
           {/* Kompetensi */}
           <div className="space-y-1.5">
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
-              Kompetensi <span className="text-rose-500">*</span>
+              Kompetensi / Subtes
             </label>
-            <div className="relative">
-              <select
-                value={competencyId}
-                onChange={(e) => onCompetencyChange(e.target.value)}
-                className="w-full appearance-none px-4 pr-10 py-2.5 bg-[#EAF6F8]/60 border border-cyan-200/80 rounded-xl text-slate-800 font-medium text-sm cursor-pointer focus:outline-none focus:border-cyan-600 focus:bg-white transition"
-              >
-                <option value="">-- Pilih Kompetensi Asesmen --</option>
-                {competencies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-            </div>
+            <CompetencyCreatableSelect
+              value={competencyId || ''}
+              onChange={(val) => onCompetencyChange(val)}
+              competencies={competencies}
+              noneLabel="-- Umum / Tanpa Kompetensi Khusus --"
+              onCreateCompetency={onCreateCompetency}
+              onRequestDeleteCompetency={onRequestDeleteCompetency}
+              isCreatingCompetency={isCreatingCompetency}
+              deletingCompetencyId={deletingCompetencyId}
+              triggerClassName="bg-[#EAF6F8]/60 border-cyan-200/80 text-slate-800"
+            />
           </div>
         </div>
 

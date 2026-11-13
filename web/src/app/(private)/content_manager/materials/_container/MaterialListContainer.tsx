@@ -17,6 +17,7 @@ import type {
   ModuleDialogForm,
   ModuleItem,
 } from '@/types/ui/material-manager.types';
+import { resolveCompetencyName } from '@/utils/competency.util';
 
 const EMPTY_MODULE_FORM: ModuleDialogForm = {
   title: '',
@@ -290,7 +291,7 @@ export const MaterialListContainer: React.FC = () => {
         fase: 'Fase F • Kurikulum Merdeka',
         title: m.title,
         pagesInfo: `${m.display_order || 1} Halaman Modul • Bahan Ajar SIMANTIK`,
-        category: m.competency_name || 'Bahasa Indonesia',
+        category: resolveCompetencyName(m.competency_name),
         status,
         updatedAt,
         learningObjectives: parsedObjectives.map((obj, i) => ({
@@ -299,7 +300,7 @@ export const MaterialListContainer: React.FC = () => {
           desc: obj,
         })),
         previewDocument: {
-          categoryBadge: (m.competency_name || 'MODUL PEMBELAJARAN').toUpperCase(),
+          categoryBadge: resolveCompetencyName(m.competency_name).toUpperCase(),
           chapterInfo: `Unit ${m.display_order || 1}`,
           title: m.title,
           contentParagraph: m.content || m.description || 'Isi konten bahan ajar modul.',

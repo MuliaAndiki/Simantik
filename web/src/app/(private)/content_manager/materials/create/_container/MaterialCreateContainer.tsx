@@ -1,22 +1,25 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { DEFAULT_DOCUMENT_HTML } from '@/components/molecules/editor';
 import { MaterialCreatePage } from '@/components/page/private/content_manager/MaterialCreatePage';
 import { useApi } from '@/hooks/useApi';
 import { useAppNameSpace } from '@/hooks/useAppNameSpace';
+import { useCompetencyDropdownActions } from '@/hooks/useService/question/useCompetencyDropdownActions';
 import type {
   LearningObjectiveItem,
   MaterialMetadata,
   PreviewDocumentStructure,
   RelevantTopicTag,
 } from '@/types/ui';
+import { findCompetencyById, resetIdIfDeleted } from '@/utils/competency.util';
 import { deleteObject, uploadAvatar } from '@/utils/r2-utils';
 
 const INITIAL_METADATA: MaterialMetadata = {
   judulMateri: '',
-  kategoriPembelajaran: 'Pemahaman Tekstual',
+  competencyId: '',
+  kategoriPembelajaran: '',
   deskripsiRingkas: '',
   idDokumen: `DOC-${Date.now().toString().slice(-6)}`,
 };
@@ -39,6 +42,7 @@ export function MaterialCreateContainer() {
   const [topics, setTopics] = useState<RelevantTopicTag[]>([]);
   const [isAddingTopic, setIsAddingTopic] = useState<boolean>(false);
   const [newTopicInput, setNewTopicInput] = useState<string>('');
+  const hydratedMaterialIdRef = useRef<string | null>(null);
 
   // 1. Fetch Material Detail if in Edit Mode
   const { data: existingMaterial, isLoading: isMaterialLoading } =
@@ -46,12 +50,14 @@ export function MaterialCreateContainer() {
       enabled: !!editId,
     });
 
-  // Sync state when existing material is loaded
+  // Sync state when existing material is loaded once per material ID
   useEffect(() => {
-    if (existingMaterial) {
+    if (existingMaterial && hydratedMaterialIdRef.current !== existingMaterial.id) {
+      hydratedMaterialIdRef.current = existingMaterial.id;
       setMetadata({
         judulMateri: existingMaterial.title || '',
-        kategoriPembelajaran: existingMaterial.competency_name || 'Pemahaman Tekstual',
+        competencyId: existingMaterial.competency_id || '',
+        kategoriPembelajaran: existingMaterial.competency_name || '',
         deskripsiRingkas: existingMaterial.description || '',
         idDokumen: `DOC-${existingMaterial.id.slice(0, 8).toUpperCase()}`,
       });
@@ -93,24 +99,30 @@ export function MaterialCreateContainer() {
 
   // Queries & Mutations
   const { data: modulesData } = api.learning.query.modules({ limit: 50 });
-  const { data: competenciesData } = api.question.query.competencies({ limit: 50 });
+
+  const {
+    competencies,
+    isCreatingCompetency,
+    deletingCompetencyId,
+    handleCreateCompetency,
+    handleRequestDeleteCompetency,
+  } = useCompetencyDropdownActions({
+    limit: 100,
+    onDeleted: (deletedId) => {
+      setMetadata((prev) => {
+        const nextCompId = resetIdIfDeleted(prev.competencyId, deletedId);
+        return {
+          ...prev,
+          competencyId: nextCompId,
+          kategoriPembelajaran: nextCompId ? prev.kategoriPembelajaran : '',
+        };
+      });
+    },
+  });
 
   const createMaterialMutation = api.learning.mutate.createMaterial();
   const updateMaterialMutation = api.learning.mutate.updateMaterial();
   const createModuleMutation = api.learning.mutate.createModule();
-
-  const categories = useMemo(() => {
-    const list = (competenciesData?.competencies ?? []).map((c) => c.name);
-    return list.length > 0
-      ? list
-      : [
-          'Pemahaman Tekstual',
-          'Kaidah Sintaksis',
-          'Retorika & Diskursus',
-          'Apresiasi Sastra',
-          'Karya Tulis Ilmiah',
-        ];
-  }, [competenciesData]);
 
   const handleMetadataChange = (next: Partial<MaterialMetadata>) => {
     setMetadata((prev) => ({ ...prev, ...next }));
@@ -200,9 +212,8 @@ export function MaterialCreateContainer() {
       return;
     }
 
-    const matchedCompetency = (competenciesData?.competencies ?? []).find(
-      (c) => c.name.toLowerCase() === metadata.kategoriPembelajaran.toLowerCase()
-    );
+    const selectedCompetency = findCompetencyById(competencies, metadata.competencyId);
+    const resolvedCompetencyId = selectedCompetency?.id || metadata.competencyId || null;
 
     // ─── Mode Edit: Update Existing Material ──────────────────────────────
     if (editId) {
@@ -215,7 +226,8 @@ export function MaterialCreateContainer() {
             content,
             learning_objectives: JSON.stringify(objectives),
             structure_items: JSON.stringify(structureItems),
-            competency_id: matchedCompetency?.id,
+            competency_id: resolvedCompetencyId,
+            clear_competency: !resolvedCompetencyId,
             type: 'document',
             status: isReview ? 'in_review' : 'draft',
           },
@@ -281,7 +293,7 @@ export function MaterialCreateContainer() {
     createMaterialMutation.mutate(
       {
         module_id: targetModuleId,
-        competency_id: matchedCompetency?.id,
+        competency_id: resolvedCompetencyId ?? undefined,
         title: metadata.judulMateri.trim(),
         description: metadata.deskripsiRingkas.trim() || undefined,
         content,
@@ -333,7 +345,11 @@ export function MaterialCreateContainer() {
   return (
     <MaterialCreatePage
       metadata={metadata}
-      categories={categories}
+      competencies={competencies}
+      onCreateCompetency={handleCreateCompetency}
+      onRequestDeleteCompetency={handleRequestDeleteCompetency}
+      isCreatingCompetency={isCreatingCompetency}
+      deletingCompetencyId={deletingCompetencyId}
       content={content}
       objectives={objectives}
       structureItems={structureItems}

@@ -6,6 +6,7 @@ import type { SharedStimulusOption } from '@/components/organisms/content_manage
 import { TryoutCreatePage } from '@/components/page/private/content_manager/TryoutCreatePage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
+import { useCompetencyDropdownActions } from '@/hooks/useService/question/useCompetencyDropdownActions';
 import type { CreateQuestionRequest, QuestionAdminResponse, SchoolLevel } from '@/types/service';
 import type { PracticeQuestionType } from '@/types/ui/practice.types';
 import type {
@@ -19,6 +20,7 @@ import type {
   TryoutPackageEditorForm,
   TryoutQuestionVariantForm,
 } from '@/types/ui/tryout-question-editor.types';
+import { clearDeletedCompetencyFromQuestions } from '@/utils/competency.util';
 import { deleteObject, uploadAvatar } from '@/utils/r2-utils';
 
 const createDefaultVariant = (
@@ -56,6 +58,7 @@ const createDefaultVariant = (
 const createDefaultAdaptiveQuestion = (number: number): TryoutAdaptiveQuestionItemForm => ({
   id: `q-${Date.now()}-${number}`,
   questionNumber: number,
+  competencyId: '',
   activeLevel: 1,
   variants: {
     1: createDefaultVariant(1, 'pilihan-ganda'),
@@ -241,6 +244,23 @@ export const TryoutQuestionContainer: React.FC = () => {
   );
   const isDraftRestoredRef = React.useRef<boolean>(false);
   const isInitialMountRef = React.useRef<boolean>(true);
+  const hydratedTryoutIdRef = React.useRef<string | null>(null);
+
+  const {
+    competencies,
+    isCreatingCompetency,
+    deletingCompetencyId,
+    handleCreateCompetency,
+    handleRequestDeleteCompetency,
+  } = useCompetencyDropdownActions({
+    limit: 100,
+    onDeleted: (deletedId) => {
+      setPackageForm((prev) => ({
+        ...prev,
+        questions: clearDeletedCompetencyFromQuestions(prev.questions, deletedId),
+      }));
+    },
+  });
 
   // State: Tryout Form
   const [packageForm, setPackageForm] = useState<TryoutPackageEditorForm>(() => {
@@ -283,10 +303,14 @@ export const TryoutQuestionContainer: React.FC = () => {
     }
   }, []);
 
-  // Sync state when tryout detail arrives
+  // Sync state once when tryout detail arrives (avoid wiping unsaved edits on refetch)
   useEffect(() => {
     if (tryoutDetailQuery.data) {
       const t = tryoutDetailQuery.data;
+      if (hydratedTryoutIdRef.current === t.id) {
+        return;
+      }
+      hydratedTryoutIdRef.current = t.id;
       const durationMinutes = t.duration_seconds ? Math.round(t.duration_seconds / 60) : 75;
 
       // Jika user sudah memiliki draf lokal yang dipulihkan, jangan timpa soal yang sedang mereka edit
@@ -325,6 +349,9 @@ export const TryoutQuestionContainer: React.FC = () => {
             currentItem = createDefaultAdaptiveQuestion(qNum);
           }
 
+          if (!currentItem.competencyId && apiQ.competencies?.[0]?.id) {
+            currentItem.competencyId = apiQ.competencies[0].id;
+          }
           currentItem.variants[level] = mapApiToVariantForm(apiQ, level);
         }
 
@@ -440,6 +467,10 @@ export const TryoutQuestionContainer: React.FC = () => {
 
   const handlePackageDescriptionChange = (description: string) => {
     setPackageForm((prev) => ({ ...prev, description }));
+  };
+
+  const handleQuestionCompetencyChange = (competencyId: string) => {
+    updateActiveQuestion((prev) => ({ ...prev, competencyId }));
   };
 
   // Question Palette Handlers
@@ -961,6 +992,7 @@ export const TryoutQuestionContainer: React.FC = () => {
             question_type_id: questionTypeId,
             question_text: fullQuestionText,
             difficulty_level: lvl,
+            competency_ids: q.competencyId ? [q.competencyId] : [],
             stimulus_id: v.stimulus.stimulusId || undefined,
             options: mappedOptions,
             explanation: v.explanation
@@ -1003,11 +1035,17 @@ export const TryoutQuestionContainer: React.FC = () => {
     <TryoutCreatePage
       packageForm={packageForm}
       activeQuestion={activeQuestion}
+      competencies={competencies}
+      onCreateCompetency={handleCreateCompetency}
+      onRequestDeleteCompetency={handleRequestDeleteCompetency}
+      isCreatingCompetency={isCreatingCompetency}
+      deletingCompetencyId={deletingCompetencyId}
       isSubmitting={isSubmitting}
       onPackageTitleChange={handlePackageTitleChange}
       onPackageDurationChange={handlePackageDurationChange}
       onPackageJenjangChange={handlePackageJenjangChange}
       onPackageDescriptionChange={handlePackageDescriptionChange}
+      onQuestionCompetencyChange={handleQuestionCompetencyChange}
       onSaveDraft={handleSaveTryout}
       onSelectQuestion={handleSelectQuestion}
       onAddQuestion={handleAddQuestion}

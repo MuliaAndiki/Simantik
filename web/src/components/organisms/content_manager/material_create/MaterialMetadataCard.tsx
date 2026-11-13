@@ -1,9 +1,12 @@
-import { ChevronDown } from 'lucide-react';
-import React from 'react';
+import type React from 'react';
+import {
+  CompetencyCreatableSelect,
+  type CompetencyDropdownActionProps,
+} from '@/components/molecules/input/CompetencyCreatableSelect';
 import type { MaterialMetadata } from '@/types/ui';
 import { cn } from '@/utils/classname';
 
-export interface MaterialMetadataCardProps {
+export interface MaterialMetadataCardProps extends CompetencyDropdownActionProps {
   metadata?: MaterialMetadata;
   categories?: string[];
   onChange?: (next: Partial<MaterialMetadata>) => void;
@@ -12,24 +15,20 @@ export interface MaterialMetadataCardProps {
 
 const DEFAULT_METADATA: MaterialMetadata = {
   judulMateri: 'Memahami Teks Eksplanasi',
-  kategoriPembelajaran: 'Pemahaman Tekstual',
+  competencyId: '',
+  kategoriPembelajaran: '',
   deskripsiRingkas:
     'Materi komprehensif mengenai struktur, kaidah kebahasaan, dan analisis logis fenomena dalam teks eksplanasi.',
   idDokumen: 'DOC-SIM-2025-014',
 };
 
-const DEFAULT_CATEGORIES: string[] = [
-  'Pemahaman Tekstual',
-  'Literasi Bahasa Indonesia',
-  'Penalaran Analitis',
-  'Struktur & Kaidah',
-  'Karya Sastra & Makna',
-  'Penalaran Matematika',
-];
-
 export const MaterialMetadataCard: React.FC<MaterialMetadataCardProps> = ({
   metadata = DEFAULT_METADATA,
-  categories = DEFAULT_CATEGORIES,
+  competencies = [],
+  onCreateCompetency,
+  onRequestDeleteCompetency,
+  isCreatingCompetency = false,
+  deletingCompetencyId = null,
   onChange,
   className,
 }) => {
@@ -71,26 +70,28 @@ export const MaterialMetadataCard: React.FC<MaterialMetadataCardProps> = ({
             />
           </div>
 
-          {/* Kategori Pembelajaran */}
+          {/* Kategori Pembelajaran / Kompetensi */}
           <div className="lg:col-span-4 space-y-1.5">
             <label htmlFor="material-category" className="text-xs font-bold text-slate-700 block">
-              Kategori Pembelajaran <span className="text-rose-500">*</span>
+              Kompetensi / Subtes
             </label>
-            <div className="relative">
-              <select
-                id="material-category"
-                value={metadata.kategoriPembelajaran}
-                onChange={(e) => onChange?.({ kategoriPembelajaran: e.target.value })}
-                className="w-full bg-[#F0F8FF] hover:bg-[#EBF5FE] border border-sky-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:bg-white transition-all appearance-none cursor-pointer pr-10"
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3.5 top-3.5 pointer-events-none" />
-            </div>
+            <CompetencyCreatableSelect
+              id="material-category"
+              value={metadata.competencyId || ''}
+              onChange={(competencyId, comp) =>
+                onChange?.({
+                  competencyId,
+                  kategoriPembelajaran: comp?.name ?? '',
+                })
+              }
+              competencies={competencies}
+              noneLabel="-- Umum / Tanpa Kompetensi Khusus --"
+              onCreateCompetency={onCreateCompetency}
+              onRequestDeleteCompetency={onRequestDeleteCompetency}
+              isCreatingCompetency={isCreatingCompetency}
+              deletingCompetencyId={deletingCompetencyId}
+              triggerClassName="bg-[#F0F8FF] hover:bg-[#EBF5FE] border-sky-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800"
+            />
           </div>
         </div>
 

@@ -87,6 +87,7 @@ type CreateMaterialRequest struct {
 
 type UpdateMaterialRequest struct {
 	CompetencyID       *uuid.UUID `json:"competency_id"`
+	ClearCompetency    bool       `json:"clear_competency"`
 	Title              string     `json:"title" validate:"omitempty,min=3,max=255"`
 	Description        string     `json:"description"`
 	Content            string     `json:"content"`
@@ -116,12 +117,13 @@ type MaterialResponse struct {
 }
 
 type ListMaterialFilter struct {
-	ModuleID     *uuid.UUID `query:"module_id"`
-	CompetencyID *uuid.UUID `query:"competency_id"`
-	Status       string     `query:"status"`
-	Search       string     `query:"search"`
-	Limit        int        `query:"limit"`
-	Offset       int        `query:"offset"`
+	ModuleID      *uuid.UUID `query:"module_id"`
+	CompetencyID  *uuid.UUID `query:"competency_id"`
+	Uncategorized bool       `query:"uncategorized"`
+	Status        string     `query:"status"`
+	Search        string     `query:"search"`
+	Limit         int        `query:"limit"`
+	Offset        int        `query:"offset"`
 }
 
 type PaginatedMaterialsResponse struct {

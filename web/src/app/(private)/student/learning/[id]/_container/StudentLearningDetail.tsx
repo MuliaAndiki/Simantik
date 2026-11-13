@@ -5,6 +5,7 @@ import { useEffect, useMemo } from 'react';
 import type { RelatedMaterialItem } from '@/components/organisms/student/LearningDetailRelatedMaterials';
 import { StudentLearningDetailPage } from '@/components/page/private/student/StudentLearningDetailPage';
 import { useApi } from '@/hooks/useApi';
+import { resolveCompetencyName } from '@/utils/competency.util';
 
 interface StudentLearningDetailContainerProps {
   materialId?: string;
@@ -52,14 +53,14 @@ export default function StudentLearningDetailContainer({
   const currentCompetency = useMemo(() => {
     if (!material?.competency_id) {
       return {
-        code: 'pemahaman-tekstual',
-        name: material?.competency_name || 'Pemahaman Tekstual',
+        code: 'umum',
+        name: resolveCompetencyName(material?.competency_name),
       };
     }
     const found = competencyMap.get(material.competency_id);
     return {
       code: found?.code || material.competency_id,
-      name: found?.name || material.competency_name || 'Pemahaman Tekstual',
+      name: resolveCompetencyName(found?.name || material.competency_name),
     };
   }, [material, competencyMap]);
 
@@ -96,8 +97,8 @@ export default function StudentLearningDetailContainer({
           title: item.title,
           description:
             item.description || 'Ringkasan pengantar materi pendukung dari kurikulum sekolah.',
-          competencyCode: comp?.code || item.competency_id || 'pemahaman-tekstual',
-          competencyName: comp?.name || item.competency_name || 'Pemahaman Tekstual',
+          competencyCode: comp?.code || item.competency_id || 'umum',
+          competencyName: resolveCompetencyName(comp?.name || item.competency_name),
           href: targetModuleId
             ? `/student/learning/${targetModuleId}/material/${item.id}`
             : `/student/learning/material/${item.id}`,

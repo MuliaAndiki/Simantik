@@ -18,6 +18,7 @@ export interface UpdatePracticePackageRequest {
   title?: string;
   description?: string;
   competency_id?: string | null;
+  clear_competency?: boolean;
   jenjang?: SchoolLevel;
   status?: string;
 }
@@ -31,6 +32,7 @@ export interface ListPracticePackageFilter {
   status?: string;
   jenjang?: SchoolLevel | string;
   competency_id?: string;
+  uncategorized?: boolean;
   limit?: number;
   offset?: number;
 }

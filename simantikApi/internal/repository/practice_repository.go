@@ -135,7 +135,9 @@ func (r *practiceRepository) ListPackages(ctx context.Context, filter dto.ListPr
 	if filter.Jenjang != "" {
 		query = query.Where("jenjang = ?", filter.Jenjang)
 	}
-	if filter.CompetencyID != nil {
+	if filter.Uncategorized {
+		query = query.Where("competency_id IS NULL")
+	} else if filter.CompetencyID != nil {
 		query = query.Where("competency_id = ?", filter.CompetencyID)
 	}
 
@@ -451,8 +453,8 @@ func (r *practiceRepository) GetPracticePackageResults(ctx context.Context, pack
 	)
 	hasCompleted := false
 
-	compName := "Bahasa Indonesia"
-	compCode := "IND"
+	compName := "Umum"
+	compCode := ""
 	if pkg.Competency != nil {
 		compName = pkg.Competency.Name
 		compCode = pkg.Competency.Code

@@ -6,6 +6,7 @@ import React, { useMemo, useState } from 'react';
 import { PracticeListPage } from '@/components/page/private/content_manager/PracticeListPage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
+import { useCompetencyDropdownActions } from '@/hooks/useService/question/useCompetencyDropdownActions';
 import type { SchoolLevel } from '@/types/service';
 import type {
   PracticeDialogForm,
@@ -14,6 +15,13 @@ import type {
   PracticeStats,
   PracticeStatusType,
 } from '@/types/ui/practice-manager.types';
+import {
+  ALL_COMPETENCY_FILTER_VALUE,
+  DEFAULT_COMPETENCY_FALLBACK,
+  mapCompetencyFilterValue,
+  resetIdIfDeleted,
+  resolveCompetencyName,
+} from '@/utils/competency.util';
 import {
   downloadTextFile,
   formatDateTimeId,
@@ -57,9 +65,10 @@ export const PracticeListContainer: React.FC = () => {
   // Map UI status filter to API status filter
   const apiStatus = useMemo(() => mapStatusFilterToApi(filters.status), [filters.status]);
 
-  const apiCompetencyId = useMemo(() => {
-    return filters.competencyId !== 'Semua Kompetensi' ? filters.competencyId : undefined;
-  }, [filters.competencyId]);
+  const competencyFilterParams = useMemo(
+    () => mapCompetencyFilterValue(filters.competencyId),
+    [filters.competencyId]
+  );
 
   const apiJenjang = useMemo(() => {
     return filters.jenjang !== 'Semua Jenjang'
@@ -71,7 +80,7 @@ export const PracticeListContainer: React.FC = () => {
   const packagesQuery = api.practice.query.packages({
     search: filters.search.trim() || undefined,
     status: apiStatus,
-    competency_id: apiCompetencyId,
+    ...competencyFilterParams,
     jenjang: apiJenjang,
     limit: filters.perPage,
     offset: (filters.page - 1) * filters.perPage,
@@ -82,16 +91,27 @@ export const PracticeListContainer: React.FC = () => {
   const publishedCountQuery = api.practice.query.packages({ status: 'published', limit: 1 });
   const archivedCountQuery = api.practice.query.packages({ status: 'archived', limit: 1 });
 
-  // Query for Competencies list
-  const competenciesQuery = api.question.query.competencies({ limit: 100 });
-
-  const competencies = useMemo(() => {
-    const list = competenciesQuery.data?.competencies ?? [];
-    return list.map((c) => ({
-      id: c.id,
-      name: c.name,
-    }));
-  }, [competenciesQuery.data]);
+  const {
+    competencies,
+    competenciesQuery,
+    isCreatingCompetency,
+    deletingCompetencyId,
+    handleCreateCompetency,
+    handleRequestDeleteCompetency,
+  } = useCompetencyDropdownActions({
+    limit: 100,
+    onDeleted: (deletedId) => {
+      setDialogForm((prev) => ({
+        ...prev,
+        competency_id: resetIdIfDeleted(prev.competency_id, deletedId),
+      }));
+      setFilters((prev) => ({
+        ...prev,
+        competencyId: resetIdIfDeleted(prev.competencyId, deletedId, ALL_COMPETENCY_FILTER_VALUE),
+        page: 1,
+      }));
+    },
+  });
 
   // Mutations
   const createPackageMutation = api.practice.mutate.createPackage();
@@ -124,7 +144,7 @@ export const PracticeListContainer: React.FC = () => {
         title: pkg.title,
         description: pkg.description || undefined,
         competencyId: pkg.competency_id,
-        competencyName: pkg.competency_name || 'Pemahaman Inferensial & Gagasan',
+        competencyName: resolveCompetencyName(pkg.competency_name, DEFAULT_COMPETENCY_FALLBACK),
         jenjang: pkg.jenjang || 'sma',
         totalQuestions: pkg.total_questions || 0,
         status,
@@ -276,6 +296,7 @@ export const PracticeListContainer: React.FC = () => {
             title: dialogForm.title.trim(),
             description: dialogForm.description.trim() || undefined,
             competency_id: dialogForm.competency_id || null,
+            clear_competency: !dialogForm.competency_id,
             jenjang: dialogForm.jenjang,
           },
         });
@@ -302,6 +323,10 @@ export const PracticeListContainer: React.FC = () => {
       stats={stats}
       packages={packages}
       competencies={competencies}
+      onCreateCompetency={handleCreateCompetency}
+      onRequestDeleteCompetency={handleRequestDeleteCompetency}
+      isCreatingCompetency={isCreatingCompetency}
+      deletingCompetencyId={deletingCompetencyId}
       filters={filters}
       totalItems={totalItems}
       isRefreshing={isRefreshing}

@@ -31,6 +31,7 @@ export interface QuestionStimulusForm {
 export interface QuestionEditorItemForm {
   id: string;
   questionNumber: number;
+  competencyId?: string;
   questionType: PracticeQuestionType;
   stimulus: QuestionStimulusForm;
   questionText: string;

@@ -57,8 +57,37 @@ func (r *competencyRepository) Update(ctx context.Context, competency *models.Co
 	return r.db.WithContext(ctx).Save(competency).Error
 }
 
+// Delete soft-deletes a competency while safely detaching active content references
+// so modules, materials, practice packages, questions, and tryouts remain intact with null/empty competency.
 func (r *competencyRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	return r.db.WithContext(ctx).Delete(&models.Competency{}, "id = ?", id).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Unscoped().
+			Model(&models.Material{}).
+			Where("competency_id = ?", id).
+			Update("competency_id", nil).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Unscoped().
+			Model(&models.PracticePackage{}).
+			Where("competency_id = ?", id).
+			Update("competency_id", nil).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(&models.Practice{}).
+			Where("competency_id = ?", id).
+			Update("competency_id", nil).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Where("competency_id = ?", id).
+			Delete(&models.QuestionCompetency{}).Error; err != nil {
+			return err
+		}
+
+		return tx.Delete(&models.Competency{}, "id = ?", id).Error
+	})
 }
 
 func (r *competencyRepository) List(ctx context.Context, filter dto.ListCompetencyFilter) ([]models.Competency, int64, error) {

@@ -189,7 +189,9 @@ func (r *materialRepository) List(ctx context.Context, filter dto.ListMaterialFi
 	if filter.ModuleID != nil {
 		query = query.Where("module_id = ?", filter.ModuleID)
 	}
-	if filter.CompetencyID != nil {
+	if filter.Uncategorized {
+		query = query.Where("competency_id IS NULL")
+	} else if filter.CompetencyID != nil {
 		query = query.Where("competency_id = ?", filter.CompetencyID)
 	}
 	if filter.Status != "" {
@@ -259,7 +261,7 @@ func (r *materialRepository) GetMaterialStudentActivities(ctx context.Context, m
 		moduleName = mat.Module.Title
 	}
 
-	compName := "Bahasa Indonesia"
+	compName := "Umum"
 	if mat.Competency != nil && mat.Competency.Name != "" {
 		compName = mat.Competency.Name
 	}
