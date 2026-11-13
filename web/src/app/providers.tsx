@@ -1,7 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { SidebarProvider } from '@/components/atoms';
 import { PWAUpdatePrompt } from '@/components/pwa/PWAUpdatePrompt';
 import { AuthProvider } from '@/core/providers/auth.provider';
 import { LenisProvider } from '@/core/providers/lenis.provinder';
@@ -25,8 +24,6 @@ const SafeReactQueryDevtools = dynamic(
 );
 
 const Providers = composeProviders([
-  ({ children }) => <SidebarProvider defaultOpen={false}>{children}</SidebarProvider>,
-
   AuthProvider,
   ThemeProvider,
   AlertProvinder,

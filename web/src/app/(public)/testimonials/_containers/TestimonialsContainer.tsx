@@ -85,10 +85,13 @@ export function TestimonialsContainer() {
   // Loading saat fetch pertama — animasi loader transisi halaman
   if (isLoading && !testimonialApiData) {
     return (
-      <PublicPageLoader
-        label="Memuat Testimoni..."
-        sublabel="Menyiapkan ulasan dan cerita pengalaman belajar siswa..."
-      />
+      <div className="w-full flex-1 min-h-screen flex items-center justify-center bg-white">
+        <PublicPageLoader
+          label="Memuat Testimoni..."
+          sublabel="Menyiapkan ulasan dan cerita pengalaman belajar siswa..."
+          containerClassName="min-h-screen w-full flex-1"
+        />
+      </div>
     );
   }
 

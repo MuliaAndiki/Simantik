@@ -111,11 +111,7 @@ export function HomeContainer() {
   }, [newsData, docData, tutorialData, testimonialData]);
 
   if (isInitialLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <PublicLoading />
-      </div>
-    );
+    return <PublicLoading />;
   }
 
   return <LandingPage data={mergedData} />;

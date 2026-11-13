@@ -78,10 +78,13 @@ export default function PrivacyContainer() {
 
   if (isLoading) {
     return (
-      <PublicPageLoader
-        label="Memuat Kebijakan Privasi..."
-        sublabel="Menyiapkan dokumen legalitas dan privasi SIMANTIK..."
-      />
+      <div className="w-full flex-1 min-h-screen flex items-center justify-center bg-white">
+        <PublicPageLoader
+          label="Memuat Kebijakan Privasi..."
+          sublabel="Menyiapkan dokumen legalitas dan privasi SIMANTIK..."
+          containerClassName="min-h-screen w-full flex-1"
+        />
+      </div>
     );
   }
 

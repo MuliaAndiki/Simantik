@@ -1,17 +1,6 @@
 import type { NextConfig } from 'next';
 import { env } from '@/configs/env.config';
 
-const getR2Domain = () => {
-  try {
-    if (process.env.NEXT_PUBLIC_R2_URL) {
-      return [new URL(process.env.NEXT_PUBLIC_R2_URL).hostname];
-    }
-  } catch {
-    // Fallback if URL parsing fails
-  }
-  return [];
-};
-
 const nextConfig: NextConfig = {
   output: 'standalone',
   serverExternalPackages: ['@aws-sdk/client-s3'],
@@ -21,7 +10,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'simantik.id',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.simantik.id',
       },
       {
         protocol: 'https',
@@ -31,9 +24,11 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.cloudflarestorage.com',
       },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
-    // Tambahkan domain R2 ke allowed domains
-    domains: ['pub-2f811af54c344a96ad45cb28d7493156.r2.dev', ...getR2Domain()],
   },
   redirects: async () => {
     return [
