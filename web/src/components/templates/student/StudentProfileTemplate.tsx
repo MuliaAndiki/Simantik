@@ -21,10 +21,6 @@ import {
   type ProfileSecurityCardProps,
   StudentDashboardFooter,
 } from "@/components/organisms/student";
-import {
-  SchoolProposalDialog,
-  type SchoolProposalDialogProps,
-} from "@/components/organisms/school/SchoolProposalDialog";
 import { cn } from "@/utils/classname";
 
 export interface StudentProfileTemplateProps {
