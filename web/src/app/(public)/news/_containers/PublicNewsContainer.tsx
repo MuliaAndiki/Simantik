@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   ArrowRight,
@@ -8,17 +8,17 @@ import {
   ChevronRight,
   Newspaper,
   Search,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import NavLayout from "@/core/layouts/nav.layout";
-import { useApi } from "@/hooks/useApi";
-import { useDebounce } from "@/hooks/useDebounce/useDebounce";
+} from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useState } from 'react';
+import NavLayout from '@/core/layouts/nav.layout';
+import { useApi } from '@/hooks/useApi';
+import { useDebounce } from '@/hooks/useDebounce/useDebounce';
 
 export function PublicNewsContainer() {
   const { content } = useApi();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 400);
   const [page, setPage] = useState(1);
   const limit = 9;
@@ -29,27 +29,23 @@ export function PublicNewsContainer() {
     offset: (page - 1) * limit,
   });
 
-  const totalPages = newsPage
-    ? Math.max(1, Math.ceil(newsPage.total / limit))
-    : 1;
+  const totalPages = newsPage ? Math.max(1, Math.ceil(newsPage.total / limit)) : 1;
 
   // Hanya memetakan data resmi dari database backend
   const displayNews = (newsPage?.news ?? []).map((item, idx) => ({
     id: item.id || `news-${idx}`,
     title: item.title,
-    excerpt: item.content
-      ? `${item.content.replace(/<[^>]*>?/gm, "").substring(0, 140)}...`
-      : "",
+    excerpt: item.content ? `${item.content.replace(/<[^>]*>?/gm, '').substring(0, 140)}...` : '',
     date: item.createdAt
-      ? new Date(item.createdAt).toLocaleDateString("id-ID", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
+      ? new Date(item.createdAt).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
         })
-      : "Terbaru",
+      : 'Terbaru',
     slug: item.slug || item.id,
-    imageUrl: item.thumbnailUrl || "/illustrations/student-learning.jpg",
-    tag: "Berita Resmi",
+    imageUrl: item.thumbnailUrl || '/illustrations/student-learning.jpg',
+    tag: 'Berita Resmi',
   }));
 
   return (
@@ -63,8 +59,8 @@ export function PublicNewsContainer() {
                 Berita &amp; Pengumuman SIMANTIK
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed">
-                Temukan tips belajar efektif, kebijakan kurikulum terbaru, serta
-                rilis fitur pembelajaran mandiri Bahasa Indonesia.
+                Temukan tips belajar efektif, kebijakan kurikulum terbaru, serta rilis fitur
+                pembelajaran mandiri Bahasa Indonesia.
               </p>
             </div>
 
@@ -172,14 +168,14 @@ export function PublicNewsContainer() {
                 <Search className="w-6 h-6" />
               </div>
               <h3 className="text-base font-bold text-slate-700">
-                {debouncedSearch.trim() !== ""
-                  ? "Tidak ada berita yang cocok"
-                  : "Belum ada berita yang dipublikasikan"}
+                {debouncedSearch.trim() !== ''
+                  ? 'Tidak ada berita yang cocok'
+                  : 'Belum ada berita yang dipublikasikan'}
               </h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                {debouncedSearch.trim() !== ""
-                  ? "Silakan coba kata kunci pencarian yang lain untuk menemukan artikel wawasan."
-                  : "Warta dan artikel berita terbaru dari tim kurikulum SIMANTIK akan ditampilkan di sini."}
+                {debouncedSearch.trim() !== ''
+                  ? 'Silakan coba kata kunci pencarian yang lain untuk menemukan artikel wawasan.'
+                  : 'Warta dan artikel berita terbaru dari tim kurikulum SIMANTIK akan ditampilkan di sini.'}
               </p>
             </div>
           )}

@@ -3,6 +3,7 @@
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
 import { env } from '@/configs';
+import { extractR2KeyFromUrl, getR2PublicBaseUrl } from './r2-url.util';
 
 // Konversi WebP hemat storage: kualitas 82 + sisi terpanjang max 1600px.
 const WEBP_QUALITY = 82;
@@ -10,7 +11,6 @@ const WEBP_MAX_DIMENSION = 1600;
 
 const bucketName = 'simantik';
 const avatarsPrefix = 'avatars';
-const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_URL || '';
 
 let r2ClientInstance: S3Client | null = null;
 
@@ -77,8 +77,9 @@ export async function uploadAvatar(
   const client = getR2Client();
   await client.send(new PutObjectCommand(uploadParams));
 
-  if (R2_PUBLIC_URL) {
-    return `${R2_PUBLIC_URL}/${Key}`;
+  const publicBaseUrl = getR2PublicBaseUrl();
+  if (publicBaseUrl) {
+    return `${publicBaseUrl}/${Key}`;
   }
 
   const accountId = env.NEXT_CLOUDFLARE_ACCOUNT_ID || process.env.NEXT_CLOUDFLARE_ACCOUNT_ID || '';
@@ -110,12 +111,7 @@ async function toWebpBuffer(input: Buffer, mimeType: string): Promise<Buffer | n
 
 export async function deleteObject(fileUrl: string): Promise<void> {
   try {
-    const url = new URL(fileUrl);
-    let Key = url.pathname.substring(1);
-
-    if (Key.startsWith(`${bucketName}/`)) {
-      Key = Key.substring(`${bucketName}/`.length);
-    }
+    const Key = extractR2KeyFromUrl(fileUrl, bucketName);
 
     const deleteParams = {
       Bucket: bucketName,
