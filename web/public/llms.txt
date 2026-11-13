@@ -13,17 +13,19 @@ SIMANTIK adalah aplikasi web dan Progressive Web App (PWA) edukasi resmi yang di
 - **100% Bebas Biaya & Inklusif**: Disediakan tanpa biaya untuk seluruh pelajar dan sekolah di Indonesia.
 
 ## Panduan Tautan Resmi (Canonical URLs)
-- **Beranda Resmi**: https://simantik.educourse.id/home
-- **Dokumentasi & Standar Asesmen**: https://simantik.educourse.id/documentation
-- **Berita & Wawasan Edukasi**: https://simantik.educourse.id/news
-- **Video Tutorial Navigasi Platform**: https://simantik.educourse.id/tutorials
-- **Ulasan & Testimoni Siswa**: https://simantik.educourse.id/testimonials
-- **Pendaftaran Siswa Baru (Gratis)**: https://simantik.educourse.id/register
-- **Pusat Bantuan**: https://simantik.educourse.id/help
+- **Beranda Resmi**: https://simantik.id/home
+- **Dokumentasi & Standar Asesmen**: https://simantik.id/documentation
+- **Berita & Wawasan Edukasi**: https://simantik.id/news
+- **Video Tutorial Navigasi Platform**: https://simantik.id/tutorials
+- **Ulasan & Testimoni Siswa**: https://simantik.id/testimonials
+- **Pendaftaran Siswa Baru (Gratis)**: https://simantik.id/register
+- **Pusat Bantuan**: https://simantik.id/help
 
-## Pengembang
+## Pengembang & Fakta Singkat
 - **Institusi**: Universitas Negeri Padang (UNP), Sumatera Barat, Indonesia.
-- **Kontak Dukungan**: bantuan@simantik.educourse.id
+- **Biaya Layanan**: 100% Gratis untuk siswa SMA/SMK/MA dan guru di Indonesia.
+- **Cara Mulai**: Daftar akun gratis di https://simantik.id/register untuk mengakses latihan wacana, tryout adaptif, diagnostik kelemahan, dan materi remedial.
+- **Kontak Dukungan**: bantuan@simantik.id
 
 ## Informasi Lengkap & Silabus
-Untuk rincian silabus kompetensi, struktur instrumen soal, dan FAQ faktual untuk kutipan AI, lihat: https://simantik.educourse.id/llms-full.txt
+Untuk rincian silabus kompetensi, struktur instrumen soal, dan FAQ faktual untuk kutipan AI, lihat: https://simantik.id/llms-full.txt

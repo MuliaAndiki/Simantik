@@ -40,6 +40,7 @@ export interface RequestConfig {
   headers?: Record<string, string>;
   cache?: RequestCache;
   next?: NextFetchRequestConfig;
+  signal?: AbortSignal;
 }
 
 type UnauthorizedMode = 'redirect' | 'json401';
@@ -209,13 +210,8 @@ async function coreFetch<T>(
   options: FetchOptions,
   isRetry = false
 ): Promise<T> {
-  const {
-    method = 'GET',
-    body,
-    headers: extraHeaders = {},
-    cache = 'no-store',
-    next,
-  } = config ?? {};
+  const { method = 'GET', body, headers: extraHeaders = {}, cache, next, signal } = config ?? {};
+  const fetchCache: RequestCache | undefined = cache ?? (next ? undefined : 'no-store');
   const unauthorizedMode = options.unauthorizedMode ?? 'redirect';
 
   const accessToken = options.withAuth ? await getAccessToken() : undefined;
@@ -231,8 +227,9 @@ async function coreFetch<T>(
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    cache,
-    next,
+    ...(fetchCache ? { cache: fetchCache } : {}),
+    ...(next ? { next } : {}),
+    ...(signal ? { signal } : {}),
   });
 
   if (res.status === 401 && options.withAuth && !isRetry) {
@@ -250,8 +247,9 @@ async function coreFetch<T>(
         ...extraHeaders,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
-      cache,
-      next,
+      ...(fetchCache ? { cache: fetchCache } : {}),
+      ...(next ? { next } : {}),
+      ...(signal ? { signal } : {}),
     });
 
     if (!retryRes.ok) {
@@ -308,13 +306,8 @@ async function coreFetchResponse<T>(
   options: FetchOptions,
   isRetry = false
 ): Promise<ApiSuccessResponse<T>> {
-  const {
-    method = 'GET',
-    body,
-    headers: extraHeaders = {},
-    cache = 'no-store',
-    next,
-  } = config ?? {};
+  const { method = 'GET', body, headers: extraHeaders = {}, cache, next, signal } = config ?? {};
+  const fetchCache: RequestCache | undefined = cache ?? (next ? undefined : 'no-store');
   const unauthorizedMode = options.unauthorizedMode ?? 'redirect';
 
   const accessToken = options.withAuth ? await getAccessToken() : undefined;
@@ -330,8 +323,9 @@ async function coreFetchResponse<T>(
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    cache,
-    next,
+    ...(fetchCache ? { cache: fetchCache } : {}),
+    ...(next ? { next } : {}),
+    ...(signal ? { signal } : {}),
   });
 
   if (res.status === 401 && options.withAuth && !isRetry) {
@@ -354,8 +348,9 @@ async function coreFetchResponse<T>(
         ...extraHeaders,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
-      cache,
-      next,
+      ...(fetchCache ? { cache: fetchCache } : {}),
+      ...(next ? { next } : {}),
+      ...(signal ? { signal } : {}),
     });
 
     if (!retryRes.ok) {

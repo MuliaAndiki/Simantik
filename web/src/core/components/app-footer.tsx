@@ -46,7 +46,7 @@ export default function AppFooter({ className, themeVariant = 'dark' }: AppFoote
 
             <div className="pt-1 flex items-center gap-2 text-xs opacity-80">
               <Mail className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-              <span>bantuan@simantik.educourse.id</span>
+              <span>bantuan@simantik.id</span>
             </div>
           </div>
 

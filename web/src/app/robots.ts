@@ -1,8 +1,11 @@
 import type { MetadataRoute } from 'next';
+import { getSiteUrl } from '@/configs/site.config';
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://simantik.educourse.id';
+export const dynamic = 'force-dynamic';
 
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = getSiteUrl();
+
   const publicAllowedPaths = [
     '/',
     '/home',
@@ -20,6 +23,7 @@ export default function robots(): MetadataRoute.Robots {
     '/login',
     '/llms.txt',
     '/llms-full.txt',
+    '/_next/static/',
   ];
 
   const privateDisallowedPaths = [
@@ -33,12 +37,15 @@ export default function robots(): MetadataRoute.Robots {
     '/api/*',
     '/dashboard/',
     '/dashboard/*',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-otp',
   ];
 
   return {
     rules: [
       {
-        // General search engine web crawlers (Google, Bing, Yahoo, DuckDuckGo)
+        // General search engine web crawlers (Google, Bing, Yahoo, DuckDuckGo, Brave)
         userAgent: '*',
         allow: publicAllowedPaths,
         disallow: privateDisallowedPaths,
@@ -50,6 +57,8 @@ export default function robots(): MetadataRoute.Robots {
           'ChatGPT-User',
           'OAI-SearchBot',
           'ClaudeBot',
+          'Claude-SearchBot',
+          'Claude-User',
           'anthropic-ai',
           'Google-Extended',
           'PerplexityBot',
@@ -59,8 +68,11 @@ export default function robots(): MetadataRoute.Robots {
         allow: publicAllowedPaths,
         disallow: privateDisallowedPaths,
       },
+      {
+        userAgent: 'Bytespider',
+        disallow: '/',
+      },
     ],
-    sitemap: [`${appUrl}/sitemap.xml`, `${appUrl}/sitemap-general.xml`],
-    host: appUrl,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }
