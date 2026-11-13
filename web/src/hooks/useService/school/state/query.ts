@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKey } from '@/configs/query-key';
 import Api from '@/services/props.service';
-import type { ListSchoolFilter, SchoolResponse } from '@/types/service';
+import type { ListSchoolFilter } from '@/types/service';
 
 export function useSchoolList(query?: ListSchoolFilter, options?: { enabled?: boolean }) {
   return useQuery({
@@ -16,9 +16,20 @@ export function useSchoolList(query?: ListSchoolFilter, options?: { enabled?: bo
 
 export function useSchoolPublicList(query?: ListSchoolFilter, options?: { enabled?: boolean }) {
   return useQuery({
-    queryKey: queryKey.school.list(query),
+    queryKey: queryKey.school.publicList(query),
     queryFn: async () => {
       const res = await Api.school.ListSchoolsPublicService(query);
+      return res.data;
+    },
+    enabled: options?.enabled,
+  });
+}
+
+export function useMySchoolSubmissions(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.school.mySubmissions(),
+    queryFn: async () => {
+      const res = await Api.school.ListMySchoolSubmissionsService();
       return res.data;
     },
     enabled: options?.enabled,

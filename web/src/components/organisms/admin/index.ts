@@ -14,6 +14,7 @@ export * from './AdminDashboardStatCards';
 export * from './AdminSchoolCreateDialog';
 export * from './AdminSchoolDataTable';
 export * from './AdminSchoolFilterBar';
+export * from './AdminSchoolRejectDialog';
 export * from './AdminSchoolStatCards';
 export * from './AdminSettingsContent';
 export * from './AdminStudentActivitySummaryCard';

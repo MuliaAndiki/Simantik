@@ -17,6 +17,12 @@ export type SchoolLevel = 'sd' | 'smp' | 'sma' | 'smk';
 export type SchoolStatusType = 'negeri' | 'swasta';
 
 /**
+ * Status moderasi/verifikasi pengajuan sekolah
+ * Maps to backend: `models.SchoolVerificationStatus`
+ */
+export type SchoolVerificationStatus = 'pending' | 'verified' | 'rejected';
+
+/**
  * Payload for creating a school
  * Maps to backend: `dto.CreateSchoolRequest`
  */
@@ -30,6 +36,20 @@ export interface CreateSchoolRequest {
   provinsi?: string;
   kabupaten?: string;
   kecamatan?: string;
+}
+
+/**
+ * Payload for submitting a school proposal by user/student
+ * Maps to backend: `dto.ProposeSchoolRequest`
+ */
+export type ProposeSchoolRequest = CreateSchoolRequest;
+
+/**
+ * Payload for rejecting a school submission
+ * Maps to backend: `dto.RejectSchoolRequest`
+ */
+export interface RejectSchoolRequest {
+  reason: string;
 }
 
 /**
@@ -56,8 +76,24 @@ export interface ListSchoolFilter {
   search?: string;
   jenjang?: SchoolLevel | string;
   status?: SchoolStatusType | string;
+  verificationStatus?: SchoolVerificationStatus | 'all' | string;
   limit?: number;
   offset?: number;
+}
+
+/**
+ * Global school verification counts summary for Admin dashboard/tabs
+ * Maps to backend: `dto.SchoolVerificationSummary`
+ */
+export interface SchoolVerificationSummary {
+  total: number;
+  verified: number;
+  pending: number;
+  rejected: number;
+  negeri: number;
+  swasta: number;
+  smaCount: number;
+  smkCount: number;
 }
 
 /**
@@ -75,6 +111,13 @@ export interface SchoolResponse {
   provinsi: string;
   kabupaten: string;
   kecamatan: string;
+  verificationStatus: SchoolVerificationStatus;
+  submittedByUserId?: string;
+  submittedByName?: string;
+  submittedByEmail?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -88,6 +131,7 @@ export interface PaginatedSchoolsResponse {
   total: number;
   limit: number;
   offset: number;
+  summary?: SchoolVerificationSummary;
 }
 
 // ============================================================================

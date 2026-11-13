@@ -18,6 +18,7 @@ type SchoolRepository interface {
 	Update(ctx context.Context, s *models.School) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, filter dto.ListSchoolFilter) ([]models.School, int64, error)
+	CountSummary(ctx context.Context) (*dto.SchoolVerificationSummary, error)
 }
 
 type schoolRepository struct {
@@ -77,6 +78,12 @@ func (r *schoolRepository) List(ctx context.Context, filter dto.ListSchoolFilter
 	if filter.Status != "" {
 		query = query.Where("status = ?", filter.Status)
 	}
+	if filter.VerificationStatus != "" && filter.VerificationStatus != "all" {
+		query = query.Where("verification_status = ?", filter.VerificationStatus)
+	}
+	if filter.SubmittedByUserID != nil {
+		query = query.Where("submitted_by_user_id = ?", *filter.SubmittedByUserID)
+	}
 
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
@@ -89,4 +96,24 @@ func (r *schoolRepository) List(ctx context.Context, filter dto.ListSchoolFilter
 	}
 
 	return list, total, nil
+}
+
+func (r *schoolRepository) CountSummary(ctx context.Context) (*dto.SchoolVerificationSummary, error) {
+	var summary dto.SchoolVerificationSummary
+	err := r.db.WithContext(ctx).Model(&models.School{}).
+		Select(`
+			COUNT(*) AS total,
+			COUNT(*) FILTER (WHERE verification_status = 'verified') AS verified,
+			COUNT(*) FILTER (WHERE verification_status = 'pending') AS pending,
+			COUNT(*) FILTER (WHERE verification_status = 'rejected') AS rejected,
+			COUNT(*) FILTER (WHERE status = 'negeri') AS negeri,
+			COUNT(*) FILTER (WHERE status = 'swasta') AS swasta,
+			COUNT(*) FILTER (WHERE jenjang = 'sma') AS sma_count,
+			COUNT(*) FILTER (WHERE jenjang = 'smk') AS smk_count
+		`).
+		Scan(&summary).Error
+	if err != nil {
+		return nil, err
+	}
+	return &summary, nil
 }

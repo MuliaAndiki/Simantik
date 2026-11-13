@@ -1,7 +1,12 @@
 import type * as React from 'react';
+import type {
+  SchoolFormErrors,
+  SchoolFormState,
+} from '@/components/molecules/school/SchoolFormFields';
 import type { ChangePasswordForm } from '@/components/organisms/student/ChangePasswordModal';
 import type { ProfileSchoolOption } from '@/components/organisms/student/ProfilePersonalInfoCard';
 import { StudentProfileTemplate } from '@/components/templates/student/StudentProfileTemplate';
+import type { SchoolResponse } from '@/types/service';
 
 export interface StudentProfilePageProps {
   fullName: string;
@@ -12,6 +17,19 @@ export interface StudentProfilePageProps {
   schoolOptions?: ProfileSchoolOption[];
   selectedSchoolId?: string;
   onSelectSchoolId?: (schoolId: string) => void;
+  onOpenProposeSchool?: () => void;
+  mySchoolSubmissions?: SchoolResponse[];
+  onResubmitSchool?: (school: SchoolResponse) => void;
+  isProposeSchoolOpen?: boolean;
+  onOpenChangeProposeSchool?: (open: boolean) => void;
+  proposeSchoolForm?: SchoolFormState;
+  proposeSchoolErrors?: SchoolFormErrors;
+  onProposeSchoolFieldChange?: <K extends keyof SchoolFormState>(
+    field: K,
+    value: SchoolFormState[K]
+  ) => void;
+  onSubmitProposeSchool?: (e: React.FormEvent) => Promise<void> | void;
+  isSubmittingProposeSchool?: boolean;
   roleName?: string;
   avatarSrc?: string;
   isVerified?: boolean;
@@ -50,6 +68,16 @@ export function StudentProfilePage({
   schoolOptions,
   selectedSchoolId,
   onSelectSchoolId,
+  onOpenProposeSchool,
+  mySchoolSubmissions,
+  onResubmitSchool,
+  isProposeSchoolOpen,
+  onOpenChangeProposeSchool,
+  proposeSchoolForm,
+  proposeSchoolErrors,
+  onProposeSchoolFieldChange,
+  onSubmitProposeSchool,
+  isSubmittingProposeSchool = false,
   roleName = 'Siswa',
   avatarSrc = '/avatars/1.png',
   statusText = 'Aktif',
@@ -88,6 +116,9 @@ export function StudentProfilePage({
         schoolOptions,
         selectedSchoolId,
         onSelectSchoolId,
+        onOpenProposeSchool,
+        mySchoolSubmissions,
+        onResubmitSchool,
         onSubmit: onSubmitPersonalInfo,
         onReset: onResetPersonalInfo,
         isSubmitting: isSubmittingPersonalInfo,
@@ -119,6 +150,23 @@ export function StudentProfilePage({
         onSubmit: onSubmitChangeAvatar,
         isSubmitting: isSubmittingAvatar,
       }}
+      schoolProposalModalProps={
+        isProposeSchoolOpen !== undefined &&
+        onOpenChangeProposeSchool &&
+        proposeSchoolForm &&
+        onProposeSchoolFieldChange &&
+        onSubmitProposeSchool
+          ? {
+              open: isProposeSchoolOpen,
+              onOpenChange: onOpenChangeProposeSchool,
+              formData: proposeSchoolForm,
+              errors: proposeSchoolErrors,
+              onChange: onProposeSchoolFieldChange,
+              onSubmit: onSubmitProposeSchool,
+              isSubmitting: isSubmittingProposeSchool,
+            }
+          : undefined
+      }
     />
   );
 }

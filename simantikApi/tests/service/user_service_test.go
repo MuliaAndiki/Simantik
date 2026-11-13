@@ -314,4 +314,48 @@ func TestUserService_UpdateMySchool(t *testing.T) {
 	if updated.School != "SMKN 2 Test" {
 		t.Fatalf("expected school updated to 'SMKN 2 Test', got %q", updated.School)
 	}
+
+	// Submitter can select their own pending school, while another student or rejected school is blocked
+	pendingOwned := &models.School{
+		ID:                 uuid.New(),
+		NPSN:               "20100300",
+		Name:               "SMA Ajuan Sendiri",
+		Level:              models.SchoolLevelSMA,
+		Status:             models.SchoolStatusSwasta,
+		Address:            "Jl. Ajuan",
+		VerificationStatus: models.SchoolVerificationPending,
+		SubmittedByUserID:  &student.ID,
+	}
+	_ = deps.schoolRepo.Create(ctx, pendingOwned)
+
+	if _, err := deps.svc.UpdateMySchool(ctx, student.ID, dto.UpdateMySchoolRequest{SchoolID: pendingOwned.ID.String()}); err != nil {
+		t.Fatalf("expected owner of pending school to select it, got %v", err)
+	}
+
+	otherUser := &models.User{
+		ID:       uuid.New(),
+		FullName: "Siswa Lain",
+		Email:    "lain@example.com",
+		Role:     models.UserRoleStudent,
+		Status:   models.UserStatusActive,
+	}
+	_ = deps.userRepo.Create(ctx, otherUser)
+	if _, err := deps.svc.UpdateMySchool(ctx, otherUser.ID, dto.UpdateMySchoolRequest{SchoolID: pendingOwned.ID.String()}); err != service.ErrSchoolNotAllowed {
+		t.Fatalf("expected ErrSchoolNotAllowed for non-owner selecting pending school, got %v", err)
+	}
+
+	rejectedSchool := &models.School{
+		ID:                 uuid.New(),
+		NPSN:               "20100400",
+		Name:               "SMA Ditolak",
+		Level:              models.SchoolLevelSMA,
+		Status:             models.SchoolStatusSwasta,
+		Address:            "Jl. Ditolak",
+		VerificationStatus: models.SchoolVerificationRejected,
+		SubmittedByUserID:  &student.ID,
+	}
+	_ = deps.schoolRepo.Create(ctx, rejectedSchool)
+	if _, err := deps.svc.UpdateMySchool(ctx, student.ID, dto.UpdateMySchoolRequest{SchoolID: rejectedSchool.ID.String()}); err != service.ErrSchoolNotAllowed {
+		t.Fatalf("expected ErrSchoolNotAllowed for rejected school, got %v", err)
+	}
 }

@@ -1,20 +1,30 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import { TableLoader } from '@/components/atoms/loading';
-import type { ChangePasswordForm } from '@/components/organisms/student/ChangePasswordModal';
-import type { ProfileSchoolOption } from '@/components/organisms/student/ProfilePersonalInfoCard';
-import { StudentProfilePage } from '@/components/page/private/student/StudentProfilePage';
-import { useApi } from '@/hooks/useApi';
-import { useAlert } from '@/hooks/useService/useAlert/costum-alert';
-import { uploadAvatar } from '@/utils/r2-utils';
+import { useEffect, useMemo, useState } from "react";
+import { TableLoader } from "@/components/atoms/loading";
+import type {
+  SchoolFormErrors,
+  SchoolFormState,
+} from "@/components/molecules/school/SchoolFormFields";
+import type { ChangePasswordForm } from "@/components/organisms/student/ChangePasswordModal";
+import type { ProfileSchoolOption } from "@/components/organisms/student/ProfilePersonalInfoCard";
+import { StudentProfilePage } from "@/components/page/private/student/StudentProfilePage";
+import { useApi } from "@/hooks/useApi";
+import { useAlert } from "@/hooks/useService/useAlert/costum-alert";
+import type { SchoolResponse } from "@/types/service";
+import { uploadAvatar } from "@/utils/r2-utils";
+import {
+  buildSchoolProposalInitialForm,
+  EMPTY_SCHOOL_FORM,
+  validateProposeSchoolForm,
+} from "@/utils/school-proposal.util";
 
-const DEFAULT_AVATAR = '/avatars/1.png';
+const DEFAULT_AVATAR = "/avatars/1.png";
 
 const EMPTY_CHANGE_PASSWORD_FORM: ChangePasswordForm = {
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: '',
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
 };
 
 export default function StudentProfile() {
@@ -24,36 +34,61 @@ export default function StudentProfile() {
   // 1. Data queries
   const { data: userProfile, isLoading: isProfileLoading } = user.query.me();
   const { data: schoolsResponse } = school.query.listPublic({ limit: 100 });
+  const { data: mySubmissionsResponse } = school.query.mySubmissions();
 
   // 2. Mutations
   const updateProfileMutation = user.mutate.updateProfile();
   const updateMySchoolMutation = user.mutate.updateMySchool();
+  const proposeSchoolMutation = school.mutate.propose();
   const changePasswordMutation = user.mutate.changePassword();
   const updateAvatarMutation = user.mutate.updateAvatar();
 
   // 3. Form state
-  const [fullName, setFullName] = useState('');
-  const [schoolName, setSchoolName] = useState('');
-  const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
+  const [fullName, setFullName] = useState("");
+  const [schoolName, setSchoolName] = useState("");
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>("");
   const [isDirty, setIsDirty] = useState(false);
 
   // 4. Modal states
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isChangeAvatarOpen, setIsChangeAvatarOpen] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isProposalOpen, setIsProposalOpen] = useState(false);
+  const [proposalForm, setProposalForm] =
+    useState<SchoolFormState>(EMPTY_SCHOOL_FORM);
+  const [proposalErrors, setProposalErrors] = useState<SchoolFormErrors>({});
 
   // 5. Change password form state
-  const [changePasswordForm, setChangePasswordForm] = useState<ChangePasswordForm>(
-    EMPTY_CHANGE_PASSWORD_FORM
+  const [changePasswordForm, setChangePasswordForm] =
+    useState<ChangePasswordForm>(EMPTY_CHANGE_PASSWORD_FORM);
+  const [changePasswordError, setChangePasswordError] = useState<string | null>(
+    null,
   );
-  const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
+
+  const mySchoolSubmissions = useMemo(
+    () => mySubmissionsResponse ?? [],
+    [mySubmissionsResponse],
+  );
+
+  const mySchoolSubmissions = useMemo(
+    () => mySubmissionsResponse ?? [],
+    [mySubmissionsResponse],
+  );
 
   const schoolOptions: ProfileSchoolOption[] = useMemo(() => {
-    return (schoolsResponse?.schools ?? []).map((s) => ({
-      id: s.id,
-      name: s.nama,
-    }));
-  }, [schoolsResponse]);
+    const optionMap = new Map<string, ProfileSchoolOption>();
+    for (const item of schoolsResponse?.schools ?? []) {
+      optionMap.set(item.id, { id: item.id, name: item.nama });
+    }
+    for (const sub of mySchoolSubmissions) {
+      if (sub.verificationStatus !== "rejected" && !optionMap.has(sub.id)) {
+        const suffix =
+          sub.verificationStatus === "pending" ? " (Menunggu Verifikasi)" : "";
+        optionMap.set(sub.id, { id: sub.id, name: `${sub.nama}${suffix}` });
+      }
+    }
+    return Array.from(optionMap.values());
+  }, [schoolsResponse, mySchoolSubmissions]);
 
   // Synchronize initial data once fetched
   useEffect(() => {
@@ -61,11 +96,16 @@ export default function StudentProfile() {
       if (userProfile.fullName) {
         setFullName(userProfile.fullName);
       }
+      const initialSchoolId = userProfile.studentProfile?.schoolId;
       const initialSchool = userProfile.studentProfile?.school;
       if (initialSchool) {
         setSchoolName(initialSchool);
+      }
+      if (initialSchoolId) {
+        setSelectedSchoolId(initialSchoolId);
+      } else if (initialSchool) {
         const match = schoolOptions.find(
-          (s) => s.name.toLowerCase() === initialSchool.toLowerCase()
+          (s) => s.name.toLowerCase() === initialSchool.toLowerCase(),
         );
         if (match) {
           setSelectedSchoolId(match.id);
@@ -94,18 +134,60 @@ export default function StudentProfile() {
   };
 
   const handleResetPersonalInfo = () => {
-    setFullName(userProfile?.fullName ?? '');
-    const initialSchool = userProfile?.studentProfile?.school ?? '';
+    setFullName(userProfile?.fullName ?? "");
+    const initialSchoolId = userProfile?.studentProfile?.schoolId ?? "";
+    const initialSchool = userProfile?.studentProfile?.school ?? "";
     setSchoolName(initialSchool);
-    const match = schoolOptions.find((s) => s.name.toLowerCase() === initialSchool.toLowerCase());
-    setSelectedSchoolId(match?.id ?? '');
+    if (initialSchoolId) {
+      setSelectedSchoolId(initialSchoolId);
+    } else {
+      const match = schoolOptions.find(
+        (s) => s.name.toLowerCase() === initialSchool.toLowerCase(),
+      );
+      setSelectedSchoolId(match?.id ?? "");
+    }
     setIsDirty(false);
+  };
+
+  const handleOpenProposeSchool = (seed?: SchoolResponse) => {
+    setProposalForm(buildSchoolProposalInitialForm(seed));
+    setProposalErrors({});
+    setIsProposalOpen(true);
+  };
+
+  const handleProposalFieldChange = <K extends keyof SchoolFormState>(
+    field: K,
+    value: SchoolFormState[K],
+  ) => {
+    setProposalForm((prev) => ({ ...prev, [field]: value }));
+    setProposalErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const handleSubmitProposal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { data, errors } = validateProposeSchoolForm(proposalForm);
+    if (errors || !data) {
+      setProposalErrors(errors ?? {});
+      return;
+    }
+
+    try {
+      const res = await proposeSchoolMutation.mutateAsync(data);
+      if (res.data) {
+        setSelectedSchoolId(res.data.id);
+        setSchoolName(res.data.nama);
+        setIsDirty(true);
+      }
+      setIsProposalOpen(false);
+    } catch {
+      // Error toast ditangani oleh useAppMutation
+    }
   };
 
   const handleSubmitPersonalInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (fullName.trim() !== '') {
+      if (fullName.trim() !== "") {
         await updateProfileMutation.mutateAsync({ fullName: fullName.trim() });
       }
 
@@ -117,17 +199,19 @@ export default function StudentProfile() {
 
       setIsDirty(false);
       toast({
-        title: 'Berhasil',
-        message: 'Informasi profil kamu berhasil disimpan.',
-        icon: 'success',
+        title: "Berhasil",
+        message: "Informasi profil kamu berhasil disimpan.",
+        icon: "success",
       });
     } catch (err: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Gagal memperbarui profil. Silakan coba lagi.';
+        err instanceof Error
+          ? err.message
+          : "Gagal memperbarui profil. Silakan coba lagi.";
       toast({
-        title: 'Gagal',
+        title: "Gagal",
         message: errorMessage,
-        icon: 'error',
+        icon: "error",
       });
     }
   };
@@ -142,29 +226,34 @@ export default function StudentProfile() {
 
   const handleChangePasswordFormChange = <K extends keyof ChangePasswordForm>(
     field: K,
-    value: ChangePasswordForm[K]
+    value: ChangePasswordForm[K],
   ) => {
     setChangePasswordForm((prev) => ({ ...prev, [field]: value }));
     setChangePasswordError(null);
   };
 
   const handleSubmitChangePassword = async () => {
-    const { currentPassword, newPassword, confirmPassword } = changePasswordForm;
+    const { currentPassword, newPassword, confirmPassword } =
+      changePasswordForm;
 
     if (!currentPassword) {
-      setChangePasswordError('Password saat ini harus diisi.');
+      setChangePasswordError("Password saat ini harus diisi.");
       return;
     }
     if (newPassword.length < 8) {
-      setChangePasswordError('Password baru minimal harus 8 karakter.');
+      setChangePasswordError("Password baru minimal harus 8 karakter.");
       return;
     }
     if (!(/[a-zA-Z]/.test(newPassword) && /\d/.test(newPassword))) {
-      setChangePasswordError('Password baru harus mengandung kombinasi huruf dan angka.');
+      setChangePasswordError(
+        "Password baru harus mengandung kombinasi huruf dan angka.",
+      );
       return;
     }
     if (newPassword !== confirmPassword) {
-      setChangePasswordError('Konfirmasi password tidak cocok dengan password baru.');
+      setChangePasswordError(
+        "Konfirmasi password tidak cocok dengan password baru.",
+      );
       return;
     }
 
@@ -176,17 +265,19 @@ export default function StudentProfile() {
 
       setIsChangePasswordOpen(false);
       toast({
-        title: 'Berhasil',
-        message: 'Kata sandi berhasil diperbarui.',
-        icon: 'success',
+        title: "Berhasil",
+        message: "Kata sandi berhasil diperbarui.",
+        icon: "success",
       });
     } catch (err: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Gagal mengubah password. Periksa password saat ini.';
+        err instanceof Error
+          ? err.message
+          : "Gagal mengubah password. Periksa password saat ini.";
       toast({
-        title: 'Gagal',
+        title: "Gagal",
         message: errorMessage,
-        icon: 'error',
+        icon: "error",
       });
     }
   };
@@ -203,17 +294,17 @@ export default function StudentProfile() {
       if (avatar instanceof File) {
         // 1. Upload ke Cloudflare R2 lewat Server Action (menggunakan FormData untuk binary streaming aman)
         const formData = new FormData();
-        formData.append('file', avatar);
+        formData.append("file", avatar);
         finalUrl = await uploadAvatar(formData);
-      } else if (typeof avatar === 'string') {
+      } else if (typeof avatar === "string") {
         // Jika relative URL, ubah ke absolute URL agar lolos validasi URL di backend
-        if (avatar.startsWith('/') && typeof window !== 'undefined') {
+        if (avatar.startsWith("/") && typeof window !== "undefined") {
           finalUrl = `${window.location.origin}${avatar}`;
         } else {
           finalUrl = avatar;
         }
       } else {
-        throw new Error('Format foto tidak valid.');
+        throw new Error("Format foto tidak valid.");
       }
 
       // 2. Simpan URL avatar ke database via user.mutate.updateAvatar
@@ -221,16 +312,17 @@ export default function StudentProfile() {
 
       setIsChangeAvatarOpen(false);
       toast({
-        title: 'Berhasil',
-        message: 'Foto profil berhasil diperbarui.',
-        icon: 'success',
+        title: "Berhasil",
+        message: "Foto profil berhasil diperbarui.",
+        icon: "success",
       });
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Gagal memperbarui foto profil.';
+      const errorMessage =
+        err instanceof Error ? err.message : "Gagal memperbarui foto profil.";
       toast({
-        title: 'Gagal',
+        title: "Gagal",
         message: errorMessage,
-        icon: 'error',
+        icon: "error",
       });
       throw err;
     } finally {
@@ -238,15 +330,17 @@ export default function StudentProfile() {
     }
   };
 
-  const email = userProfile?.email ?? '';
+  const email = userProfile?.email ?? "";
   const avatarSrc = userProfile?.avatarURL ?? DEFAULT_AVATAR;
-  const roleName = userProfile?.role === 'student' ? 'Siswa' : (userProfile?.role ?? 'Siswa');
-  const statusText = userProfile?.status === 'active' ? 'Aktif' : 'Aktif';
+  const roleName =
+    userProfile?.role === "student" ? "Siswa" : (userProfile?.role ?? "Siswa");
+  const statusText = userProfile?.status === "active" ? "Aktif" : "Aktif";
 
   const isSubmittingPersonalInfo =
     updateProfileMutation.isPending || updateMySchoolMutation.isPending;
   const isSubmittingPassword = changePasswordMutation.isPending;
-  const isSubmittingAvatar = updateAvatarMutation.isPending || isUploadingAvatar;
+  const isSubmittingAvatar =
+    updateAvatarMutation.isPending || isUploadingAvatar;
 
   if (isProfileLoading && !userProfile) {
     return <TableLoader label="Memuat profil..." />;
@@ -262,6 +356,16 @@ export default function StudentProfile() {
       schoolOptions={schoolOptions}
       selectedSchoolId={selectedSchoolId}
       onSelectSchoolId={handleSelectSchoolId}
+      onOpenProposeSchool={() => handleOpenProposeSchool()}
+      mySchoolSubmissions={mySchoolSubmissions}
+      onResubmitSchool={(item) => handleOpenProposeSchool(item)}
+      isProposeSchoolOpen={isProposalOpen}
+      onOpenChangeProposeSchool={setIsProposalOpen}
+      proposeSchoolForm={proposalForm}
+      proposeSchoolErrors={proposalErrors}
+      onProposeSchoolFieldChange={handleProposalFieldChange}
+      onSubmitProposeSchool={handleSubmitProposal}
+      isSubmittingProposeSchool={proposeSchoolMutation.isPending}
       roleName={roleName}
       avatarSrc={avatarSrc}
       isVerified={true}

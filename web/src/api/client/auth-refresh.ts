@@ -4,16 +4,6 @@ import { getRefreshToken, setSessionCookies, shouldPersistSession } from '@/util
 
 let _refreshInFlight: Promise<boolean> | null = null;
 
-function buildInternalApiKey(): string {
-  return (
-    process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ||
-    process.env.NEXT_INTERNAL_API_SECRET ||
-    process.env.INTERNAL_API_SECRET ||
-    process.env.INTERNAL_API_KEY ||
-    ''
-  );
-}
-
 async function refreshAccessTokenOnce(): Promise<boolean> {
   const refreshToken = getRefreshToken();
 
@@ -26,8 +16,6 @@ async function refreshAccessTokenOnce(): Promise<boolean> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-internal-api-key': buildInternalApiKey(),
-        'x-api-secret': buildInternalApiKey(),
       },
       body: JSON.stringify({ refreshToken }),
       credentials: 'include',
