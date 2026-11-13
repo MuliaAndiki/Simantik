@@ -198,30 +198,6 @@ export function ProfilePersonalInfoCard({
               />
             </div>
           )}
-          {onOpenProposeSchool && (
-            <div className="flex items-center justify-between pt-1 text-xs text-slate-500">
-              <span>Sekolah tidak ada di daftar?</span>
-              <button
-                type="button"
-                onClick={onOpenProposeSchool}
-                className="inline-flex items-center gap-1 font-semibold text-teal-700 hover:text-teal-800 underline underline-offset-4 cursor-pointer"
-              >
-                <PlusCircle className="size-3.5" />
-                Ajukan Sekolah Baru
-              </button>
-            </div>
-          )}
-          {mySchoolSubmissions && mySchoolSubmissions.length > 0 && (
-            <div className="pt-1.5">
-              <MySchoolSubmissionBanner
-                submissions={mySchoolSubmissions}
-                onSelectSubmission={
-                  onSelectSchoolId ? (s) => onSelectSchoolId(s.id) : undefined
-                }
-                onResubmit={onResubmitSchool}
-              />
-            </div>
-          )}
         </div>
 
         {/* Action Buttons */}
