@@ -55,10 +55,6 @@ export function PublicNewsContainer() {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 text-left">
             <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-teal-800 text-xs font-bold w-fit">
-                <Newspaper className="w-3.5 h-3.5" />
-                <span>Wawasan &amp; Informasi Terkini</span>
-              </div>
               <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
                 Berita &amp; Pengumuman SIMANTIK
               </h1>

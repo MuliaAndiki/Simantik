@@ -1,15 +1,4 @@
-import {
-  ArrowRight,
-  Award,
-  BookOpen,
-  CheckCircle2,
-  ChevronRight,
-  Laptop,
-  Play,
-  ShieldCheck,
-  Sparkles,
-  Zap,
-} from 'lucide-react';
+import { Award, BookOpen, CheckCircle2, ChevronRight, Play, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { ScribbleSparkle, ScribbleUnderline } from '@/components/atoms/doodles/ScribbleDoodles';
 import type { HeroStudentMockup } from '@/types/ui';
@@ -32,10 +21,6 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
           {/* Left Column: Value Copy & CTAs */}
           <div className="lg:col-span-7 space-y-6 text-left">
             {/* Top Pill Tag */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-50 border border-teal-200/80 text-teal-800 text-xs font-bold shadow-2xs">
-              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-              <span>SIMANTIK • Simulasi Mandiri Tes Kemampuan Akademik</span>
-            </div>
             {/* Main Headline with Animated Scribble Underline */}
             <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-900 tracking-tight leading-[1.18] relative">
               Latihan Membaca, Kuasai Soal, dan Raih Skor Maksimal di{' '}
@@ -122,9 +107,6 @@ export function LandingHeroSection({ student }: LandingHeroSectionProps) {
                     </span>
                     <span className="text-xs text-slate-400 font-medium">/{student.maxScore}</span>
                   </div>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-400">
-                  <Zap className="w-5 h-5" />
                 </div>
               </div>
 

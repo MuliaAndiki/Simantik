@@ -97,10 +97,13 @@ export function DocumentationContainer() {
   // Loading saat fetch awal data
   if (isLoading && !docApiData) {
     return (
-      <PublicPageLoader
-        label="Memuat Dokumentasi..."
-        sublabel="Menyiapkan direktori panduan dan rujukan resmi SIMANTIK..."
-      />
+      <div className="w-full flex-1 min-h-screen flex items-center justify-center bg-white">
+        <PublicPageLoader
+          label="Memuat Dokumentasi..."
+          sublabel="Menyiapkan direktori panduan dan rujukan resmi SIMANTIK..."
+          containerClassName="min-h-screen w-full flex-1"
+        />
+      </div>
     );
   }
 

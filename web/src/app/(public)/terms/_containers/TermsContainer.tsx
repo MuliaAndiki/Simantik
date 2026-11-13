@@ -77,10 +77,13 @@ export default function TermsContainer() {
 
   if (isLoading) {
     return (
-      <PublicPageLoader
-        label="Memuat Syarat & Ketentuan..."
-        sublabel="Menyiapkan dokumen syarat dan ketentuan layanan SIMANTIK..."
-      />
+      <div className="w-full flex-1 min-h-screen flex items-center justify-center bg-white">
+        <PublicPageLoader
+          label="Memuat Syarat & Ketentuan..."
+          sublabel="Menyiapkan dokumen syarat dan ketentuan layanan SIMANTIK..."
+          containerClassName="min-h-screen w-full flex-1"
+        />
+      </div>
     );
   }
 

@@ -77,10 +77,13 @@ export default function HelpContainer() {
 
   if (isLoading) {
     return (
-      <PublicPageLoader
-        label="Memuat Pusat Bantuan..."
-        sublabel="Menyiapkan panduan dan dokumen bantuan SIMANTIK..."
-      />
+      <div className="w-full flex-1 min-h-screen flex items-center justify-center bg-white">
+        <PublicPageLoader
+          label="Memuat Pusat Bantuan..."
+          sublabel="Menyiapkan panduan dan dokumen bantuan SIMANTIK..."
+          containerClassName="min-h-screen w-full flex-1"
+        />
+      </div>
     );
   }
 

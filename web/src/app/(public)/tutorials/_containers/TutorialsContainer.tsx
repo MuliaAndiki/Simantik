@@ -133,10 +133,13 @@ export function TutorialsContainer() {
   // Loading saat fetch pertama — animasi loader transisi halaman
   if (isLoading && !tutorialsData) {
     return (
-      <PublicPageLoader
-        label="Memuat Video Tutorial..."
-        sublabel="Menyiapkan direktori video panduan belajar SIMANTIK..."
-      />
+      <div className="w-full flex-1 min-h-screen flex items-center justify-center bg-white">
+        <PublicPageLoader
+          label="Memuat Video Tutorial..."
+          sublabel="Menyiapkan direktori video panduan belajar SIMANTIK..."
+          containerClassName="min-h-screen w-full flex-1"
+        />
+      </div>
     );
   }
 

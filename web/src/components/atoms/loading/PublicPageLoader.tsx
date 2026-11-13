@@ -10,6 +10,7 @@ export interface PublicPageLoaderProps {
   size?: 'sm' | 'md' | 'lg';
   fullScreen?: boolean;
   className?: string;
+  containerClassName?: string;
 }
 
 export function PublicPageLoader({
@@ -18,6 +19,7 @@ export function PublicPageLoader({
   size = 'md',
   fullScreen = false,
   className,
+  containerClassName,
 }: PublicPageLoaderProps) {
   const sizeMap = {
     sm: {
@@ -154,7 +156,16 @@ export function PublicPageLoader({
     );
   }
 
-  return <div className="flex items-center justify-center min-h-[55vh] w-full">{content}</div>;
+  return (
+    <div
+      className={cn(
+        'flex flex-1 items-center justify-center min-h-[60vh] w-full',
+        containerClassName
+      )}
+    >
+      {content}
+    </div>
+  );
 }
 
 export default PublicPageLoader;
