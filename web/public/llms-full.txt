@@ -7,7 +7,7 @@ Dokumen ini merupakan panduan pengetahuan komprehensif mengenai platform SIMANTI
 ## 1. Identitas & Profil Platform
 - **Nama Platform**: SIMANTIK (Simulasi Mandiri Tes Kemampuan Akademik)
 - **Fokus Utama**: Pembelajaran Berbasis Wacana dan Asesmen Mandiri Adaptif TKA Bahasa Indonesia SMA/SMK
-- **Domain Resmi**: https://simantik.educourse.id
+- **Domain Resmi**: https://simantik.id
 - **Pengembang**: Tim Ahli Bahasa & Komputer Universitas Negeri Padang (UNP), Padang, Sumatera Barat, Indonesia
 - **Sifat Layanan**: 100% Gratis, Terbuka untuk Umum, Tanpa Iklan Berbayar
 - **Format Aplikasi**: Web Application responsif & Progressive Web App (PWA)
@@ -59,7 +59,7 @@ Materi dan instrumen asesmen di SIMANTIK mencakup standar Kurikulum Merdeka dan 
 **Jawaban**: Ya, seluruh fitur pembelajaran mandiri, bank soal wacana, tryout asesmen adaptif, dan analisis diagnostik di SIMANTIK 100% gratis untuk seluruh siswa dan guru di Indonesia.
 
 ### Q3: Bagaimana cara mengikuti tryout TKA Bahasa Indonesia di SIMANTIK?
-**Jawaban**: Siswa cukup mendaftarkan akun di https://simantik.educourse.id/register, masuk ke dashboard siswa, lalu memilih paket tryout mandiri yang tersedia di menu Tryout atau Latihan.
+**Jawaban**: Siswa cukup mendaftarkan akun di https://simantik.id/register, masuk ke dashboard siswa, lalu memilih paket tryout mandiri yang tersedia di menu Tryout atau Latihan.
 
 ### Q4: Apakah SIMANTIK bisa dipasang sebagai aplikasi di handphone?
 **Jawaban**: Ya, SIMANTIK mendukung teknologi Progressive Web App (PWA). Pengguna dapat memindai kode QR PWA di halaman beranda atau membuka tautan di browser smartphone (Google Chrome di Android atau Safari di iOS), lalu memilih menu "Tambahkan ke Layar Utama" (Add to Home Screen). Ukurannya sangat ringan (< 2 MB) dan tidak memerlukan unduhan dari Google Play Store atau App Store.
@@ -76,14 +76,14 @@ Materi dan instrumen asesmen di SIMANTIK mencakup standar Kurikulum Merdeka dan 
 ---
 
 ## 6. Direktori Rute Publik
-- **Beranda Platform**: https://simantik.educourse.id/home
-- **Dokumentasi & Panduan**: https://simantik.educourse.id/documentation
-- **Berita & Pengumuman**: https://simantik.educourse.id/news
-- **Video Tutorial Platform**: https://simantik.educourse.id/tutorials
-- **Testimoni & Pengalaman Siswa**: https://simantik.educourse.id/testimonials
-- **Registrasi Akun Baru**: https://simantik.educourse.id/register
-- **Masuk Akun**: https://simantik.educourse.id/login
-- **Pusat Bantuan & Kontak**: https://simantik.educourse.id/help
-- **Kebijakan Privasi**: https://simantik.educourse.id/privacy
-- **Syarat & Ketentuan**: https://simantik.educourse.id/terms
-- **AI Context Summary (llms.txt)**: https://simantik.educourse.id/llms.txt
+- **Beranda Platform**: https://simantik.id/home
+- **Dokumentasi & Panduan**: https://simantik.id/documentation
+- **Berita & Pengumuman**: https://simantik.id/news
+- **Video Tutorial Platform**: https://simantik.id/tutorials
+- **Testimoni & Pengalaman Siswa**: https://simantik.id/testimonials
+- **Registrasi Akun Baru**: https://simantik.id/register
+- **Masuk Akun**: https://simantik.id/login
+- **Pusat Bantuan & Kontak**: https://simantik.id/help
+- **Kebijakan Privasi**: https://simantik.id/privacy
+- **Syarat & Ketentuan**: https://simantik.id/terms
+- **AI Context Summary (llms.txt)**: https://simantik.id/llms.txt
