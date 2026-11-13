@@ -2,6 +2,7 @@ import { useAdmin } from './useService/admin/useAdmin';
 import { useAuth } from './useService/auth/useAuth';
 import { useContent } from './useService/content/useContent';
 import { useEvaluation } from './useService/evaluation/useEvaluation';
+import { useGeo } from './useService/geo/useGeo';
 import { useLearning } from './useService/learning/useLearning';
 import { useNotification } from './useService/notification/useNotification';
 import { usePractice } from './useService/practice/usePractice';
@@ -19,6 +20,7 @@ export function useApi() {
     auth: useAuth(),
     content: useContent(),
     evaluation: useEvaluation(),
+    geo: useGeo(),
     learning: useLearning(),
     notification: useNotification(),
     practice: usePractice(),

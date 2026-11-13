@@ -197,3 +197,16 @@ export function usePublicTestimonialsList(
     enabled: options?.enabled,
   });
 }
+
+export function useMyTestimonialStatus(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKey.content.myTestimonialStatus(),
+    queryFn: async () => {
+      const res = await Api.content.GetMyTestimonialStatusService();
+      return res.data;
+    },
+    enabled: options?.enabled ?? true,
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+}

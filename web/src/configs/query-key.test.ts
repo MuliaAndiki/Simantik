@@ -37,4 +37,16 @@ describe('queryKey architecture', () => {
       't-1',
     ]);
   });
+
+  it('generates geo and student testimonial status keys', () => {
+    expect(queryKey.geoRoot()).toEqual(['geo']);
+    expect(queryKey.geo.searchSchools('SMAN 1')).toEqual(['geo', 'searchSchools', 'SMAN 1']);
+    expect(queryKey.geo.reverse(-6.8902123, 107.6131456)).toEqual([
+      'geo',
+      'reverse',
+      -6.89021,
+      107.61315,
+    ]);
+    expect(queryKey.content.myTestimonialStatus()).toEqual(['content', 'myTestimonialStatus']);
+  });
 });

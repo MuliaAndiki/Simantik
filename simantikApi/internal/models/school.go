@@ -46,6 +46,8 @@ type School struct {
 	Provinsi           string                   `gorm:"column:provinsi;type:varchar(100)" json:"provinsi"`
 	Kabupaten          string                   `gorm:"column:kabupaten;type:varchar(100)" json:"kabupaten"`
 	Kecamatan          string                   `gorm:"column:kecamatan;type:varchar(100)" json:"kecamatan"`
+	Latitude           *float64                 `gorm:"column:latitude;type:double precision" json:"latitude"`
+	Longitude          *float64                 `gorm:"column:longitude;type:double precision" json:"longitude"`
 	VerificationStatus SchoolVerificationStatus `gorm:"column:verification_status;type:varchar(20);not null;default:'verified';index" json:"verificationStatus"`
 	SubmittedByUserID  *uuid.UUID               `gorm:"column:submitted_by_user_id;type:uuid;index" json:"submittedByUserId"`
 	SubmittedByName    string                   `gorm:"column:submitted_by_name;type:varchar(150)" json:"submittedByName"`

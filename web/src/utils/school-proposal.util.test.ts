@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'bun:test';
-import type { SchoolResponse } from '@/types/service';
+import type { GeoPlace, SchoolResponse } from '@/types/service';
 import {
   buildSchoolProposalInitialForm,
   EMPTY_SCHOOL_FORM,
+  guessSchoolLevel,
+  guessSchoolStatus,
+  placeToFormPatch,
   validateProposeSchoolForm,
 } from './school-proposal.util';
 
@@ -24,7 +27,7 @@ describe('school-proposal.util', () => {
       expect(form.npsn).toBe('');
     });
 
-    it('pre-populates fields from a rejected SchoolResponse for resubmission', () => {
+    it('pre-populates fields and coordinates from a rejected SchoolResponse for resubmission', () => {
       const rejectedSchool: SchoolResponse = {
         id: 'sch-1',
         npsn: '20219999',
@@ -36,6 +39,8 @@ describe('school-proposal.util', () => {
         provinsi: 'Jawa Barat',
         kabupaten: 'Bandung',
         kecamatan: 'Coblong',
+        latitude: -6.89021,
+        longitude: 107.61314,
         verificationStatus: 'rejected',
         rejectionReason: 'Alamat kurang lengkap',
         createdAt: '2026-11-13T00:00:00Z',
@@ -52,12 +57,74 @@ describe('school-proposal.util', () => {
         provinsi: 'Jawa Barat',
         kabupaten: 'Bandung',
         kecamatan: 'Coblong',
+        latitude: -6.89021,
+        longitude: 107.61314,
       });
     });
   });
 
+  describe('guessSchoolLevel & guessSchoolStatus', () => {
+    it('detects SD/MI, SMP/MTs, SMK, and SMA levels accurately', () => {
+      expect(guessSchoolLevel('SDN 01 Menteng')).toBe('sd');
+      expect(guessSchoolLevel('MIN 1 Jakarta')).toBe('sd');
+      expect(guessSchoolLevel('SMPN 2 Surabaya')).toBe('smp');
+      expect(guessSchoolLevel('MTsN 1 Malang')).toBe('smp');
+      expect(guessSchoolLevel('SMKN 4 Yogyakarta')).toBe('smk');
+      expect(guessSchoolLevel('SMAN 1 Bandung')).toBe('sma');
+      expect(guessSchoolLevel('SMA Kristen Penabur')).toBe('sma');
+    });
+
+    it('detects Negeri vs Swasta status accurately', () => {
+      expect(guessSchoolStatus('SMAN 1 Bandung')).toBe('negeri');
+      expect(guessSchoolStatus('SMA Negeri 3 Jakarta')).toBe('negeri');
+      expect(guessSchoolStatus('SMKN 2 Depok')).toBe('negeri');
+      expect(guessSchoolStatus('SMA Kristen Penabur')).toBe('swasta');
+      expect(guessSchoolStatus('SMK Swasta Nusantara')).toBe('swasta');
+    });
+  });
+
+  describe('placeToFormPatch', () => {
+    const samplePlace: GeoPlace = {
+      name: 'SMAN 1 Bandung',
+      displayName: 'SMAN 1 Bandung, Jalan Ir. H. Djuanda, Coblong, Kota Bandung, Jawa Barat',
+      latitude: -6.89021234,
+      longitude: 107.61314567,
+      provinsi: 'Jawa Barat',
+      kabupaten: 'Kota Bandung',
+      kecamatan: 'Coblong',
+    };
+
+    it('fills name, inferred level/status, coords, and regions when fillName is true', () => {
+      const patch = placeToFormPatch(samplePlace, { fillName: true });
+      expect(patch).toEqual({
+        nama: 'SMAN 1 Bandung',
+        jenjang: 'sma',
+        status: 'negeri',
+        latitude: -6.890212,
+        longitude: 107.613146,
+        provinsi: 'Jawa Barat',
+        kabupaten: 'Kota Bandung',
+        kecamatan: 'Coblong',
+      });
+      expect(patch.alamat).toBeUndefined();
+      expect(patch.npsn).toBeUndefined();
+    });
+
+    it('keeps nama untouched during reverse geocoding free map click', () => {
+      const patch = placeToFormPatch(samplePlace, { fillName: false });
+      expect(patch).toEqual({
+        latitude: -6.890212,
+        longitude: 107.613146,
+        provinsi: 'Jawa Barat',
+        kabupaten: 'Kota Bandung',
+        kecamatan: 'Coblong',
+      });
+      expect(patch.nama).toBeUndefined();
+    });
+  });
+
   describe('validateProposeSchoolForm', () => {
-    it('returns sanitized ProposeSchoolRequest when valid', () => {
+    it('returns sanitized ProposeSchoolRequest with coordinates when valid', () => {
       const result = validateProposeSchoolForm({
         npsn: ' 20219876 ',
         nama: ' SMA Negeri 1 Uji ',
@@ -67,6 +134,8 @@ describe('school-proposal.util', () => {
         provinsi: '  ',
         kabupaten: ' Kota Bandung ',
         kecamatan: '',
+        latitude: -6.890212,
+        longitude: 107.613146,
       });
 
       expect(result.errors).toBeUndefined();
@@ -79,21 +148,38 @@ describe('school-proposal.util', () => {
         provinsi: undefined,
         kabupaten: 'Kota Bandung',
         kecamatan: undefined,
+        latitude: -6.890212,
+        longitude: 107.613146,
       });
     });
 
-    it('returns field-level validation errors for invalid inputs', () => {
-      const result = validateProposeSchoolForm({
+    it('returns field-level validation errors including missing or out-of-Indonesia coordinates', () => {
+      const missingCoords = validateProposeSchoolForm({
         ...EMPTY_SCHOOL_FORM,
         npsn: '12',
         nama: 'A',
         alamat: 'Jl.',
       });
 
-      expect(result.data).toBeUndefined();
-      expect(result.errors?.npsn).toBeDefined();
-      expect(result.errors?.nama).toBeDefined();
-      expect(result.errors?.alamat).toBeDefined();
+      expect(missingCoords.data).toBeUndefined();
+      expect(missingCoords.errors?.npsn).toBeDefined();
+      expect(missingCoords.errors?.nama).toBeDefined();
+      expect(missingCoords.errors?.alamat).toBeDefined();
+      expect(missingCoords.errors?.latitude).toBeDefined();
+      expect(missingCoords.errors?.longitude).toBeDefined();
+
+      const outsideId = validateProposeSchoolForm({
+        ...EMPTY_SCHOOL_FORM,
+        npsn: '20219876',
+        nama: 'Paris School',
+        alamat: 'Jl. Luar Wilayah',
+        latitude: 48.8566,
+        longitude: 2.3522,
+      });
+
+      expect(outsideId.data).toBeUndefined();
+      expect(outsideId.errors?.latitude).toBeDefined();
+      expect(outsideId.errors?.longitude).toBeDefined();
     });
   });
 });

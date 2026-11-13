@@ -39,6 +39,12 @@ func NewSchoolService(schoolRepo repository.SchoolRepository, userRepo repositor
 }
 
 func (s *schoolService) CreateSchool(ctx context.Context, req dto.CreateSchoolRequest) (*dto.SchoolResponse, error) {
+	if req.Latitude != nil || req.Longitude != nil {
+		if err := validateIndonesiaCoordinates(req.Latitude, req.Longitude); err != nil {
+			return nil, err
+		}
+	}
+
 	npsn := strings.TrimSpace(req.NPSN)
 	if _, err := s.schoolRepo.FindByNPSN(ctx, npsn); err == nil {
 		return nil, ErrSchoolNPSNExists
@@ -54,6 +60,8 @@ func (s *schoolService) CreateSchool(ctx context.Context, req dto.CreateSchoolRe
 		Provinsi:           strings.TrimSpace(req.Provinsi),
 		Kabupaten:          strings.TrimSpace(req.Kabupaten),
 		Kecamatan:          strings.TrimSpace(req.Kecamatan),
+		Latitude:           cloneFloatPtr(req.Latitude),
+		Longitude:          cloneFloatPtr(req.Longitude),
 		VerificationStatus: models.SchoolVerificationVerified,
 	}
 
@@ -65,6 +73,10 @@ func (s *schoolService) CreateSchool(ctx context.Context, req dto.CreateSchoolRe
 }
 
 func (s *schoolService) ProposeSchool(ctx context.Context, userID uuid.UUID, req dto.ProposeSchoolRequest) (*dto.SchoolResponse, error) {
+	if err := validateIndonesiaCoordinates(req.Latitude, req.Longitude); err != nil {
+		return nil, err
+	}
+
 	npsn := strings.TrimSpace(req.NPSN)
 	submitterName, submitterEmail := s.resolveSubmitterInfo(ctx, userID)
 
@@ -85,6 +97,8 @@ func (s *schoolService) ProposeSchool(ctx context.Context, userID uuid.UUID, req
 			existing.Provinsi = strings.TrimSpace(req.Provinsi)
 			existing.Kabupaten = strings.TrimSpace(req.Kabupaten)
 			existing.Kecamatan = strings.TrimSpace(req.Kecamatan)
+			existing.Latitude = cloneFloatPtr(req.Latitude)
+			existing.Longitude = cloneFloatPtr(req.Longitude)
 			existing.VerificationStatus = models.SchoolVerificationPending
 			existing.SubmittedByUserID = &userID
 			existing.SubmittedByName = submitterName
@@ -112,6 +126,8 @@ func (s *schoolService) ProposeSchool(ctx context.Context, userID uuid.UUID, req
 		Provinsi:           strings.TrimSpace(req.Provinsi),
 		Kabupaten:          strings.TrimSpace(req.Kabupaten),
 		Kecamatan:          strings.TrimSpace(req.Kecamatan),
+		Latitude:           cloneFloatPtr(req.Latitude),
+		Longitude:          cloneFloatPtr(req.Longitude),
 		VerificationStatus: models.SchoolVerificationPending,
 		SubmittedByUserID:  &userID,
 		SubmittedByName:    submitterName,
@@ -205,6 +221,21 @@ func (s *schoolService) UpdateSchool(ctx context.Context, id uuid.UUID, req dto.
 	}
 	if req.Kecamatan != nil {
 		school.Kecamatan = *req.Kecamatan
+	}
+	if req.Latitude != nil || req.Longitude != nil {
+		nextLat := school.Latitude
+		if req.Latitude != nil {
+			nextLat = cloneFloatPtr(req.Latitude)
+		}
+		nextLng := school.Longitude
+		if req.Longitude != nil {
+			nextLng = cloneFloatPtr(req.Longitude)
+		}
+		if err := validateIndonesiaCoordinates(nextLat, nextLng); err != nil {
+			return nil, err
+		}
+		school.Latitude = nextLat
+		school.Longitude = nextLng
 	}
 
 	if err := s.schoolRepo.Update(ctx, school); err != nil {
@@ -345,6 +376,8 @@ func mapSchoolToResponse(s *models.School) *dto.SchoolResponse {
 		Provinsi:           s.Provinsi,
 		Kabupaten:          s.Kabupaten,
 		Kecamatan:          s.Kecamatan,
+		Latitude:           s.Latitude,
+		Longitude:          s.Longitude,
 		VerificationStatus: string(effectiveVerificationStatus(s)),
 		SubmittedByUserID:  s.SubmittedByUserID,
 		SubmittedByName:    s.SubmittedByName,
@@ -355,4 +388,33 @@ func mapSchoolToResponse(s *models.School) *dto.SchoolResponse {
 		CreatedAt:          s.CreatedAt,
 		UpdatedAt:          s.UpdatedAt,
 	}
+}
+
+const (
+	indonesiaMinLat = -11.0
+	indonesiaMaxLat = 6.0
+	indonesiaMinLng = 95.0
+	indonesiaMaxLng = 141.0
+)
+
+func validateIndonesiaCoordinates(lat, lng *float64) error {
+	if lat == nil || lng == nil {
+		return ErrInvalidCoordinates
+	}
+	if isInvalidCoordValue(*lat, indonesiaMinLat, indonesiaMaxLat) || isInvalidCoordValue(*lng, indonesiaMinLng, indonesiaMaxLng) {
+		return ErrInvalidCoordinates
+	}
+	return nil
+}
+
+func isInvalidCoordValue(v, minVal, maxVal float64) bool {
+	return v != v || v < minVal || v > maxVal
+}
+
+func cloneFloatPtr(v *float64) *float64 {
+	if v == nil {
+		return nil
+	}
+	copied := *v
+	return &copied
 }

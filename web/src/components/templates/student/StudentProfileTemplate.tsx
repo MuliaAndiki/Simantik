@@ -5,10 +5,6 @@ import {
   type ProfileHeroCardProps,
 } from '@/components/molecules/student/ProfileHeroCard';
 import {
-  SchoolProposalDialog,
-  type SchoolProposalDialogProps,
-} from '@/components/organisms/school/SchoolProposalDialog';
-import {
   ChangeAvatarModal,
   type ChangeAvatarModalProps,
   ChangePasswordModal,
@@ -30,7 +26,6 @@ export interface StudentProfileTemplateProps {
   securityProps: ProfileSecurityCardProps;
   changePasswordModalProps: ChangePasswordModalProps;
   changeAvatarModalProps: ChangeAvatarModalProps;
-  schoolProposalModalProps?: SchoolProposalDialogProps;
   className?: string;
 }
 
@@ -41,7 +36,6 @@ export function StudentProfileTemplate({
   securityProps,
   changePasswordModalProps,
   changeAvatarModalProps,
-  schoolProposalModalProps,
   className,
 }: StudentProfileTemplateProps) {
   return (
@@ -80,7 +74,6 @@ export function StudentProfileTemplate({
       {/* 4. Modals */}
       <ChangePasswordModal {...changePasswordModalProps} />
       <ChangeAvatarModal {...changeAvatarModalProps} />
-      {schoolProposalModalProps && <SchoolProposalDialog {...schoolProposalModalProps} />}
 
       {/* 5. Unified Footer */}
       <StudentDashboardFooter />

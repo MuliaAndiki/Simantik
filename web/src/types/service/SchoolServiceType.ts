@@ -36,13 +36,18 @@ export interface CreateSchoolRequest {
   provinsi?: string;
   kabupaten?: string;
   kecamatan?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 /**
  * Payload for submitting a school proposal by user/student
  * Maps to backend: `dto.ProposeSchoolRequest`
  */
-export type ProposeSchoolRequest = CreateSchoolRequest;
+export interface ProposeSchoolRequest extends CreateSchoolRequest {
+  latitude: number;
+  longitude: number;
+}
 
 /**
  * Payload for rejecting a school submission
@@ -66,6 +71,22 @@ export interface UpdateSchoolRequest {
   provinsi?: string;
   kabupaten?: string;
   kecamatan?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+/**
+ * Geocoded school/location item from /api/v1/geo/*
+ * Maps to backend: `dto.GeoPlace`
+ */
+export interface GeoPlace {
+  name: string;
+  displayName: string;
+  latitude: number;
+  longitude: number;
+  provinsi: string;
+  kabupaten: string;
+  kecamatan: string;
 }
 
 /**
@@ -111,6 +132,8 @@ export interface SchoolResponse {
   provinsi: string;
   kabupaten: string;
   kecamatan: string;
+  latitude?: number;
+  longitude?: number;
   verificationStatus: SchoolVerificationStatus;
   submittedByUserId?: string;
   submittedByName?: string;

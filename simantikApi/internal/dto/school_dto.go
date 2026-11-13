@@ -7,39 +7,45 @@ import (
 )
 
 type CreateSchoolRequest struct {
-	NPSN      string  `json:"npsn" validate:"required,max=20"`
-	Name      string  `json:"nama" validate:"required,min=2,max=255"`
-	Level     string  `json:"jenjang" validate:"required,oneof=sd smp sma smk"`
-	Status    string  `json:"status" validate:"required,oneof=negeri swasta"`
-	LogoURL   *string `json:"logo" validate:"omitempty,max=500"`
-	Address   string  `json:"alamat" validate:"required,max=500"`
-	Provinsi  string  `json:"provinsi" validate:"omitempty,max=100"`
-	Kabupaten string  `json:"kabupaten" validate:"omitempty,max=100"`
-	Kecamatan string  `json:"kecamatan" validate:"omitempty,max=100"`
+	NPSN      string   `json:"npsn" validate:"required,max=20"`
+	Name      string   `json:"nama" validate:"required,min=2,max=255"`
+	Level     string   `json:"jenjang" validate:"required,oneof=sd smp sma smk"`
+	Status    string   `json:"status" validate:"required,oneof=negeri swasta"`
+	LogoURL   *string  `json:"logo" validate:"omitempty,max=500"`
+	Address   string   `json:"alamat" validate:"required,max=500"`
+	Provinsi  string   `json:"provinsi" validate:"omitempty,max=100"`
+	Kabupaten string   `json:"kabupaten" validate:"omitempty,max=100"`
+	Kecamatan string   `json:"kecamatan" validate:"omitempty,max=100"`
+	Latitude  *float64 `json:"latitude" validate:"omitempty,min=-90,max=90"`
+	Longitude *float64 `json:"longitude" validate:"omitempty,min=-180,max=180"`
 }
 
 type UpdateSchoolRequest struct {
-	NPSN      string  `json:"npsn" validate:"omitempty,max=20"`
-	Name      string  `json:"nama" validate:"omitempty,min=2,max=255"`
-	Level     string  `json:"jenjang" validate:"omitempty,oneof=sd smp sma smk"`
-	Status    string  `json:"status" validate:"omitempty,oneof=negeri swasta"`
-	LogoURL   *string `json:"logo" validate:"omitempty,max=500"`
-	Address   string  `json:"alamat" validate:"omitempty,max=500"`
-	Provinsi  *string `json:"provinsi" validate:"omitempty,max=100"`
-	Kabupaten *string `json:"kabupaten" validate:"omitempty,max=100"`
-	Kecamatan *string `json:"kecamatan" validate:"omitempty,max=100"`
+	NPSN      string   `json:"npsn" validate:"omitempty,max=20"`
+	Name      string   `json:"nama" validate:"omitempty,min=2,max=255"`
+	Level     string   `json:"jenjang" validate:"omitempty,oneof=sd smp sma smk"`
+	Status    string   `json:"status" validate:"omitempty,oneof=negeri swasta"`
+	LogoURL   *string  `json:"logo" validate:"omitempty,max=500"`
+	Address   string   `json:"alamat" validate:"omitempty,max=500"`
+	Provinsi  *string  `json:"provinsi" validate:"omitempty,max=100"`
+	Kabupaten *string  `json:"kabupaten" validate:"omitempty,max=100"`
+	Kecamatan *string  `json:"kecamatan" validate:"omitempty,max=100"`
+	Latitude  *float64 `json:"latitude" validate:"omitempty,min=-90,max=90"`
+	Longitude *float64 `json:"longitude" validate:"omitempty,min=-180,max=180"`
 }
 
 type ProposeSchoolRequest struct {
-	NPSN      string  `json:"npsn" validate:"required,min=5,max=20"`
-	Name      string  `json:"nama" validate:"required,min=2,max=255"`
-	Level     string  `json:"jenjang" validate:"required,oneof=sd smp sma smk"`
-	Status    string  `json:"status" validate:"required,oneof=negeri swasta"`
-	LogoURL   *string `json:"logo" validate:"omitempty,max=500"`
-	Address   string  `json:"alamat" validate:"required,min=5,max=500"`
-	Provinsi  string  `json:"provinsi" validate:"omitempty,max=100"`
-	Kabupaten string  `json:"kabupaten" validate:"omitempty,max=100"`
-	Kecamatan string  `json:"kecamatan" validate:"omitempty,max=100"`
+	NPSN      string   `json:"npsn" validate:"required,min=5,max=20"`
+	Name      string   `json:"nama" validate:"required,min=2,max=255"`
+	Level     string   `json:"jenjang" validate:"required,oneof=sd smp sma smk"`
+	Status    string   `json:"status" validate:"required,oneof=negeri swasta"`
+	LogoURL   *string  `json:"logo" validate:"omitempty,max=500"`
+	Address   string   `json:"alamat" validate:"required,min=5,max=500"`
+	Provinsi  string   `json:"provinsi" validate:"omitempty,max=100"`
+	Kabupaten string   `json:"kabupaten" validate:"omitempty,max=100"`
+	Kecamatan string   `json:"kecamatan" validate:"omitempty,max=100"`
+	Latitude  *float64 `json:"latitude" validate:"required,min=-90,max=90"`
+	Longitude *float64 `json:"longitude" validate:"required,min=-180,max=180"`
 }
 
 type RejectSchoolRequest struct {
@@ -57,6 +63,8 @@ type SchoolResponse struct {
 	Provinsi           string     `json:"provinsi"`
 	Kabupaten          string     `json:"kabupaten"`
 	Kecamatan          string     `json:"kecamatan"`
+	Latitude           *float64   `json:"latitude,omitempty"`
+	Longitude          *float64   `json:"longitude,omitempty"`
 	VerificationStatus string     `json:"verificationStatus"`
 	SubmittedByUserID  *uuid.UUID `json:"submittedByUserId,omitempty"`
 	SubmittedByName    string     `json:"submittedByName,omitempty"`

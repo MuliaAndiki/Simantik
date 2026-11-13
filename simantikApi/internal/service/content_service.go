@@ -51,17 +51,21 @@ type ContentService interface {
 
 	// Testimonials
 	CreateTestimonial(ctx context.Context, req dto.CreateTestimonialRequest, userID *uuid.UUID) (*dto.TestimonialResponse, error)
+	GetMyTestimonialStatus(ctx context.Context, userID uuid.UUID) (*dto.TestimonialMyStatusResponse, error)
 	UpdateTestimonialStatus(ctx context.Context, id uuid.UUID, req dto.UpdateTestimonialStatusRequest) (*dto.TestimonialResponse, error)
 	DeleteTestimonial(ctx context.Context, id uuid.UUID) error
 	ListTestimonialsAdmin(ctx context.Context, filter dto.ListTestimonialFilter) (*dto.PaginatedTestimonialsResponse, error)
 	ListTestimonialsPublic(ctx context.Context, limit, offset int) (*dto.PaginatedTestimonialsResponse, error)
 }
 
+const TestimonialRequiredTryouts = 3
+
 type contentService struct {
 	newsRepo     repository.NewsRepository
 	docRepo      repository.DocumentationRepository
 	tutorialRepo repository.TutorialRepository
 	testRepo     repository.TestimonialRepository
+	attemptRepo  repository.TryoutAttemptRepository
 }
 
 func NewContentService(
@@ -69,12 +73,14 @@ func NewContentService(
 	docRepo repository.DocumentationRepository,
 	testRepo repository.TestimonialRepository,
 	tutorialRepo repository.TutorialRepository,
+	attemptRepo repository.TryoutAttemptRepository,
 ) ContentService {
 	return &contentService{
 		newsRepo:     newsRepo,
 		docRepo:      docRepo,
 		testRepo:     testRepo,
 		tutorialRepo: tutorialRepo,
+		attemptRepo:  attemptRepo,
 	}
 }
 
@@ -629,6 +635,16 @@ func (s *contentService) ListTutorialPublic(ctx context.Context, filter dto.List
 // ─── Testimonial Methods ─────────────────────────────────────────────────────
 
 func (s *contentService) CreateTestimonial(ctx context.Context, req dto.CreateTestimonialRequest, userID *uuid.UUID) (*dto.TestimonialResponse, error) {
+	if userID != nil && *userID != uuid.Nil {
+		_, err := s.testRepo.FindLatestByUserID(ctx, *userID)
+		if err == nil {
+			return nil, ErrTestimonialAlreadySubmitted
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	}
+
 	t := &models.Testimonial{
 		UserID:     userID,
 		AuthorName: req.AuthorName,
@@ -643,6 +659,36 @@ func (s *contentService) CreateTestimonial(ctx context.Context, req dto.CreateTe
 	}
 
 	return mapTestimonialToResponse(t), nil
+}
+
+func (s *contentService) GetMyTestimonialStatus(ctx context.Context, userID uuid.UUID) (*dto.TestimonialMyStatusResponse, error) {
+	var hasSubmitted bool
+	var lastSubmittedAt *time.Time
+
+	existing, err := s.testRepo.FindLatestByUserID(ctx, userID)
+	if err == nil && existing != nil {
+		hasSubmitted = true
+		ts := existing.CreatedAt
+		lastSubmittedAt = &ts
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	var completed int64
+	if s.attemptRepo != nil {
+		completed, err = s.attemptRepo.CountCompletedByUser(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &dto.TestimonialMyStatusResponse{
+		HasSubmitted:     hasSubmitted,
+		CompletedTryouts: completed,
+		RequiredTryouts:  TestimonialRequiredTryouts,
+		Eligible:         !hasSubmitted && completed >= int64(TestimonialRequiredTryouts),
+		LastSubmittedAt:  lastSubmittedAt,
+	}, nil
 }
 
 func (s *contentService) UpdateTestimonialStatus(ctx context.Context, id uuid.UUID, req dto.UpdateTestimonialStatusRequest) (*dto.TestimonialResponse, error) {

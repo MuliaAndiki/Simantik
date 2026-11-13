@@ -120,6 +120,7 @@ export const queryKey = {
     tutorials: (query?: Record<string, any>) => ['content', 'tutorials', query] as const,
     tutorialBySlug: (slug: string) => ['content', 'tutorialBySlug', slug] as const,
     testimonials: (query?: Record<string, any>) => ['content', 'testimonials', query] as const,
+    myTestimonialStatus: () => ['content', 'myTestimonialStatus'] as const,
   },
 
   notificationRoot: () => ['notification'] as const,
@@ -144,5 +145,12 @@ export const queryKey = {
     publicList: (query?: Record<string, any>) => ['school', 'publicList', query] as const,
     mySubmissions: () => ['school', 'mySubmissions'] as const,
     detail: (id: string) => ['school', 'detail', id] as const,
+  },
+
+  geoRoot: () => ['geo'] as const,
+  geo: {
+    searchSchools: (q: string) => ['geo', 'searchSchools', q] as const,
+    reverse: (lat: number, lon: number) =>
+      ['geo', 'reverse', Number(lat.toFixed(5)), Number(lon.toFixed(5))] as const,
   },
 } as const;

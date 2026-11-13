@@ -153,11 +153,15 @@ func (m *mockDocRepo) GetDistinctCategories(ctx context.Context) ([]string, erro
 }
 
 type mockTestimonialRepo struct {
-	items map[uuid.UUID]*models.Testimonial
+	items   map[uuid.UUID]*models.Testimonial
+	deleted map[uuid.UUID]*models.Testimonial
 }
 
 func newMockTestimonialRepo() *mockTestimonialRepo {
-	return &mockTestimonialRepo{items: make(map[uuid.UUID]*models.Testimonial)}
+	return &mockTestimonialRepo{
+		items:   make(map[uuid.UUID]*models.Testimonial),
+		deleted: make(map[uuid.UUID]*models.Testimonial),
+	}
 }
 
 func (m *mockTestimonialRepo) Create(ctx context.Context, t *models.Testimonial) error {
@@ -188,8 +192,28 @@ func (m *mockTestimonialRepo) UpdateStatus(ctx context.Context, id uuid.UUID, st
 }
 
 func (m *mockTestimonialRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	delete(m.items, id)
+	if existing, ok := m.items[id]; ok {
+		m.deleted[id] = existing
+		delete(m.items, id)
+	}
 	return nil
+}
+
+func (m *mockTestimonialRepo) FindLatestByUserID(ctx context.Context, userID uuid.UUID) (*models.Testimonial, error) {
+	var latest *models.Testimonial
+	for _, src := range []map[uuid.UUID]*models.Testimonial{m.items, m.deleted} {
+		for _, t := range src {
+			if t.UserID != nil && *t.UserID == userID {
+				if latest == nil || t.CreatedAt.After(latest.CreatedAt) {
+					latest = t
+				}
+			}
+		}
+	}
+	if latest == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return latest, nil
 }
 
 func (m *mockTestimonialRepo) List(ctx context.Context, filter dto.ListTestimonialFilter) ([]models.Testimonial, int64, error) {
@@ -213,7 +237,7 @@ func TestContentService_News(t *testing.T) {
 	newsRepo := newMockNewsRepo()
 	docRepo := newMockDocRepo()
 	testRepo := newMockTestimonialRepo()
-	svc := service.NewContentService(newsRepo, docRepo, testRepo, newMockTutorialRepo())
+	svc := service.NewContentService(newsRepo, docRepo, testRepo, newMockTutorialRepo(), newMockAttemptRepo())
 
 	authorID := uuid.New()
 
@@ -280,7 +304,7 @@ func TestContentService_Documentation(t *testing.T) {
 	newsRepo := newMockNewsRepo()
 	docRepo := newMockDocRepo()
 	testRepo := newMockTestimonialRepo()
-	svc := service.NewContentService(newsRepo, docRepo, testRepo, newMockTutorialRepo())
+	svc := service.NewContentService(newsRepo, docRepo, testRepo, newMockTutorialRepo(), newMockAttemptRepo())
 
 	authorID := uuid.New()
 
@@ -312,7 +336,7 @@ func TestContentService_Testimonials(t *testing.T) {
 	newsRepo := newMockNewsRepo()
 	docRepo := newMockDocRepo()
 	testRepo := newMockTestimonialRepo()
-	svc := service.NewContentService(newsRepo, docRepo, testRepo, newMockTutorialRepo())
+	svc := service.NewContentService(newsRepo, docRepo, testRepo, newMockTutorialRepo(), newMockAttemptRepo())
 
 	studentID := uuid.New()
 
@@ -362,7 +386,7 @@ func TestContentService_Testimonials(t *testing.T) {
 
 func TestContentService_GetDocumentationCategories(t *testing.T) {
 	docRepo := newMockDocRepo()
-	svc := service.NewContentService(newMockNewsRepo(), docRepo, newMockTestimonialRepo(), newMockTutorialRepo())
+	svc := service.NewContentService(newMockNewsRepo(), docRepo, newMockTestimonialRepo(), newMockTutorialRepo(), newMockAttemptRepo())
 
 	authorID := uuid.New()
 	_, err := svc.CreateDocumentation(context.Background(), dto.CreateDocumentationRequest{
@@ -388,5 +412,106 @@ func TestContentService_GetDocumentationCategories(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("expected 'Pedoman Khusus' to be in categories, got %v", categories)
+	}
+}
+
+func TestContentService_GetMyTestimonialStatus_AndDuplicateGuard(t *testing.T) {
+	ctx := context.Background()
+	testRepo := newMockTestimonialRepo()
+	attemptRepo := newMockAttemptRepo()
+	svc := service.NewContentService(newMockNewsRepo(), newMockDocRepo(), testRepo, newMockTutorialRepo(), attemptRepo)
+
+	studentID := uuid.New()
+
+	// 1. 0 completed tryouts -> not eligible
+	st0, err := svc.GetMyTestimonialStatus(ctx, studentID)
+	if err != nil {
+		t.Fatalf("status check failed: %v", err)
+	}
+	if st0.HasSubmitted || st0.CompletedTryouts != 0 || st0.RequiredTryouts != 3 || st0.Eligible {
+		t.Fatalf("expected ineligible at 0 tryouts, got %+v", st0)
+	}
+
+	// 2. 2 completed + 1 in_progress tryout -> still not eligible
+	for i := 0; i < 2; i++ {
+		_ = attemptRepo.CreateAttempt(ctx, &models.TryoutAttempt{
+			ID:     uuid.New(),
+			UserID: studentID,
+			Status: models.AttemptStatusCompleted,
+		})
+	}
+	_ = attemptRepo.CreateAttempt(ctx, &models.TryoutAttempt{
+		ID:     uuid.New(),
+		UserID: studentID,
+		Status: models.AttemptStatusInProgress,
+	})
+	st2, err := svc.GetMyTestimonialStatus(ctx, studentID)
+	if err != nil {
+		t.Fatalf("status check 2 failed: %v", err)
+	}
+	if st2.CompletedTryouts != 2 || st2.Eligible {
+		t.Fatalf("expected 2 completed and ineligible, got %+v", st2)
+	}
+
+	// 3. 3rd completed tryout -> eligible
+	_ = attemptRepo.CreateAttempt(ctx, &models.TryoutAttempt{
+		ID:     uuid.New(),
+		UserID: studentID,
+		Status: models.AttemptStatusCompleted,
+	})
+	st3, err := svc.GetMyTestimonialStatus(ctx, studentID)
+	if err != nil {
+		t.Fatalf("status check 3 failed: %v", err)
+	}
+	if st3.CompletedTryouts != 3 || st3.HasSubmitted || !st3.Eligible {
+		t.Fatalf("expected 3 completed and eligible, got %+v", st3)
+	}
+
+	// 4. First submission succeeds
+	created, err := svc.CreateTestimonial(ctx, dto.CreateTestimonialRequest{
+		AuthorName: "Rina Putri",
+		AuthorRole: "Siswa SMAN 2",
+		Content:    "Tryout adaptif SIMANTIK sangat membantu persiapan SNBT saya.",
+		Rating:     5,
+	}, &studentID)
+	if err != nil {
+		t.Fatalf("first testimonial submit failed: %v", err)
+	}
+
+	// 5. Status reflects submitted and ineligible; second submit returns ErrTestimonialAlreadySubmitted
+	stAfter, err := svc.GetMyTestimonialStatus(ctx, studentID)
+	if err != nil {
+		t.Fatalf("status after submit failed: %v", err)
+	}
+	if !stAfter.HasSubmitted || stAfter.Eligible || stAfter.LastSubmittedAt == nil {
+		t.Fatalf("expected hasSubmitted=true and ineligible after submit, got %+v", stAfter)
+	}
+	if _, err := svc.CreateTestimonial(ctx, dto.CreateTestimonialRequest{
+		AuthorName: "Rina Putri",
+		Content:    "Mencoba kirim kedua kali seharusnya ditolak.",
+		Rating:     4,
+	}, &studentID); err != service.ErrTestimonialAlreadySubmitted {
+		t.Fatalf("expected ErrTestimonialAlreadySubmitted on second submit, got %v", err)
+	}
+
+	// 6. Deleted testimonial by admin still counts as submitted (no pop-up spam)
+	if err := svc.DeleteTestimonial(ctx, created.ID); err != nil {
+		t.Fatalf("delete testimonial failed: %v", err)
+	}
+	stDeleted, err := svc.GetMyTestimonialStatus(ctx, studentID)
+	if err != nil {
+		t.Fatalf("status after delete failed: %v", err)
+	}
+	if !stDeleted.HasSubmitted || stDeleted.Eligible {
+		t.Fatalf("expected soft-deleted testimonial to still block pop-up, got %+v", stDeleted)
+	}
+
+	// 7. Anonymous submissions remain allowed
+	if _, err := svc.CreateTestimonial(ctx, dto.CreateTestimonialRequest{
+		AuthorName: "Pengunjung Anonim",
+		Content:    "Platform pembelajaran yang rapi dan mudah dipakai!",
+		Rating:     5,
+	}, nil); err != nil {
+		t.Fatalf("expected anonymous submission to succeed, got %v", err)
 	}
 }

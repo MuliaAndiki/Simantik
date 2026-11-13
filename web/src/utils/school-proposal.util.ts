@@ -4,6 +4,7 @@ import type {
 } from '@/components/molecules/school/SchoolFormFields';
 import { proposeSchoolSchema } from '@/schemas/school/school.schema';
 import type {
+  GeoPlace,
   ProposeSchoolRequest,
   SchoolLevel,
   SchoolResponse,
@@ -19,7 +20,70 @@ export const EMPTY_SCHOOL_FORM: SchoolFormState = {
   provinsi: '',
   kabupaten: '',
   kecamatan: '',
+  latitude: null,
+  longitude: null,
 };
+
+/**
+ * Menebak jenjang pendidikan dari nama sekolah (tetap dapat diubah manual oleh user).
+ */
+export function guessSchoolLevel(name: string): SchoolLevel {
+  const normalized = name.toLowerCase();
+  if (/\bsmk[a-z0-9]*\b|\bsekolah menengah kejuruan\b/.test(normalized)) {
+    return 'smk';
+  }
+  if (/\b(smp[a-z0-9]*|mts[a-z0-9]*)\b|\bsekolah menengah pertama\b/.test(normalized)) {
+    return 'smp';
+  }
+  if (/\b(sd[a-z0-9]*|min|mis|mi)\b|\b(sekolah dasar|madrasah ibtidaiyah)\b/.test(normalized)) {
+    return 'sd';
+  }
+  return 'sma';
+}
+
+/**
+ * Menebak status negeri/swasta dari nama sekolah (tetap dapat diubah manual oleh user).
+ */
+export function guessSchoolStatus(name: string): SchoolStatusType {
+  const normalized = name.toLowerCase();
+  if (/\bswasta\b/.test(normalized)) {
+    return 'swasta';
+  }
+  if (
+    /\b(negeri|sman|smpn|sdn|smkn|man|mtsn|min)\b|\bsma\s+n\b|\bsmp\s+n\b|\bsd\s+n\b|\bsmk\s+n\b/.test(
+      normalized
+    )
+  ) {
+    return 'negeri';
+  }
+  return 'swasta';
+}
+
+/**
+ * Mengonversi hasil Nominatim/geo menjadi patch form pengajuan sekolah.
+ * Alamat lengkap & NPSN sengaja tidak diisi otomatis agar tetap diverifikasi user.
+ */
+export function placeToFormPatch(
+  place: GeoPlace,
+  options?: { fillName?: boolean }
+): Partial<SchoolFormState> {
+  const patch: Partial<SchoolFormState> = {
+    latitude: Number(place.latitude.toFixed(6)),
+    longitude: Number(place.longitude.toFixed(6)),
+    provinsi: place.provinsi || '',
+    kabupaten: place.kabupaten || '',
+    kecamatan: place.kecamatan || '',
+  };
+
+  if (options?.fillName && place.name?.trim()) {
+    const cleanName = place.name.trim();
+    patch.nama = cleanName;
+    patch.jenjang = guessSchoolLevel(cleanName);
+    patch.status = guessSchoolStatus(cleanName);
+  }
+
+  return patch;
+}
 
 /**
  * Membangun initial form state pengajuan sekolah dari query pencarian
@@ -49,6 +113,8 @@ export function buildSchoolProposalInitialForm(seed?: string | SchoolResponse): 
       provinsi: seed.provinsi || '',
       kabupaten: seed.kabupaten || '',
       kecamatan: seed.kecamatan || '',
+      latitude: typeof seed.latitude === 'number' ? seed.latitude : null,
+      longitude: typeof seed.longitude === 'number' ? seed.longitude : null,
     };
   }
 
@@ -89,6 +155,8 @@ export function validateProposeSchoolForm(form: SchoolFormState): {
       provinsi: val.provinsi || undefined,
       kabupaten: val.kabupaten || undefined,
       kecamatan: val.kecamatan || undefined,
+      latitude: val.latitude,
+      longitude: val.longitude,
     },
   };
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { Heart, Send, Star, X } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Spinner } from '@/components/atoms';
 import { cn } from '@/utils/classname';
 
@@ -15,6 +15,9 @@ export interface TestimonialSubmitModalProps {
     rating: number;
   }) => Promise<void>;
   isLoading?: boolean;
+  defaultAuthorName?: string;
+  defaultAuthorRole?: string;
+  closeLabel?: string;
 }
 
 export function TestimonialSubmitModal({
@@ -22,6 +25,9 @@ export function TestimonialSubmitModal({
   onClose,
   onSubmit,
   isLoading = false,
+  defaultAuthorName,
+  defaultAuthorRole,
+  closeLabel = 'Batal',
 }: TestimonialSubmitModalProps) {
   const [authorName, setAuthorName] = useState('');
   const [authorRole, setAuthorRole] = useState('');
@@ -30,6 +36,17 @@ export function TestimonialSubmitModal({
   const [hoverRating, setHoverRating] = useState(0);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setErrorMsg('');
+    if (defaultAuthorName) {
+      setAuthorName((prev) => prev || defaultAuthorName);
+    }
+    if (defaultAuthorRole) {
+      setAuthorRole((prev) => prev || defaultAuthorRole);
+    }
+  }, [defaultAuthorName, defaultAuthorRole, isOpen]);
 
   if (!isOpen) return null;
 
@@ -200,7 +217,7 @@ export function TestimonialSubmitModal({
                 disabled={isLoading}
                 className="px-4 py-2.5 rounded-full border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
               >
-                Batal
+                {closeLabel}
               </button>
 
               <button

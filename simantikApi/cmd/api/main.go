@@ -128,10 +128,11 @@ func main() {
 	evaluationService := service.NewEvaluationService(evaluationRepo, attemptRepo, tryoutRepo, db)
 	learningService := service.NewLearningService(moduleRepo, materialRepo, progressRepo, jenjangResolver)
 	adminService := service.NewAdminService(adminRepo)
-	contentService := service.NewContentService(newsRepo, docRepo, testRepo, tutorialRepo)
+	contentService := service.NewContentService(newsRepo, docRepo, testRepo, tutorialRepo, attemptRepo)
 	notificationService := service.NewNotificationService(notifRepo, emailSender)
 	reportingService := service.NewReportingService(reportingRepo, recommendationService)
 	schoolService := service.NewSchoolService(schoolRepo, userRepo)
+	geoService := service.NewGeoService(cfg.NominatimBaseURL, cfg.GeoUserAgent)
 	practiceService := service.NewPracticeService(db, practiceRepo, questionRepo, evaluationRepo, jenjangResolver, recommendationService, stimulusRepo)
 
 	// ─── 4. HTTP Handlers ──────────────────────────────────────────────────────
@@ -149,6 +150,7 @@ func main() {
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	reportingHandler := handler.NewReportingHandler(reportingService)
 	schoolHandler := handler.NewSchoolHandler(schoolService)
+	geoHandler := handler.NewGeoHandler(geoService)
 	practiceHandler := handler.NewPracticeHandler(practiceService)
 	systemHandler := handler.NewSystemHandler(db, cfg)
 
@@ -187,6 +189,7 @@ func main() {
 		Notification:   notificationHandler,
 		Reporting:      reportingHandler,
 		School:         schoolHandler,
+		Geo:            geoHandler,
 		Practice:       practiceHandler,
 		System:         systemHandler,
 	})

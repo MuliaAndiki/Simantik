@@ -27,6 +27,20 @@ export const proposeSchoolSchema = z.object({
     .optional()
     .default(''),
   kecamatan: z.string().trim().max(100, 'Kecamatan maksimal 100 karakter').optional().default(''),
+  latitude: z
+    .number({
+      required_error: 'Pilih lokasi sekolah pada peta terlebih dahulu',
+      invalid_type_error: 'Pilih lokasi sekolah pada peta terlebih dahulu',
+    })
+    .min(-11, 'Koordinat lintang harus berada di wilayah Indonesia')
+    .max(6, 'Koordinat lintang harus berada di wilayah Indonesia'),
+  longitude: z
+    .number({
+      required_error: 'Pilih lokasi sekolah pada peta terlebih dahulu',
+      invalid_type_error: 'Pilih lokasi sekolah pada peta terlebih dahulu',
+    })
+    .min(95, 'Koordinat bujur harus berada di wilayah Indonesia')
+    .max(141, 'Koordinat bujur harus berada di wilayah Indonesia'),
 });
 
 export const rejectSchoolSchema = z.object({

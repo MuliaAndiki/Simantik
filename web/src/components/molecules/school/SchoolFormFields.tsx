@@ -13,6 +13,8 @@ export interface SchoolFormState {
   provinsi: string;
   kabupaten: string;
   kecamatan: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export type SchoolFormErrors = Partial<Record<keyof SchoolFormState, string>>;
@@ -22,6 +24,7 @@ export interface SchoolFormFieldsProps {
   onChange: <K extends keyof SchoolFormState>(field: K, value: SchoolFormState[K]) => void;
   errors?: SchoolFormErrors;
   disabled?: boolean;
+  showCoordinates?: boolean;
 }
 
 export const SchoolFormFields: React.FC<SchoolFormFieldsProps> = ({
@@ -29,6 +32,7 @@ export const SchoolFormFields: React.FC<SchoolFormFieldsProps> = ({
   onChange,
   errors,
   disabled = false,
+  showCoordinates = true,
 }) => {
   return (
     <div className="space-y-4">
@@ -161,6 +165,61 @@ export const SchoolFormFields: React.FC<SchoolFormFieldsProps> = ({
           />
         </AdminField>
       </div>
+
+      {showCoordinates && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <AdminField
+            label="Latitude (Opsional)"
+            className="[&>label]:text-[11px] [&>label]:text-slate-600"
+          >
+            <AdminTextInput
+              type="number"
+              step="any"
+              value={formData.latitude ?? ''}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === '') {
+                  onChange('latitude', null);
+                  return;
+                }
+                const parsed = Number(raw);
+                onChange('latitude', Number.isFinite(parsed) ? parsed : null);
+              }}
+              placeholder="-6.200000"
+              bold={false}
+              disabled={disabled}
+              className="h-9"
+              aria-invalid={!!errors?.latitude}
+            />
+            {errors?.latitude && <p className="text-[11px] text-rose-600">{errors.latitude}</p>}
+          </AdminField>
+          <AdminField
+            label="Longitude (Opsional)"
+            className="[&>label]:text-[11px] [&>label]:text-slate-600"
+          >
+            <AdminTextInput
+              type="number"
+              step="any"
+              value={formData.longitude ?? ''}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === '') {
+                  onChange('longitude', null);
+                  return;
+                }
+                const parsed = Number(raw);
+                onChange('longitude', Number.isFinite(parsed) ? parsed : null);
+              }}
+              placeholder="106.816666"
+              bold={false}
+              disabled={disabled}
+              className="h-9"
+              aria-invalid={!!errors?.longitude}
+            />
+            {errors?.longitude && <p className="text-[11px] text-rose-600">{errors.longitude}</p>}
+          </AdminField>
+        </div>
+      )}
     </div>
   );
 };

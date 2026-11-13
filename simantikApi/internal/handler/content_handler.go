@@ -573,10 +573,28 @@ func (h *ContentHandler) CreateTestimonial(c *fiber.Ctx) error {
 
 	res, err := h.contentService.CreateTestimonial(c.UserContext(), req, userID)
 	if err != nil {
+		if errors.Is(err, service.ErrTestimonialAlreadySubmitted) {
+			return utils.Error(c, fiber.StatusConflict, "Anda sudah pernah mengirimkan testimoni", err)
+		}
 		return utils.Error(c, fiber.StatusInternalServerError, "failed to submit testimonial", err)
 	}
 
 	return utils.Created(c, "testimonial submitted successfully and is pending approval", res)
+}
+
+// GetMyTestimonialStatus handles GET /api/v1/testimonials/me/status.
+func (h *ContentHandler) GetMyTestimonialStatus(c *fiber.Ctx) error {
+	userID, ok := c.Locals(middleware.LocalsUserID).(uuid.UUID)
+	if !ok {
+		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", errors.New("missing user context"))
+	}
+
+	res, err := h.contentService.GetMyTestimonialStatus(c.UserContext(), userID)
+	if err != nil {
+		return utils.Error(c, fiber.StatusInternalServerError, "failed to retrieve testimonial status", err)
+	}
+
+	return utils.OK(c, "testimonial status retrieved successfully", res)
 }
 
 // ListTestimonialsPublic handles GET /api/v1/testimonials.

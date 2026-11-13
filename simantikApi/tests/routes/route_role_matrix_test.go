@@ -56,6 +56,7 @@ func newRoleMatrixApp() *fiber.App {
 		Notification:   handler.NewNotificationHandler(nil),
 		Reporting:      handler.NewReportingHandler(nil),
 		School:         handler.NewSchoolHandler(nil),
+		Geo:            handler.NewGeoHandler(nil),
 		Practice:       handler.NewPracticeHandler(nil),
 		System:         handler.NewSystemHandler(nil, cfg),
 		Stimulus:       handler.NewStimulusHandler(nil),
@@ -146,6 +147,9 @@ func TestRouteRoleMatrix(t *testing.T) {
 		{"MyProgress", "GET", "/api/v1/learning-progress", []string{"admin", "content_manager", "student"}, []bool{true, true, true}},
 		{"MyNotifications", "GET", "/api/v1/notifications/", []string{"admin", "content_manager", "student"}, []bool{true, true, true}},
 		{"MyProfile", "GET", "/api/v1/users/me", []string{"admin", "content_manager", "student"}, []bool{true, true, true}},
+		{"GeoSchoolsSearch", "GET", "/api/v1/geo/schools/search?q=SMA", []string{"admin", "content_manager", "student"}, []bool{true, true, true}},
+		{"GeoReverse", "GET", "/api/v1/geo/reverse?lat=-6.2&lon=106.8", []string{"admin", "content_manager", "student"}, []bool{true, true, true}},
+		{"MyTestimonialStatus", "GET", "/api/v1/testimonials/me/status", []string{"admin", "content_manager", "student"}, []bool{true, true, true}},
 	}
 
 	for _, tc := range cases {
@@ -213,6 +217,45 @@ func TestRouteRoleMatrix_NoAuth(t *testing.T) {
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusUnauthorized {
 			t.Errorf("expected 401, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("GeoTanpaToken", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/v1/geo/schools/search?q=SMA", nil)
+		req.Header.Set("X-Internal-Api-Key", testAPISecret)
+		resp, err := app.Test(req, 5000)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected 401, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("TestimonialStatusTanpaToken", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/v1/testimonials/me/status", nil)
+		req.Header.Set("X-Internal-Api-Key", testAPISecret)
+		resp, err := app.Test(req, 5000)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected 401, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("CreateTestimonialAnonim", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/api/v1/testimonials", nil)
+		req.Header.Set("X-Internal-Api-Key", testAPISecret)
+		resp, err := app.Test(req, 5000)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+			t.Errorf("expected anonymous POST /testimonials guard PASS, got %d", resp.StatusCode)
 		}
 	})
 }

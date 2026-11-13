@@ -8,6 +8,7 @@ describe('EndpointEntry', () => {
     expect(EndpointEntry.content).toBeDefined();
     expect(EndpointEntry.evaluation).toBeDefined();
     expect(EndpointEntry.learning).toBeDefined();
+    expect(EndpointEntry.geo).toBeDefined();
     expect(EndpointEntry.notification).toBeDefined();
     expect(EndpointEntry.question).toBeDefined();
     expect(EndpointEntry.recommendation).toBeDefined();
@@ -21,5 +22,8 @@ describe('EndpointEntry', () => {
     expect(EndpointEntry.user.getProfile).toBe('/users/me');
     expect(EndpointEntry.tryout.attemptQuestion('att-1', 3)).toBe('/attempts/att-1/questions/3');
     expect(EndpointEntry.reporting.questionAnalytics('q-1')).toBe('/admin/reports/questions/q-1');
+    expect(EndpointEntry.geo.searchSchools).toBe('/geo/schools/search');
+    expect(EndpointEntry.geo.reverse).toBe('/geo/reverse');
+    expect(EndpointEntry.content.myTestimonialStatus).toBe('/testimonials/me/status');
   });
 });

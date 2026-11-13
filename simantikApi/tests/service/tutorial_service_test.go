@@ -92,7 +92,7 @@ func (m *mockTutorialRepo) GetDistinctCategories(ctx context.Context) ([]string,
 }
 
 func newTutorialTestService() service.ContentService {
-	return service.NewContentService(newMockNewsRepo(), newMockDocRepo(), newMockTestimonialRepo(), newMockTutorialRepo())
+	return service.NewContentService(newMockNewsRepo(), newMockDocRepo(), newMockTestimonialRepo(), newMockTutorialRepo(), newMockAttemptRepo())
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────

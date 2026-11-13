@@ -25,4 +25,5 @@ export const mountEntry = {
   practiceAttempts: '/practice-attempts',
   schools: '/admin/schools',
   schoolPublik: '/schools',
+  geo: '/geo',
 } as const;

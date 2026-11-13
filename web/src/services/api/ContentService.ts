@@ -16,6 +16,7 @@ import type {
   PaginatedNewsResponse,
   PaginatedTestimonialsResponse,
   PaginatedTutorialsResponse,
+  TestimonialMyStatusResponse,
   TestimonialResponse,
   TutorialResponse,
   UpdateDocumentationRequest,
@@ -365,13 +366,22 @@ class ContentService {
   public async CreateTestimonialService(
     payload: CreateTestimonialRequest
   ): Promise<TResponse<TestimonialResponse>> {
-    const res = await getHttp().PublicPostResponse<TestimonialResponse>(
+    const res = await getHttp().PostResponse<TestimonialResponse>(
       EndpointEntry.content.testimonials,
       payload
     );
     return toServiceResponse(res, {
       message: res.message,
       statusCode: 201,
+    });
+  }
+
+  public async GetMyTestimonialStatusService(): Promise<TResponse<TestimonialMyStatusResponse>> {
+    const res = await getHttp().GetResponse<TestimonialMyStatusResponse>(
+      EndpointEntry.content.myTestimonialStatus
+    );
+    return toServiceResponse(res, {
+      message: res.message,
     });
   }
 }
