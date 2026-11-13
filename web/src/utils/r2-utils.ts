@@ -1,7 +1,6 @@
 'use server';
 
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import sharp from 'sharp';
 import { env } from '@/configs';
 import { extractR2KeyFromUrl, getR2PublicBaseUrl } from './r2-url.util';
 
@@ -94,6 +93,8 @@ async function toWebpBuffer(input: Buffer, mimeType: string): Promise<Buffer | n
   if (mimeType === 'image/webp' || mimeType === 'image/svg+xml') return null;
   if (mimeType && !mimeType.startsWith('image/')) return null;
   try {
+    const mod = await import('sharp');
+    const sharp = mod.default ?? (mod as unknown as typeof import('sharp')['default']);
     return await sharp(input, { animated: false })
       .rotate()
       .resize({
