@@ -41,3 +41,12 @@ export function hasActiveSchoolSkipInStorage(userId?: string | null): boolean {
     return false;
   }
 }
+
+export function clearSchoolSkipInStorage(userId?: string | null): void {
+  if (typeof window === 'undefined' || !userId) return;
+  try {
+    window.localStorage.removeItem(buildSchoolSkipKey(userId));
+  } catch {
+    // Ignore storage quota or private browsing errors
+  }
+}

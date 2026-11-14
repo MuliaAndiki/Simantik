@@ -359,3 +359,136 @@ func TestUserService_UpdateMySchool(t *testing.T) {
 		t.Fatalf("expected ErrSchoolNotAllowed for rejected school, got %v", err)
 	}
 }
+
+
+func TestUserService_UpdateMe_JenjangUpsertAndSync(t *testing.T) {
+	deps := newUserServiceTestDeps()
+	ctx := context.Background()
+
+	student := &models.User{
+		ID:       uuid.New(),
+		FullName: "Siswa Skip Sekolah",
+		Email:    "skip@example.com",
+		Role:     models.UserRoleStudent,
+		Status:   models.UserStatusActive,
+	}
+	_ = deps.userRepo.Create(ctx, student)
+
+	// Setting explicit jenjang without an existing StudentProfile creates it without marking hasSchool=true
+	jenjangSMA := "sma"
+	res, err := deps.svc.UpdateMe(ctx, student.ID, dto.UpdateMeRequest{Jenjang: &jenjangSMA})
+	if err != nil {
+		t.Fatalf("expected UpdateMe to upsert missing profile, got %v", err)
+	}
+	if res.HasSchool {
+		t.Fatal("expected hasSchool=false when only jenjang is set")
+	}
+	if res.StudentProfile == nil {
+		t.Fatal("expected StudentProfile in response")
+	}
+	if res.StudentProfile.Jenjang == nil || *res.StudentProfile.Jenjang != "sma" {
+		t.Fatalf("expected profile jenjang 'sma', got %v", res.StudentProfile.Jenjang)
+	}
+	if res.StudentProfile.EffectiveJenjang == nil || *res.StudentProfile.EffectiveJenjang != "sma" {
+		t.Fatalf("expected effectiveJenjang 'sma', got %v", res.StudentProfile.EffectiveJenjang)
+	}
+
+	// Updating jenjang again updates the existing profile cleanly
+	jenjangSMK := "smk"
+	resUpdated, err := deps.svc.UpdateMe(ctx, student.ID, dto.UpdateMeRequest{Jenjang: &jenjangSMK})
+	if err != nil {
+		t.Fatalf("expected UpdateMe jenjang update to succeed, got %v", err)
+	}
+	if resUpdated.StudentProfile == nil || resUpdated.StudentProfile.EffectiveJenjang == nil || *resUpdated.StudentProfile.EffectiveJenjang != "smk" {
+		t.Fatalf("expected effectiveJenjang 'smk', got %+v", resUpdated.StudentProfile)
+	}
+}
+
+func TestUserService_GetMeAndUpdateMySchool_JenjangResolution(t *testing.T) {
+	deps := newUserServiceTestDeps()
+	ctx := context.Background()
+
+	schoolSMP := &models.School{
+		ID:      uuid.New(),
+		NPSN:    "20100991",
+		Name:    "SMPN 1 Nusantara",
+		Level:   models.SchoolLevelSMP,
+		Status:  models.SchoolStatusNegeri,
+		Address: "Jl. SMP No. 1",
+	}
+	schoolSMA := &models.School{
+		ID:      uuid.New(),
+		NPSN:    "20100992",
+		Name:    "SMAN 1 Nusantara",
+		Level:   models.SchoolLevelSMA,
+		Status:  models.SchoolStatusNegeri,
+		Address: "Jl. SMA No. 1",
+	}
+	_ = deps.schoolRepo.Create(ctx, schoolSMP)
+	_ = deps.schoolRepo.Create(ctx, schoolSMA)
+
+	student := &models.User{
+		ID:       uuid.New(),
+		FullName: "Siswa Pindah Jenjang",
+		Email:    "pindah@example.com",
+		Role:     models.UserRoleStudent,
+		Status:   models.UserStatusActive,
+	}
+	_ = deps.userRepo.Create(ctx, student)
+
+	// 1. Select SMP school -> effectiveJenjang & schoolJenjang resolve to "smp"
+	resSMP, err := deps.svc.UpdateMySchool(ctx, student.ID, dto.UpdateMySchoolRequest{SchoolID: schoolSMP.ID.String()})
+	if err != nil {
+		t.Fatalf("UpdateMySchool SMP failed: %v", err)
+	}
+	if resSMP.StudentProfile == nil || resSMP.StudentProfile.SchoolJenjang == nil || *resSMP.StudentProfile.SchoolJenjang != "smp" {
+		t.Fatalf("expected schoolJenjang 'smp', got %+v", resSMP.StudentProfile)
+	}
+	if resSMP.StudentProfile.EffectiveJenjang == nil || *resSMP.StudentProfile.EffectiveJenjang != "smp" {
+		t.Fatalf("expected effectiveJenjang 'smp', got %+v", resSMP.StudentProfile)
+	}
+
+	// 2. Apply explicit override to "smk" -> GetMe reflects schoolJenjang="smp" & effectiveJenjang="smk"
+	overrideSMK := "smk"
+	if _, err := deps.svc.UpdateMe(ctx, student.ID, dto.UpdateMeRequest{Jenjang: &overrideSMK}); err != nil {
+		t.Fatalf("UpdateMe override failed: %v", err)
+	}
+	meOverride, err := deps.svc.GetMe(ctx, student.ID)
+	if err != nil {
+		t.Fatalf("GetMe failed: %v", err)
+	}
+	if meOverride.StudentProfile == nil || meOverride.StudentProfile.SchoolJenjang == nil || *meOverride.StudentProfile.SchoolJenjang != "smp" {
+		t.Fatalf("expected GetMe schoolJenjang 'smp', got %+v", meOverride.StudentProfile)
+	}
+	if meOverride.StudentProfile.EffectiveJenjang == nil || *meOverride.StudentProfile.EffectiveJenjang != "smk" {
+		t.Fatalf("expected GetMe effectiveJenjang 'smk', got %+v", meOverride.StudentProfile)
+	}
+
+	// 3. Switching to SMA school clears stale explicit override -> GetMe resolves effectiveJenjang="sma"
+	resSMA, err := deps.svc.UpdateMySchool(ctx, student.ID, dto.UpdateMySchoolRequest{SchoolID: schoolSMA.ID.String()})
+	if err != nil {
+		t.Fatalf("UpdateMySchool SMA failed: %v", err)
+	}
+	if resSMA.StudentProfile == nil || resSMA.StudentProfile.Jenjang != nil {
+		t.Fatalf("expected explicit Jenjang override cleared on school switch, got %+v", resSMA.StudentProfile)
+	}
+	if resSMA.StudentProfile.EffectiveJenjang == nil || *resSMA.StudentProfile.EffectiveJenjang != "sma" {
+		t.Fatalf("expected effectiveJenjang 'sma', got %+v", resSMA.StudentProfile)
+	}
+
+	storedProfile, err := deps.profileRepo.FindByUserID(ctx, student.ID)
+	if err != nil {
+		t.Fatalf("expected stored profile: %v", err)
+	}
+	if storedProfile.Jenjang != nil {
+		t.Fatalf("expected stored profile.Jenjang cleared to nil, got %v", *storedProfile.Jenjang)
+	}
+
+	meAfterSwitch, err := deps.svc.GetMe(ctx, student.ID)
+	if err != nil {
+		t.Fatalf("GetMe after switch failed: %v", err)
+	}
+	if meAfterSwitch.StudentProfile == nil || meAfterSwitch.StudentProfile.EffectiveJenjang == nil || *meAfterSwitch.StudentProfile.EffectiveJenjang != "sma" {
+		t.Fatalf("expected GetMe effectiveJenjang 'sma' after switch, got %+v", meAfterSwitch.StudentProfile)
+	}
+}

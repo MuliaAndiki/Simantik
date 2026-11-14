@@ -24,6 +24,8 @@ type StudentProfileResponse struct {
 	School           string  `json:"school"`
 	Grade            string  `json:"grade"`
 	Jenjang          *string `json:"jenjang,omitempty"`
+	SchoolJenjang    *string `json:"schoolJenjang,omitempty"`
+	EffectiveJenjang *string `json:"effectiveJenjang,omitempty"`
 	Major            string  `json:"major"`
 	TargetUniversity string  `json:"target_university"`
 	TargetMajor      string  `json:"target_major"`

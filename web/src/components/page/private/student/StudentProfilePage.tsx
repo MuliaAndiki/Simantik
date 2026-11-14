@@ -1,6 +1,9 @@
 import type * as React from 'react';
 import type { ChangePasswordForm } from '@/components/organisms/student/ChangePasswordModal';
-import type { ProfileSchoolOption } from '@/components/organisms/student/ProfilePersonalInfoCard';
+import type {
+  ProfileSchoolOption,
+  ProfileSchoolPickerProps,
+} from '@/components/organisms/student/ProfilePersonalInfoCard';
 import { StudentProfileTemplate } from '@/components/templates/student/StudentProfileTemplate';
 import type { SchoolResponse } from '@/types/service';
 
@@ -13,6 +16,7 @@ export interface StudentProfilePageProps {
   schoolOptions?: ProfileSchoolOption[];
   selectedSchoolId?: string;
   onSelectSchoolId?: (schoolId: string) => void;
+  schoolPickerProps?: ProfileSchoolPickerProps;
   onOpenProposeSchool?: () => void;
   mySchoolSubmissions?: SchoolResponse[];
   onResubmitSchool?: (school: SchoolResponse) => void;
@@ -54,6 +58,7 @@ export function StudentProfilePage({
   schoolOptions,
   selectedSchoolId,
   onSelectSchoolId,
+  schoolPickerProps,
   onOpenProposeSchool,
   mySchoolSubmissions,
   onResubmitSchool,
@@ -95,6 +100,7 @@ export function StudentProfilePage({
         schoolOptions,
         selectedSchoolId,
         onSelectSchoolId,
+        schoolPickerProps,
         onOpenProposeSchool,
         mySchoolSubmissions,
         onResubmitSchool,

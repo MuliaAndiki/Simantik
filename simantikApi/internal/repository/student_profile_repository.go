@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -31,6 +32,9 @@ func (r *studentProfileRepository) Create(ctx context.Context, p *models.Student
 func (r *studentProfileRepository) FindByUserID(ctx context.Context, userID uuid.UUID) (*models.StudentProfile, error) {
 	var p models.StudentProfile
 	if err := r.db.WithContext(ctx).First(&p, "user_id = ?", userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
 	return &p, nil
