@@ -1,5 +1,6 @@
 'use client';
 
+import 'leaflet/dist/leaflet.css';
 import { Loader2, MapPin } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import type { SchoolMapPickerProps } from './SchoolMapPicker';
@@ -7,7 +8,10 @@ import type { SchoolMapPickerProps } from './SchoolMapPicker';
 const DynamicSchoolMapPicker = dynamic(() => import('./SchoolMapPicker'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[360px] md:h-[520px] w-full flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-500">
+    <div
+      style={{ minHeight: 360 }}
+      className="flex h-[360px] md:h-[520px] w-full flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-500"
+    >
       <div className="flex items-center gap-2 text-sm font-medium">
         <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
         Memuat peta interaktif...

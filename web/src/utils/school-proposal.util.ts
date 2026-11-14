@@ -2,8 +2,9 @@ import type {
   SchoolFormErrors,
   SchoolFormState,
 } from '@/components/molecules/school/SchoolFormFields';
-import { proposeSchoolSchema } from '@/schemas/school/school.schema';
+import { adminSchoolSchema, proposeSchoolSchema } from '@/schemas/school/school.schema';
 import type {
+  CreateSchoolRequest,
   GeoPlace,
   ProposeSchoolRequest,
   SchoolLevel,
@@ -125,8 +126,21 @@ export function buildSchoolProposalInitialForm(seed?: string | SchoolResponse): 
   return { ...EMPTY_SCHOOL_FORM, nama: trimmed };
 }
 
+function extractSchoolFieldErrors(
+  issues: ReadonlyArray<{ path: (string | number)[]; message: string }>
+): SchoolFormErrors {
+  const errors: SchoolFormErrors = {};
+  for (const issue of issues) {
+    const field = issue.path[0] as keyof SchoolFormState | undefined;
+    if (field && !errors[field]) {
+      errors[field] = issue.message;
+    }
+  }
+  return errors;
+}
+
 /**
- * Validasi payload pengajuan sekolah menggunakan Zod schema terpusat.
+ * Validasi payload pengajuan sekolah siswa menggunakan Zod schema terpusat (wajib koordinat).
  */
 export function validateProposeSchoolForm(form: SchoolFormState): {
   data?: ProposeSchoolRequest;
@@ -134,14 +148,7 @@ export function validateProposeSchoolForm(form: SchoolFormState): {
 } {
   const parsed = proposeSchoolSchema.safeParse(form);
   if (!parsed.success) {
-    const errors: SchoolFormErrors = {};
-    for (const issue of parsed.error.issues) {
-      const field = issue.path[0] as keyof SchoolFormState | undefined;
-      if (field && !errors[field]) {
-        errors[field] = issue.message;
-      }
-    }
-    return { errors };
+    return { errors: extractSchoolFieldErrors(parsed.error.issues) };
   }
 
   const val = parsed.data;
@@ -157,6 +164,35 @@ export function validateProposeSchoolForm(form: SchoolFormState): {
       kecamatan: val.kecamatan || undefined,
       latitude: val.latitude,
       longitude: val.longitude,
+    },
+  };
+}
+
+/**
+ * Validasi payload form sekolah Admin menggunakan Zod schema (koordinat opsional berpasangan).
+ */
+export function validateAdminSchoolForm(form: SchoolFormState): {
+  data?: CreateSchoolRequest;
+  errors?: SchoolFormErrors;
+} {
+  const parsed = adminSchoolSchema.safeParse(form);
+  if (!parsed.success) {
+    return { errors: extractSchoolFieldErrors(parsed.error.issues) };
+  }
+
+  const val = parsed.data;
+  return {
+    data: {
+      npsn: val.npsn,
+      nama: val.nama,
+      jenjang: val.jenjang,
+      status: val.status,
+      alamat: val.alamat,
+      provinsi: val.provinsi || undefined,
+      kabupaten: val.kabupaten || undefined,
+      kecamatan: val.kecamatan || undefined,
+      latitude: typeof val.latitude === 'number' ? val.latitude : undefined,
+      longitude: typeof val.longitude === 'number' ? val.longitude : undefined,
     },
   };
 }

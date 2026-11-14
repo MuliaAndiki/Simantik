@@ -5,8 +5,8 @@ import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { Loader2 } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import type { GeoPlace } from '@/types/service';
 
@@ -67,10 +67,39 @@ function MapFlyController({
 
   useEffect(() => {
     if (!target) return;
+    map.invalidateSize({ pan: false });
     map.flyTo([target.lat, target.lng], target.zoom ?? 16, {
       duration: 0.7,
     });
   }, [map, target]);
+
+  return null;
+}
+
+/** Ensures Leaflet recalculates bounds after CSS/layout settle and responsive resizes. */
+function MapResizeObserver() {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+    const rafId = window.requestAnimationFrame(() => {
+      map.invalidateSize({ pan: false });
+    });
+
+    if (typeof ResizeObserver === 'undefined') {
+      return () => window.cancelAnimationFrame(rafId);
+    }
+
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize({ pan: false });
+    });
+    observer.observe(container);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
+  }, [map]);
 
   return null;
 }
@@ -87,7 +116,25 @@ export default function SchoolMapPicker({
 }: SchoolMapPickerProps) {
   ensureLeafletIcons();
 
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const tileErrorCountRef = useRef(0);
+  const [mapKey, setMapKey] = useState(0);
+  const [hasTileError, setHasTileError] = useState(false);
+
   const candidateIcon = useMemo(() => createCandidateIcon(), []);
+
+  useEffect(() => {
+    if (mapKey >= 2) return;
+    const rafId = window.requestAnimationFrame(() => {
+      const host = hostRef.current;
+      if (!host) return;
+      if (!host.querySelector('.leaflet-pane')) {
+        setMapKey((prev) => (prev < 2 ? prev + 1 : prev));
+      }
+    });
+
+    return () => window.cancelAnimationFrame(rafId);
+  }, [mapKey]);
 
   const visibleCandidates = useMemo(() => {
     if (!selectedPosition) return candidates;
@@ -105,18 +152,35 @@ export default function SchoolMapPicker({
 
   return (
     <div
+      ref={hostRef}
+      style={{ minHeight: 360 }}
       className={`relative isolate z-0 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 ${heightClassName}`}
     >
       <MapContainer
+        key={mapKey}
         center={initialCenter}
         zoom={initialZoom}
         scrollWheelZoom
+        style={{ height: '100%', width: '100%', minHeight: 360 }}
         className="h-full w-full"
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          eventHandlers={{
+            tileload: () => {
+              tileErrorCountRef.current = 0;
+              setHasTileError((prev) => (prev ? false : prev));
+            },
+            tileerror: () => {
+              tileErrorCountRef.current += 1;
+              if (tileErrorCountRef.current >= 3) {
+                setHasTileError((prev) => (prev ? prev : true));
+              }
+            },
+          }}
         />
+        <MapResizeObserver />
         <MapClickListener onMapClick={onMapClick} />
         <MapFlyController target={flyToTarget} />
 
@@ -153,6 +217,16 @@ export default function SchoolMapPicker({
           </Marker>
         )}
       </MapContainer>
+
+      {hasTileError && (
+        <div className="pointer-events-none absolute bottom-3 left-3 z-[400] max-w-xs inline-flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50/95 px-3 py-2 text-[11px] font-medium text-amber-900 shadow-md">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+          <span>
+            Sebagian ubin peta OpenStreetMap gagal dimuat. Pencarian &amp; klik koordinat tetap
+            berfungsi.
+          </span>
+        </div>
+      )}
 
       {isReversing && (
         <div className="pointer-events-none absolute top-3 right-3 z-[400] inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-md border border-slate-200">

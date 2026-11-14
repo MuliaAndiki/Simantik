@@ -6,6 +6,7 @@ import {
   guessSchoolLevel,
   guessSchoolStatus,
   placeToFormPatch,
+  validateAdminSchoolForm,
   validateProposeSchoolForm,
 } from './school-proposal.util';
 
@@ -180,6 +181,86 @@ describe('school-proposal.util', () => {
       expect(outsideId.data).toBeUndefined();
       expect(outsideId.errors?.latitude).toBeDefined();
       expect(outsideId.errors?.longitude).toBeDefined();
+    });
+  });
+
+  describe('validateAdminSchoolForm', () => {
+    it('passes without coordinates for Admin manual entry', () => {
+      const result = validateAdminSchoolForm({
+        ...EMPTY_SCHOOL_FORM,
+        npsn: ' 20219876 ',
+        nama: ' SMA Negeri 1 Uji ',
+        alamat: ' Jl. Pendidikan No. 1 ',
+        provinsi: ' Jawa Barat ',
+      });
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data).toEqual({
+        npsn: '20219876',
+        nama: 'SMA Negeri 1 Uji',
+        jenjang: 'sma',
+        status: 'negeri',
+        alamat: 'Jl. Pendidikan No. 1',
+        provinsi: 'Jawa Barat',
+        kabupaten: undefined,
+        kecamatan: undefined,
+        latitude: undefined,
+        longitude: undefined,
+      });
+    });
+
+    it('rejects half-pair coordinates when only latitude or longitude is provided', () => {
+      const onlyLat = validateAdminSchoolForm({
+        ...EMPTY_SCHOOL_FORM,
+        npsn: '20219876',
+        nama: 'SMA Negeri 1 Uji',
+        alamat: 'Jl. Pendidikan No. 1',
+        latitude: -6.890212,
+        longitude: null,
+      });
+
+      expect(onlyLat.data).toBeUndefined();
+      expect(onlyLat.errors?.longitude).toBeDefined();
+
+      const onlyLng = validateAdminSchoolForm({
+        ...EMPTY_SCHOOL_FORM,
+        npsn: '20219876',
+        nama: 'SMA Negeri 1 Uji',
+        alamat: 'Jl. Pendidikan No. 1',
+        latitude: null,
+        longitude: 107.613146,
+      });
+
+      expect(onlyLng.data).toBeUndefined();
+      expect(onlyLng.errors?.latitude).toBeDefined();
+    });
+
+    it('rejects out-of-Indonesia coordinates and accepts a valid Indonesia coordinate pair', () => {
+      const outsideId = validateAdminSchoolForm({
+        ...EMPTY_SCHOOL_FORM,
+        npsn: '20219876',
+        nama: 'Paris School',
+        alamat: 'Jl. Luar Wilayah',
+        latitude: 48.8566,
+        longitude: 2.3522,
+      });
+
+      expect(outsideId.data).toBeUndefined();
+      expect(outsideId.errors?.latitude).toBeDefined();
+      expect(outsideId.errors?.longitude).toBeDefined();
+
+      const validPair = validateAdminSchoolForm({
+        ...EMPTY_SCHOOL_FORM,
+        npsn: '20219876',
+        nama: 'SMAN 1 Bandung',
+        alamat: 'Jl. Ir. H. Juanda No. 93',
+        latitude: -6.8859,
+        longitude: 107.6131,
+      });
+
+      expect(validPair.errors).toBeUndefined();
+      expect(validPair.data?.latitude).toBe(-6.8859);
+      expect(validPair.data?.longitude).toBe(107.6131);
     });
   });
 });

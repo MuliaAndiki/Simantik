@@ -1,21 +1,16 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import type { SchoolFormState } from '@/components/organisms/admin';
 import { AdminSchoolListPage } from '@/components/page/private/admin/AdminSchoolListPage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
 import { rejectSchoolSchema } from '@/schemas/school/school.schema';
-import type {
-  CreateSchoolRequest,
-  SchoolLevel,
-  SchoolResponse,
-  SchoolStatusType,
-} from '@/types/service';
-import { EMPTY_SCHOOL_FORM } from '@/utils/school-proposal.util';
+import type { SchoolLevel, SchoolResponse, SchoolStatusType } from '@/types/service';
 
 export function SchoolListContainer() {
+  const router = useRouter();
   const api = useApi();
   const ns = useAppNameSpace();
 
@@ -27,10 +22,7 @@ export function SchoolListContainer() {
   const [page, setPage] = useState(1);
   const perPage = 10;
 
-  // Dialog state
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
-  const [formData, setFormData] = useState<SchoolFormState>(EMPTY_SCHOOL_FORM);
+  // Action state
   const [isVerifyingId, setIsVerifyingId] = useState<string | null>(null);
 
   // Reject dialog state
@@ -52,8 +44,6 @@ export function SchoolListContainer() {
     offset: (page - 1) * perPage,
   });
 
-  const createMutation = api.school.mutate.create();
-  const updateMutation = api.school.mutate.update();
   const deleteMutation = api.school.mutate.delete();
   const verifyMutation = api.school.mutate.verify();
   const rejectMutation = api.school.mutate.reject();
@@ -110,84 +100,11 @@ export function SchoolListContainer() {
   }, [schools, schoolsData?.summary, total]);
 
   const handleOpenCreate = () => {
-    setDialogMode('create');
-    setFormData(EMPTY_SCHOOL_FORM);
-    setIsDialogOpen(true);
+    router.push('/admin/schools/create');
   };
 
   const handleOpenEdit = (school: SchoolResponse) => {
-    setDialogMode('edit');
-    setFormData({
-      id: school.id,
-      npsn: school.npsn,
-      nama: school.nama,
-      jenjang: (school.jenjang?.toLowerCase() as SchoolLevel) || 'sma',
-      status: (school.status?.toLowerCase() as SchoolStatusType) || 'negeri',
-      alamat: school.alamat || '',
-      provinsi: school.provinsi || '',
-      kabupaten: school.kabupaten || '',
-      kecamatan: school.kecamatan || '',
-      latitude: typeof school.latitude === 'number' ? school.latitude : null,
-      longitude: typeof school.longitude === 'number' ? school.longitude : null,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleFormFieldChange = <K extends keyof SchoolFormState>(
-    field: K,
-    value: SchoolFormState[K]
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.npsn.trim() || !formData.nama.trim() || !formData.alamat.trim()) {
-      ns.alert.toast({
-        title: 'Form Belum Lengkap',
-        message: 'NPSN, Nama Sekolah, dan Alamat wajib diisi.',
-        icon: 'warning',
-      });
-      return;
-    }
-
-    try {
-      if (dialogMode === 'create') {
-        const payload: CreateSchoolRequest = {
-          npsn: formData.npsn.trim(),
-          nama: formData.nama.trim(),
-          jenjang: formData.jenjang,
-          status: formData.status,
-          alamat: formData.alamat.trim(),
-          provinsi: formData.provinsi.trim() || undefined,
-          kabupaten: formData.kabupaten.trim() || undefined,
-          kecamatan: formData.kecamatan.trim() || undefined,
-          latitude: typeof formData.latitude === 'number' ? formData.latitude : undefined,
-          longitude: typeof formData.longitude === 'number' ? formData.longitude : undefined,
-        };
-        await createMutation.mutateAsync(payload);
-      } else if (formData.id) {
-        await updateMutation.mutateAsync({
-          id: formData.id,
-          body: {
-            npsn: formData.npsn.trim(),
-            nama: formData.nama.trim(),
-            jenjang: formData.jenjang,
-            status: formData.status,
-            alamat: formData.alamat.trim(),
-            provinsi: formData.provinsi.trim() || undefined,
-            kabupaten: formData.kabupaten.trim() || undefined,
-            kecamatan: formData.kecamatan.trim() || undefined,
-            latitude: typeof formData.latitude === 'number' ? formData.latitude : undefined,
-            longitude: typeof formData.longitude === 'number' ? formData.longitude : undefined,
-          },
-        });
-      }
-      setIsDialogOpen(false);
-      refetch();
-    } catch {
-      // Toast handled by mutation
-    }
+    router.push(`/admin/schools/${school.id}/edit`);
   };
 
   const handleDelete = (school: SchoolResponse) => {
@@ -291,13 +208,6 @@ export function SchoolListContainer() {
       totalItems={total}
       rowsPerPage={perPage}
       onPageChange={setPage}
-      isDialogOpen={isDialogOpen}
-      onOpenDialogChange={setIsDialogOpen}
-      dialogMode={dialogMode}
-      formData={formData}
-      onFormFieldChange={handleFormFieldChange}
-      onSubmitDialog={handleSubmit}
-      isSubmitting={createMutation.isPending || updateMutation.isPending}
       onOpenCreate={handleOpenCreate}
       onEdit={handleOpenEdit}
       onDelete={handleDelete}

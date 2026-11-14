@@ -23,7 +23,6 @@ export function LoginPage({
         </>
       }
       heroDescription="Masuk untuk belajar, latihan, cek kemampuan, dan tahu apa yang perlu kamu tingkatkan."
-      badge="Selamat Datang !"
       title="Masuk ke SIMANTIK"
       description="Masuk untuk melanjutkan perjalanan belajarmu"
     >

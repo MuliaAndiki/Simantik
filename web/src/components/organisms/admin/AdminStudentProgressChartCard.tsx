@@ -1,8 +1,13 @@
 'use client';
 
-import { ArrowRight, BookOpen, LineChart, TrendingUp } from 'lucide-react';
+import { ArrowRight, BookOpen, LineChart, Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
 import { cn } from '@/utils/classname';
+import {
+  buildProgressChartGeometry,
+  DEFAULT_PROGRESS_CHART_DIMENSIONS,
+  resolveActivePointIndex,
+} from '@/utils/student-progress-chart.util';
 
 export type TimeframePeriod = '7d' | '30d' | '3m' | '6m';
 
@@ -39,7 +44,7 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
   chartData = [],
   className,
 }) => {
-  const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(chartData.length - 1);
+  const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
 
   const timeframes: { id: TimeframePeriod; label: string }[] = [
     { id: '7d', label: '7 Hari' },
@@ -49,43 +54,15 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
   ];
 
   // SVG Chart Dimensions
-  const width = 600;
-  const height = 180;
-  const paddingX = 40;
-  const paddingTop = 30;
-  const paddingBottom = 30;
-  const graphWidth = width - paddingX * 2;
+  const { width, height, paddingX, paddingTop, paddingBottom } = DEFAULT_PROGRESS_CHART_DIMENSIONS;
   const graphHeight = height - paddingTop - paddingBottom;
 
-  // Calculate coordinates for points
-  const points =
-    chartData.length > 1
-      ? chartData.map((d, index) => {
-          const x = paddingX + (index / (chartData.length - 1)) * graphWidth;
-          const y = paddingTop + (1 - d.score / 100) * graphHeight;
-          return { x, y, ...d };
-        })
-      : [];
-
-  // Create SVG path string
-  const linePath = points.reduce((acc, curr, index) => {
-    if (index === 0) return `M ${curr.x} ${curr.y}`;
-    // smooth curve bezier
-    const prev = points[index - 1];
-    const cp1x = prev.x + (curr.x - prev.x) / 2;
-    const cp1y = prev.y;
-    const cp2x = prev.x + (curr.x - prev.x) / 2;
-    const cp2y = curr.y;
-    return `${acc} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
-  }, '');
-
-  // Create SVG area fill path string
-  const areaPath = `${linePath} L ${points[points.length - 1].x} ${height - paddingBottom} L ${points[0].x} ${height - paddingBottom} Z`;
-
-  const activePoint =
-    activeTooltipIndex !== null && points[activeTooltipIndex]
-      ? points[activeTooltipIndex]
-      : points[points.length - 1];
+  const { points, linePath, areaPath } = buildProgressChartGeometry(
+    chartData,
+    DEFAULT_PROGRESS_CHART_DIMENSIONS
+  );
+  const resolvedActiveIndex = resolveActivePointIndex(activeTooltipIndex, points.length);
+  const activePoint = resolvedActiveIndex !== null ? points[resolvedActiveIndex] : undefined;
 
   return (
     <div
@@ -168,10 +145,35 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
             <span className="text-2xl font-black text-slate-900">
               {scoreDiff !== undefined ? (scoreDiff >= 0 ? `+${scoreDiff}` : scoreDiff) : '—'}
             </span>
-            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-              <TrendingUp className="w-3 h-3" />
-              Naik
-            </span>
+            {scoreDiff !== undefined && (
+              <span
+                className={cn(
+                  'inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold',
+                  scoreDiff > 0
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : scoreDiff < 0
+                      ? 'bg-rose-100 text-rose-700'
+                      : 'bg-slate-100 text-slate-600'
+                )}
+              >
+                {scoreDiff > 0 ? (
+                  <>
+                    <TrendingUp className="w-3 h-3" />
+                    Naik
+                  </>
+                ) : scoreDiff < 0 ? (
+                  <>
+                    <TrendingDown className="w-3 h-3" />
+                    Turun
+                  </>
+                ) : (
+                  <>
+                    <Minus className="w-3 h-3" />
+                    Tetap
+                  </>
+                )}
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-slate-500 font-medium">Dibandingkan sesi lalu</p>
         </div>
@@ -233,21 +235,23 @@ export const AdminStudentProgressChartCard: React.FC<AdminStudentProgressChartCa
               })}
 
               {/* Area gradient */}
-              <path d={areaPath} fill="url(#chartAreaGradient)" />
+              {areaPath && <path d={areaPath} fill="url(#chartAreaGradient)" />}
 
               {/* Line Path */}
-              <path
-                d={linePath}
-                fill="none"
-                stroke="#134653"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              {linePath && (
+                <path
+                  d={linePath}
+                  fill="none"
+                  stroke="#134653"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
 
               {/* Data Points */}
               {points.map((p, idx) => {
-                const isSelected = activeTooltipIndex === idx;
+                const isSelected = resolvedActiveIndex === idx;
                 return (
                   <g
                     key={idx}
