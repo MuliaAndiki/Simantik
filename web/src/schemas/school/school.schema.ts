@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const proposeSchoolSchema = z.object({
+const baseSchoolFields = {
   npsn: z
     .string()
     .trim()
@@ -27,21 +27,58 @@ export const proposeSchoolSchema = z.object({
     .optional()
     .default(''),
   kecamatan: z.string().trim().max(100, 'Kecamatan maksimal 100 karakter').optional().default(''),
-  latitude: z
+};
+
+const createIndonesiaLatSchema = (missingMessage: string) =>
+  z
     .number({
-      required_error: 'Pilih lokasi sekolah pada peta terlebih dahulu',
-      invalid_type_error: 'Pilih lokasi sekolah pada peta terlebih dahulu',
+      required_error: missingMessage,
+      invalid_type_error: missingMessage,
     })
     .min(-11, 'Koordinat lintang harus berada di wilayah Indonesia')
-    .max(6, 'Koordinat lintang harus berada di wilayah Indonesia'),
-  longitude: z
+    .max(6, 'Koordinat lintang harus berada di wilayah Indonesia');
+
+const createIndonesiaLngSchema = (missingMessage: string) =>
+  z
     .number({
-      required_error: 'Pilih lokasi sekolah pada peta terlebih dahulu',
-      invalid_type_error: 'Pilih lokasi sekolah pada peta terlebih dahulu',
+      required_error: missingMessage,
+      invalid_type_error: missingMessage,
     })
     .min(95, 'Koordinat bujur harus berada di wilayah Indonesia')
-    .max(141, 'Koordinat bujur harus berada di wilayah Indonesia'),
+    .max(141, 'Koordinat bujur harus berada di wilayah Indonesia');
+
+export const proposeSchoolSchema = z.object({
+  ...baseSchoolFields,
+  latitude: createIndonesiaLatSchema('Pilih lokasi sekolah pada peta terlebih dahulu'),
+  longitude: createIndonesiaLngSchema('Pilih lokasi sekolah pada peta terlebih dahulu'),
 });
+
+export const adminSchoolSchema = z
+  .object({
+    ...baseSchoolFields,
+    latitude: createIndonesiaLatSchema('Latitude harus berupa angka yang valid').nullish(),
+    longitude: createIndonesiaLngSchema('Longitude harus berupa angka yang valid').nullish(),
+  })
+  .superRefine((data, ctx) => {
+    const hasLat = typeof data.latitude === 'number';
+    const hasLng = typeof data.longitude === 'number';
+    if (hasLat === hasLng) return;
+
+    if (!hasLat) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['latitude'],
+        message: 'Latitude wajib diisi jika Longitude terisi',
+      });
+    }
+    if (!hasLng) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['longitude'],
+        message: 'Longitude wajib diisi jika Latitude terisi',
+      });
+    }
+  });
 
 export const rejectSchoolSchema = z.object({
   reason: z
@@ -52,4 +89,5 @@ export const rejectSchoolSchema = z.object({
 });
 
 export type ProposeSchoolFormData = z.infer<typeof proposeSchoolSchema>;
+export type AdminSchoolFormData = z.infer<typeof adminSchoolSchema>;
 export type RejectSchoolFormData = z.infer<typeof rejectSchoolSchema>;
