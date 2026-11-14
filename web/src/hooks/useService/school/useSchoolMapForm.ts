@@ -7,7 +7,7 @@ import type {
 } from '@/components/molecules/school/SchoolFormFields';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
-import type { GeoPlace } from '@/types/service';
+import type { GeoPlace, SchoolLevel } from '@/types/service';
 import {
   buildSchoolProposalInitialForm,
   EMPTY_SCHOOL_FORM,
@@ -17,6 +17,7 @@ import {
 export interface UseSchoolMapFormOptions {
   initialForm?: SchoolFormState;
   initialSearch?: string;
+  initialJenjang?: SchoolLevel;
   enabled?: boolean;
 }
 
@@ -33,6 +34,7 @@ const isValidIndonesiaCoords = (lat: number | null | undefined, lng: number | nu
 export function useSchoolMapForm({
   initialForm = EMPTY_SCHOOL_FORM,
   initialSearch = '',
+  initialJenjang,
   enabled = true,
 }: UseSchoolMapFormOptions = {}) {
   const api = useApi();
@@ -45,8 +47,8 @@ export function useSchoolMapForm({
   );
 
   const [formData, setFormData] = useState<SchoolFormState>(() =>
-    trimmedInitialSearch && initialForm === EMPTY_SCHOOL_FORM
-      ? buildSchoolProposalInitialForm(trimmedInitialSearch)
+    initialForm === EMPTY_SCHOOL_FORM && (trimmedInitialSearch || initialJenjang)
+      ? buildSchoolProposalInitialForm(trimmedInitialSearch || undefined, initialJenjang)
       : initialForm
   );
   const [errors, setErrors] = useState<SchoolFormErrors>({});

@@ -1,4 +1,5 @@
 import type { ApiResponse, UserRole, UserStatus } from '../model';
+import type { SchoolLevel } from './SchoolServiceType';
 
 // ============================================================================
 // User Service Request Payloads
@@ -10,6 +11,7 @@ import type { ApiResponse, UserRole, UserStatus } from '../model';
  */
 export interface UpdateMeRequest {
   fullName?: string;
+  jenjang?: SchoolLevel;
 }
 
 /**
@@ -74,7 +76,9 @@ export interface UserResponse {
     schoolId?: string;
     school: string;
     grade: string;
-    //
+    jenjang?: string;
+    schoolJenjang?: string;
+    effectiveJenjang?: string;
   };
 }
 

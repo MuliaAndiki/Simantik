@@ -9,8 +9,10 @@ import { useSchoolMapForm } from '@/hooks/useService/school/useSchoolMapForm';
 import type { SchoolResponse } from '@/types/service';
 import {
   buildSchoolProposalInitialForm,
+  normalizeSchoolLevelParam,
   validateProposeSchoolForm,
 } from '@/utils/school-proposal.util';
+import { clearSchoolSkipInStorage } from '@/utils/school-skip.util';
 import { getAccessToken } from '@/utils/session-cookie';
 
 function resolveSafeReturnTo(raw: string | null): string {
@@ -27,6 +29,7 @@ export default function ContainerAjukanSekolah() {
   const ns = useAppNameSpace();
 
   const initialQ = searchParams.get('q')?.trim() ?? '';
+  const initialJenjang = normalizeSchoolLevelParam(searchParams.get('jenjang'));
   const resubmitId = searchParams.get('resubmit')?.trim() ?? '';
   const returnTo = resolveSafeReturnTo(searchParams.get('returnTo'));
   const backHref = returnTo !== '/home' ? returnTo : '/pilih-sekolah';
@@ -52,9 +55,11 @@ export default function ContainerAjukanSekolah() {
 
   const { formData, setErrors, hydrateForm, mapProps, geoFormProps } = useSchoolMapForm({
     initialSearch: initialQ,
+    initialJenjang,
     enabled: hasAuth,
   });
 
+  const meQuery = api.user.query.me({ enabled: hasAuth });
   const mySubmissionsQuery = api.school.query.mySubmissions({
     enabled: hasAuth && Boolean(resubmitId),
   });
@@ -119,6 +124,7 @@ export default function ContainerAjukanSekolah() {
       if (createdSchoolId) {
         try {
           await updateMySchool.mutateAsync({ schoolId: createdSchoolId });
+          clearSchoolSkipInStorage(meQuery.data?.id);
           router.replace(returnTo);
           return;
         } catch {

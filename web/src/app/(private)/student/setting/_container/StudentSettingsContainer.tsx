@@ -1,6 +1,7 @@
 'use client';
 
-import { Bell, Lock, User } from 'lucide-react';
+import { AlertCircle, Bell, GraduationCap, Lock, PlusCircle, User } from 'lucide-react';
+import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import {
   type PasswordFormState,
@@ -13,6 +14,7 @@ import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
 import { useLanguage } from '@/hooks/useLanguage';
 import { EMPTY_PASSWORD_FORM, validateChangePassword } from '@/utils/password.util';
+import { buildProposeSchoolHref } from '@/utils/school-picker.util';
 
 type StudentSettingsTab = 'profile' | 'security' | 'preferences';
 
@@ -51,7 +53,9 @@ export default function StudentSettingsContainer() {
   }, []);
 
   const email = user?.email || '';
+  const hasSchool = Boolean(user?.studentProfile?.schoolId || user?.studentProfile?.school);
   const schoolName = user?.studentProfile?.school || 'Belum memilih sekolah';
+  const proposeSchoolHref = buildProposeSchoolHref({ returnTo: '/student/setting' });
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,14 +145,37 @@ export default function StudentSettingsContainer() {
             onFullNameChange={setFullName}
             onSaveProfile={handleSaveProfile}
             extraRows={
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Sekolah</label>
-                <div className="h-10 rounded-xl bg-slate-100 border border-slate-200 text-xs font-medium text-slate-500 flex items-center px-3">
-                  {schoolName}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-xs font-bold text-slate-700">Sekolah</label>
+                  {!hasSchool && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                      <AlertCircle className="size-3" />
+                      Belum dipilih
+                    </span>
+                  )}
                 </div>
-                <span className="text-[11px] text-slate-400">
-                  Sekolah diatur saat onboarding dan melalui halaman profil.
-                </span>
+                <div className="min-h-10 rounded-xl bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700 flex items-center justify-between gap-2 px-3 py-2">
+                  <span className={!hasSchool ? 'text-slate-500' : 'text-slate-800'}>
+                    {schoolName}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                  <Link
+                    href="/student/profile"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors"
+                  >
+                    <GraduationCap className="size-3.5 text-teal-600" />
+                    {hasSchool ? 'Ubah Sekolah di Profil' : 'Pilih Sekolah di Profil'}
+                  </Link>
+                  <Link
+                    href={proposeSchoolHref}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50/70 hover:bg-teal-100/70 px-3 py-1.5 text-xs font-semibold text-teal-800 transition-colors"
+                  >
+                    <PlusCircle className="size-3.5 text-teal-700" />
+                    Ajukan Sekolah Baru
+                  </Link>
+                </div>
               </div>
             }
           />

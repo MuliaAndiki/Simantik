@@ -5,15 +5,34 @@ import {
   EMPTY_SCHOOL_FORM,
   guessSchoolLevel,
   guessSchoolStatus,
+  normalizeSchoolLevelParam,
   placeToFormPatch,
   validateAdminSchoolForm,
   validateProposeSchoolForm,
 } from './school-proposal.util';
 
 describe('school-proposal.util', () => {
+  describe('normalizeSchoolLevelParam', () => {
+    it('normalizes valid levels and rejects invalid or empty params', () => {
+      expect(normalizeSchoolLevelParam(' SMA ')).toBe('sma');
+      expect(normalizeSchoolLevelParam('smk')).toBe('smk');
+      expect(normalizeSchoolLevelParam('sd')).toBe('sd');
+      expect(normalizeSchoolLevelParam('smp')).toBe('smp');
+      expect(normalizeSchoolLevelParam('all')).toBeUndefined();
+      expect(normalizeSchoolLevelParam(null)).toBeUndefined();
+    });
+  });
+
   describe('buildSchoolProposalInitialForm', () => {
     it('returns empty default form when no seed is provided', () => {
       expect(buildSchoolProposalInitialForm()).toEqual(EMPTY_SCHOOL_FORM);
+    });
+
+    it('applies defaultJenjang even when seed string is empty or partial', () => {
+      expect(buildSchoolProposalInitialForm(undefined, 'smp').jenjang).toBe('smp');
+      const seeded = buildSchoolProposalInitialForm('SMP Pelita', 'smp');
+      expect(seeded.nama).toBe('SMP Pelita');
+      expect(seeded.jenjang).toBe('smp');
     });
 
     it('seeds npsn when search string is numeric (>= 3 digits)', () => {

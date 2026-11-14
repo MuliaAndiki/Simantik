@@ -11,10 +11,21 @@ import type {
 } from '@/types/service';
 import { readUserSnapshot, type UserCacheContext } from '@/utils/cache/user.cache';
 
+const JENJANG_AFFECTED_CONTENT_KEYS = [
+  queryKey.learningRoot(),
+  queryKey.practiceRoot(),
+  queryKey.tryoutRoot(),
+  queryKey.evaluationRoot(),
+  queryKey.recommendationRoot(),
+];
+
 export function useUpdateProfile() {
   return useAppMutation<UserResponse, UpdateMeRequest, UserCacheContext>({
     mutationFn: (body: UpdateMeRequest) => Api.user.UpdateMeService(body),
-    invalidateKeys: [queryKey.userRoot()],
+    invalidateKeys: (_data, variables) =>
+      variables?.jenjang
+        ? [queryKey.userRoot(), queryKey.authRoot(), ...JENJANG_AFFECTED_CONTENT_KEYS]
+        : [queryKey.userRoot()],
     optimistic: (ns) => ({ previousUser: readUserSnapshot(ns) }),
   });
 }
@@ -22,7 +33,12 @@ export function useUpdateProfile() {
 export function useUpdateMySchool() {
   return useAppMutation<UserResponse, UpdateMySchoolRequest, UserCacheContext>({
     mutationFn: (body: UpdateMySchoolRequest) => Api.user.UpdateMySchoolService(body),
-    invalidateKeys: [queryKey.userRoot(), queryKey.authRoot()],
+    invalidateKeys: [
+      queryKey.userRoot(),
+      queryKey.authRoot(),
+      queryKey.schoolRoot(),
+      ...JENJANG_AFFECTED_CONTENT_KEYS,
+    ],
     optimistic: (ns) => ({ previousUser: readUserSnapshot(ns) }),
   });
 }

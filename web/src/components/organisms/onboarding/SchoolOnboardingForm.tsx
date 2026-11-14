@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react';
 import type * as React from 'react';
 import { Button } from '@/components/atoms/button';
 import { FormField } from '@/components/molecules/auth/FormField';
@@ -7,10 +8,14 @@ import {
 } from '@/components/molecules/auth/SchoolSearchSelect';
 import { MySchoolSubmissionBanner } from '@/components/molecules/school/MySchoolSubmissionBanner';
 import type { SchoolResponse } from '@/types/service';
+import { cn } from '@/utils/classname';
+import { formatSchoolLevelLabel, type SchoolLevelFilterValue } from '@/utils/school-picker.util';
 
 export interface SchoolOnboardingFormProps {
   schoolSearch: string;
   onSchoolSearchChange: (value: string) => void;
+  jenjangFilter?: SchoolLevelFilterValue;
+  onJenjangFilterChange?: (value: SchoolLevelFilterValue) => void;
   schoolOptions: SchoolOption[];
   schoolLoading: boolean;
   selectedSchool: SchoolOption | null;
@@ -29,6 +34,8 @@ export interface SchoolOnboardingFormProps {
 export function SchoolOnboardingForm({
   schoolSearch,
   onSchoolSearchChange,
+  jenjangFilter = 'all',
+  onJenjangFilterChange,
   schoolOptions,
   schoolLoading,
   selectedSchool,
@@ -43,6 +50,8 @@ export function SchoolOnboardingForm({
   loading = false,
   error,
 }: SchoolOnboardingFormProps) {
+  const selectedJenjangLabel = formatSchoolLevelLabel(selectedSchool?.jenjang);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(e);
@@ -62,6 +71,8 @@ export function SchoolOnboardingForm({
         <SchoolSearchSelect
           search={schoolSearch}
           onSearchChange={onSchoolSearchChange}
+          jenjangFilter={jenjangFilter}
+          onJenjangFilterChange={onJenjangFilterChange}
           schools={schoolOptions}
           loading={schoolLoading}
           selected={selectedSchool}
@@ -71,6 +82,37 @@ export function SchoolOnboardingForm({
           disabled={loading}
         />
       </FormField>
+
+      <div
+        role="status"
+        className={cn(
+          'flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-xs leading-relaxed transition-colors',
+          selectedJenjangLabel
+            ? 'bg-teal-50/80 border-teal-200 text-teal-900'
+            : 'bg-slate-50 border-slate-200/80 text-slate-600'
+        )}
+      >
+        <Info
+          className={cn(
+            'size-4 shrink-0 mt-0.5',
+            selectedJenjangLabel ? 'text-teal-600' : 'text-slate-500'
+          )}
+        />
+        {selectedJenjangLabel ? (
+          <p>
+            Kamu memilih sekolah jenjang <strong>{selectedJenjangLabel}</strong> &mdash;{' '}
+            <strong>Materi Belajar</strong>, <strong>Soal Latihan</strong>, dan{' '}
+            <strong>Tryout</strong> akan disesuaikan untuk jenjang{' '}
+            <strong>{selectedJenjangLabel}</strong>.
+          </p>
+        ) : (
+          <p>
+            <strong>Materi Belajar</strong>, <strong>Soal Latihan</strong>, dan{' '}
+            <strong>Tryout</strong> akan otomatis disesuaikan dengan jenjang sekolah yang kamu
+            pilih.
+          </p>
+        )}
+      </div>
 
       <div className="flex flex-col gap-2 mt-2">
         <Button
