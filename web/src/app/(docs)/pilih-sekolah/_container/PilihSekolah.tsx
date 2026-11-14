@@ -1,27 +1,23 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { SchoolOption } from '@/components/molecules/auth/SchoolSearchSelect';
 import { SchoolOnboardingPage } from '@/components/page/onboarding/SchoolOnboardingPage';
 import { useApi } from '@/hooks/useApi';
 import useAppNameSpace from '@/hooks/useAppNameSpace';
 import { useDebounce } from '@/hooks/useDebounce/useDebounce';
 import type { SchoolResponse } from '@/types/service';
-import { markSchoolSkippedInStorage } from '@/utils/school-skip.util';
+import {
+  buildProposeSchoolHref,
+  mergeSelectableSchools,
+  type SchoolLevelFilterValue,
+  toSelectableSchoolItem,
+} from '@/utils/school-picker.util';
+import { clearSchoolSkipInStorage, markSchoolSkippedInStorage } from '@/utils/school-skip.util';
 import { getAccessToken } from '@/utils/session-cookie';
 
-const SCHOOL_SEARCH_DEBOUNCE_MS = 800;
-
-function toSchoolOption(school: SchoolResponse): SchoolOption {
-  return {
-    id: school.id,
-    nama: school.nama,
-    npsn: school.npsn,
-    jenjang: school.jenjang,
-    verificationStatus: school.verificationStatus,
-  };
-}
+const SCHOOL_SEARCH_DEBOUNCE_MS = 350;
 
 export default function ContainerPilihSekolah() {
   const router = useRouter();
@@ -31,6 +27,7 @@ export default function ContainerPilihSekolah() {
 
   const [hasAuth, setHasAuth] = useState(false);
   const [schoolSearch, setSchoolSearch] = useState('');
+  const [jenjangFilter, setJenjangFilter] = useState<SchoolLevelFilterValue>('all');
   const [selectedSchool, setSelectedSchool] = useState<SchoolOption | null>(null);
   const [error, setError] = useState<string>();
   const debouncedSearch = useDebounce(schoolSearch, SCHOOL_SEARCH_DEBOUNCE_MS);
@@ -44,12 +41,25 @@ export default function ContainerPilihSekolah() {
 
   const schoolQuery = api.school.query.listPublic({
     search: debouncedSearch.trim() || undefined,
+    jenjang: jenjangFilter === 'all' ? undefined : jenjangFilter,
     limit: 20,
   });
-  const schoolOptions: SchoolOption[] = schoolQuery.data?.schools.map(toSchoolOption) ?? [];
+
+  const schoolOptions: SchoolOption[] = useMemo(
+    () =>
+      mergeSelectableSchools(schoolQuery.data?.schools, mySubmissionsQuery.data ?? undefined, {
+        search: debouncedSearch,
+        jenjang: jenjangFilter,
+      }),
+    [debouncedSearch, jenjangFilter, mySubmissionsQuery.data, schoolQuery.data?.schools]
+  );
 
   const handleSchoolSearchChange = (search: string) => {
     setSchoolSearch(search);
+  };
+
+  const handleJenjangFilterChange = (nextJenjang: SchoolLevelFilterValue) => {
+    setJenjangFilter(nextJenjang);
   };
 
   const handleSchoolSelect = (school: SchoolOption) => {
@@ -73,13 +83,16 @@ export default function ContainerPilihSekolah() {
     }
 
     if (seed && typeof seed !== 'string') {
-      router.push(`/pilih-sekolah/ajukan?resubmit=${encodeURIComponent(seed.id)}`);
+      router.push(buildProposeSchoolHref({ resubmitId: seed.id }));
       return;
     }
 
-    const qParam =
-      typeof seed === 'string' && seed.trim() ? `?q=${encodeURIComponent(seed.trim())}` : '';
-    router.push(`/pilih-sekolah/ajukan${qParam}`);
+    router.push(
+      buildProposeSchoolHref({
+        query: typeof seed === 'string' ? seed : schoolSearch,
+        jenjang: jenjangFilter,
+      })
+    );
   };
 
   const handleSkip = () => {
@@ -105,6 +118,7 @@ export default function ContainerPilihSekolah() {
       { schoolId: selectedSchool.id },
       {
         onSuccess: () => {
+          clearSchoolSkipInStorage(meQuery.data?.id);
           router.replace('/home');
         },
       }
@@ -115,6 +129,8 @@ export default function ContainerPilihSekolah() {
     <SchoolOnboardingPage
       schoolSearch={schoolSearch}
       onSchoolSearchChange={handleSchoolSearchChange}
+      jenjangFilter={jenjangFilter}
+      onJenjangFilterChange={handleJenjangFilterChange}
       schoolOptions={schoolOptions}
       schoolLoading={schoolQuery.isFetching}
       selectedSchool={selectedSchool}
@@ -127,7 +143,7 @@ export default function ContainerPilihSekolah() {
           handleNavigateToProposal(school);
           return;
         }
-        handleSchoolSelect(toSchoolOption(school));
+        handleSchoolSelect(toSelectableSchoolItem(school));
       }}
       onResubmitSubmission={handleNavigateToProposal}
       onSkip={handleSkip}

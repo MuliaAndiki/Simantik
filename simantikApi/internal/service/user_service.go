@@ -61,6 +61,7 @@ func (s *userService) GetMe(ctx context.Context, userID uuid.UUID) (*dto.UserRes
 	}
 
 	res := ToUserResponse(user)
+	s.enrichStudentJenjang(ctx, user, &res)
 	return &res, nil
 }
 
@@ -77,28 +78,84 @@ func (s *userService) UpdateMe(ctx context.Context, userID uuid.UUID, req dto.Up
 		user.FullName = req.FullName
 	}
 
-	if req.Jenjang != nil {
-		if err := s.updateProfileJenjang(ctx, userID, *req.Jenjang); err != nil {
-			return nil, err
-		}
-	}
-
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		return nil, err
 	}
 
+	if req.Jenjang != nil && *req.Jenjang != "" {
+		profile, err := s.updateProfileJenjang(ctx, user.ID, *req.Jenjang)
+		if err != nil {
+			return nil, err
+		}
+		user.StudentProfile = profile
+	}
+
 	res := ToUserResponse(user)
+	s.enrichStudentJenjang(ctx, user, &res)
 	return &res, nil
 }
 
-// updateProfileJenjang menyimpan jenjang eksplisit siswa (misal gap year) ke StudentProfile.
-func (s *userService) updateProfileJenjang(ctx context.Context, userID uuid.UUID, jenjang string) error {
+// updateProfileJenjang menyimpan jenjang eksplisit siswa (misal gap year) ke StudentProfile,
+// termasuk membuat StudentProfile baru bila siswa sebelumnya melewati onboarding sekolah.
+func (s *userService) updateProfileJenjang(ctx context.Context, userID uuid.UUID, jenjang string) (*models.StudentProfile, error) {
 	profile, err := s.profileRepo.FindByUserID(ctx, userID)
 	if err != nil {
-		return err
+		if !errors.Is(err, repository.ErrNotFound) {
+			return nil, err
+		}
+		profile = nil
 	}
+	if profile == nil {
+		created := &models.StudentProfile{
+			UserID:  userID,
+			Jenjang: &jenjang,
+		}
+		if err := s.profileRepo.Create(ctx, created); err != nil {
+			return nil, err
+		}
+		return created, nil
+	}
+
 	profile.Jenjang = &jenjang
-	return s.profileRepo.Update(ctx, profile)
+	if err := s.profileRepo.Update(ctx, profile); err != nil {
+		return nil, err
+	}
+	return profile, nil
+}
+
+func (s *userService) enrichStudentJenjang(ctx context.Context, user *models.User, res *dto.UserResponse) {
+	if user == nil || user.StudentProfile == nil || res == nil || res.StudentProfile == nil {
+		return
+	}
+
+	var schoolLevel string
+	if user.StudentProfile.SchoolID != nil && s.schoolRepo != nil {
+		school, err := s.schoolRepo.FindByID(ctx, *user.StudentProfile.SchoolID)
+		if err == nil && school != nil {
+			schoolLevel = string(school.Level)
+		}
+	}
+
+	setStudentJenjangFields(res, user.StudentProfile.Jenjang, schoolLevel)
+}
+
+func setStudentJenjangFields(res *dto.UserResponse, explicitJenjang *string, schoolLevel string) {
+	if res == nil || res.StudentProfile == nil {
+		return
+	}
+	if schoolLevel != "" {
+		lvl := schoolLevel
+		res.StudentProfile.SchoolJenjang = &lvl
+	}
+	if explicitJenjang != nil && *explicitJenjang != "" {
+		eff := *explicitJenjang
+		res.StudentProfile.EffectiveJenjang = &eff
+		return
+	}
+	if schoolLevel != "" {
+		eff := schoolLevel
+		res.StudentProfile.EffectiveJenjang = &eff
+	}
 }
 
 func (s *userService) ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error {
@@ -195,21 +252,26 @@ func (s *userService) UpdateMySchool(ctx context.Context, userID uuid.UUID, req 
 	if err == nil && profile != nil {
 		profile.SchoolID = &school.ID
 		profile.School = school.Name
+		// Clear explicit jenjang override when switching schools so JenjangResolver follows the new school's level.
+		profile.Jenjang = nil
 		if err := s.profileRepo.Update(ctx, profile); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := s.profileRepo.Create(ctx, &models.StudentProfile{
+		profile = &models.StudentProfile{
 			UserID:   user.ID,
 			SchoolID: &school.ID,
 			School:   school.Name,
-		}); err != nil {
+		}
+		if err := s.profileRepo.Create(ctx, profile); err != nil {
 			return nil, err
 		}
 	}
 
+	user.StudentProfile = profile
 	res := ToUserResponse(user)
 	res.HasSchool = true
+	setStudentJenjangFields(&res, profile.Jenjang, string(school.Level))
 	return &res, nil
 }
 

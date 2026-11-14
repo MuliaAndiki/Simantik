@@ -86,21 +86,33 @@ export function placeToFormPatch(
   return patch;
 }
 
+const VALID_SCHOOL_LEVELS: ReadonlyArray<SchoolLevel> = ['sd', 'smp', 'sma', 'smk'];
+
+/** Menormalisasi query parameter jenjang menjadi SchoolLevel yang valid atau undefined. */
+export function normalizeSchoolLevelParam(raw?: string | null): SchoolLevel | undefined {
+  if (!raw) return undefined;
+  const normalized = raw.trim().toLowerCase() as SchoolLevel;
+  return VALID_SCHOOL_LEVELS.includes(normalized) ? normalized : undefined;
+}
+
 /**
  * Membangun initial form state pengajuan sekolah dari query pencarian
  * atau data pengajuan sebelumnya yang ditolak (untuk ajukan ulang).
  */
-export function buildSchoolProposalInitialForm(seed?: string | SchoolResponse): SchoolFormState {
+export function buildSchoolProposalInitialForm(
+  seed?: string | SchoolResponse,
+  defaultJenjang?: SchoolLevel
+): SchoolFormState {
+  const baseForm: SchoolFormState = defaultJenjang
+    ? { ...EMPTY_SCHOOL_FORM, jenjang: defaultJenjang }
+    : { ...EMPTY_SCHOOL_FORM };
+
   if (!seed) {
-    return { ...EMPTY_SCHOOL_FORM };
+    return baseForm;
   }
 
   if (typeof seed !== 'string') {
-    const jenjang = (
-      ['sd', 'smp', 'sma', 'smk'].includes(seed.jenjang?.toLowerCase())
-        ? seed.jenjang.toLowerCase()
-        : 'sma'
-    ) as SchoolLevel;
+    const jenjang = normalizeSchoolLevelParam(seed.jenjang) ?? 'sma';
     const status = (
       seed.status?.toLowerCase() === 'swasta' ? 'swasta' : 'negeri'
     ) as SchoolStatusType;
@@ -121,9 +133,9 @@ export function buildSchoolProposalInitialForm(seed?: string | SchoolResponse): 
 
   const trimmed = seed.trim();
   if (/^\d{3,}$/.test(trimmed)) {
-    return { ...EMPTY_SCHOOL_FORM, npsn: trimmed };
+    return { ...baseForm, npsn: trimmed };
   }
-  return { ...EMPTY_SCHOOL_FORM, nama: trimmed };
+  return { ...baseForm, nama: trimmed };
 }
 
 function extractSchoolFieldErrors(
