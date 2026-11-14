@@ -2,13 +2,11 @@ import { Plus } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/atoms';
 import {
-  AdminSchoolCreateDialog,
   AdminSchoolDataTable,
   AdminSchoolFilterBar,
   AdminSchoolRejectDialog,
   AdminSchoolStatCards,
   type AdminSchoolStatCardsProps,
-  type SchoolFormState,
 } from '@/components/organisms/admin';
 import type { SchoolResponse } from '@/types/service';
 import { cn } from '@/utils/classname';
@@ -31,13 +29,6 @@ export interface AdminSchoolListTemplateProps {
   totalItems: number;
   rowsPerPage: number;
   onPageChange: (page: number) => void;
-  isDialogOpen: boolean;
-  onOpenDialogChange: (open: boolean) => void;
-  dialogMode: 'create' | 'edit';
-  formData: SchoolFormState;
-  onFormFieldChange: <K extends keyof SchoolFormState>(field: K, value: SchoolFormState[K]) => void;
-  onSubmitDialog: (e: React.FormEvent) => Promise<void> | void;
-  isSubmitting?: boolean;
   onOpenCreate: () => void;
   onEdit: (school: SchoolResponse) => void;
   onDelete: (school: SchoolResponse) => void;
@@ -72,13 +63,6 @@ export const AdminSchoolListTemplate: React.FC<AdminSchoolListTemplateProps> = (
   totalItems,
   rowsPerPage,
   onPageChange,
-  isDialogOpen,
-  onOpenDialogChange,
-  dialogMode,
-  formData,
-  onFormFieldChange,
-  onSubmitDialog,
-  isSubmitting = false,
   onOpenCreate,
   onEdit,
   onDelete,
@@ -202,17 +186,6 @@ export const AdminSchoolListTemplate: React.FC<AdminSchoolListTemplateProps> = (
           isVerifyingId={isVerifyingId}
         />
       </div>
-
-      {/* Create / Edit Modal Dialog */}
-      <AdminSchoolCreateDialog
-        open={isDialogOpen}
-        onOpenChange={onOpenDialogChange}
-        mode={dialogMode}
-        formData={formData}
-        onChange={onFormFieldChange}
-        onSubmit={onSubmitDialog}
-        isSubmitting={isSubmitting}
-      />
 
       {/* Reject School Modal Dialog */}
       <AdminSchoolRejectDialog

@@ -11,7 +11,6 @@ export * from './AdminDashboardRecentActivities';
 export * from './AdminDashboardRecentAttempts';
 export * from './AdminDashboardRecentStudentsTable';
 export * from './AdminDashboardStatCards';
-export * from './AdminSchoolCreateDialog';
 export * from './AdminSchoolDataTable';
 export * from './AdminSchoolFilterBar';
 export * from './AdminSchoolRejectDialog';
