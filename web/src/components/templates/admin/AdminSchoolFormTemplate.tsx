@@ -1,18 +1,18 @@
-import { AlertCircle, ArrowLeft, MapPin } from "lucide-react";
-import Link from "next/link";
-import type React from "react";
+import { AlertCircle, ArrowLeft, MapPin } from 'lucide-react';
+import Link from 'next/link';
+import type React from 'react';
 import {
   SchoolMapPickerLazy,
   type SchoolMapPickerProps,
-} from "@/components/molecules/map/SchoolMapPickerLazy";
+} from '@/components/molecules/map/SchoolMapPickerLazy';
 import {
   SchoolProposalForm,
   type SchoolProposalFormProps,
-} from "@/components/organisms/school/SchoolProposalForm";
-import { cn } from "@/utils/classname";
+} from '@/components/organisms/school/SchoolProposalForm';
+import { cn } from '@/utils/classname';
 
 export interface AdminSchoolFormTemplateProps {
-  mode: "create" | "edit";
+  mode: 'create' | 'edit';
   mapProps: SchoolMapPickerProps;
   formProps: SchoolProposalFormProps;
   backHref?: string;
@@ -21,42 +21,36 @@ export interface AdminSchoolFormTemplateProps {
   className?: string;
 }
 
-export const AdminSchoolFormTemplate: React.FC<
-  AdminSchoolFormTemplateProps
-> = ({
+export const AdminSchoolFormTemplate: React.FC<AdminSchoolFormTemplateProps> = ({
   mode,
   mapProps,
   formProps,
-  backHref = "/admin/schools",
+  backHref = '/admin/schools',
   isLoadingInitial = false,
   isNotFound = false,
   className,
 }) => {
-  const isEdit = mode === "edit";
+  const isEdit = mode === 'edit';
 
   return (
-    <div className={cn("w-full max-w-full mx-auto space-y-6", className)}>
+    <div className={cn('w-full max-w-full mx-auto space-y-6', className)}>
       {/* Header Banner */}
       <div className="bg-white rounded-2xl border border-slate-100/90 shadow-2xs p-6 md:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span
-                className="h-3.5 w-1 rounded-full bg-teal-600 shrink-0"
-                aria-hidden="true"
-              />
+              <span className="h-3.5 w-1 rounded-full bg-teal-600 shrink-0" aria-hidden="true" />
               <span className="text-[11px] font-bold text-teal-700 uppercase tracking-wider">
                 Master Data Sekolah
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              {isEdit ? "Edit Data Sekolah" : "Tambah Sekolah Baru"}
+              {isEdit ? 'Edit Data Sekolah' : 'Tambah Sekolah Baru'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1.5 leading-relaxed max-w-2xl">
-              Cari sekolah melalui peta OpenStreetMap atau klik titik lokasi di
-              peta untuk mengisi koordinat serta wilayah administratif secara
-              otomatis. Koordinat tetap opsional untuk admin dan dapat diisi
-              atau dihapus manual.
+              Cari sekolah melalui peta OpenStreetMap atau klik titik lokasi di peta untuk mengisi
+              koordinat serta wilayah administratif secara otomatis. Koordinat tetap opsional untuk
+              admin dan dapat diisi atau dihapus manual.
             </p>
           </div>
 
@@ -76,9 +70,7 @@ export const AdminSchoolFormTemplate: React.FC<
             <AlertCircle className="h-6 w-6" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-slate-900">
-              Data Sekolah Tidak Ditemukan
-            </h2>
+            <h2 className="text-lg font-bold text-slate-900">Data Sekolah Tidak Ditemukan</h2>
             <p className="text-xs sm:text-sm text-slate-600">
               Sekolah yang ingin Anda ubah tidak tersedia atau telah dihapus.
             </p>
@@ -105,8 +97,8 @@ export const AdminSchoolFormTemplate: React.FC<
                     Peta Lokasi Sekolah
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Klik marker hasil pencarian atau klik sembarang titik di
-                    peta untuk memilih lokasi.
+                    Klik marker hasil pencarian atau klik sembarang titik di peta untuk memilih
+                    lokasi.
                   </p>
                 </div>
               </div>
@@ -124,9 +116,9 @@ export const AdminSchoolFormTemplate: React.FC<
               )}
 
               <p className="mt-2.5 text-[11px] text-slate-500">
-                Data peta disediakan oleh OpenStreetMap. Jika nama sekolah belum
-                muncul di pencarian, klik langsung titik lokasi pada peta atau
-                isi form di samping secara manual.
+                Data peta disediakan oleh OpenStreetMap. Jika nama sekolah belum muncul di
+                pencarian, klik langsung titik lokasi pada peta atau isi form di samping secara
+                manual.
               </p>
             </div>
           </section>
@@ -150,10 +142,8 @@ export const AdminSchoolFormTemplate: React.FC<
                   {...formProps}
                   coordinatesRequired={false}
                   showManualCoordinates
-                  submitLabel={isEdit ? "Simpan Perubahan" : "Tambah Sekolah"}
-                  submittingLabel={
-                    isEdit ? "Menyimpan Perubahan..." : "Menyimpan Sekolah..."
-                  }
+                  submitLabel={isEdit ? 'Simpan Perubahan' : 'Tambah Sekolah'}
+                  submittingLabel={isEdit ? 'Menyimpan Perubahan...' : 'Menyimpan Sekolah...'}
                   cancelLabel="Batal"
                 />
               )}
